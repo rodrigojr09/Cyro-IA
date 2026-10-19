@@ -55,7 +55,8 @@ function addMessage(role, content) {
 }
 function showProject(data) {
   if (!data) return;
-  document.getElementById('project-name').textContent = data.project ? 'Projeto: ' + data.project.name : 'Nenhum projeto selecionado';
+  const selected = window.jarvisWorkspace?.project || data.project;
+  document.getElementById('project-name').textContent = selected ? 'Projeto: ' + selected.name : 'Nenhum projeto selecionado';
   const roots = document.getElementById('authorized-roots');
   const previous = roots.value;
   roots.replaceChildren();
@@ -142,9 +143,12 @@ async function speak(text) {
 async function submit() {
   const text = input.value.trim();
   if (!text || send.disabled) return;
+  const currentChat = window.jarvisWorkspace?.chat;
+  if (window.jarvisWorkspace && !currentChat) return;
   input.value = '';
   addMessage('user', text);
   send.disabled = true;
+  window.jarvisWorkspace?.begin();
   analyzing = programmingMode.checked;
   document.getElementById('authorize-project').disabled = true;
   document.getElementById('revoke-root').disabled = true;
@@ -152,7 +156,7 @@ async function submit() {
   if (analyzing) { status.textContent = 'Localizando projeto...'; pollTimer = setTimeout(refreshProject, 300); }
   status.textContent = analyzing ? 'Localizando projeto...' : 'JARVIS está pensando...';
   try {
-    const data = await api('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text, mode: programmingMode.checked ? 'programming' : 'chat'})});
+    const data = await api('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text, mode: programmingMode.checked ? 'programming' : 'chat', ...(currentChat ? {chat_id:currentChat.id} : {})})});
     analyzing = false;
     clearTimeout(pollTimer);
     showProject(data.programming);
@@ -169,6 +173,7 @@ async function submit() {
     programmingMode.disabled = false;
     document.getElementById('authorize-project').disabled = false;
     await refreshProject();
+    window.jarvisWorkspace?.end();
     input.focus();
   }
 }
@@ -201,6 +206,11 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 (async () => {
   try {
     await api('/health');
+    if (window.jarvisWorkspace) {
+      await window.jarvisWorkspace.init();
+      status.textContent='Conectado';
+      return;
+    }
     const history = await api('/history');
     messages.replaceChildren();
     for (const item of history) addMessage(item.role, item.content);

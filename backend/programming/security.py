@@ -1,5 +1,6 @@
 """Fronteira de leitura: autorizações explícitas, caminhos e texto sanitizado."""
 import os
+import hashlib
 import re
 import stat
 import unicodedata
@@ -122,7 +123,7 @@ class ReadPolicy:
             raise ReadError('Arquivo inexistente ou sem permissão de leitura.') from None
         return resolved
 
-    def text(self, value, base=None):
+    def snapshot(self, value, base=None):
         path = self.resolve(value, base)
         if not readable_name(path.name):
             raise ReadError('Tipo de arquivo não permitido para leitura de código.')
@@ -143,7 +144,11 @@ class ReadPolicy:
             text = raw.decode('utf-8-sig')
         except (OSError, UnicodeError):
             raise ReadError('Arquivo sem permissão ou não é texto UTF-8.') from None
-        return path, redact(text)
+        return path, redact(text), {'hash': hashlib.sha256(raw).hexdigest(), 'size': len(raw), 'mtime_ns': opened.st_mtime_ns}
+
+    def text(self, value, base=None):
+        path, text, _ = self.snapshot(value, base)
+        return path, text
 
     def read(self, value, base=None, start_line=1, end_line=160):
         path, text = self.text(value, base)

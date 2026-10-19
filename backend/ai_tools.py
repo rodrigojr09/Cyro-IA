@@ -41,15 +41,23 @@ def speech_text(reply):
     return text or 'A análise e os exemplos de código estão disponíveis no chat.'
 
 
-async def converse(client, model, messages, mode, service):
-    tools = PROGRAMMING_TOOLS if mode == 'programming' else COMPUTER_TOOLS
+async def converse(client, model, messages, mode, service, gate=None, usage_callback=None):
+    tools = getattr(service, 'tools', PROGRAMMING_TOOLS) if mode == 'programming' else COMPUTER_TOOLS
     names = {tool['function']['name'] for tool in tools}
     pending, used, calls = [], 0, 0
     for round_number in range(MAX_TOOL_ROUNDS + 1):
         allow_tools = round_number < MAX_TOOL_ROUNDS and calls < MAX_TOOL_CALLS and used < MAX_CONTEXT_CHARS
-        options = {'tools': tools} if allow_tools else {}
-        result = await client.chat.completions.create(model=model, messages=messages,
-                                                       max_completion_tokens=3500, **options)
+        options = {'tools': tools} if allow_tools and tools else {}
+        async def request():
+            return await asyncio.wait_for(client.chat.completions.create(model=model, messages=messages,
+                                                       max_completion_tokens=3500, **options), timeout=90)
+        if gate:
+            async with gate:
+                result = await request()
+        else:
+            result = await request()
+        if usage_callback:
+            usage_callback(getattr(result, 'usage', None))
         assistant = result.choices[0].message
         if not assistant.tool_calls:
             return assistant.content or 'Não consegui gerar uma resposta.', pending

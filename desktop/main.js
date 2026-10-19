@@ -4,11 +4,16 @@ const path = require('path');
 const fs = require('fs/promises');
 const { pathToFileURL } = require('url');
 const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
+const dataDir = process.env.JARVIS_DATA_DIR || path.join(process.env.LOCALAPPDATA || path.join(require('os').homedir(), 'AppData', 'Local'), 'JARVIS');
+if (!path.isAbsolute(dataDir)) throw new Error('JARVIS_DATA_DIR deve ser um caminho absoluto.');
 const routes = new Map([
     ['/health', 'GET'], ['/history', 'GET'], ['/chat', 'POST'], ['/speak', 'POST'],
     ['/action/open', 'POST'], ['/action/folder', 'POST'], ['/action/confirm', 'POST'],
     ['/computer/processes', 'GET'], ['/computer/system', 'GET'],
-    ['/programming/status', 'GET'], ['/programming/revoke', 'POST']
+    ['/programming/status', 'GET'], ['/programming/revoke', 'POST'],
+    ['/workspace', 'GET'], ['/workspace/view', 'POST'], ['/chats/history', 'GET'],
+    ['/chats/create', 'POST'], ['/projects/refresh', 'POST'], ['/projects/accept-partial', 'POST'],
+    ['/projects/knowledge', 'GET'], ['/projects/note', 'POST']
 ]);
 let win;
 function trusted(event) {
@@ -17,7 +22,7 @@ function trusted(event) {
 }
 async function backend(route, method, body) {
     try {
-        const token = (await fs.readFile(path.join(__dirname, '..', 'backend', '.local-token'), 'utf8')).trim();
+        const token = (await fs.readFile(path.join(dataDir, '.local-token'), 'utf8')).trim();
         const response = await fetch('http://127.0.0.1:8765' + route, {
             method, headers: { 'Content-Type': 'application/json', 'X-Jarvis-Token': token },
             body: method === 'POST' ? body : undefined,
@@ -51,11 +56,47 @@ app.whenReady().then(() => {
         const confirmation = await dialog.showMessageBox(win, {
             type: 'question', title: 'Autorizar análise somente leitura',
             message: 'Permitir que o JARVIS leia código nesta pasta e nas subpastas?',
-            detail: selectedPath + '\nTrechos consultados pelo chat serão enviados à OpenAI. Arquivos protegidos serão bloqueados.',
+            detail: selectedPath + '\nO cadastro inicia uma análise automática em lotes pela OpenAI API, com consumo de tokens. Trechos de código serão enviados; arquivos protegidos serão bloqueados. A pasta original não será modificada.',
             buttons: ['Cancelar', 'Autorizar leitura'], defaultId: 0, cancelId: 0, noLink: true
         });
         if (confirmation.response !== 1) return { canceled: true };
-        return backend('/programming/authorize', 'POST', JSON.stringify({ path: selectedPath }));
+        return backend('/projects/register', 'POST', JSON.stringify({ path: selectedPath }));
+    });
+    ipcMain.handle('jarvis:remove-project', async (event, projectId) => {
+        if (!trusted(event) || !/^[a-f0-9-]{36}$/i.test(projectId)) throw new Error('Projeto inválido.');
+        const result = await dialog.showMessageBox(win, {
+            type: 'warning', title: 'Remover projeto do JARVIS',
+            message: 'A pasta original será preservada. O que deseja remover?',
+            detail: 'Manter memória permite recuperar os chats ao cadastrar a mesma pasta novamente. Apagar memória remove os chats e o conhecimento internos deste projeto.',
+            buttons: ['Cancelar', 'Somente cadastro; manter memória', 'Cadastro e memória interna'], defaultId: 0, cancelId: 0, noLink: true
+        });
+        if (result.response === 0) return { canceled: true };
+        return backend('/projects/remove','POST',JSON.stringify({project_id:projectId,delete_memory:result.response===2,confirmed:true}));
+    });
+    ipcMain.handle('jarvis:manage-chat', async (event, chatId, action, title) => {
+        if (!trusted(event) || !/^[a-f0-9-]{36}$/i.test(chatId) || !['rename','archive','restore','delete'].includes(action)) throw new Error('Conversa inválida.');
+        const body = {chat_id:chatId};
+        if (action === 'rename') {
+            if (typeof title !== 'string' || !title.trim() || title.length > 120) throw new Error('Título inválido.');
+            body.title = title;
+        } else if (action === 'restore') body.archived = false;
+        else {
+            const result = await dialog.showMessageBox(win, {type:'warning', title:'Gerenciar conversa',
+                message:action === 'delete' ? 'Excluir permanentemente esta conversa e seu histórico interno?' : 'Arquivar esta conversa?',
+                buttons:['Cancelar','Confirmar'],defaultId:0,cancelId:0,noLink:true});
+            if (result.response !== 1) return {canceled:true};
+            body.confirmed = true;
+            if (action === 'delete') body.delete = true;
+            else body.archived = true;
+        }
+        return backend('/chats/change','POST',JSON.stringify(body));
+    });
+    let expanded = false;
+    ipcMain.handle('jarvis:expand', event => {
+        if (!trusted(event)) throw new Error('Solicitação não autorizada.');
+        expanded = !expanded;
+        win.setSize(expanded ? 780 : 390, expanded ? 720 : 540);
+        return expanded;
     });
     ipcMain.handle('jarvis:copy-code', (event, text) => {
         if (!trusted(event) || typeof text !== 'string' || text.length > 100000) {
@@ -65,10 +106,12 @@ app.whenReady().then(() => {
         return true;
     });
     ipcMain.handle('jarvis:api', async (event, route, options = {}) => {
-        if (!trusted(event) || !routes.has(route)) {
+        if (typeof route !== 'string' || route.length > 1024) throw new Error('Rota inválida.');
+        const baseRoute = route.split('?')[0];
+        if (!trusted(event) || !routes.has(baseRoute) || (route.includes('?') && !['/chats/history','/projects/knowledge'].includes(baseRoute))) {
             throw new Error('Solicitação não autorizada.');
         }
-        const method = routes.get(route);
+        const method = routes.get(baseRoute);
         if (options.method && options.method !== method) throw new Error('Método não permitido.');
         if (options.body !== undefined && (typeof options.body !== 'string' || options.body.length > 30000)) {
             throw new Error('Conteúdo inválido.');

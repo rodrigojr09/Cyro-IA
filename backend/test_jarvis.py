@@ -26,6 +26,8 @@ class JarvisTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         self.patches = [patch.object(main, 'DB', root / 'test.sqlite3'),
+                        patch.object(main, 'DATA', root / 'appdata'),
+                        patch.object(main, 'ROOT', root),
                         patch.object(main, 'TOKEN_FILE', root / 'token'),
                         patch.dict(os.environ, {'OPENAI_API_KEY': 'fake-test-key'})]
         for item in self.patches:

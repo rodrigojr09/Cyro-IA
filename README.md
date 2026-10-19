@@ -1,172 +1,171 @@
-# JARVIS v0.3.0 — Windows
+# JARVIS v0.4.0 — Windows
 
-Assistente pessoal com análise de projetos locais pelo chat, exclusivamente em modo de leitura. Preserva chat, áudio automático, histórico SQLite e os controles locais da v0.2.
+Assistente pessoal em Electron e FastAPI com chat, voz, controle limitado do computador e análise de projetos originais em modo **somente leitura**. Cada projeto tem sua própria memória duradoura e várias conversas independentes.
 
-## Pré-requisitos
-- Python 3.11 ou superior
-- Node.js 22.12 ou superior
-- Windows 10/11
-- Chave da OpenAI API com faturamento habilitado (cobrança por uso)
+## Instalação e execução
 
-## Backend (Terminal 1, PowerShell)
+Requisitos: Windows 10/11, Python 3.11+, Node.js 22.12+ e chave da OpenAI API com faturamento para chat, voz e análise semântica.
+
+Backend, no PowerShell:
+
 ```powershell
 cd backend
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-# Somente na primeira instalação, se .env ainda não existir:
+python -m pip install -r requirements.txt
+# Apenas na primeira instalação, se .env ainda não existir:
 Copy-Item .env.example .env
 ```
-Edite `backend/.env` e substitua `coloque_sua_chave_aqui` pela sua chave real. Nunca envie o arquivo `.env` a outras pessoas.
+
+Configure sua chave em `backend/.env`, mantendo o arquivo privado. Na atualização, preserve o `.env` e o banco `backend/jarvis.sqlite3` existente.
 
 ```powershell
-uvicorn main:app --host 127.0.0.1 --port 8765
+python -m uvicorn main:app --host 127.0.0.1 --port 8765
 ```
 
-## Desktop (Terminal 2, PowerShell)
+Desktop, em outro terminal:
+
 ```powershell
 cd desktop
-npm install
+npm ci
 npm start
 ```
 
-## Arquitetura
+Reinicie backend e Electron após atualizar. Execute somente um backend, sem `--workers`: há uma fila e um token por instância. Não exponha a porta à rede. Nenhuma dependência dos projetos analisados é instalada.
 
-Fluxo: interface → ponte isolada do Electron → processo principal → FastAPI local → OpenAI e/ou ferramentas permitidas. O histórico fica no SQLite e a resposta de voz volta como MP3 em base64.
+## Projetos e conversas
 
-| Arquivo | Responsabilidade |
+1. Clique em **+ Pasta**, escolha a pasta original de um projeto e confirme a autorização nativa. O cadastro inicia automaticamente a análise em segundo plano, com consumo da OpenAI API informado no diálogo.
+2. Acompanhe o estado da memória. A primeira conversa só fica disponível após uma análise bem-sucedida dentro dos limites, ou após clicar explicitamente em **Continuar com análise parcial**. Sem chave/API, ainda é produzida uma base estática parcial, cuja utilização exige essa aceitação.
+3. Escolha o projeto e um chat nos seletores. Projetos com nomes iguais são diferenciados pelo caminho. Selecionar a mesma pasta novamente reutiliza o UUID, os chats e a memória existentes; não duplica o cadastro.
+4. Use **+ Chat** para outro assunto. O chat carrega o IDEIA.md atual e o resumo daquela conversa; criar outro chat no projeto ativo não dispara uma varredura nem uma análise completa.
+5. Em **Gerenciar conversas e memória**, altere o título, arquive/restaure/exclua chats, consulte páginas anteriores do histórico, veja o IDEIA.md e solicite atualização da memória.
+6. Registre decisões, ideias, problemas ou informações no formulário próprio. Essas anotações são identificadas como fornecidas pelo usuário e preservadas nas atualizações; hipóteses da IA não viram decisões humanas automaticamente.
+7. **Remover projeto** oferece duas escolhas distintas: remover somente o cadastro, mantendo a memória para recuperar ao cadastrar a mesma pasta; ou apagar também a memória interna daquele projeto. Ambas preservam a pasta original. A exclusão de chats e o arquivamento têm confirmação nativa. A conversa geral que recebeu a migração é protegida contra exclusão, podendo ser arquivada.
+8. Use **↔** para alternar entre a janela flutuante compacta e o modo expandido. Durante uma resposta, a troca de projeto/chat e um novo envio ficam bloqueados para evitar mistura visual de conversas.
+
+**Conversas gerais** continuam disponíveis no seletor. Não recebem automaticamente conhecimento de nenhum projeto e não têm ferramentas de leitura de projetos. Nelas, desmarcar o modo de análise oferece os controles locais anteriores. Chats de projeto ficam obrigatoriamente em modo de leitura.
+
+Exemplos: “Explique a arquitetura”, “Procure onde getUsers é usado”, “Leia index.ts do backend”, “Investigue o login”, “Compare frontend e backend” e “Mostre uma correção sem alterar os arquivos”. Quando houver arquivos duplicados, informe um dos caminhos apresentados. Sugestões aparecem em blocos de código selecionáveis e copiáveis; a voz usa uma explicação curta, sem ler centenas de linhas.
+
+## Armazenamento e migração
+
+O local padrão é **`%LOCALAPPDATA%\JARVIS`**, fora da instalação e dos projetos originais:
+
+```text
+JARVIS/
+  registry.db
+  .local-token
+  general/
+    project.db
+  projects/
+    {UUID}/
+      IDEIA.md
+      project.db
+      arquivos/
+        ARCHITECTURE.md
+        FILE_INDEX.json
+        DECISIONS.md       (quando houver anotações)
+        PROBLEMS.md        (quando houver problemas relatados)
+        FEATURES.md        (quando houver ideias registradas)
+```
+
+`registry.db` guarda catálogo, identidade normalizada de diretórios, datas, estado, versão da base, consumo registrado e índice de chats. Cada `project.db` guarda mensagens, metadados das conversas, resumos, contexto, hashes, resumos de arquivos, conhecimento, versões anteriores, anotações e uso da API. O espaço `general` é independente. A propriedade de cada chat é fixada pelo seu ID e validada pelo backend; a IA não pode transferi-lo a outro projeto ou autorizar acesso.
+
+O IDEIA.md contém objetivo, visão geral, tecnologias, arquitetura, funcionalidades identificadas, estrutura, banco, fluxos, problemas, ideias, decisões e data da análise. Separa evidência textual estática, informações humanas, hipóteses e sugestões não implementadas. Presença de dependência ou marcador no código não comprova funcionamento em produção. DECISIONS.md mantém informações datadas, sem pressupor que ainda estejam implementadas ou vigentes.
+
+O SQLite é a fonte de verdade da memória. Os documentos são exportados com substituição atômica; o histórico de conhecimento permanece no banco. Versões monotônicas e checkpoints permitem retomar análise interrompida e reconstruir documentos sem descartar a base anterior.
+
+Na primeira inicialização da v0.4, as mensagens de `backend/jarvis.sqlite3` são copiadas integralmente para uma conversa geral. A origem é aberta somente para leitura, e cada ID importado recebe um marcador transacional: reiniciar não duplica mensagens. O banco antigo não é apagado ou alterado. Autorizações anteriores são copiadas para a área de dados; o contexto antigo fica preservado em `legacy-programming-context.json`, sem ser aplicado a projetos novos. A atualização não cadastra nem estuda automaticamente todas as pastas anteriormente autorizadas: selecione o projeto para iniciar a nova análise.
+
+O `.env` continua sendo configuração privada do backend; não é movido nem incluído no Git. O token agora é lido pelo Electron na pasta de dados. Clientes que usavam o token na pasta de instalação precisam ser adaptados. O estado de desenvolvimento não deve ser copiado para o projeto original.
+
+Para testes ou instalação personalizada, `JARVIS_DATA_DIR` pode definir um **caminho absoluto** de dados. Configure a mesma variável de ambiente nos dois terminais, antes de iniciar backend e Electron; não basta defini-la no `.env` lido apenas pelo Python. Use um local privado fora dos projetos. Para backup, encerre o backend e copie a pasta de dados inteira; ela contém conversas pessoais e não deve ser publicada. Os bancos não são criptografados.
+
+## Análise inicial, cache e atualização
+
+A fila de indexação tem um trabalhador e compartilha com o chat um limite de uma chamada de modelo por vez. A leitura de estrutura/código é feita fora do loop HTTP, mantendo a interface utilizável. A análise realiza:
+
+- Descoberta segura de arquivos e manifests, com exclusões e orçamento de busca.
+- SHA-256 dos arquivos elegíveis, metadados e extração estática de símbolos, imports, marcadores de rotas e modelos/tabelas.
+- Leitura de trechos pequenos em lotes, resumos por arquivo, agrupamento por módulo e consolidação do conhecimento. Não importa módulos nem executa código.
+- Atualização somente dos arquivos cujo hash mudou, dos novos arquivos e de dependentes transitivos reconhecidos por imports. Exclusões são confirmadas somente em varreduras completas; dados não reconfirmados em varreduras parciais são marcados como históricos.
+- Invalidação mais ampla quando manifests/dependências mudam ou há alteração estrutural grande. Uma nova análise completa dentro dos limites pode ser necessária, mas resumos válidos são reutilizados quando possível.
+
+O projeto é verificado ao ser aberto e, enquanto estiver ativo, a cada **30 segundos**, com debounce de **10 segundos** e deduplicação da fila. Criar ou abrir outro chat do mesmo projeto ativo não provoca nova análise completa. Projetos inativos são verificados quando abertos; não existe monitor independente com o backend fechado. Estados parciais/falhos não repetem chamadas pagas indefinidamente: use **Atualizar memória** para retomar.
+
+Uma passagem analisa semanticamente até 60 arquivos. Se houver mais arquivos pendentes, use Atualizar memória para continuar o próximo conjunto, reutilizando o cache. É possível aceitar uma base parcial e conversar enquanto sua cobertura é ampliada. A interface informa se a base está atualizada, em análise, parcial, interrompida ou desatualizada por indisponibilidade da pasta.
+
+Se a pasta ficar inacessível, os chats e a última memória publicada continuam disponíveis. A IA deve informar a limitação e não afirmar que leu a versão atual. Tentativas futuras de leitura continuam respeitando permissões do Windows.
+
+O histórico do chat e suas respostas geradas são persistidos, inclusive exemplos sugeridos, com filtragem de padrões de segredos. Resultados brutos das ferramentas e arquivos inteiros não são automaticamente armazenados como mensagens: a base usa referências e resumos. O contexto enviado à IA é limitado ao projeto/chat solicitado e à versão atual do conhecimento, independentemente dos demais chats.
+
+## Limites de leitura e custo
+
+| Operação | Limites padrão |
 | --- | --- |
-| `desktop/main.js` | Janela, bloqueio de navegação, validação do remetente IPC e acesso autenticado a rotas fixas do backend. |
-| `desktop/preload.js` | Ponte limitada de API e controles da janela; não expõe Node.js nem o token à interface. |
-| `desktop/renderer.js` | Chat, histórico, áudio, consultas diretas e botões de confirmar/cancelar. Exibe dados com `textContent`. |
-| `desktop/index.html` | Interface e política de conteúdo; o renderizador não acessa diretamente a rede. |
-| `desktop/package.json` / `package-lock.json` | Versão, comandos e dependências do Electron. |
-| `backend/main.py` | Rotas FastAPI, autenticação, chamadas de chat/voz, orquestração e persistência SQLite. |
-| `backend/computer.py` | Ferramentas com validação estrita, listas de permissão, confirmações e consultas via psutil. |
-| `backend/programming/security.py` | Autorizações explícitas, validação de caminhos, leitura limitada e remoção de padrões de segredos. |
-| `backend/programming/discovery.py` | Descoberta limitada, estrutura e detecção estática de tecnologias e dependências. |
-| `backend/programming/tools.py` | Registro independente de ferramentas de leitura, seleção de projeto, buscas e imports relacionados. |
-| `backend/programming/context.py` | Referências e resumos de programação, sem persistir resultados integrais de leitura. |
-| `backend/ai_tools.py` | Ciclo progressivo de ferramentas com orçamento de contexto e preparação de resumo falado. |
-| `backend/requirements.txt` / `requirements-dev.txt` | Dependências de execução e testes. |
-| `backend/.env.example` | Configuração de exemplo sem credenciais. O `.env` real permanece privado. |
-| `backend/test_jarvis.py` / `desktop/security.test.js` | Testes de backend, ponte Electron e fluxo da interface. |
-| `backend/test_programming.py` / `desktop/smoke.cjs` | Projetos fictícios, segurança de leitura, continuidade, limites e teste real do renderizador Electron. |
-| `.gitignore` | Exclui segredos, token, banco, ambientes, dependências instaladas e cache Python. |
+| Varredura | 2.000 entradas, 6 níveis e 3 segundos; indexação até 400 arquivos e 16 MiB lidos por passagem. |
+| Arquivo | Texto UTF-8 previsto na lista, até 128 KiB, 200 linhas por ferramenta, 1.000 caracteres por linha e 12.000 caracteres por leitura. |
+| Análise inicial/incremental | Até 60 arquivos semânticos por passagem, em lotes de 6; até 1.200 caracteres de trecho por arquivo; entrada de cada lote até 12.000 caracteres. |
+| Consolidação | Agrupamento resumido por módulo; até 10.000 caracteres enviados à consolidação e 2.200 tokens por resposta de indexação. |
+| Chat | Até 5 rodadas e 12 ferramentas, 10.000 caracteres por resultado e 36.000 no total de resultados; histórico até 20.000, referências até 5.000, IDEIA.md resumido até 10.000 e resumo da conversa até 3.000 caracteres. Resposta até 3.500 tokens. |
+| Busca | Até 40 arquivos/256.000 caracteres examinados/30 ocorrências de código; até 100 entradas de diretório e 150 de busca/árvore. |
+| Histórico na interface | Páginas de até 100 mensagens. O envio ao modelo usa apenas contexto limitado, não todo o histórico. |
+| Voz | Programação: até 700 caracteres, removendo blocos de código, sem chamada extra de modelo para o resumo. |
 
-Na v0.1, as ferramentas estavam em `main.py` e o renderizador acessava o FastAPI diretamente. Na v0.2, a execução fica em `computer.py` e a comunicação passa pelo processo principal do Electron. A tabela `messages` é preservada, com até 20 mensagens anteriores no chat e 30 na recuperação do histórico. As conexões SQLite agora são fechadas explicitamente.
+Os limites produzem cobertura parcial, nunca uma afirmação de leitura completa de todo o código. Para projetos maiores, escolha uma raiz mais específica e retome lotes quando necessário. Resumos de arquivos minimizados/ofuscados ou gerados podem não ser úteis; binários, arquivos grandes e dependências não são analisados. A detecção de relações é estática e heurística; aliases complexos e imports dinâmicos podem exigir investigação pelo chat.
 
-## Atualização da v0.1
+O uso de tokens é registrado quando retornado pela API, separado em operações de lote, consolidação e chat. O indicador de memória exibe o total registrado como dica ao passar o mouse. Não é uma estimativa monetária nem inclui necessariamente tentativas/repetições não informadas pelo provedor. Sem mudanças, a verificação por hashes não faz uma chamada de análise à OpenAI. Uma conversa nova reutiliza o conhecimento existente.
 
-Preserve `backend/.env` e `backend/jarvis.sqlite3`. Instale novamente as dependências Python para incluir psutil. Não há migração destrutiva do banco. Reinicie backend e Electron após atualizar.
+## Segurança
 
-Use um único processo backend, sem `--workers`: o token e as confirmações pertencem à sessão em memória. O backend continua sendo iniciado separadamente.
+- O JARVIS nunca escreve, cria, renomeia, exclui ou executa arquivos dos projetos analisados. Não instala dependências nem executa terminal sugerido pela IA. Escritas e remoções da memória são feitas somente na área interna.
+- Cada chat de projeto tem uma política de leitura restrita à raiz daquele projeto. Caminhos externos, travessia `..`, UNC/dispositivos, fluxos alternativos do Windows, links, junctions e hard links são bloqueados. O cadastro rejeita raízes que contenham a própria base interna.
+- São ignorados `node_modules`, `.git`, `.next`, `dist`, `build`, `coverage`, `.venv`, `__pycache__` e outros caches. `.env` e variantes, chaves, tokens, credenciais, bancos e binários são bloqueados. A política conservadora pode bloquear nomes legítimos contendo termos sensíveis.
+- Padrões reconhecíveis de segredos embutidos em código são removidos antes do envio. A filtragem não identifica todo segredo possível: autorize apenas código apropriado para análise pela API. Arquivos, resumos e IDEIA.md são dados não confiáveis e não habilitam ferramentas ou permissões.
+- Todas as rotas de dados exigem token local. `/health` retorna apenas disponibilidade. O token fica no processo principal do Electron, fora do renderizador. CORS, navegação e novas janelas externas permanecem bloqueados; sandbox e isolamento de contexto são preservados.
+- A ponte genérica não oferece cadastro de projetos nem exclusões de chats/projetos; essas operações passam por fluxos separados e diálogos humanos. Anotações humanas têm formulário explícito, sem ferramenta da IA para confirmá-las.
+- A remoção recursiva valida o destino interno por UUID e não aceita caminhos de projeto como destino. Arquivos internos redirecionados/compartilhados são recusados. Nenhuma dessas proteções substitui a segurança do Windows contra outro programa malicioso executando como o mesmo usuário.
+- Mensagens, trechos consultados e resumos necessários são enviados à OpenAI. Voz envia o texto a sintetizar. Nunca publique `.env`, token, histórico, bancos ou a base pessoal.
 
-## Assistente de programação — v0.3.0
+## Ferramentas e arquitetura
 
-1. Inicie backend e Electron. O modo **Análise de projetos · somente leitura** inicia marcado.
-2. Clique em **Autorizar pasta**, selecione uma pasta local específica e confirme **Autorizar leitura** no diálogo nativo. Você pode autorizar diretamente um projeto ou uma pasta que contenha projetos, como a Área de Trabalho. Nenhuma pasta é liberada automaticamente para análise, nem mesmo as pastas de abertura da v0.2.
-3. Digite “Analise o projeto iPet” ou informe um caminho dentro de uma raiz autorizada. “Área de Trabalho/iPet”, “Desktop/iPet”, “Documentos” e “Downloads” são reconhecidos quando essas pastas estão autorizadas. Pastas redirecionadas podem ser autorizadas diretamente pelo seletor; a raiz escolhida é canonicalizada, e links/junctions abaixo dela são bloqueados.
-4. Continue com “Procure getUsers”, “Leia index.ts do backend” ou “Estou com um problema no login”. O projeto selecionado aparece na interface e é reutilizado nas perguntas seguintes. Se houver nomes duplicados, o JARVIS deve pedir que você escolha um dos caminhos.
-5. Use **Copiar código** para copiar sugestões e aplicá-las manualmente. O JARVIS não altera nem executa os projetos analisados.
-6. Selecione uma raiz no seletor de pastas e clique em **Revogar** para retirar a autorização. Se o projeto perder acesso, seu contexto é descartado. Autorizações não podem ser alteradas enquanto uma análise estiver em andamento.
+Electron → preload isolado → ponte autenticada → FastAPI → memória do proprietário do chat e ferramentas de leitura → OpenAI. Os dados persistentes ficam separados da configuração e do código-fonte do JARVIS.
 
-Desmarcar o modo de análise retorna ao chat e aos controles de computador da v0.2, com suas confirmações existentes. As ferramentas de abertura não são oferecidas à IA no modo de programação. Não há ferramenta de escrita, terminal, instalação, autorização de pastas ou execução de código nesse modo. Mesmo que o modelo invente o nome de uma dessas ferramentas, o backend a recusa.
-
-### Ferramentas de leitura
-
-| Ferramenta | Uso |
+| Arquivo/módulo | Responsabilidade |
 | --- | --- |
-| `list_projects` | Descobrir projetos nas raízes autorizadas, com filtro por nome. |
-| `select_project` | Selecionar projeto por nome ou caminho e reutilizá-lo. |
-| `list_directory` | Listar arquivos e subpastas permitidos. |
-| `read_file` | Ler intervalos com linhas numeradas; aceitar nomes e referências como `index.ts do backend`. |
-| `search_files` | Localizar por nome, extensão ou parte do caminho. |
-| `search_code` | Buscar literalmente funções, classes, variáveis, imports e trechos. Não utiliza regex fornecida pela IA. |
-| `get_project_structure` | Resumir a árvore de diretórios permitida. |
-| `analyze_project` | Ler até quatro manifests e identificar tecnologias, dependências e entradas prováveis. |
-| `get_file_context` | Ler o arquivo e até três imports locais relacionados, sem carregar módulos. |
+| `backend/data_paths.py` | Pasta privada de dados do aplicativo. |
+| `backend/project_store.py` | Catálogo, bancos por projeto, conversas, migração e exportação atômica. |
+| `backend/project_index.py` | Fila, hashes, cache, lotes, documentos, versões e acompanhamento de mudanças. |
+| `backend/project_chat.py` | Contexto por conversa e ferramentas fixadas ao projeto proprietário. |
+| `backend/main.py` | Rotas autenticadas, ciclo de vida, chat/voz e integração. |
+| `backend/ai_tools.py` | Ciclo progressivo de ferramentas, orçamento e voz resumida. |
+| `backend/programming/` | Leitura segura, descoberta, estrutura, busca e contexto compatível da v0.3. |
+| `backend/computer.py` | Ações locais da v0.2, com listas fixas e confirmações. |
+| `desktop/main.js` / `preload.js` | Janela, token, rotas permitidas, diálogos nativos e cópia segura. |
+| `desktop/workspace.js` | Projetos, conversas, memória, estados e gerenciamento da interface. |
+| `desktop/renderer.js` / `index.html` | Chat flutuante, código como texto, áudio e layout compacto/expandido. |
 
-A análise começa por metadados e arquivos relevantes e pode aprofundar a leitura em rodadas. Tecnologias detectadas incluem Next.js, React, Node.js, Express, Electron, Python e FastAPI; a presença de dependências é evidência estática, não garantia de uso. A análise não substitui execução de testes ou verificação de compilação do projeto: o JARVIS não realiza essas operações nos projetos analisados.
+Ferramentas de programação: `list_projects`, `select_project`, `list_directory`, `read_file`, `search_files`, `search_code`, `get_project_structure`, `analyze_project`, `get_file_context` e `read_knowledge`. Em chats cadastrados, listar/selecionar/analisar reutiliza somente o projeto daquele chat; mudar de projeto exige a interface. `read_knowledge` acessa apenas documentos internos previstos, sem caminho arbitrário.
 
-### Limites e privacidade
+Rotas principais: `GET /workspace`, `POST /workspace/view`, `/projects/register`, `/projects/refresh`, `/projects/accept-partial`, `/projects/remove`, `/projects/note`, `GET /projects/knowledge`, `POST /chats/create`, `/chats/change`, `GET /chats/history` e `POST /chat` com `chat_id`. IDs são validados; as conversas pertencem a um proprietário fixo.
 
-- Até 10 raízes locais explicitamente autorizadas. Não permite unidades inteiras nem caminhos de rede/UNC ou de dispositivo. Não percorre o disco inteiro.
-- Descoberta: até 2.000 entradas, 6 níveis de subpastas e 3 segundos por varredura; na descoberta de projetos, o orçamento é compartilhado entre as raízes. Buscas podem ser parciais; autorize uma pasta mais específica quando necessário.
-- Leitura: apenas tipos de texto/código previstos, UTF-8, até 128 KiB por arquivo, 200 linhas por chamada, 1.000 caracteres por linha e 12.000 caracteres de conteúdo por leitura. A saída informa truncamento.
-- Pesquisa de código: até 40 arquivos, 256.000 caracteres examinados e 30 ocorrências. Diretórios retornam até 100 itens, buscas/árvores até 150 itens e projetos até 60 resultados.
-- Por mensagem: até 5 rodadas e 12 chamadas de ferramenta; até 10.000 caracteres por resultado e 36.000 caracteres de resultados enviados à IA. Histórico enviado limitado a 20.000 caracteres e contexto de referências a 5.000. A resposta tem limite de 3.500 tokens. Resultados excessivos são resumidos/truncados; a IA deve informar a cobertura parcial.
-- `node_modules`, `.git`, `.next`, `dist`, `build`, `coverage`, `.venv`, `__pycache__` e outros caches/dependências são ignorados. Não lê binários, bancos, `.env` (inclusive variantes), chaves, tokens e arquivos de credenciais. A política é conservadora e pode bloquear nomes legítimos que contenham termos sensíveis.
-- Bloqueia travessia `..`, caminhos externos, fluxos alternativos do Windows, links simbólicos, junctions e hard links. Revalida o caminho e a identidade do arquivo durante a leitura. Não é uma sandbox contra alterações maliciosas simultâneas realizadas por outro programa do mesmo usuário.
-- Padrões reconhecíveis de segredos embutidos em código são removidos antes do envio. Essa filtragem não identifica todos os segredos possíveis; autorize apenas pastas apropriadas para análise pela API. Arquivos e nomes lidos são conteúdo não confiável e nunca concedem permissões nem habilitam ferramentas.
-- Autorizações ficam em `backend/.programming-roots.json`; projeto atual, último arquivo, até 20 referências e resumos ficam em `backend/.programming-context.json`. São arquivos privados do próprio JARVIS, ignorados pelo Git. Não são criados arquivos de estado dentro dos projetos externos analisados.
-- Resultados integrais das ferramentas não são salvos na memória persistente. Mensagens de programação são salvas no SQLite com resumos limitados a 700 caracteres e sem blocos de código cercados por crases. O código completo sugerido fica na conversa atual; após reiniciar a interface, o histórico mostra o resumo. Esses resumos ainda podem conter referências ou pequenos trechos, portanto o banco continua sendo dado pessoal.
-- Na programação, a voz usa uma versão curta, com até 700 caracteres e sem blocos de código. O resumo é preparado localmente, sem uma chamada extra de modelo.
+Para compatibilidade, `/history` e `/chat` sem `chat_id` referem-se à conversa geral padrão. O modo de programação antigo sem ID mantém as autorizações legadas; não utiliza a base de outros projetos cadastrados. As rotas `/programming/status`, `/programming/authorize` e `/programming/revoke` continuam autenticadas, mas a interface nova cadastra projetos pelo diálogo próprio. Documentação interativa da API permanece desativada.
 
-Sem chave/API disponível, a seleção e a revogação de autorizações continuam locais, mas a interpretação e a análise pelo chat dependem da OpenAI.
+## Controles do computador preservados
 
-## Controle do computador
+Nas conversas gerais, desmarque o modo de análise para usar os controles antigos. Bloco de Notas e Calculadora têm executáveis fixos em System32; VS Code é localizado somente nas instalações padrão de usuário/Program Files. Não se usa PATH nem argumentos da IA.
 
-Use o seletor acima do chat, inclusive sem chave OpenAI, ou peça pelo chat:
+Pastas de abertura: Desktop, Documents e Downloads diretamente no perfil; pastas inexistentes/redirecionadas são bloqueadas. Essas permissões de abertura não autorizam automaticamente análise de código. Cada abertura exige confirmação humana, expira em 120 segundos e só pode ser confirmada uma vez. Processos retornam apenas PID/nome, até 200; o sistema retorna arquitetura, versão, CPUs, memória e disco. Exclusões de arquivos, encerramento de processos e comandos arbitrários continuam indisponíveis.
 
-- “Abra o Bloco de Notas / a Calculadora / o VS Code.”
-- “Liste os processos em execução.”
-- “Consulte as informações do sistema.”
-- “Abra minha pasta Downloads.”
-
-Aplicativos permitidos: Bloco de Notas e Calculadora em `System32`; VS Code nas instalações padrão do usuário ou de `Program Files`. Não se procura executáveis no PATH nem se aceitam argumentos da IA. Instalações personalizadas exigem revisão da lista em código.
-
-Pastas autorizadas: `Desktop`, `Documents` e `Downloads`, diretamente no perfil do usuário, pelos identificadores `desktop`, `documents` e `downloads`. Caminhos arbitrários, pastas inexistentes, links e redirecionamentos são bloqueados. Pastas transferidas para OneDrive ou outro local precisam de uma futura configuração explícita; não há descoberta automática de caminhos alternativos.
-
-Toda abertura exige clique em **Confirmar abertura**. **Cancelar** descarta a solicitação. A confirmação expira após 120 segundos, só funciona uma vez e é consumida mesmo se a abertura falhar. Reiniciar o backend invalida as confirmações; os cartões não são restaurados do histórico. O resultado é registrado no SQLite. Enviar a solicitação ao Windows não garante que a janela apareceu.
-
-Processos: apenas PID e nome, em ordem alfabética, até 200 registros, com indicação do total. Sem linhas de comando, caminhos ou variáveis de ambiente. Sistema: versão, arquitetura, CPUs lógicas, memória e espaço no disco do perfil.
-
-## Segurança e privacidade
-
-- Não existe ferramenta para executar comandos/scripts/PowerShell, excluir arquivos, encerrar processos, desligar o computador ou alterar configurações. A IA não pode adicionar ferramentas nem chamar a rota de confirmação.
-- A v0.2 exige confirmação para todas as aberturas. Ações destrutivas e outras operações sensíveis permanecem indisponíveis. Qualquer implementação futura deve exigir validação própria e confirmação humana explícita.
-- O backend gera um token por inicialização em `backend/.local-token`. O processo principal do Electron lê o arquivo e envia `X-Jarvis-Token`, sem entregar o token ao renderizador. O arquivo é removido no encerramento normal e substituído na próxima inicialização. Não compartilhe esse arquivo.
-- Todas as rotas de dados e ações exigem autenticação. `/health` retorna apenas disponibilidade. CORS não é habilitado. O Electron bloqueia navegação e novas janelas externas; preserva isolamento de contexto, sandbox e ausência de Node.js no renderizador.
-- O token reduz acesso por páginas e clientes sem autorização, mas não protege contra programas do mesmo usuário capazes de ler arquivos locais. Use somente `127.0.0.1`; não exponha a porta à rede.
-- Chaves ficam no `.env`, fora da interface e das respostas. Erros da OpenAI retornam apenas o tipo de falha, sem conteúdo da exceção. Não publique `.env`, token ou banco pessoal.
-- Mensagens e resultados de consultas pelo chat são enviados à OpenAI. A voz envia o texto da resposta ao serviço de áudio. Consultas pelo seletor são locais e não chamam a OpenAI. O histórico SQLite não é criptografado.
-
-## API local
-
-As rotas são destinadas à ponte do Electron. Clientes antigos precisam autenticar e respeitar o novo fluxo de confirmação.
-
-| Método e rota | Comportamento |
-| --- | --- |
-| `GET /health` | Disponibilidade, sem autenticação. |
-| `GET /history` | Últimas 30 mensagens. |
-| `POST /chat` | Recebe `message`; retorna `reply` e `pending_actions`. |
-| `POST /speak` | Recebe `message`; retorna `audio_base64`. |
-| `GET /computer/processes` | Consulta limitada de processos. |
-| `GET /computer/system` | Informações do sistema. |
-| `POST /action/open` | Recebe `app`; retorna `pending_action`, sem abrir o programa. |
-| `POST /action/folder` | Recebe `folder`; retorna `pending_action`. |
-| `POST /action/confirm` | Recebe `confirmation_id` e `approved` booleano; executa ou cancela. |
-| `GET /programming/status` | Andamento real da ferramenta, projeto selecionado e raízes autorizadas. |
-| `POST /programming/authorize` | Autoriza uma raiz; no Electron só é acessível pelo fluxo separado de seleção e confirmação nativas. Não é ferramenta da IA nem rota da ponte genérica. |
-| `POST /programming/revoke` | Revoga uma raiz autorizada e invalida contexto que perdeu acesso. |
-
-`POST /chat` também aceita `mode: "programming"` (somente ferramentas de leitura) ou `mode: "chat"` (compatibilidade com v0.2; padrão da API). Retorna `speech_text` e `programming` além dos campos anteriores. A interface usa programação por padrão. Durante uma requisição, o backend serializa o chat e publica o andamento para a interface consultar.
-
-Solicitações de controle rejeitam campos extras, aplicativos fora da lista e caminhos arbitrários. Há no máximo 100 confirmações válidas pendentes. A documentação interativa da API fica desabilitada.
-
-## Testes
-
-No ambiente virtual do backend:
+## Testes e validação
 
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.txt
-python -m unittest -v test_jarvis test_programming
+python -m unittest -v test_jarvis test_programming test_projects
 ```
-
-No desktop:
 
 ```powershell
 cd desktop
@@ -175,20 +174,14 @@ npm run test:electron
 node --check main.js
 node --check preload.js
 node --check renderer.js
+node --check workspace.js
+node --check smoke.cjs
 ```
 
-Validação da v0.3.0: **35 testes Python, 10 testes Node e teste real do renderizador Electron**, além da verificação de sintaxe dos arquivos JavaScript. Inclui regressões da v0.2, descoberta, leitura TypeScript/JavaScript/Python/JSON, buscas, duplicatas, caminhos e segredos bloqueados, links/hard links, permissões, contexto, voz curta e limites. Os projetos fictícios são comparados por hashes antes e depois para detectar qualquer alteração.
+Validação da v0.4.0: **59 testes Python, 14 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
 
-Os testes usam banco temporário e simulam OpenAI, áudio e abertura de programas. Não geram custos de API nem alteram projetos reais ou o banco pessoal. A consulta de sistema é verificada localmente. O teste Electron abre uma janela oculta com o preload real e respostas fictícias, verificando modo, chat, layout, código como texto, cópia e resumo de voz. Não escreve na área de transferência real e salva apenas uma captura temporária. Se o Windows não permitir criar symlinks no teste, o atributo de redirecionamento é simulado; hard links são verificados no sistema de arquivos real. Reprodução sonora, diálogo nativo operado por uma pessoa e chamadas reais à OpenAI continuam sem validação de ponta a ponta. O ambiente atual emite um aviso de depreciação de TestClient/httpx, sem falhas nos testes.
+OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, vários chats e dados fictícios. Não utiliza a área de transferência real. Captura temporária: `jarvis-v04-smoke.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
 
-Conferência manual: inicie ambos os processos, autorize um projeto de teste, peça sua análise, investigue um arquivo e faça uma pergunta de continuação. Confira o projeto atual, código copiável, voz curta, histórico resumido e revogação. Para regressão da v0.2, desmarque o modo de análise, consulte o sistema e teste cancelar/confirmar uma abertura.
+Chamadas reais à OpenAI, reprodução sonora e interação humana com os diálogos nativos não foram verificadas de ponta a ponta. O ambiente emite aviso de depreciação de TestClient/httpx, sem falha na suíte.
 
-## Limites desta versão
-- O chat é por texto; a resposta é por texto e áudio automático. Entrada por microfone virá depois.
-- O backend precisa ser iniciado separadamente do Electron.
-- A memória é o histórico recente em SQLite, não uma memória semântica de longo prazo.
-- Ferramentas: Bloco de Notas, Calculadora, VS Code, pastas autorizadas, processos e informações do sistema.
-- Aberturas exigem confirmação explícita pela interface. Consultas diretas aparecem em texto; chat e resultados de confirmação preservam áudio automático.
-- A interface é local e o backend aceita conexões apenas em loopback; não exponha a porta na rede.
-- Os textos das mensagens são enviados à OpenAI para geração das respostas; não inclua segredos.
-- O modelo e a voz são configuráveis em `.env`; disponibilidade e custos dependem da conta/API.
+Validação manual sugerida: reinicie os dois processos, confira a conversa geral migrada, cadastre um projeto de teste, aguarde a análise, crie dois chats com assuntos distintos, reinicie o JARVIS e abra-os novamente. Altere manualmente um arquivo do projeto de teste e confira a atualização incremental. Teste arquivar/restaurar e remover somente o cadastro antes de qualquer escolha de apagar memória. Microfone e execução/edição de projetos permanecem fora do escopo.

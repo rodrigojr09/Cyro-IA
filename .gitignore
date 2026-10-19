@@ -17,3 +17,5 @@ node_modules/
 *.p12
 *.pfx
 __pycache__/
+JARVIS_DATA/
+.jarvis-data/
