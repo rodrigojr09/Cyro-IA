@@ -3,6 +3,7 @@
 !.env.example
 .local-token
 .local-token.*
+.programming-*.json
 .venv/
 node_modules/
 *.sqlite3

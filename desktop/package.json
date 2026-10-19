@@ -1,11 +1,12 @@
 {
   "name": "jarvis-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test security.test.js"
+    "test": "node --test security.test.js",
+    "test:electron": "electron smoke.cjs"
   },
   "devDependencies": {
     "electron": "^44.9.0"

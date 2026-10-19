@@ -80,13 +80,14 @@ Na raiz do projeto, confira o estado do Git antes de editar. Para os testes atua
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m unittest -v test_jarvis
+.\.venv\Scripts\python.exe -m unittest -v test_jarvis test_programming
 ```
 
 Em `desktop`:
 
 ```powershell
 npm test
+npm run test:electron
 node --check main.js
 node --check preload.js
 node --check renderer.js

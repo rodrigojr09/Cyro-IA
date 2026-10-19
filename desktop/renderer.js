@@ -5,13 +5,97 @@ const status = document.getElementById('status');
 document.getElementById('minimize').onclick = () => window.jarvisWindow.minimize();
 document.getElementById('close').onclick = () => window.jarvisWindow.close();
 let audio;
+let analyzing = false;
+let pollTimer;
+const programmingMode = document.getElementById('programming-mode');
+
+function renderContent(el, content) {
+  const blocks = /```([^\n`]*)\n([\s\S]*?)(?:```|$)/g;
+  let match, cursor = 0;
+  while ((match = blocks.exec(content)) !== null) {
+    if (match.index > cursor) {
+      const paragraph = document.createElement('span');
+      paragraph.textContent = content.slice(cursor, match.index);
+      el.appendChild(paragraph);
+    }
+    const container = document.createElement('div');
+    container.className = 'code-block';
+    const label = document.createElement('div');
+    label.textContent = match[1].trim() || 'código';
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    const snippet = match[2];
+    code.textContent = snippet;
+    pre.appendChild(code);
+    const copy = document.createElement('button');
+    copy.textContent = 'Copiar código';
+    copy.onclick = async () => {
+      try { await window.jarvisWindow.copyCode(snippet); copy.textContent = 'Copiado'; }
+      catch { copy.textContent = 'Falha ao copiar'; }
+    };
+    container.appendChild(label);
+    container.appendChild(pre);
+    container.appendChild(copy);
+    el.appendChild(container);
+    cursor = blocks.lastIndex;
+  }
+  if (cursor === 0) el.textContent = content;
+  else if (cursor < content.length) {
+    const rest = document.createElement('span');
+    rest.textContent = content.slice(cursor);
+    el.appendChild(rest);
+  }
+}
 function addMessage(role, content) {
   const el = document.createElement('div');
   el.className = 'message ' + role;
-  el.textContent = content;
+  renderContent(el, content);
   messages.appendChild(el);
   messages.scrollTop = messages.scrollHeight;
 }
+function showProject(data) {
+  if (!data) return;
+  document.getElementById('project-name').textContent = data.project ? 'Projeto: ' + data.project.name : 'Nenhum projeto selecionado';
+  const roots = document.getElementById('authorized-roots');
+  const previous = roots.value;
+  roots.replaceChildren();
+  for (const root of data.roots || []) {
+    const option = document.createElement('option');
+    option.value = root.path;
+    option.textContent = root.name;
+    option.title = root.path;
+    roots.appendChild(option);
+  }
+  if (Array.from(roots.children).some(option => option.value === previous)) roots.value = previous;
+  document.getElementById('revoke-root').disabled = !(data.roots || []).length || analyzing;
+}
+async function refreshProject() {
+  try {
+    const data = await api('/programming/status');
+    showProject(data);
+    if (analyzing && data.progress !== 'Pronto') status.textContent = data.progress;
+  } catch { /* O envio principal informa erros de conexão. */ }
+  finally { if (analyzing) pollTimer = setTimeout(refreshProject, 650); }
+}
+document.getElementById('authorize-project').onclick = async () => {
+  try {
+    const result = await window.jarvisWindow.authorizeFolder();
+    if (result.canceled) return;
+    if (!result.ok) throw new Error(result.data.detail || 'Não foi possível autorizar a pasta.');
+    await refreshProject();
+    addMessage('assistant', 'Pasta autorizada para leitura. Informe o nome do projeto que deseja analisar.');
+  } catch (err) { addMessage('assistant', 'Erro: ' + err.message); }
+};
+document.getElementById('revoke-root').onclick = async () => {
+  try {
+    const data = await api('/programming/revoke', {method: 'POST', body: JSON.stringify({path: document.getElementById('authorized-roots').value})});
+    showProject(data);
+  } catch (err) { addMessage('assistant', 'Erro: ' + err.message); }
+};
+programmingMode.onchange = () => {
+  document.getElementById('computer-controls').hidden = programmingMode.checked;
+};
+programmingMode.onchange();
 async function api(route, options) {
   const response = await window.jarvisWindow.api(route, options);
   const data = response.data;
@@ -61,16 +145,32 @@ async function submit() {
   input.value = '';
   addMessage('user', text);
   send.disabled = true;
-  status.textContent = 'JARVIS está pensando...';
+  analyzing = programmingMode.checked;
+  document.getElementById('authorize-project').disabled = true;
+  document.getElementById('revoke-root').disabled = true;
+  programmingMode.disabled = true;
+  if (analyzing) { status.textContent = 'Localizando projeto...'; pollTimer = setTimeout(refreshProject, 300); }
+  status.textContent = analyzing ? 'Localizando projeto...' : 'JARVIS está pensando...';
   try {
-    const data = await api('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text})});
+    const data = await api('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text, mode: programmingMode.checked ? 'programming' : 'chat'})});
+    analyzing = false;
+    clearTimeout(pollTimer);
+    showProject(data.programming);
     addMessage('assistant', data.reply);
     for (const action of data.pending_actions || []) showConfirmation(action);
     status.textContent = 'Gerando resposta em áudio...';
-    await speak(data.reply);
+    await speak(data.speech_text || data.reply.slice(0, 4000));
     if (!status.textContent.startsWith('Áudio indisponível')) status.textContent = 'Pronto';
   } catch (err) { addMessage('assistant', 'Erro: ' + err.message); status.textContent = 'Falha'; }
-  finally { send.disabled = false; input.focus(); }
+  finally {
+    analyzing = false;
+    clearTimeout(pollTimer);
+    send.disabled = false;
+    programmingMode.disabled = false;
+    document.getElementById('authorize-project').disabled = false;
+    await refreshProject();
+    input.focus();
+  }
 }
 send.onclick = submit;
 document.getElementById('computer-run').onclick = async () => {
@@ -106,5 +206,6 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
     for (const item of history) addMessage(item.role, item.content);
     if (!history.length) addMessage('assistant', 'Sistema inicializado. Como posso ajudar?');
     status.textContent = 'Conectado';
+    await refreshProject();
   } catch { status.textContent = 'Backend offline — inicie o Python'; }
 })();

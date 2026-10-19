@@ -5,9 +5,11 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { pathToFileURL } = require('node:url');
 
-function setup() {
+function setup({ authorized = false, canceled = false } = {}) {
   const handlers = new Map();
   const requests = [];
+  const copies = [];
+  const dialogs = [];
   const frame = { url: pathToFileURL(path.join(__dirname, 'index.html')).href };
   const contents = { mainFrame: frame, setWindowOpenHandler() {}, on() {} };
   class Window {
@@ -15,6 +17,11 @@ function setup() {
     loadFile() {}
   }
   const electron = {
+    dialog: {
+      showOpenDialog: async (_, options) => { dialogs.push(options); return { canceled, filePaths: ['C:\\Projects'] }; },
+      showMessageBox: async (_, options) => { dialogs.push(options); return { response: authorized ? 1 : 0 }; }
+    },
+    clipboard: { writeText: text => copies.push(text) },
     app: { disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {} },
     BrowserWindow: Window,
     ipcMain: { handle: (name, fn) => handlers.set(name, fn), on() {} }
@@ -28,7 +35,8 @@ function setup() {
       return { ok: true, json: async () => ({ reply: 'Resposta' }) };
     }
   });
-  return { invoke: handlers.get('jarvis:api'), event: { sender: contents, senderFrame: frame }, requests };
+  return { invoke: handlers.get('jarvis:api'), handlers, copies, dialogs,
+    event: { sender: contents, senderFrame: frame }, requests };
 }
 
 test('IPC permite somente a janela principal e rotas registradas', async () => {
@@ -57,7 +65,7 @@ test('IPC rejeita corpos inválidos e excessivos', async () => {
   assert.equal(requests.length, 0);
 });
 
-async function rendererSetup() {
+async function rendererSetup({ programming = false, reply, speechSummary } = {}) {
   const requests = [];
   const timers = [];
   class Element {
@@ -68,27 +76,35 @@ async function rendererSetup() {
     focus() {}
   }
   const elements = Object.fromEntries(['messages', 'input', 'send', 'status', 'minimize', 'close',
-    'computer-run', 'computer-action'].map(id => [id, new Element()]));
+    'computer-run', 'computer-action', 'computer-controls', 'programming-mode', 'project-name',
+    'authorized-roots', 'revoke-root', 'authorize-project'].map(id => [id, new Element()]));
+  elements['programming-mode'].checked = programming;
+  const copies = [];
   let plays = 0;
   const action = { confirmation_id: 'pending-test', description: 'Abrir aplicativo: Bloco de Notas', expires_in_seconds: 120 };
   const api = async (route, options) => {
     requests.push({ route, options });
-    const data = route === '/history' ? [] : route === '/chat' ? { reply: 'Aguardo confirmação.', pending_actions: [action] }
+    const data = route === '/history' ? [] : route === '/chat' ? {
+      reply: reply || 'Aguardo confirmação.', speech_text: speechSummary, pending_actions: programming ? [] : [action],
+      programming: { project: { name: 'iPet' }, roots: [{ name: 'Desktop', path: 'C:\\Desktop' }] }
+    }
       : route === '/action/open' ? { pending_action: action }
       : route === '/action/confirm' ? { result: 'Ação processada.' }
       : route === '/speak' ? { audio_base64: 'bXAz' }
       : route === '/computer/processes' ? { total: 1, processes: [{ pid: 1, name: '<script>example</script>' }] }
+      : route === '/programming/status' ? { progress: 'Lendo arquivo index.ts...', project: { name: 'iPet' }, roots: [{ name: 'Desktop', path: 'C:\\Desktop' }] }
       : { ok: true };
     return { ok: true, data };
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'renderer.js'), 'utf8'), {
     document: { getElementById: id => elements[id], createElement: () => new Element() },
-    window: { jarvisWindow: { api, minimize() {}, close() {} } },
+    window: { jarvisWindow: { api, minimize() {}, close() {}, copyCode: async text => copies.push(text),
+      authorizeFolder: async () => ({ ok: true, data: {} }) } },
     Audio: class { async play() { plays++; } pause() {} },
     setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {}
   });
   await new Promise(resolve => setImmediate(resolve));
-  return { elements, requests, timers, plays: () => plays };
+  return { elements, requests, timers, copies, plays: () => plays };
 }
 
 test('interface preserva chat e áudio e confirma somente por clique', async () => {
@@ -127,4 +143,51 @@ test('consulta direta evita OpenAI e exibe nomes de processos como texto', async
   await elements['computer-run'].onclick();
   assert.equal(requests.some(item => item.route === '/chat'), false);
   assert.match(elements.messages.children.at(-1).textContent, /<script>example<\/script>/);
+});
+
+test('autorização exige seleção e confirmação humanas; API genérica não pode conceder acesso', async () => {
+  const denied = setup();
+  await assert.rejects(denied.invoke(denied.event, '/programming/authorize', { body: '{"path":"C:\\"}' }));
+  assert.equal((await denied.handlers.get('jarvis:authorize-folder')(denied.event)).canceled, true);
+  assert.equal(denied.requests.length, 0);
+  const approved = setup({ authorized: true });
+  await approved.handlers.get('jarvis:authorize-folder')(approved.event);
+  assert.equal(approved.dialogs.length, 2);
+  assert.equal(approved.requests[0].url, 'http://127.0.0.1:8765/programming/authorize');
+  assert.equal(JSON.parse(approved.requests[0].options.body).path, 'C:\\Projects');
+  const canceled = setup({ authorized: true, canceled: true });
+  await canceled.handlers.get('jarvis:authorize-folder')(canceled.event);
+  assert.equal(canceled.requests.length, 0);
+});
+
+test('cópia é limitada à janela confiável e nunca executa código', async () => {
+  const { handlers, event, copies } = setup();
+  assert.throws(() => handlers.get('jarvis:copy-code')({ ...event, sender: {} }, 'code'));
+  assert.throws(() => handlers.get('jarvis:copy-code')(event, 'x'.repeat(100001)));
+  handlers.get('jarvis:copy-code')(event, '<script>untrusted</script>');
+  assert.deepEqual(copies, ['<script>untrusted</script>']);
+});
+
+test('modo de programação mostra projeto, copia código como texto e fala somente o resumo', async () => {
+  const { elements, requests, copies } = await rendererSetup({ programming: true,
+    reply: 'Sugestão:\n```ts\nconst example = "<script>";\n```\nAplique manualmente.', speechSummary: 'Explicação resumida.' });
+  elements.input.value = 'Analise iPet';
+  await elements.send.onclick();
+  assert.equal(JSON.parse(requests.find(item => item.route === '/chat').options.body).mode, 'programming');
+  assert.equal(JSON.parse(requests.find(item => item.route === '/speak').options.body).message, 'Explicação resumida.');
+  assert.equal(elements['project-name'].textContent, 'Projeto: iPet');
+  assert.equal(elements['computer-controls'].hidden, true);
+  const card = elements.messages.children.at(-1);
+  const codeBlock = card.children.find(child => child.className === 'code-block');
+  await codeBlock.children[2].onclick();
+  assert.deepEqual(copies, ['const example = "<script>";\n']);
+  assert.equal(requests.some(item => item.route === '/action/confirm'), false);
+});
+
+test('interface autoriza por diálogo e permite revogar uma raiz', async () => {
+  const { elements, requests } = await rendererSetup({ programming: true });
+  await elements['authorize-project'].onclick();
+  elements['authorized-roots'].value = 'C:\\Desktop';
+  await elements['revoke-root'].onclick();
+  assert.equal(JSON.parse(requests.find(item => item.route === '/programming/revoke').options.body).path, 'C:\\Desktop');
 });
