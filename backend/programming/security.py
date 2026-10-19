@@ -21,6 +21,14 @@ SECRET_EXTENSIONS = {'.pem', '.key', '.ppk', '.p12', '.pfx', '.crt', '.cer', '.d
 MAX_FILE_BYTES = 128 * 1024
 MAX_LINE_CHARS = 1000
 MAX_READ_CHARS = 12000
+GENERATED_NAMES = {'package-lock.json','npm-shrinkwrap.json','pnpm-lock.yaml','yarn.lock',
+                   'bun.lock','bun.lockb','poetry.lock','uv.lock','pipfile.lock','composer.lock',
+                   'cargo.lock','gemfile.lock'}
+
+
+def generated(name):
+    lowered=name.casefold()
+    return lowered in GENERATED_NAMES or lowered.endswith(('.min.js','.min.css','.map','.tsbuildinfo'))
 
 
 class ReadError(ValueError):
@@ -38,7 +46,7 @@ def sensitive(name):
 
 
 def readable_name(name):
-    return not sensitive(name) and (Path(name).suffix.casefold() in EXTENSIONS or name.casefold() in PLAIN_NAMES)
+    return not sensitive(name) and not generated(name) and (Path(name).suffix.casefold() in EXTENSIONS or name.casefold() in PLAIN_NAMES)
 
 
 def redact(text):
@@ -110,7 +118,7 @@ class ReadPolicy:
             cursor = root
             for part in ('.', *path.relative_to(root).parts):
                 if part != '.':
-                    if part.casefold() in IGNORED or sensitive(part):
+                    if part.casefold() in IGNORED or sensitive(part) or generated(part):
                         raise ReadError('Arquivo ou diretório protegido.')
                     cursor = cursor / part
                 info = cursor.lstat()

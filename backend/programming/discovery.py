@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 
-from .security import IGNORED, ReadError, normalized, readable_name, sensitive
+from .security import IGNORED, ReadError, normalized, readable_name, sensitive, generated
 
 MAX_ENTRIES = 2000
 MAX_DEPTH = 6
@@ -32,7 +32,9 @@ def walk(policy, directory, depth=MAX_DEPTH, max_entries=MAX_ENTRIES, deadline=N
                     if visited > max_entries or time.monotonic() >= deadline:
                         truncated = True
                         break
-                    if entry.name.casefold() in IGNORED or sensitive(entry.name):
+                    if entry.name.casefold() in IGNORED or sensitive(entry.name) or generated(entry.name):
+                        continue
+                    if hasattr(policy,'allows_path') and not policy.allows_path(entry.path,navigate=True):
                         continue
                     try:
                         path = policy.resolve(entry.path)
@@ -128,8 +130,8 @@ def project_root(policy, path):
         current = parent
 
 
-def analyze(policy, project):
-    listing = walk(policy, project)
+def analyze(policy, project, listing=None):
+    listing = listing if listing is not None else walk(policy, project)
     files = [item['relative_path'] for item in listing['entries'] if item['type'] == 'file']
     technologies, manifests = set(), []
     # Leitura progressiva: somente até quatro manifests, jamais todo o projeto.

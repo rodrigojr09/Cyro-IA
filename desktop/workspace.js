@@ -16,15 +16,16 @@ window.jarvisWorkspace = (() => {
     select.value = value || '';
   }
   function controls() {
-    el('send').disabled = busy || loading || !chat || !!chat.archived;
-    el('new-chat').disabled = busy || loading || !!(project && !project.ready);
+    el('send').disabled = busy || loading || !chat || !!chat.archived || !!(project&&(!project.ready||project.scope_confirmed===0));
+    el('new-chat').disabled = busy || loading || !!(project && (!project.ready||project.scope_confirmed===0));
     for(const id of ['project-select','chat-select','add-project'])el(id).disabled=busy||loading;
     el('accept-partial').hidden = !(project && !project.ready && project.knowledge_version > 0 && project.state === 'partial');
-    const states={ready:'atualizada',partial:'parcial',queued:'verificação na fila',indexing:'em análise',unavailable:'desatualizada: pasta indisponível',interrupted:'atualização interrompida'};
+    const states={selecting:'aguardando seleção de arquivos',empty:'seleção sem arquivos elegíveis',ready:'atualizada',partial:'parcial',queued:'verificação na fila',indexing:'em análise',unavailable:'desatualizada: pasta indisponível',interrupted:'atualização interrompida'};
     el('memory-state').textContent = project ? `Base v${project.knowledge_version} · ${states[project.state]||project.state} · ${project.progress}` : 'Conversa geral · memória independente';
     el('memory-state').title=project ? `${project.tokens||0} tokens registrados pela API. ${project.progress}` : '';
     el('project-name').textContent = project ? 'Projeto: '+project.name : 'JARVIS · conversas gerais';
-    el('refresh-memory').disabled = !project || ['queued','indexing'].includes(project.state);
+    el('refresh-memory').disabled = !project || project.scope_confirmed===0 || ['queued','indexing'].includes(project.state);
+    el('select-sources').disabled=busy||loading||!project||['queued','indexing'].includes(project.state);
     el('remove-project').disabled = !project || ['queued','indexing'].includes(project.state);
     el('show-knowledge').disabled = !project || !project.knowledge_version;
     el('save-note').disabled = !project || !project.ready;
@@ -56,7 +57,7 @@ window.jarvisWorkspace = (() => {
       if (chats.length) await openChat(chats.some(item=>item.id===preferredChat) ? preferredChat : chats[0].id);
       else {
         messages.replaceChildren();
-        addMessage('assistant','Preparando a base de conhecimento. Aguarde a conclusão ou aceite uma análise parcial quando disponível.');
+        addMessage('assistant',project?.scope_confirmed===0 ? 'Escolha Arquivos do projeto antes de iniciar. Selecionar nomes e pastas não consome tokens.' : 'Preparando a base de conhecimento. Aguarde a conclusão ou aceite uma análise parcial quando disponível.');
       }
     } finally { loading=false; controls(); }
   }
@@ -98,6 +99,7 @@ window.jarvisWorkspace = (() => {
       if(result.canceled)return;
       if(!result.ok)throw new Error(result.data.detail||'Falha no cadastro');
       await catalog(result.data.id);
+      if(window.jarvisScope)await window.jarvisScope.open(project,async()=>catalog(project.id,chat?.id));
     });
     handler('new-chat',async()=>{const item=await post('/chats/create',{project_id:project?.id||null,title:el('chat-title').value||'Nova conversa'});await catalog(project?.id||'',item.id);});
     handler('rename-chat',async()=>{const result=await window.jarvisWindow.manageChat(chat.id,'rename',el('chat-title').value);if(!result.ok)throw new Error(result.data.detail);await catalog(project?.id||'',chat.id);});
@@ -105,6 +107,7 @@ window.jarvisWorkspace = (() => {
     handler('delete-chat',async()=>{const result=await window.jarvisWindow.manageChat(chat.id,'delete');if(result.canceled)return;if(!result.ok)throw new Error(result.data.detail);await catalog(project?.id||'');});
     handler('remove-project',async()=>{const result=await window.jarvisWindow.removeProject(project.id);if(result.canceled)return;if(!result.ok)throw new Error(result.data.detail);await catalog('');});
     handler('refresh-memory',async()=>{project=await post('/projects/refresh',{project_id:project.id});controls();});
+    handler('select-sources',()=>window.jarvisScope.open(project,async()=>catalog(project.id,chat?.id)));
     handler('accept-partial',async()=>{await post('/projects/accept-partial',{project_id:project.id});await catalog(project.id);});
     handler('show-knowledge',async()=>{const result=await api('/projects/knowledge?project_id='+encodeURIComponent(project.id));addMessage('assistant',result.content);});
     handler('save-note',async()=>{await post('/projects/note',{project_id:project.id,kind:el('note-kind').value,content:el('project-note').value});el('project-note').value='';await catalog(project.id,chat?.id);});

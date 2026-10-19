@@ -80,7 +80,7 @@ Na raiz do projeto, confira o estado do Git antes de editar. Para os testes atua
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m unittest -v test_jarvis test_programming test_projects
+.\.venv\Scripts\python.exe -m unittest -v test_jarvis test_programming test_projects test_scope
 ```
 
 Em `desktop`:
@@ -92,6 +92,7 @@ node --check main.js
 node --check preload.js
 node --check renderer.js
 node --check workspace.js
+node --check scope.js
 ```
 
 Instale as dependências de teste de `backend/requirements-dev.txt` quando necessário. Testes automatizados de OpenAI, voz e abertura de programas usam simulações; a validação real dessas integrações deve ser identificada separadamente. Atualize estas orientações quando a estrutura do projeto mudar, preservando as regras permanentes acima.

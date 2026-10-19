@@ -13,7 +13,8 @@ const routes = new Map([
     ['/programming/status', 'GET'], ['/programming/revoke', 'POST'],
     ['/workspace', 'GET'], ['/workspace/view', 'POST'], ['/chats/history', 'GET'],
     ['/chats/create', 'POST'], ['/projects/refresh', 'POST'], ['/projects/accept-partial', 'POST'],
-    ['/projects/knowledge', 'GET'], ['/projects/note', 'POST']
+    ['/projects/knowledge', 'GET'], ['/projects/note', 'POST'],
+    ['/projects/selection', 'GET'], ['/projects/selection/save', 'POST']
 ]);
 let win;
 function trusted(event) {
@@ -56,7 +57,7 @@ app.whenReady().then(() => {
         const confirmation = await dialog.showMessageBox(win, {
             type: 'question', title: 'Autorizar análise somente leitura',
             message: 'Permitir que o JARVIS leia código nesta pasta e nas subpastas?',
-            detail: selectedPath + '\nO cadastro inicia uma análise automática em lotes pela OpenAI API, com consumo de tokens. Trechos de código serão enviados; arquivos protegidos serão bloqueados. A pasta original não será modificada.',
+            detail: selectedPath + '\nPrimeiro você escolherá os arquivos e pastas usados na análise, sem consumo de tokens. A OpenAI será usada somente após confirmar a seleção. A pasta original não será modificada.',
             buttons: ['Cancelar', 'Autorizar leitura'], defaultId: 0, cancelId: 0, noLink: true
         });
         if (confirmation.response !== 1) return { canceled: true };
@@ -108,7 +109,7 @@ app.whenReady().then(() => {
     ipcMain.handle('jarvis:api', async (event, route, options = {}) => {
         if (typeof route !== 'string' || route.length > 1024) throw new Error('Rota inválida.');
         const baseRoute = route.split('?')[0];
-        if (!trusted(event) || !routes.has(baseRoute) || (route.includes('?') && !['/chats/history','/projects/knowledge'].includes(baseRoute))) {
+        if (!trusted(event) || !routes.has(baseRoute) || (route.includes('?') && !['/chats/history','/projects/knowledge','/projects/selection'].includes(baseRoute))) {
             throw new Error('Solicitação não autorizada.');
         }
         const method = routes.get(baseRoute);

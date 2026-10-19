@@ -9,6 +9,7 @@ let copied;
 let speech;
 let submittedMode;
 let submittedChat;
+let savedScope;
 const projectId='11111111-1111-4111-8111-111111111111';
 const generalId='22222222-2222-4222-8222-222222222222';
 const firstId='33333333-3333-4333-8333-333333333333';
@@ -18,7 +19,9 @@ const timer = setTimeout(() => { console.error('Tempo de teste Electron excedido
 const project = { progress: 'Pronto', project: { name: 'iPet', path: 'C:\\Fixtures\\iPet' },
   roots: [{ name: 'Fixtures', path: 'C:\\Fixtures' }] };
 ipcMain.handle('jarvis:api', (_, route, options) => {
-  const projectInfo={id:projectId,name:'iPet',path:'C:\\Fixtures\\iPet',state:'ready',ready:1,knowledge_version:2,progress:'Memória atualizada'};
+  const projectInfo={id:projectId,name:'iPet',path:'C:\\Fixtures\\iPet',state:'ready',ready:1,scope_confirmed:1,knowledge_version:2,progress:'Memória atualizada'};
+  if(route==='/projects/selection/save'){savedScope=JSON.parse(options.body);return {ok:true,data:{...projectInfo,selection_changed:true}};}
+  if(route.startsWith('/projects/selection?'))return {ok:true,data:{selection:{confirmed:true,include:['.'],exclude:[]},next_offset:null,entries:[{name:'src',path:'src',type:'directory'},{name:'package-lock.json',path:'package-lock.json',type:'file',disabled:true,reason:'Lock ignorado'},{name:'dist',path:'dist',type:'directory',disabled:true,reason:'Build ignorado'}]}};
   if(route==='/workspace')return {ok:true,data:{projects:[projectInfo],general_chat_id:generalId}};
   if(route==='/workspace/view')return {ok:true,data:JSON.parse(options.body).project_id ? {project:projectInfo,chats,archived_chats:[]} : {project:null,chats:[{id:generalId,project_id:null,title:'Geral',archived:0}],archived_chats:[]}};
   if(route.startsWith('/chats/history?')){
@@ -87,6 +90,13 @@ app.whenReady().then(async () => {
     assert.equal(await win.webContents.executeJavaScript(`document.querySelectorAll('pre code').length`),0);
     await win.webContents.executeJavaScript(`document.getElementById('new-chat').onclick()`);
     assert.equal(await win.webContents.executeJavaScript(`window.jarvisWorkspace.chat.id`),'55555555-5555-4555-8555-555555555555');
+    await win.webContents.executeJavaScript(`window.jarvisScope.open(window.jarvisWorkspace.project)`);
+    assert.equal(await win.webContents.executeJavaScript(`document.querySelectorAll('#scope-list input:disabled').length`),2);
+    await win.webContents.executeJavaScript(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    await fs.writeFile(path.join(app.getPath('temp'),'jarvis-v05-scope.png'),(await win.webContents.capturePage()).toPNG());
+    await win.webContents.executeJavaScript(`(async()=>{document.getElementById('scope-none').onclick();await document.getElementById('scope-save').onclick();})()`);
+    assert.deepEqual(savedScope.include,[]);
+    assert.deepEqual(savedScope.exclude,['.']);
     console.log('Electron real: projetos, múltiplos chats, memória, modo somente leitura, código, cópia, voz curta e layout aprovados.');
     console.log('Captura: ' + destination);
     clearTimeout(timer);

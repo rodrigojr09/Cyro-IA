@@ -10,6 +10,7 @@ from project_store import atomic_text, database, now
 from programming.context import memory_summary
 from programming.discovery import analyze, walk
 from programming.security import ReadError, ReadPolicy, redact
+from project_scope import selected_listing
 
 MAX_FILES = 400
 MAX_BYTES = 16 * 1024 * 1024
@@ -50,7 +51,7 @@ class ProjectIndexer:
         self.worker_task = asyncio.create_task(self.worker())
         self.watch_task = asyncio.create_task(self.watch())
         for project in self.store.projects():
-            if project['state'] == 'interrupted':
+            if project['state'] == 'interrupted' and project['scope_confirmed']:
                 self.enqueue(project['id'])
 
     async def stop(self):
@@ -60,7 +61,9 @@ class ProjectIndexer:
         await asyncio.gather(*(task for task in (self.worker_task,self.watch_task) if task), return_exceptions=True)
 
     def enqueue(self, project_id, debounce=False):
-        self.store.project(project_id)
+        project=self.store.project(project_id)
+        if not project['scope_confirmed']:
+            raise ReadError('Escolha Arquivos do projeto antes de iniciar a análise.')
         if project_id in self.pending or (debounce and time.monotonic() - self.last_requests.get(project_id, 0) < 10):
             return
         self.pending.add(project_id)
@@ -96,9 +99,9 @@ class ProjectIndexer:
                 self.queue.task_done()
 
     def scan(self, project):
-        policy = ReadPolicy()
+        policy = self.store.read_policy(project['id'])
         root = policy.authorize(project['path'])
-        listing = walk(policy, root)
+        listing = selected_listing(policy)
         snapshots, total, skipped = {}, 0, listing['skipped']
         entries = [item for item in listing['entries'] if item['type'] == 'file']
         for item in entries[:MAX_FILES]:
@@ -113,7 +116,7 @@ class ProjectIndexer:
                     'excerpt': '\n'.join(f'{i}: {line[:240]}' for i,line in enumerate(text.splitlines(),1))[:1200]}
             except ReadError:
                 skipped += 1
-        return snapshots, bool(listing['truncated'] or skipped or len(entries)>MAX_FILES or total>MAX_BYTES), analyze(policy, root)
+        return snapshots, bool(listing['truncated'] or skipped or len(entries)>MAX_FILES or total>MAX_BYTES), analyze(policy, root,listing)
 
     async def ask(self, project_id, operation, messages, json_output=False):
         options = {'response_format': {'type': 'json_object'}} if json_output else {}
@@ -136,6 +139,9 @@ class ProjectIndexer:
         except asyncio.CancelledError:
             await scan_task
             raise
+        if not snapshots:
+            self.store.update_project(project_id,state='empty',ready=0,progress='Nenhum arquivo elegível na seleção. Ajuste Arquivos do projeto.')
+            return
         with database(self.store.db_path(project_id)) as con:
             old = {row['path']: dict(row) for row in con.execute('SELECT * FROM files')}
         changed = {path for path,item in snapshots.items() if path not in old or old[path]['hash'] != item['hash']}
@@ -209,7 +215,7 @@ class ProjectIndexer:
         partial = partial or errors or bool(remaining)
         self.store.update_project(project_id, progress='Consolidando resumos por módulo e IDEIA.md')
         synthesis = ''
-        if self.has_key() and not errors:
+        if self.has_key() and not errors and (changed or deleted or todo):
             try:
                 modules = self.modules(project_id)
                 synthesis = await self.ask(project_id, 'project_summary', [

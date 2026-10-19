@@ -33,7 +33,7 @@ class ProjectChatService(ProgrammingService):
         self.project_info = store.project(chat['project_id']) if chat['project_id'] else None
         self.fixed_path = self.project_info['path'] if self.project_info else None
         self.context = StoredContext(store, chat['id'])
-        self.policy = ReadPolicy([self.fixed_path] if self.fixed_path else [])
+        self.policy = store.read_policy(chat['project_id']) if self.fixed_path else ReadPolicy([])
         self.progress = 'Pronto'
         if self.fixed_path:
             self.context.select(self.fixed_path)

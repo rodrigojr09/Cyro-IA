@@ -10,6 +10,7 @@ from pathlib import Path
 
 from programming.context import memory_summary
 from programming.security import ReadError, ReadPolicy, redact
+from project_scope import SourceSelection, SelectedReadPolicy, browse_sources
 
 
 def now():
@@ -54,7 +55,7 @@ class ProjectStore:
         (self.root / 'projects').mkdir(exist_ok=True)
         (self.root / 'general').mkdir(exist_ok=True)
         with database(self.registry) as con:
-            if con.execute('PRAGMA user_version').fetchone()[0] > 1:
+            if con.execute('PRAGMA user_version').fetchone()[0] > 2:
                 raise ReadError('Formato de catálogo mais recente que esta versão do JARVIS.')
             con.executescript('''
                 CREATE TABLE IF NOT EXISTS projects (
@@ -65,7 +66,7 @@ class ProjectStore:
                     ready INTEGER NOT NULL DEFAULT 0, removed INTEGER NOT NULL DEFAULT 0,
                     progress TEXT NOT NULL DEFAULT 'Na fila', error TEXT,
                     tokens INTEGER NOT NULL DEFAULT 0, memory_deleted INTEGER NOT NULL DEFAULT 0,
-                    coverage_complete INTEGER NOT NULL DEFAULT 0);
+                    coverage_complete INTEGER NOT NULL DEFAULT 0, scope_confirmed INTEGER NOT NULL DEFAULT 0);
                 CREATE TABLE IF NOT EXISTS chats (
                     id TEXT PRIMARY KEY, project_id TEXT, title TEXT NOT NULL,
                     created_at TEXT NOT NULL, last_message_at TEXT, archived INTEGER NOT NULL DEFAULT 0,
@@ -77,8 +78,14 @@ class ProjectStore:
             con.execute("UPDATE projects SET state='interrupted', progress='Análise interrompida; retome a atualização', error='Interrupção durante a análise' WHERE state IN ('indexing','queued')")
             if 'coverage_complete' not in {row['name'] for row in con.execute('PRAGMA table_info(projects)')}:
                 con.execute('ALTER TABLE projects ADD COLUMN coverage_complete INTEGER NOT NULL DEFAULT 0')
-            con.execute('PRAGMA user_version=1')
+            if 'scope_confirmed' not in {row['name'] for row in con.execute('PRAGMA table_info(projects)')}:
+                con.execute('ALTER TABLE projects ADD COLUMN scope_confirmed INTEGER NOT NULL DEFAULT 0')
+                con.execute("UPDATE projects SET state='selecting',progress='Confirme os arquivos do projeto antes de usar a API'")
+            con.execute('PRAGMA user_version=2')
         self.initialize_db(self.root / 'general' / 'project.db')
+        for project in self.projects(include_removed=True):
+            if self.db_path(project['id']).is_file():
+                self.initialize_db(self.db_path(project['id']))
         with database(self.registry) as con:
             row = con.execute("SELECT value FROM settings WHERE key='general_chat'").fetchone()
         if row is None:
@@ -88,7 +95,7 @@ class ProjectStore:
 
     def initialize_db(self, path):
         with database(path) as con:
-            if con.execute('PRAGMA user_version').fetchone()[0] > 1:
+            if con.execute('PRAGMA user_version').fetchone()[0] > 2:
                 raise ReadError('Formato de memória mais recente que esta versão do JARVIS.')
             con.executescript('''
                 CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,6 +104,8 @@ class ProjectStore:
                 CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, title TEXT NOT NULL,
                     created_at TEXT NOT NULL,last_message_at TEXT,archived INTEGER NOT NULL,summary TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS contexts (chat_id TEXT PRIMARY KEY, data TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS source_selection (id INTEGER PRIMARY KEY CHECK(id=1),include_paths TEXT NOT NULL,
+                    exclude_paths TEXT NOT NULL,revision TEXT NOT NULL,updated_at TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS files (path TEXT PRIMARY KEY, hash TEXT NOT NULL,
                     size INTEGER NOT NULL, mtime_ns INTEGER NOT NULL, summary TEXT NOT NULL,
                     ai_summary TEXT NOT NULL DEFAULT '', analyzed_hash TEXT NOT NULL DEFAULT '',
@@ -111,7 +120,9 @@ class ProjectStore:
                 CREATE TABLE IF NOT EXISTS usage (id INTEGER PRIMARY KEY, created_at TEXT,
                     operation TEXT, prompt_tokens INTEGER, completion_tokens INTEGER, total_tokens INTEGER);
             ''')
-            con.execute('PRAGMA user_version=1')
+            con.execute('PRAGMA user_version=2')
+            if 'scope_revision' not in {row['name'] for row in con.execute('PRAGMA table_info(messages)')}:
+                con.execute("ALTER TABLE messages ADD COLUMN scope_revision TEXT NOT NULL DEFAULT ''")
             if 'stale' not in {row['name'] for row in con.execute('PRAGMA table_info(files)')}:
                 con.execute('ALTER TABLE files ADD COLUMN stale INTEGER NOT NULL DEFAULT 0')
 
@@ -161,17 +172,65 @@ class ProjectStore:
                             (str(original), key, file_id, now(), project_id))
                 created = bool(row['memory_deleted'])
                 if created:
-                    con.execute("UPDATE projects SET knowledge_version=0,ready=0,state='queued',memory_deleted=0,tokens=0,last_analysis=NULL,coverage_complete=0 WHERE id=?", (project_id,))
+                    con.execute("UPDATE projects SET knowledge_version=0,ready=0,state='selecting',scope_confirmed=0,memory_deleted=0,tokens=0,last_analysis=NULL,coverage_complete=0 WHERE id=?", (project_id,))
             else:
                 project_id, created = str(uuid.uuid4()), True
                 stamp = now()
                 con.execute('INSERT INTO projects(id,name,path,path_key,file_identity,created_at,updated_at) VALUES(?,?,?,?,?,?,?)',
                             (project_id, redact(name.strip() or original.name)[:120], str(original), key, file_id, stamp, stamp))
+                con.execute("UPDATE projects SET state='selecting',progress='Escolha os arquivos antes de iniciar a análise' WHERE id=?",(project_id,))
         directory = self.project_dir(project_id)
         directory.mkdir(exist_ok=True)
         (directory / 'arquivos').mkdir(exist_ok=True)
         self.initialize_db(directory / 'project.db')
         return {**self.project(project_id), 'created': created}
+
+    def scope(self,project_id):
+        project=self.project(project_id)
+        with database(self.db_path(project_id)) as con:
+            row=con.execute('SELECT * FROM source_selection WHERE id=1').fetchone()
+        return {'include':json.loads(row['include_paths']) if row else [],
+                'exclude':json.loads(row['exclude_paths']) if row else [],
+                'revision':row['revision'] if row else '', 'confirmed':bool(project['scope_confirmed'])}
+
+    def read_policy(self,project_id):
+        project=self.project(project_id)
+        scope=self.scope(project_id)
+        if not scope['confirmed']:
+            raise ReadError('Confirme Arquivos do projeto antes de iniciar leituras ou usar a API.')
+        return SelectedReadPolicy(project['path'],SourceSelection(scope['include'],scope['exclude']))
+
+    def selection_preview(self,project_id,path='.',offset=0):
+        project=self.project(project_id)
+        return {**browse_sources(project['path'],path,offset),'selection':self.scope(project_id)}
+
+    def set_scope(self,project_id,include,exclude):
+        project=self.project(project_id)
+        selection=SourceSelection(include,exclude)
+        validator=ReadPolicy([project['path']])
+        for rule in selection.include:
+            validator.resolve(rule,project['path'])
+        old=self.scope(project_id)
+        if old['confirmed'] and old['revision']==selection.revision:
+            return {**self.project(project_id),'selection_changed':False}
+        with database(self.db_path(project_id)) as con:
+            con.execute('INSERT OR REPLACE INTO source_selection VALUES(1,?,?,?,?)',
+                        (json.dumps(selection.include),json.dumps(selection.exclude),selection.revision,now()))
+            from programming.security import IGNORED,generated,sensitive
+            for row in con.execute('SELECT path FROM files').fetchall():
+                if not selection.selected(row['path']) or any(part.casefold() in IGNORED or generated(part) or sensitive(part) for part in Path(row['path']).parts):
+                    con.execute('DELETE FROM files WHERE path=?',(row['path'],))
+            con.execute('DELETE FROM contexts')
+            docs=con.execute('SELECT name FROM knowledge').fetchall()
+            for doc in docs:
+                con.execute('UPDATE knowledge SET content=? WHERE name=?',
+                            ('# Seleção alterada\n\nMemória aguardando atualização somente com os arquivos confirmados. Versões antigas permanecem no histórico interno.',doc['name']))
+            con.execute("UPDATE conversations SET summary=''")
+        with database(self.registry) as con:
+            con.execute("UPDATE chats SET summary='' WHERE project_id=?",(project_id,))
+            con.execute("UPDATE projects SET scope_confirmed=1,ready=0,coverage_complete=0,state='selecting',progress='Seleção salva; aguardando análise',updated_at=? WHERE id=?",(now(),project_id))
+        self.export_knowledge(project_id)
+        return {**self.project(project_id),'selection_changed':True}
 
     def update_project(self, project_id, **values):
         allowed = {'state', 'progress', 'knowledge_version', 'ready', 'last_analysis', 'updated_at', 'error', 'tokens','coverage_complete'}
@@ -200,7 +259,7 @@ class ProjectStore:
     def create_chat(self, project_id=None, title='Nova conversa'):
         if project_id:
             project = self.project(project_id)
-            if not project['ready']:
+            if not project['ready'] or not project['scope_confirmed']:
                 raise ReadError('Aguarde a análise inicial ou aceite explicitamente a análise parcial.')
         chat_id = str(uuid.uuid4())
         with database(self.registry) as con:
@@ -236,17 +295,20 @@ class ProjectStore:
         self.mirror_chat(result)
         return result
 
-    def history(self, chat_id, limit=100, before=None):
+    def history(self, chat_id, limit=100, before=None, for_model=False):
         chat = self.chat(chat_id, allow_archived=True)
+        revision=self.scope(chat['project_id'])['revision'] if chat['project_id'] and for_model else None
         with database(self.db_path(chat['project_id'])) as con:
-            rows = con.execute('SELECT id,role,content,created_at FROM messages WHERE chat_id=? AND id<? ORDER BY id DESC LIMIT ?',
-                               (chat_id, before or 9223372036854775807, min(limit, 100))).fetchall()
+            rows = con.execute('SELECT id,role,content,created_at FROM messages WHERE chat_id=? AND id<?'+
+                               (' AND scope_revision=?' if revision is not None else '')+' ORDER BY id DESC LIMIT ?',
+                               (chat_id, before or 9223372036854775807,*((revision,) if revision is not None else ()),min(limit,100))).fetchall()
         return [dict(row) for row in reversed(rows)]
 
     def append(self, chat_id, role, content):
         chat = self.chat(chat_id)
         with database(self.db_path(chat['project_id'])) as con:
-            con.execute('INSERT INTO messages(chat_id,role,content,created_at) VALUES(?,?,?,?)', (chat_id, role, redact(content), now()))
+            revision=self.scope(chat['project_id'])['revision'] if chat['project_id'] else ''
+            con.execute('INSERT INTO messages(chat_id,role,content,created_at,scope_revision) VALUES(?,?,?,?,?)', (chat_id, role, redact(content), now(),revision))
         summary = (chat['summary'] + '\n' + role + ': ' + memory_summary(content,500))[-3000:]
         with database(self.registry) as con:
             con.execute('UPDATE chats SET last_message_at=?,summary=? WHERE id=?', (now(), summary, chat_id))

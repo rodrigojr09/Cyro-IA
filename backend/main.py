@@ -22,6 +22,7 @@ from data_paths import data_directory
 from project_store import ProjectStore, database, now
 from project_index import ProjectIndexer
 from project_chat import ProjectChatService
+from project_scope import RegisteredReadPolicy
 
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / '.env')
@@ -66,7 +67,7 @@ async def lifespan(app: FastAPI):
             TOKEN_FILE.unlink()
 
 
-app = FastAPI(version='0.4.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(version='0.5.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware('http')
@@ -116,6 +117,26 @@ class ProjectNote(WorkspaceRequest):
     content: str = Field(min_length=1, max_length=4000)
 
 
+class ScopeRequest(WorkspaceRequest):
+    include: list[str] = Field(max_length=300)
+    exclude: list[str] = Field(default_factory=list,max_length=500)
+
+
+@app.get('/projects/selection')
+async def project_selection(project_id: str,path: str='.',offset: int=0):
+    return await asyncio.to_thread(store.selection_preview,project_id,path,offset)
+
+
+@app.post('/projects/selection/save')
+async def save_project_selection(req: ScopeRequest):
+    if req.project_id in indexer.pending or chat_lock.locked():
+        raise HTTPException(409,'Aguarde a análise ou resposta terminar antes de alterar a seleção.')
+    result=store.set_scope(req.project_id,req.include,req.exclude)
+    if result['selection_changed']:
+        indexer.enqueue(req.project_id)
+    return {**store.project(req.project_id),'selection_changed':result['selection_changed']}
+
+
 @app.exception_handler(ReadError)
 async def read_error_handler(request: Request, exc: ReadError):
     return JSONResponse(status_code=400,content={'detail':str(exc)})
@@ -131,7 +152,7 @@ async def workspace_view(req: WorkspaceRequest):
     project = store.project(req.project_id) if req.project_id else None
     previous_project=indexer.active_project
     indexer.active_project = req.project_id
-    if project and previous_project!=req.project_id and project['state'] not in {'partial','indexing','queued'}:
+    if project and project['scope_confirmed'] and previous_project!=req.project_id and project['state'] not in {'partial','indexing','queued'}:
         indexer.enqueue(project['id'], debounce=True)
     if project and project['knowledge_version'] and not (store.project_dir(project['id'])/'IDEIA.md').is_file():
         store.export_knowledge(project['id'])
@@ -143,7 +164,6 @@ async def workspace_view(req: WorkspaceRequest):
 async def register_project(req: ProjectRequest):
     project = store.register(req.path, req.name)
     indexer.active_project = project['id']
-    indexer.enqueue(project['id'])
     return project
 
 
@@ -288,10 +308,18 @@ async def process_chat(req: ChatRequest):
         raise HTTPException(503, 'Configure OPENAI_API_KEY no backend/.env')
     chat_id = req.chat_id or store.general_chat()
     chat_info = store.chat(chat_id)
+    if chat_info['project_id']:
+        owner=store.project(chat_info['project_id'])
+        if not owner['scope_confirmed']:
+            raise ReadError('Confirme Arquivos do projeto antes de usar o chat. Nenhuma chamada de IA foi feita.')
+        if not owner['ready']:
+            raise ReadError('Aguarde a análise da seleção ou aceite explicitamente a base parcial.')
     service = ProjectChatService(store,chat_info) if req.chat_id else programming
+    if not req.chat_id:
+        service.policy=RegisteredReadPolicy(service.policy.roots,store)
     active_service = service
     mode = 'programming' if chat_info['project_id'] else req.mode
-    previous = list(reversed(store.history(chat_id,limit=20)))
+    previous = list(reversed(store.history(chat_id,limit=20,for_model=True)))
     messages = [{'role': 'system', 'content': SYSTEM}]
     if req.chat_id and not chat_info['project_id']:
         messages.append({'role':'system','content':'Conversa geral independente, sem acesso a código de projetos. '

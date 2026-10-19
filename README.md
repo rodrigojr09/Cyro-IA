@@ -1,4 +1,4 @@
-# JARVIS v0.4.0 — Windows
+# JARVIS v0.5.0 — Windows
 
 Assistente pessoal em Electron e FastAPI com chat, voz, controle limitado do computador e análise de projetos originais em modo **somente leitura**. Cada projeto tem sua própria memória duradoura e várias conversas independentes.
 
@@ -35,8 +35,8 @@ Reinicie backend e Electron após atualizar. Execute somente um backend, sem `--
 
 ## Projetos e conversas
 
-1. Clique em **+ Pasta**, escolha a pasta original de um projeto e confirme a autorização nativa. O cadastro inicia automaticamente a análise em segundo plano, com consumo da OpenAI API informado no diálogo.
-2. Acompanhe o estado da memória. A primeira conversa só fica disponível após uma análise bem-sucedida dentro dos limites, ou após clicar explicitamente em **Continuar com análise parcial**. Sem chave/API, ainda é produzida uma base estática parcial, cuja utilização exige essa aceitação.
+1. Clique em **+ Pasta**, escolha a pasta original de um projeto e confirme a autorização nativa. O cadastro abre a seleção de fontes: navegue nas pastas e marque/desmarque arquivos antes de iniciar a análise. A prévia lista apenas nomes, tipos e tamanhos, sem ler conteúdo nem chamar a OpenAI.
+2. Clique em **Salvar seleção e analisar** para iniciar a análise em segundo plano dos arquivos escolhidos, com consumo da OpenAI API. Acompanhe o estado da memória. A primeira conversa só fica disponível após uma análise bem-sucedida dentro dos limites, ou após clicar explicitamente em **Continuar com análise parcial**. Sem chave/API, ainda é produzida uma base estática parcial, cuja utilização exige essa aceitação.
 3. Escolha o projeto e um chat nos seletores. Projetos com nomes iguais são diferenciados pelo caminho. Selecionar a mesma pasta novamente reutiliza o UUID, os chats e a memória existentes; não duplica o cadastro.
 4. Use **+ Chat** para outro assunto. O chat carrega o IDEIA.md atual e o resumo daquela conversa; criar outro chat no projeto ativo não dispara uma varredura nem uma análise completa.
 5. Em **Gerenciar conversas e memória**, altere o título, arquive/restaure/exclua chats, consulte páginas anteriores do histórico, veja o IDEIA.md e solicite atualização da memória.
@@ -47,6 +47,18 @@ Reinicie backend e Electron após atualizar. Execute somente um backend, sem `--
 **Conversas gerais** continuam disponíveis no seletor. Não recebem automaticamente conhecimento de nenhum projeto e não têm ferramentas de leitura de projetos. Nelas, desmarcar o modo de análise oferece os controles locais anteriores. Chats de projeto ficam obrigatoriamente em modo de leitura.
 
 Exemplos: “Explique a arquitetura”, “Procure onde getUsers é usado”, “Leia index.ts do backend”, “Investigue o login”, “Compare frontend e backend” e “Mostre uma correção sem alterar os arquivos”. Quando houver arquivos duplicados, informe um dos caminhos apresentados. Sugestões aparecem em blocos de código selecionáveis e copiáveis; a voz usa uma explicação curta, sem ler centenas de linhas.
+
+## Seleção de fontes e economia de tokens
+
+Use **Arquivos do projeto** para revisar a seleção a qualquer momento. A pasta inteira começa marcada como conveniência; desmarque a raiz e marque somente as pastas/arquivos desejados para uma análise menor. Marcar uma pasta inclui arquivos futuros dentro dela; uma seleção de arquivo individual não inclui seus irmãos. Exclusões e inclusões mais específicas prevalecem sobre as da pasta superior.
+
+`dist`, `build`, `node_modules`, caches, arquivos de lock (incluindo `package-lock.json`), mapas e bundles minificados ficam bloqueados automaticamente. As proteções de segredos, tamanho, links e limites de acesso continuam obrigatórias, mesmo que uma pasta seja marcada.
+
+A seleção fica na base interna de cada projeto e restringe a indexação, as ferramentas do chat, a busca e os imports relacionados. Nenhum arquivo original é alterado. Cancelar a seleção não inicia análise; confirmar a mesma seleção não reanalisa. O cache dos arquivos ainda selecionados é reaproveitado. A prévia mostra até 200 itens por página, com limite de 2.000 por pasta; abra subpastas para refinar.
+
+Na atualização da v0.4.0, projetos existentes exigem confirmação das fontes antes de novas leituras/análises. Histórico e memória anteriores são preservados. Ao mudar a seleção, o histórico continua visível, mas mensagens e resumos do escopo anterior deixam de ser enviados automaticamente à IA; a memória corrente é reconstruída com as fontes escolhidas. Notas fornecidas pelo usuário continuam preservadas.
+
+**Zero tokens se aplica à seleção local.** Análise semântica, chat e voz continuam sujeitos ao uso da API. A economia depende da quantidade e do tamanho dos arquivos selecionados; não existe garantia de consumo zero para essas funções.
 
 ## Armazenamento e migração
 
@@ -164,7 +176,7 @@ Pastas de abertura: Desktop, Documents e Downloads diretamente no perfil; pastas
 cd backend
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.txt
-python -m unittest -v test_jarvis test_programming test_projects
+python -m unittest -v test_jarvis test_programming test_projects test_scope
 ```
 
 ```powershell
@@ -175,13 +187,14 @@ node --check main.js
 node --check preload.js
 node --check renderer.js
 node --check workspace.js
+node --check scope.js
 node --check smoke.cjs
 ```
 
-Validação da v0.4.0: **59 testes Python, 14 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
+Validação da v0.5.0: **71 testes Python, 17 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
 
-OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, vários chats e dados fictícios. Não utiliza a área de transferência real. Captura temporária: `jarvis-v04-smoke.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
+OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, vários chats e dados fictícios. Não utiliza a área de transferência real. Captura temporária: `jarvis-v04-smoke.png` e `jarvis-v05-scope.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
 
 Chamadas reais à OpenAI, reprodução sonora e interação humana com os diálogos nativos não foram verificadas de ponta a ponta. O ambiente emite aviso de depreciação de TestClient/httpx, sem falha na suíte.
 
-Validação manual sugerida: reinicie os dois processos, confira a conversa geral migrada, cadastre um projeto de teste, aguarde a análise, crie dois chats com assuntos distintos, reinicie o JARVIS e abra-os novamente. Altere manualmente um arquivo do projeto de teste e confira a atualização incremental. Teste arquivar/restaurar e remover somente o cadastro antes de qualquer escolha de apagar memória. Microfone e execução/edição de projetos permanecem fora do escopo.
+Validação manual sugerida: reinicie os dois processos, confira a conversa geral migrada, cadastre um projeto de teste, selecione somente suas fontes, confirme e aguarde a análise, crie dois chats com assuntos distintos, reinicie o JARVIS e abra-os novamente. Altere manualmente um arquivo do projeto de teste e confira a atualização incremental. Teste arquivar/restaurar e remover somente o cadastro antes de qualquer escolha de apagar memória. Microfone e execução/edição de projetos permanecem fora do escopo.

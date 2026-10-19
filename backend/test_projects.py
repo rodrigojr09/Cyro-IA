@@ -29,6 +29,12 @@ def snapshot(root):
     return {str(path.relative_to(root)):hashlib.sha256(path.read_bytes()).hexdigest() for path in root.rglob('*') if path.is_file()}
 
 
+def register_selected(store,path):
+    project=store.register(path)
+    store.set_scope(project['id'],['.'],[])
+    return store.project(project['id'])
+
+
 def fake_client():
     async def create(**kwargs):
         if kwargs.get('response_format'):
@@ -49,7 +55,7 @@ class StoreTests(unittest.TestCase):
         self.original=make_project(self.base/'originals'/'same')
         self.before=snapshot(self.original)
         self.store=ProjectStore(self.base/'internal')
-        self.project=self.store.register(self.original)
+        self.project=register_selected(self.store,self.original)
 
     def tearDown(self):
         self.assertEqual(self.before,snapshot(self.original))
@@ -145,7 +151,7 @@ class IndexTests(unittest.IsolatedAsyncioTestCase):
         self.original=make_project(self.base/'original')
         self.before=snapshot(self.original)
         self.store=ProjectStore(self.base/'data')
-        self.project=self.store.register(self.original)
+        self.project=register_selected(self.store,self.original)
         self.client=fake_client()
         self.indexer=ProjectIndexer(self.store,self.client,'fake',lambda:True)
 
@@ -288,14 +294,14 @@ class ProjectAPITests(unittest.TestCase):
         test_jarvis.JarvisTests.setUp(self)
         self.root=Path(self.temp.name)
         self.original=make_project(self.root/'original')
-        self.project=main.store.register(self.original)
+        self.project=register_selected(main.store,self.original)
         main.store.update_project(self.project['id'],ready=1,state='ready')
 
     def tearDown(self):
         test_jarvis.JarvisTests.tearDown(self)
 
     def test_chat_history_and_idea_are_isolated_in_model_context(self):
-        other=main.store.register(make_project(self.root/'other',marker='ONLY_B'))
+        other=register_selected(main.store,make_project(self.root/'other',marker='ONLY_B'))
         main.store.update_project(other['id'],ready=1,state='ready')
         first=main.store.create_chat(self.project['id'],'A')
         second=main.store.create_chat(other['id'],'B')
@@ -322,13 +328,16 @@ class ProjectAPITests(unittest.TestCase):
         self.assertEqual(response.status_code,200)
         self.assertEqual(before,snapshot(self.original))
 
-    def test_registration_starts_background_analysis_and_duplicate_uses_cache(self):
+    def test_registration_waits_for_selection_then_background_analysis_uses_cache(self):
         source=make_project(self.root/'new-project')
         fake=fake_client()
         main.indexer.client=fake
         response=self.client.post('/projects/register',json={'path':str(source)})
         self.assertEqual(response.status_code,200)
         project_id=response.json()['id']
+        self.assertFalse(fake.chat.completions.create.await_count)
+        self.assertFalse(main.indexer.pending)
+        self.assertEqual(self.client.post('/projects/selection/save',json={'project_id':project_id,'include':['.'],'exclude':[]}).status_code,200)
         self.client.portal.call(main.indexer.queue.join)
         self.assertTrue(main.store.project(project_id)['ready'])
         calls=fake.chat.completions.create.await_count

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-10-19
+
+- Seleção visual de pastas e arquivos antes da primeira análise, com prévia local paginada de metadados sem leitura de conteúdo nem uso da OpenAI.
+- Regras persistentes por projeto, com inclusões/exclusões herdadas e edição pelo botão Arquivos do projeto. Nenhuma análise começa ao cadastrar ou cancelar a seleção.
+- Indexação, chat, buscas, contexto relacionado e API legada respeitam as fontes selecionadas. Builds, dependências, lockfiles, mapas e bundles minificados são excluídos obrigatoriamente.
+- Seleção idêntica evita reanálise; cache dos arquivos ainda incluídos é preservado. Seleção vazia não usa API. Arquivos individuais são descobertos diretamente, evitando percorrer pastas irrelevantes.
+- Migração preserva dados e exige revisão da seleção nos projetos existentes. Ao alterar o escopo, histórico permanece disponível na interface, mas o contexto anterior deixa de ser reenviado automaticamente.
+- Verificação: 71 testes Python, 17 testes Node, sintaxe JavaScript e teste real do Electron com dados fictícios. Inclui prévia sem abertura de conteúdo, cache sem chamadas extras, isolamento de leituras, migração, reinicialização e confirmação visual.
+- Limitação: a prévia é gratuita em tokens; análise, chat e áudio ainda usam a API. API e voz reais não foram exercitadas; integrações externas usam simulações nos testes. Aviso existente de depreciação de TestClient/httpx.
+
 ## 0.4.0 — 2026-10-19
 
 ### Adicionado
