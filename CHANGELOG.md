@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0 — 2026-10-20
+
+- JARVIS Quick Chat com três janelas independentes: ícone circular transparente de 56 px, compositor e resposta compacta. Campo e resposta semitransparentes, com texto opaco e cantos recortados. Sem entrada adicional na barra de tarefas e sem grande região invisível bloqueando cliques.
+- Ícone arrastável com posição persistida e limites da área útil, incluindo coordenadas negativas e mudanças de monitores. Campo prefere esquerda, usa o outro lado quando necessário, e resposta fica acima com altura limitada/rolagem.
+- Enter/Shift+Enter/Escape, rascunho persistente, indicador de geração e mensagens de falha. Recolher o campo mantém requisições em andamento; histórico próprio pode ser aberto na janela principal.
+- Conversa rápida persistente e contexto de 30–80 palavras enviado à IA, sem corte posterior. Projeto ativo exige opção explícita e mantém políticas de leitura/seleção; histórico rápido é separado por escopo para evitar mistura de projetos/perguntas gerais.
+- Temporizador configurável de 200 ppm, 5–30 segundos iniciais, com pausa por hover, seleção, cópia, fixação e áudio; geração em andamento não é ocultada automaticamente.
+- Bandeja com abertura da principal/Quick Chat e encerramento explícito. X mantém na bandeja por padrão, com opção de encerrar; ausência de bandeja utiliza encerramento seguro. O iniciador continua ativo enquanto o Electron estiver ativo.
+- Voz rápida opcional, respeitando preferência global e excluindo reprodução simultânea entre janelas. IPC separado por papel, preload isolado, origem validada e credenciais restritas ao processo principal.
+- O iniciador verifica também a versão do backend para evitar reutilizar um processo antigo sem os endpoints do Quick Chat.
+- Catálogo/base existentes preservados sem reinicialização ou alteração de schema; a conversa usa o banco geral e configurações próprias em dados internos.
+- Verificação: 93 testes Python (78 backend + 15 iniciador), 39 testes Node e dois testes reais do Electron. Capturas revisadas; principal minimizada, posição, painel acima, timers, IPC, contexto, falhas, áudio simulado e encerramento verificados.
+- Limites: API/som reais, arraste humano, múltiplos monitores físicos com DPI misto e jogos exclusivos não verificados de ponta a ponta. O Windows pode impedir sobreposição em tela cheia exclusiva/protegida.
+
 ## 0.7.0 — 2026-10-20
 
 - `start.py` na raiz inicia FastAPI com o interpretador Python atual, aguarda `/health`, compila a interface com dependências existentes e abre o Electron, sem instalar pacotes ou depender do diretório corrente.

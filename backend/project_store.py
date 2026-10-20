@@ -135,6 +135,19 @@ class ProjectStore:
     def db_path(self, project_id=None):
         return self.project_dir(project_id) / 'project.db' if project_id else self.root / 'general' / 'project.db'
 
+    def quick_chat(self,create=True):
+        with database(self.registry) as con:
+            row=con.execute("SELECT value FROM settings WHERE key='quick_chat'").fetchone()
+            existing=con.execute('SELECT * FROM chats WHERE id=?',(row['value'],)).fetchone() if row else None
+        if existing:
+            if existing['archived'] and create:self.change_chat(existing['id'],archived=False)
+            return existing['id']
+        if not create:return None
+        chat=self.create_chat(None,'JARVIS Quick Chat')
+        with database(self.registry) as con:
+            con.execute("INSERT OR REPLACE INTO settings VALUES('quick_chat',?)",(chat['id'],))
+        return chat['id']
+
     def general_chat(self):
         with database(self.registry) as con:
             return con.execute("SELECT value FROM settings WHERE key='general_chat'").fetchone()['value']
@@ -295,19 +308,19 @@ class ProjectStore:
         self.mirror_chat(result)
         return result
 
-    def history(self, chat_id, limit=100, before=None, for_model=False):
+    def history(self, chat_id, limit=100, before=None, for_model=False,context_scope=None):
         chat = self.chat(chat_id, allow_archived=True)
-        revision=self.scope(chat['project_id'])['revision'] if chat['project_id'] and for_model else None
+        revision=context_scope if context_scope is not None else (self.scope(chat['project_id'])['revision'] if chat['project_id'] and for_model else None)
         with database(self.db_path(chat['project_id'])) as con:
             rows = con.execute('SELECT id,role,content,created_at FROM messages WHERE chat_id=? AND id<?'+
                                (' AND scope_revision=?' if revision is not None else '')+' ORDER BY id DESC LIMIT ?',
                                (chat_id, before or 9223372036854775807,*((revision,) if revision is not None else ()),min(limit,100))).fetchall()
         return [dict(row) for row in reversed(rows)]
 
-    def append(self, chat_id, role, content):
+    def append(self, chat_id, role, content,context_scope=None):
         chat = self.chat(chat_id)
         with database(self.db_path(chat['project_id'])) as con:
-            revision=self.scope(chat['project_id'])['revision'] if chat['project_id'] else ''
+            revision=context_scope if context_scope is not None else (self.scope(chat['project_id'])['revision'] if chat['project_id'] else '')
             con.execute('INSERT INTO messages(chat_id,role,content,created_at,scope_revision) VALUES(?,?,?,?,?)', (chat_id, role, redact(content), now(),revision))
         summary = (chat['summary'] + '\n' + role + ': ' + memory_summary(content,500))[-3000:]
         with database(self.registry) as con:

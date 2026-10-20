@@ -11,6 +11,10 @@ const project={id:projectId,name:'iPet',path:'C:\\Fixtures\\iPet',ready:1,state:
 const chats=[{id:firstId,project_id:projectId,title:'Investigando a autenticação',archived:0},{id:secondId,project_id:projectId,title:'Melhorias no feed',archived:0},{id:generalId,project_id:null,title:'Ideias para a semana',archived:0}];
 const reply='## Uma sessão segura começa no backend\n\nO fluxo de autenticação deve validar o token antes de carregar os dados do usuário.\n\n1. Confira a validade da sessão.\n2. Trate a resposta de acesso negado.\n\n| Camada | Responsabilidade |\n| --- | --- |\n| Backend | Validar sessão e permissões |\n| Frontend | Exibir estado de autenticação |\n\n```ts\nexport async function getCurrentUser() {\n  const response = await fetch("/api/me");\n  if (!response.ok) throw new Error("Sessão inválida");\n  return response.json();\n}\n```\n\n**Hipótese:** investigue o tratamento de expiração no arquivo `backend/index.ts:2`. Aplique o exemplo manualmente. Nenhum arquivo foi alterado.';
 const timer=setTimeout(()=>{console.error('Tempo de teste excedido');app.exit(1);},45000);
+ipcMain.handle('jarvis:voice-preference',()=>{});
+ipcMain.handle('jarvis:audio-claim',()=>{});
+ipcMain.handle('jarvis:quick-settings',()=>({opacity:.82,wpm:200,minSeconds:5,maxSeconds:30,voice:false,closeToTray:true}));
+ipcMain.handle('jarvis:quick-configure',(_,value)=>value);
 ipcMain.handle('jarvis:copy-code',(_,text)=>{copied=text;return true;});
 ipcMain.handle('jarvis:open-link',()=>true);
 ipcMain.handle('jarvis:api',(_,route,options)=>{

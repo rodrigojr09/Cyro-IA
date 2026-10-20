@@ -5,17 +5,19 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { pathToFileURL } = require('node:url');
 
-function setup({ authorized = false, canceled = false, ownsInstance=true,probe=false } = {}) {
+function setup({ authorized = false, canceled = false, ownsInstance=true,probe=false,quickToTray=true } = {}) {
   const handlers = new Map();
   const requests = [];
   const copies = [];
   const dialogs = [];
   const exits=[];
-  const windowEvents=new Map(),external=[];let windowOptions,maximized=false,fullscreen=false;
+  const windowEvents=new Map(),external=[];let windowOptions,maximized=false,fullscreen=false,hidden=false,quitCalls=0,destroyCalls=0;
   const frame = { url: pathToFileURL(path.join(__dirname, 'index.html')).href };
   const contents = { mainFrame: frame, setWindowOpenHandler() {}, on(name,fn) {windowEvents.set(name,fn);} };
   class Window {
     constructor(options) { windowOptions=options;this.webContents = contents; }
+    on(name,fn){windowEvents.set(name,fn);}
+    hide(){hidden=true;}
     maximize(){maximized=true;}
     setFullScreen(value){fullscreen=value;}
     isFullScreen(){return fullscreen;}
@@ -28,13 +30,13 @@ function setup({ authorized = false, canceled = false, ownsInstance=true,probe=f
     },
     shell:{openExternal:async url=>external.push(url)},
     clipboard: { writeText: text => copies.push(text) },
-    app: { requestSingleInstanceLock:()=>ownsInstance,exit:code=>exits.push(code),disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {} },
+    app: { requestSingleInstanceLock:()=>ownsInstance,exit:code=>exits.push(code),disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {},quit(){quitCalls++;} },
     BrowserWindow: Window,
     ipcMain: { handle: (name, fn) => handlers.set(name, fn), on() {} }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8'), {
     __dirname, console, URL, process: { env: {}, argv:probe?['--jarvis-probe']:[],on() {} }, AbortSignal,
-    require: name => name === 'electron' ? electron : name === './window-state' ? {load:()=>null,save(){}} : name === 'fs/promises'
+    require: name => name === 'electron' ? electron : name === './quick-controller' ? {createQuick:()=>({getSettings:()=>({}),setSettings:v=>v,setProject(){},setMasterVoice(){},claimAudio(){},hideOnClose:()=>quickToTray,destroy(){destroyCalls++;}})} : name === './window-state' ? {load:()=>null,save(){}} : name === 'fs/promises'
       ? { readFile: async () => 'test-local-token' } : require(name),
     fetch: async (url, options) => {
       requests.push({ url, options });
@@ -42,7 +44,7 @@ function setup({ authorized = false, canceled = false, ownsInstance=true,probe=f
     }
   });
   return { invoke: handlers.get('jarvis:api'), handlers, copies, dialogs,exits,
-    event: { sender: contents, senderFrame: frame }, requests,windowEvents,external,get windowOptions(){return windowOptions;},get maximized(){return maximized;},get fullscreen(){return fullscreen;} };
+    event: { sender: contents, senderFrame: frame }, requests,windowEvents,external,get windowOptions(){return windowOptions;},get hidden(){return hidden;},get quitCalls(){return quitCalls;},get maximized(){return maximized;},get fullscreen(){return fullscreen;} };
 }
 
 test('IPC permite somente a janela principal e rotas registradas', async () => {
@@ -232,4 +234,9 @@ test('links externos exigem janela confiável, protocolo web e confirmação hum
 test('Electron bloqueia segunda instância e probe não abre janela',()=>{
  const second=setup({ownsInstance:false});assert.deepEqual(second.exits,[73]);assert.equal(second.windowOptions,undefined);
  const probe=setup({probe:true});assert.deepEqual(probe.exits,[0]);assert.equal(probe.windowOptions,undefined);
+});
+
+test('fechar principal mantém Quick Chat na bandeja ou encerra conforme preferência',()=>{
+ let prevented=false;const tray=setup();tray.windowEvents.get('close')({preventDefault(){prevented=true;}});assert.equal(prevented,true);assert.equal(tray.hidden,true);assert.equal(tray.quitCalls,0);
+ const exit=setup({quickToTray:false});exit.windowEvents.get('close')({preventDefault(){}});assert.equal(exit.quitCalls,1);
 });

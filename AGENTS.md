@@ -80,7 +80,7 @@ Na raiz do projeto, confira o estado do Git antes de editar. Para os testes atua
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m unittest -v test_jarvis test_programming test_projects test_scope
+.\.venv\Scripts\python.exe -m unittest -v test_jarvis test_programming test_projects test_scope test_quick
 ```
 
 Em `desktop`:
@@ -88,6 +88,7 @@ Em `desktop`:
 ```powershell
 npm test
 npm run test:electron
+npm run test:quick
 node --check main.js
 node --check preload.js
 node --check renderer.js
@@ -102,3 +103,5 @@ Instale as dependências de teste de `backend/requirements-dev.txt` quando neces
 O frontend desktop usa dependências locais empacotadas por `npm run build` (executado antes de start/testes). Após atualizar dependências, use `npm ci` em desktop. Preserve a moldura nativa, a persistência de janela, a sanitização do Markdown e a validação de links externos.
 
 Para o iniciador na raiz: `backend\.venv\Scripts\python.exe -m unittest -v test_start`. Preserve o uso do interpretador atual, o lock de instância e a distinção entre processos próprios e externos. Nunca encerre processos apenas por estarem usando a porta 8765.
+
+Preserve a independência das janelas do Quick Chat, o IPC por papel e o encerramento explícito pela bandeja. O X mantém na bandeja por padrão; start.py deve acompanhar a duração do processo Electron, sem encerrar o backend apenas porque a principal foi escondida. Não prometa sobreposição em jogos exclusivos quando o Windows a impedir.

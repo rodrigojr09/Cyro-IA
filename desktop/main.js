@@ -20,7 +20,7 @@ const routes = new Map([
     ['/projects/knowledge', 'GET'], ['/projects/note', 'POST'],
     ['/projects/selection', 'GET'], ['/projects/selection/save', 'POST']
 ]);
-let win;
+let win,quickController,quitting=false;
 app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.show();win.focus();}});
 function trusted(event) {
     return event.sender === win?.webContents && event.senderFrame === win.webContents.mainFrame &&
@@ -51,7 +51,7 @@ function createWindow() {
     });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', event => event.preventDefault());
-    win.on?.('close', () => windowState.save(stateFile, win));
+    win.on?.('close', event => {windowState.save(stateFile, win);if(!quitting&&quickController?.hideOnClose()){event.preventDefault();win.hide();}else if(!quitting){event.preventDefault();quitJarvis();}});
     win.webContents.on('before-input-event', (event, input) => {
         if(input.type==='keyDown' && input.key==='F11' && !input.isAutoRepeat){event.preventDefault();win.setFullScreen(!win.isFullScreen());}
     });
@@ -59,6 +59,8 @@ function createWindow() {
     if (saved?.fullscreen) win.setFullScreen?.(true);
     win.loadFile(path.join(__dirname, 'index.html'));
 }
+function showMain(chatId){if(win){if(win.isMinimized())win.restore();win.show();win.focus();if(chatId)win.webContents.send('jarvis:open-chat',chatId);}}
+function quitJarvis(){quitting=true;app.quit();}
 app.whenReady().then(() => {
     ipcMain.handle('jarvis:authorize-folder', async event => {
         if (!trusted(event)) throw new Error('Solicitação não autorizada.');
@@ -131,15 +133,22 @@ app.whenReady().then(() => {
         if (options.body !== undefined && (typeof options.body !== 'string' || options.body.length > 30000)) {
             throw new Error('Conteúdo inválido.');
         }
-        return backend(route, method, options.body);
+        const result=await backend(route, method, options.body);
+        if(baseRoute==='/workspace/view'&&result.ok)quickController?.setProject(result.data.project);
+        return result;
     });
     ipcMain.on('window:minimize', event => {if(trusted(event))win.minimize();});
     ipcMain.on('window:close', event => {if(trusted(event))win.close();});
+    ipcMain.handle('jarvis:quick-settings',event=>{if(!trusted(event))throw Error('Solicitação não autorizada.');return quickController.getSettings();});
+    ipcMain.handle('jarvis:quick-configure',(event,value)=>{if(!trusted(event))throw Error('Solicitação não autorizada.');return quickController.setSettings(value);});
+    ipcMain.handle('jarvis:voice-preference',(event,value)=>{if(!trusted(event)||typeof value!=='boolean')throw Error('Solicitação não autorizada.');quickController?.setMasterVoice(value);});
+    ipcMain.handle('jarvis:audio-claim',event=>{if(!trusted(event))throw Error('Solicitação não autorizada.');quickController?.claimAudio(event.sender);});
     createWindow();
+    quickController=require('./quick-controller').createQuick({electron:require('electron'),backend,dataDir,mainWindow:()=>win,openMain:showMain,quit:quitJarvis});
 });
 app.on('window-all-closed', () => {
     console.log("Todas as janelas foram fechadas.");
-    app.quit()
+    if(quitting)app.quit()
 });
 
 process.on("uncaughtException", (error) => {
@@ -147,6 +156,7 @@ process.on("uncaughtException", (error) => {
 });
 
 app.on("before-quit", () => {
+    quitting=true;quickController?.destroy();
     console.log("JARVIS está encerrando...");
 });
 

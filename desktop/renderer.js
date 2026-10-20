@@ -138,6 +138,7 @@ function showConfirmation(action) {
   window.jarvisUI?.scroll(true);
   messages.scrollTop = messages.scrollHeight;
 }
+window.jarvisWindow.onStopAudio?.(()=>window.jarvisUI?.stopVoice());
 window.jarvisStopAudio=()=>{if(audio){audio.pause();audio=null;}};
 async function speak(text) {
   const ui=window.jarvisUI;
@@ -152,6 +153,8 @@ async function speak(text) {
     audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
     audio.onended=()=>ui?.voiceState('');
     audio.onerror=()=>ui?.voiceState('');
+    await window.jarvisWindow.claimAudio?.();
+    if(ui&&generation!==ui.audioGeneration){audio?.pause();return;}
     const playing=audio;
     await playing.play();
     if(generation!==ui?.audioGeneration&&ui){playing.pause();return;}
@@ -230,6 +233,14 @@ document.getElementById('computer-run').onclick = async () => {
   finally { button.disabled = false; }
 };
 input.addEventListener('keydown', e => { if (e.key === 'Enter'&&!e.shiftKey&&!e.isComposing) {e.preventDefault();submit();} });
+let quickToOpen=null,quickOpenTimer;
+async function openQueuedQuick(){
+  clearTimeout(quickOpenTimer);
+  if(!quickToOpen)return;
+  try{await window.jarvisWorkspace.init();if(!window.jarvisWorkspace.canNavigate){quickOpenTimer=setTimeout(openQueuedQuick,200);return;}const id=quickToOpen;quickToOpen=null;await window.jarvisWorkspace.catalog('',id);}
+  catch{quickToOpen=null;status.textContent='Não foi possível abrir o Quick Chat. Confira o backend.';}
+}
+window.jarvisWindow.onOpenChat?.(id=>{quickToOpen=id;void openQueuedQuick();});
 (async () => {
   try {
     await api('/health');

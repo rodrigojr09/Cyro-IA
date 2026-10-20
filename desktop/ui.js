@@ -4,7 +4,7 @@ window.jarvisUI=(()=>{
   try{preferences={...preferences,...JSON.parse(localStorage.getItem('jarvis.preferences')||'{}')};}catch{}
   function persist(){try{localStorage.setItem('jarvis.preferences',JSON.stringify(preferences));}catch{}}
   function icons(){window.jarvisVendor.refreshIcons();}
-  function apply(){document.body.classList.toggle('sidebar-collapsed',!!preferences.collapsed);document.body.classList.toggle('large-text',!!preferences.largeText);$('sidebar-toggle').setAttribute('aria-expanded',String(!preferences.collapsed));$('voice-toggle').setAttribute('aria-pressed',String(preferences.voice));$('voice-toggle').querySelector('span').textContent=preferences.voice?'Voz ativa':'Voz desativada';persist();}
+  function apply(){window.jarvisWindow.voicePreference?.(!!preferences.voice).catch(()=>{});document.body.classList.toggle('sidebar-collapsed',!!preferences.collapsed);document.body.classList.toggle('large-text',!!preferences.largeText);$('sidebar-toggle').setAttribute('aria-expanded',String(!preferences.collapsed));$('voice-toggle').setAttribute('aria-pressed',String(preferences.voice));$('voice-toggle').querySelector('span').textContent=preferences.voice?'Voz ativa':'Voz desativada';persist();}
   function copy(button,text){button.onclick=async()=>{try{await window.jarvisWindow.copyCode(text);button.textContent='Copiado';}catch{button.textContent='Falha ao copiar';}};}
   function render(el,text){
     el.classList.add('markdown');
@@ -39,11 +39,17 @@ window.jarvisUI=(()=>{
     'Inteligência artificial':()=>'<h3>Inteligência artificial</h3><p>A conexão e os modelos são configurados no backend. Chaves de API nunca são exibidas aqui.</p><p>O chat usa contexto progressivo. A seleção local de fontes não consome tokens; análise e respostas utilizam a API.</p>',
     'Projetos':()=>'<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
     'Memória':()=>'<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button>',
-    'Aplicativo':()=>'<h3>Aplicativo</h3><p>JARVIS · 0.7.0</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>'
+    'Quick Chat':()=>'<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="55" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><label><input id="quick-tray" type="checkbox">Ao fechar a janela principal, manter na bandeja</label><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
+    'Aplicativo':()=>'<h3>Aplicativo</h3><p>JARVIS · 0.8.0</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>'
   };
   function category(name){
     $('settings-content').innerHTML=settings[name]();
     for(const button of $('settings-tabs').children)button.classList.toggle('active',button.textContent===name);
+    if(name==='Quick Chat'&&window.jarvisWindow.quickSettings){
+      const container=$('settings-content');
+      window.jarvisWindow.quickSettings().then(value=>{if(!container.querySelector('#quick-save'))return;$('quick-opacity').value=Math.round(value.opacity*100);$('quick-wpm').value=value.wpm;$('quick-min').value=value.minSeconds;$('quick-max').value=value.maxSeconds;$('quick-voice').checked=value.voice;$('quick-tray').checked=value.closeToTray;}).catch(()=>{if($('quick-config-status'))$('quick-config-status').textContent='Não foi possível carregar as preferências.';});
+      $('quick-save').onclick=async()=>{try{await window.jarvisWindow.configureQuick({opacity:Number($('quick-opacity').value)/100,wpm:Number($('quick-wpm').value),minSeconds:Number($('quick-min').value),maxSeconds:Number($('quick-max').value),voice:$('quick-voice').checked,closeToTray:$('quick-tray').checked});$('quick-config-status').textContent='Preferências salvas.';}catch{if($('quick-config-status'))$('quick-config-status').textContent='Confira os valores e tente novamente.';}};
+    }
     const bind=(id,fn)=>{if($(id))$(id).onclick=fn;};
     if($('setting-large')){$('setting-large').checked=preferences.largeText;bind('setting-large',()=>{preferences.largeText=$('setting-large').checked;apply();});}
     if($('setting-voice')){$('setting-voice').checked=preferences.voice;bind('setting-voice',toggleVoice);}

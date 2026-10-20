@@ -1,16 +1,17 @@
 {
   "name": "jarvis-desktop",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test security.test.js workspace.test.js scope.test.js ui.test.js",
+    "test": "node --test security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js",
     "test:electron": "electron smoke.cjs",
     "build": "node build.cjs",
     "prestart": "npm run build",
     "pretest": "npm run build",
-    "pretest:electron": "npm run build"
+    "pretest:electron": "npm run build",
+    "test:quick": "electron quick-smoke.cjs"
   },
   "devDependencies": {
     "electron": "^44.9.0",

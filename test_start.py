@@ -118,7 +118,7 @@ class LauncherTests(unittest.TestCase):
             with start.InstanceLock(path):pass
 
     def test_health_checks_service_and_installation_on_real_local_http(self):
-        response={'ok':True,'service':'jarvis','installation':start.INSTALLATION}
+        response={'ok':True,'service':'jarvis','installation':start.INSTALLATION,'version':start.VERSION}
         class Handler(BaseHTTPRequestHandler):
             def log_message(self,*_):pass
             def do_GET(self):
@@ -197,7 +197,7 @@ class LauncherTests(unittest.TestCase):
                     "    await send({'type':'lifespan.shutdown.complete'});return\n"
                     " else:\n"
                     "  await send({'type':'http.response.start','status':200,'headers':[]})\n"
-                    "  await send({'type':'http.response.body','body':"+repr(json.dumps({'ok':True,'service':'jarvis','installation':start.INSTALLATION}).encode())+"})\n")
+                    "  await send({'type':'http.response.body','body':"+repr(json.dumps({'ok':True,'service':'jarvis','installation':start.INSTALLATION,'version':start.VERSION}).encode())+"})\n")
             (root/'main.py').write_text(source)
             with socket.socket() as listener:listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
             owned=start.OwnedProcesses()

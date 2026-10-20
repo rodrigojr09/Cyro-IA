@@ -1,6 +1,6 @@
 // Sidebar e contexto por IDs; a propriedade de cada conversa continua validada no backend.
 window.jarvisWorkspace=(()=>{
-  let project=null,chat=null,projects=[],chats=[],allChats=[],olderThan=null,loading=false,busy=false;
+  let project=null,chat=null,projects=[],chats=[],allChats=[],olderThan=null,loading=false,busy=false,initialising=null;
   const expanded=new Set(),el=id=>document.getElementById(id);
   const post=(route,body)=>api(route,{method:'POST',body:JSON.stringify(body)});
   const ui=()=>window.jarvisUI;
@@ -82,7 +82,8 @@ window.jarvisWorkspace=(()=>{
   async function poll(){try{if(!loading&&!busy){const result=await api('/workspace');projects=result.projects;allChats=result.chats||allChats;if(project){const updated=projects.find(p=>p.id===project.id);if(updated){const ready=!project.ready&&updated.ready;project=updated;if(ready&&!chat)await view(project.id);}}controls();}}catch{}finally{setTimeout(poll,2000);}}
   async function run(fn){if(busy||loading)return;try{await fn();}catch(error){addMessage('assistant','Erro: '+error.message);controls();}}
   function handler(id,fn){el(id).onclick=()=>run(fn);}
-  async function init(){
+  function init(){if(!initialising)initialising=initialize().catch(error=>{initialising=null;throw error;});return initialising;}
+  async function initialize(){
     el('legacy-roots').hidden=true;
     el('general-nav').onclick=()=>run(()=>view(''));
     el('nav-search').addEventListener('input',renderNavigation);
@@ -102,5 +103,5 @@ window.jarvisWorkspace=(()=>{
     try{await catalog(saved?.project||'',saved?.chat);}catch{await catalog('',null);}
     setTimeout(poll,2000);
   }
-  return {init,view,openChat,newChat,catalog,get project(){return project;},get chat(){return chat;},controls,begin(){busy=true;controls();},end(){busy=false;controls();}};
+  return {init,view,openChat,newChat,catalog,get canNavigate(){return !busy&&!loading;},get project(){return project;},get chat(){return chat;},controls,begin(){busy=true;controls();},end(){busy=false;controls();}};
 })();

@@ -19,6 +19,7 @@ ROOT=Path(__file__).resolve().parent
 BACKEND=ROOT/'backend'
 DESKTOP=ROOT/'desktop'
 PORT=8765
+VERSION=json.loads((DESKTOP/'package.json').read_text(encoding='utf-8'))['version']
 INSTALLATION=hashlib.sha256(os.path.normcase(str(ROOT)).encode()).hexdigest()
 
 
@@ -138,7 +139,7 @@ def healthy():
     try:
         with build_opener(ProxyHandler({}),NoRedirect()).open(f'http://127.0.0.1:{PORT}/health',timeout=.7) as response:
             data=json.loads(response.read(4096))
-            return response.status==200 and data.get('ok') is True and data.get('service')=='jarvis' and data.get('installation')==INSTALLATION
+            return response.status==200 and data.get('ok') is True and data.get('service')=='jarvis' and data.get('installation')==INSTALLATION and data.get('version')==VERSION
     except (OSError,URLError,ValueError,AttributeError):return False
 
 
@@ -192,7 +193,7 @@ def launch():
             try:code=build.wait(timeout=60)
             except subprocess.TimeoutExpired:raise LaunchError('A preparação da interface excedeu o tempo esperado.') from None
             if code:raise LaunchError('Falha ao compilar a interface. Confira as dependências desktop instaladas.')
-            say('Abrindo o Electron. Feche a janela ou pressione Ctrl+C para encerrar.')
+            say('Abrindo o Electron. Use Encerrar JARVIS na bandeja ou pressione Ctrl+C para encerrar.')
             frontend=owned.spawn([electron,DESKTOP],DESKTOP)
             while frontend.poll() is None:
                 if backend is not None and backend.poll() is not None:

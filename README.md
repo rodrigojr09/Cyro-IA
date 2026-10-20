@@ -1,4 +1,4 @@
-# JARVIS v0.7.0 — Windows
+# JARVIS v0.8.0 — Windows
 
 Assistente pessoal em Electron e FastAPI com chat, voz, controle limitado do computador e análise de projetos originais em modo **somente leitura**. Cada projeto tem sua própria memória duradoura e várias conversas independentes.
 
@@ -18,9 +18,9 @@ Também pode executar `python "C:\caminho\do\JARVIS\start.py"` a partir de qualq
 
 Para dois cliques, abra **start.bat**. Ele utiliza `backend\.venv\Scripts\python.exe` quando esse ambiente existe; caso contrário, utiliza `python` do sistema. Erros ficam visíveis com uma pausa no terminal.
 
-O iniciador verifica instâncias existentes, identifica o backend em `127.0.0.1:8765`, aguarda `/health`, prepara os arquivos da interface com as dependências locais e abre o Electron. Fechar a janela ou pressionar **Ctrl+C** encerra os processos criados por ele. Um backend externo reutilizado permanece ativo; aplicativos abertos pelas ferramentas do backend também são preservados. Mantenha o terminal aberto enquanto utiliza o JARVIS.
+O iniciador verifica instâncias existentes, identifica o backend em `127.0.0.1:8765`, aguarda `/health`, prepara os arquivos da interface com as dependências locais e abre o Electron. Por padrão, o X da janela principal mantém o JARVIS na bandeja e o Quick Chat ativo. Use **Encerrar JARVIS** no menu da bandeja ou **Ctrl+C** no terminal para finalizar os processos criados pelo iniciador. Um backend externo reutilizado permanece ativo; aplicativos abertos pelas ferramentas do backend também são preservados. Mantenha o terminal aberto enquanto utiliza o JARVIS.
 
-Uma segunda execução é bloqueada pelo sistema operacional; o Electron também tem proteção nativa, inclusive quando iniciado por `npm start`. A verificação de saúde compara a identidade da instalação, sem expor chaves ou caminhos privados. Backend antigo ou outro serviço na porta 8765 gera orientação para encerramento manual; o script nunca finaliza o ocupante da porta. Após atualizar de uma versão anterior, reinicie o backend uma vez para disponibilizar a identificação nova do `/health`.
+Uma segunda execução é bloqueada pelo sistema operacional; o Electron também tem proteção nativa, inclusive quando iniciado por `npm start`. A verificação de saúde compara a identidade e a versão da instalação, sem expor chaves ou caminhos privados. Backend antigo ou outro serviço na porta 8765 gera orientação para encerramento manual; o script nunca finaliza o ocupante da porta. Após atualizar de uma versão anterior, reinicie o backend uma vez para disponibilizar a identificação nova do `/health`.
 
 Falhas de dependências informam como corrigir a instalação uma vez. Não são executados `pip install` ou `npm install` durante a inicialização. O primeiro backend pode levar até 45 segundos para ficar pronto; falha ou timeout encerra somente os processos iniciados pelo lançador. `JARVIS_DATA_DIR`, quando utilizado, deve estar definido no ambiente do terminal para os dois processos, como na execução manual.
 
@@ -62,7 +62,7 @@ Reinicie backend e Electron após atualizar. Execute somente um backend, sem `--
 5. No botão **⋯** do cabeçalho, altere o título, arquive/restaure/exclua chats, consulte páginas anteriores do histórico, veja o IDEIA.md e solicite atualização da memória.
 6. Registre decisões, ideias, problemas ou informações no formulário próprio. Essas anotações são identificadas como fornecidas pelo usuário e preservadas nas atualizações; hipóteses da IA não viram decisões humanas automaticamente.
 7. **Remover projeto** oferece duas escolhas distintas: remover somente o cadastro, mantendo a memória para recuperar ao cadastrar a mesma pasta; ou apagar também a memória interna daquele projeto. Ambas preservam a pasta original. A exclusão de chats e o arquivamento têm confirmação nativa. A conversa geral que recebeu a migração é protegida contra exclusão, podendo ser arquivada.
-8. A janela abre maximizada no primeiro uso, com moldura nativa do Windows. Pode ser redimensionada (mínimo 800×560), minimizada e fechada normalmente. **F11** alterna tela cheia. Tamanho, posição e estados de maximização/tela cheia são salvos ao fechar; posições fora dos monitores disponíveis são descartadas. Durante uma resposta, a troca de projeto/chat e um novo envio ficam bloqueados.
+8. A janela abre maximizada no primeiro uso, com moldura nativa do Windows. Pode ser redimensionada (mínimo 800×560) e minimizada. Por padrão, o X esconde a janela na bandeja; esse comportamento pode ser alterado em Configurações → Quick Chat. **F11** alterna tela cheia. Tamanho, posição e estados de maximização/tela cheia são salvos ao fechar; posições fora dos monitores disponíveis são descartadas. Durante uma resposta, a troca de projeto/chat e um novo envio ficam bloqueados.
 
 **Conversas gerais** continuam disponíveis na barra lateral. Não recebem automaticamente conhecimento de nenhum projeto e não têm ferramentas de leitura de projetos. Os controles locais estão em **Configurações → Aplicativo → Controle do computador**, disponíveis nas conversas gerais. Chats de projeto ficam obrigatoriamente em modo de leitura.
 
@@ -79,6 +79,22 @@ O cabeçalho permite ativar/desativar a voz; o rodapé indica preparação/repro
 **Configurações** organiza Aparência, Voz, Inteligência artificial, Projetos, Memória e Aplicativo. Modelo e credenciais continuam configurados exclusivamente no backend; a interface nunca lê o `.env`. Gerenciamento de título, arquivamento, exclusão, anotações e memória fica no menu **⋯** do cabeçalho.
 
 O frontend permanece em JavaScript modular, reaproveitando a integração existente. `npm start` compila dependências locais antes de abrir: Marked, DOMPurify, Highlight.js e Lucide. Nenhuma CDN é utilizada. Execute `npm ci` ao atualizar para instalar as novas dependências, incluindo as de desenvolvimento para a compilação.
+
+## JARVIS Quick Chat
+
+Enquanto o JARVIS estiver em execução, um ícone circular de 56 px permanece sobre as janelas, independente da principal. Clique para abrir o campo, arraste para reposicionar e clique novamente ou use **Escape** para recolher. A posição é salva em `quick-state.json`, na pasta interna de dados. Mudanças de monitores recolocam o ícone dentro da área útil; o campo prefere a esquerda e troca de lado quando não há espaço. O campo e a resposta usam superfícies escuras semitransparentes (82% e 86%), com texto opaco para legibilidade. A resposta é posicionada acima do campo, com rolagem para conteúdo longo. Não há uma janela transparente grande sobre a área de trabalho: as três superfícies são independentes e o ícone tem região circular de interação e os painéis têm cantos recortados no Windows; áreas externas não capturam cliques.
+
+**Enter** envia; **Shift+Enter** quebra linha. Perguntas e respostas usam uma conversa própria chamada **JARVIS Quick Chat**, disponível nas conversas gerais. **Abrir conversa** restaura a janela principal e abre esse histórico. Recolher o campo não cancela uma requisição em andamento. O rascunho é mantido localmente; perguntas aceitas para geração ficam no histórico mesmo se a API falhar. Falha de conexão mantém o texto para nova tentativa manual, sem repetição automática ou cobrança automática adicional.
+
+Para consultar código ou memória, selecione um projeto na principal e marque **Usar [projeto]** no campo rápido. O backend valida o cadastro, a seleção de fontes e o estado da análise. Nenhum histórico dos chats do projeto é copiado para a conversa rápida. Perguntas gerais, projetos diferentes e seleções de fontes diferentes recebem históricos de contexto separados, embora o histórico completo continue visível na conversa rápida. As ferramentas deste modo são exclusivamente de leitura; aberturas do computador continuam disponíveis na interface principal com confirmação humana.
+
+A IA recebe instrução específica para respostas diretas, preferencialmente de 30–80 palavras, com exceções para precisão, completude e alertas. A resposta não é cortada após a geração. O tempo visual segue `palavras / 200 × 60 + 3`, inicialmente entre **5 e 30 segundos**. Mouse sobre a resposta, seleção, cópia, fixação e preparação/reprodução de áudio pausam o relógio. É possível fixar/desafixar ou fechar manualmente. Uma nova resposta reinicia a contagem; o temporizador nunca oculta uma geração em andamento.
+
+Em **Configurações → Quick Chat**, ajuste a opacidade dos painéis (55–95%), palavras por minuto (80–600), tempos mínimo/máximo (limites de 3–120 segundos), voz e comportamento do X. A voz rápida vem desativada e também respeita o interruptor global da principal. A reprodução é coordenada entre janelas para evitar falas simultâneas; o painel oferece **Parar voz**. Fechar a resposta interrompe sua fala.
+
+A bandeja oferece **Abrir JARVIS**, **Quick Chat** e **Encerrar JARVIS**. Minimizar ou esconder a principal não abre outra janela principal nem encerra o backend. Encerrar pela bandeja fecha as janelas auxiliares e permite ao `start.py` finalizar seus processos. Se a bandeja estiver indisponível, o X encerra o aplicativo para evitar uma execução escondida sem acesso ao encerramento.
+
+Janelas sempre no topo funcionam conforme as regras do Windows; não há promessa de sobreposição sobre jogos em tela cheia exclusiva ou telas protegidas. Coordenadas de múltiplos monitores têm testes com monitores virtuais; múltiplos monitores físicos, escala DPI mista, arraste humano e jogos exclusivos ainda exigem validação manual.
 
 ## Seleção de fontes e economia de tokens
 
@@ -191,6 +207,8 @@ Electron → preload isolado → ponte autenticada → FastAPI → memória do p
 | `desktop/index.html` / `app.css` | Layout desktop, sidebar, compositor e diálogos responsivos. |
 | `desktop/ui.js` / `vendor-entry.js` | Markdown sanitizado, código, ícones, configurações, rolagem e indicadores. |
 | `desktop/renderer.js` | Chat, áudio, confirmação humana e controles do computador. |
+| `desktop/quick-controller.js` / `quick-core.js` | Janelas independentes, bandeja, IPC, posição por monitor, configurações, temporizador e coordenação de áudio. |
+| `desktop/quick.html` / `quick-renderer.js` | Ícone, campo, resposta, seleção de texto e rascunho local do Quick Chat. |
 | `desktop/window-state.js` | Validação e persistência das dimensões/estados da janela. |
 
 Ferramentas de programação: `list_projects`, `select_project`, `list_directory`, `read_file`, `search_files`, `search_code`, `get_project_structure`, `analyze_project`, `get_file_context` e `read_knowledge`. Em chats cadastrados, listar/selecionar/analisar reutiliza somente o projeto daquele chat; mudar de projeto exige a interface. `read_knowledge` acessa apenas documentos internos previstos, sem caminho arbitrário.
@@ -220,13 +238,14 @@ Os testes do iniciador cobrem ordem de inicialização, reutilização, dependê
 cd backend
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.txt
-python -m unittest -v test_jarvis test_programming test_projects test_scope
+python -m unittest -v test_jarvis test_programming test_projects test_scope test_quick
 ```
 
 ```powershell
 cd desktop
 npm test
 npm run test:electron
+npm run test:quick
 node --check main.js
 node --check preload.js
 node --check renderer.js
@@ -234,12 +253,18 @@ node --check workspace.js
 node --check scope.js
 node --check ui.js
 node --check window-state.js
+node --check quick-controller.js
+node --check quick-renderer.js
+node --check quick-preload.js
+node --check quick-core.js
 node --check smoke.cjs
 ```
 
-Validação da v0.7.0: **87 testes Python (72 backend + 15 iniciador), 28 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
+Validação da v0.8.0: **93 testes Python (78 backend + 15 iniciador), 39 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
 
 OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, sidebar, vários chats, Markdown, configurações, redimensionamento e dados fictícios. Maximização/F11 e validação/persistência da janela têm testes automatizados de lógica; interação nativa humana e restauração visual em diferentes monitores precisam de validação manual. Não utiliza a área de transferência real. Captura temporária: `jarvis-v06-home.png`, `jarvis-v06-chat.png` e `jarvis-v06-settings.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
+
+O teste real do Quick Chat verifica a principal minimizada, ícone independente, envio/recepção simulados, resposta acima do campo, hover/fixação/tempo, posição restaurada, janela Electron em tela cheia comum e encerramento de todas as janelas. Capturas adicionais: `jarvis-v08-quick-response.png` e `jarvis-v08-quick-input.png`.
 
 Chamadas reais à OpenAI, reprodução sonora e interação humana com os diálogos nativos não foram verificadas de ponta a ponta. O ambiente emite aviso de depreciação de TestClient/httpx, sem falha na suíte.
 
