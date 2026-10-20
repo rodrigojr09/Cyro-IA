@@ -9,6 +9,8 @@ function render(state){
  current=state;
  document.documentElement.style.setProperty('--quick-opacity',String(state.config.opacity));
  if(role==='composer'){
+  $('quick-voice-toggle').textContent=!state.masterVoice?'Voz global desligada':state.config.voice?'Voz ativa':'Voz desligada';
+  $('quick-voice-toggle').setAttribute('aria-pressed',String(state.config.voice));
   $('send').disabled=state.busy;$('question').disabled=state.busy;
   $('use-project').disabled=state.busy||!state.project;
   if(!state.project)$('use-project').checked=false;
@@ -18,10 +20,13 @@ function render(state){
  if(role==='response'){
   const text=state.busy?'Preparando uma resposta curta...':(state.answer||state.error);
   if($('answer').textContent!==text){$('answer').textContent=text;requestAnimationFrame(()=>{const article=$('answer');article.style.flex='none';const natural=article.scrollHeight;article.style.flex='';call(window.quick.resize(Math.max(130,Math.min(400,natural+110))));});}
-  $('response').classList.toggle('busy',state.busy);$('response').classList.toggle('error',!!state.error);
-  $('result-status').textContent=state.voicing?'Preparando ou reproduzindo voz':state.error?'Verifique a conexão':state.usedProject?'Contexto: '+state.usedProject:'Conversa rápida';
+  $('response').classList.toggle('busy',state.busy);$('response').classList.toggle('error',!!state.error&&!state.answer);
+  $('result-status').textContent=state.voicing?'Preparando ou reproduzindo voz':state.error?(state.answer?'Voz indisponível':'Falha na resposta'):state.usedProject?'Contexto: '+state.usedProject:'Conversa rápida';
+  $('result-status').title=state.error||'';
   $('remaining').textContent=state.busy?'Em andamento':state.pinned?'Fixada':state.voicing?'Áudio ativo':state.hovered?'Pausado':state.remaining+'s';
   $('pin').setAttribute('aria-pressed',String(state.pinned));$('pin').textContent=state.pinned?'Desafixar':'Fixar';
+  $('listen').disabled=state.busy||!state.answer||!state.masterVoice;
+  $('listen').title=state.masterVoice?'Ouvir resposta':'Ative a voz na janela principal';
   $('copy').disabled=state.busy||!state.answer;$('stop-audio').hidden=!state.voicing;
  }
 }
@@ -40,6 +45,7 @@ if(role==='composer'){
  try{$('question').value=localStorage.getItem('jarvis.quick.draft')||'';}catch{}
  $('question').oninput=()=>{try{localStorage.setItem('jarvis.quick.draft',$('question').value);}catch{}};
  async function submit(){const text=$('question').value.trim();if(!text||current.busy)return;$('send').disabled=true;try{const result=await window.quick.send(text,$('use-project').checked);if(result.ok){$('question').value='';try{localStorage.removeItem('jarvis.quick.draft');}catch{}}}catch{$('question').value=text;}finally{$('send').disabled=false;}}
+ $('quick-voice-toggle').onclick=()=>call(window.quick.voice(!current.config.voice));
  $('send').onclick=submit;
  $('question').onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();void submit();}if(event.key==='Escape')call(window.quick.collapse());};
  $('collapse').onclick=()=>call(window.quick.collapse());
@@ -48,8 +54,9 @@ if(role==='composer'){
 if(role==='response'){
  document.addEventListener('selectionchange',()=>call(window.quick.pause('selection',!!window.getSelection()?.toString())));
  document.addEventListener('copy',()=>{call(window.quick.pause('copy',true));clearTimeout(copyTimer);copyTimer=setTimeout(()=>call(window.quick.pause('copy',false)),2000);});
+ $('listen').onclick=async()=>{await window.quick.voice(true);call(window.quick.speak());};
  $('pin').onclick=()=>call(window.quick.pin(!current.pinned));$('close-response').onclick=()=>call(window.quick.hide());
  $('copy').onclick=()=>call(window.quick.copy());$('open-main').onclick=()=>call(window.quick.openMain());$('stop-audio').onclick=()=>call(window.quick.stop());
  document.addEventListener('keydown',event=>{if(event.key==='Escape')call(window.quick.hide());});
- window.quick.onAudio(async payload=>{stopAudio();audio=new Audio('data:audio/mp3;base64,'+payload.data);audio.onended=()=>call(window.quick.stop());audio.onerror=()=>call(window.quick.stop());try{await audio.play();}catch{call(window.quick.stop());}});
+ window.quick.onAudio(async payload=>{stopAudio();const playing=new Audio('data:audio/mp3;base64,'+payload.data);audio=playing;playing.onended=()=>call(window.quick.audioEnded(payload.epoch));playing.onerror=()=>call(window.quick.audioFailed(payload.epoch));try{await playing.play();}catch{call(window.quick.audioFailed(payload.epoch));}});
 }

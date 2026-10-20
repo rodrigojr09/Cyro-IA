@@ -2,6 +2,7 @@ const {contextBridge,ipcRenderer}=require('electron');
 const invoke=(name,...args)=>ipcRenderer.invoke('quick:'+name,...args);
 contextBridge.exposeInMainWorld('quick',{
  toggle:()=>invoke('toggle'),move:(x,y,save)=>invoke('move',x,y,save),send:(message,useProject)=>invoke('send',message,useProject),state:()=>invoke('state'),openMain:()=>invoke('open-main'),resize:height=>invoke('resize',height),pause:(reason,value)=>invoke('pause',reason,value),pin:value=>invoke('pin',value),hide:()=>invoke('hide'),collapse:()=>invoke('collapse'),copy:()=>invoke('copy'),speak:()=>invoke('speak'),stop:()=>invoke('stop'),claim:()=>invoke('claim'),
+ voice:value=>invoke('voice',value),audioFailed:epoch=>invoke('audio-failed',epoch),audioEnded:epoch=>invoke('audio-ended',epoch),
  onAudio:callback=>ipcRenderer.on('quick:audio',(_,data)=>callback(data)),
  onState:callback=>ipcRenderer.on('quick:state',(_,data)=>callback(data)),onFocus:callback=>ipcRenderer.on('quick:focus',()=>callback()),onStopAudio:callback=>ipcRenderer.on('jarvis:stop-audio',()=>callback())
 });

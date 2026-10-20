@@ -17,7 +17,9 @@ function fixture(directory,backend){
  class Tray{setToolTip(){}setContextMenu(menu){this.menu=menu;}on(){}destroy(){this.destroyed=true;}}
  const screen=new EventEmitter();screen.displays=[{id:1,workArea:{x:0,y:0,width:1280,height:800}},{id:2,workArea:{x:-1280,y:0,width:1280,height:800}}];screen.getAllDisplays=()=>screen.displays;screen.getPrimaryDisplay=()=>screen.displays[0];
  const main=new Window({});main.minimized=true;
+ const fresh=!fs.existsSync(path.join(directory,'quick-state.json'));
  const controller=createQuick({electron:{BrowserWindow:Window,screen,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),removeHandler:name=>handlers.delete(name)},Tray,Menu:{buildFromTemplate:x=>x},nativeImage:{createFromBitmap:()=>({})},clipboard:{writeText(){}}},backend:async(...args)=>{requests.push(args);return backend?backend(...args):{ok:true,data:args[0]==='/quick/session'?{chat_id:'quick-id'}:args[0]==='/speak'?{audio_base64:'bXAz'}:{reply:'Resposta curta de teste.'}};},dataDir:directory,mainWindow:()=>main,openMain:id=>opened.push(id),quit:()=>quit++,now:()=>now,schedule:fn=>{tick=fn;return 1;},cancel:()=>{}});
+ if(fresh)controller.setSettings({voice:false});
  const invoke=(role,name,...args)=>{const webContents=controller.windows[role].webContents;return handlers.get('quick:'+name)({sender:webContents,senderFrame:webContents.mainFrame},...args);};
  return {controller,invoke,handlers,requests,main,screen,opened,advance(ms){now+=ms;tick();}};
 }
@@ -84,4 +86,17 @@ test('abrir o ícone mostra só o compositor, preserva histórico e pausa ao pas
  await f.invoke('composer','send','Uma pergunta',false);assert.equal(f.controller.windows.response.visible,true);
  f.invoke('composer','pause','hover',true);f.advance(50000);assert.equal(f.controller.windows.response.visible,true);assert.equal(f.invoke('orb','state').hovered,true);
  f.invoke('composer','collapse');const calls=f.requests.length;f.invoke('orb','toggle');assert.equal(f.requests.length,calls);assert.equal(f.controller.windows.composer.visible,true);assert.equal(f.controller.windows.response.visible,false);assert.equal(f.invoke('orb','state').answer,'Resposta curta de teste.');
+}));
+
+test('falha de reprodução fica visível, permite tentar novamente e ignora eventos antigos',temporary(async f=>{
+ f.invoke('orb','toggle');await f.invoke('composer','send','Resumo',false);f.invoke('composer','voice',true);await f.invoke('response','speak');
+ const first=f.controller.windows.response.webContents.events.filter(e=>e.name==='quick:audio').at(-1).data.epoch;
+ f.invoke('response','audio-failed',first);assert.match(f.invoke('orb','state').error,/reproduzir/);assert.equal(f.invoke('orb','state').voicing,false);
+ await f.invoke('response','speak');const second=f.controller.windows.response.webContents.events.filter(e=>e.name==='quick:audio').at(-1).data.epoch;
+ f.invoke('response','audio-ended',first);assert.equal(f.invoke('orb','state').voicing,true);f.invoke('response','audio-ended',second);assert.equal(f.invoke('orb','state').voicing,false);
+}));
+test('atualização ativa voz rápida uma vez e respeita desativação posterior',temporary(async(f,dir)=>{
+ f.controller.destroy();const file=path.join(dir,'quick-state.json');const saved=JSON.parse(fs.readFileSync(file));delete saved.voicePreferenceVersion;saved.settings.voice=false;fs.writeFileSync(file,JSON.stringify(saved));
+ const migrated=fixture(dir);try{assert.equal(migrated.controller.getSettings().voice,true);migrated.invoke('composer','voice',false);}finally{migrated.controller.destroy();}
+ const restarted=fixture(dir);try{assert.equal(restarted.controller.getSettings().voice,false);}finally{restarted.controller.destroy();}
 }));

@@ -1,7 +1,7 @@
 // Geometria em DIP, limites de leitura e relógio pausável, compartilhados com os testes.
 (function(root){
  const ICON_SIZE=42;
- const defaults={wpm:200,minSeconds:5,maxSeconds:30,voice:false,closeToTray:true,opacity:.62};
+ const defaults={wpm:200,minSeconds:5,maxSeconds:30,voice:true,closeToTray:true,opacity:.62};
  function settings(value={}){
   if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Configuração inválida.');
   if(Object.keys(value).some(k=>!Object.hasOwn(defaults,k)))throw Error('Configuração desconhecida.');

@@ -9,16 +9,16 @@ function createQuick({electron,backend,dataDir,mainWindow,openMain,quit,now=()=>
  const file=path.join(dataDir,'quick-state.json'),url=pathToFileURL(path.join(__dirname,'quick.html')).href;
  let config={...core.defaults},position=null,masterVoice=true,expanded=false,answerVisible=false,busy=false,pinned=false,answer='',question='',error='',project=null,usedProject=null,voiceEpoch=0,voicing=false,disposed=false,responseHeight=230;
  const windows={},shapeSizes={},clock=new core.Clock(now);
- try{if(!fs.lstatSync(file).isSymbolicLink()){const saved=JSON.parse(fs.readFileSync(file,'utf8'));config=core.settings(saved.settings);if(!saved.appearanceVersion&&config.opacity===.82)config.opacity=core.defaults.opacity;if(Number.isFinite(saved.position?.x)&&Number.isFinite(saved.position?.y))position=saved.position;}}catch{}
- function persist(){const temporary=file+'.'+randomUUID()+'.tmp';try{fs.mkdirSync(dataDir,{recursive:true});fs.writeFileSync(temporary,JSON.stringify({appearanceVersion:1,settings:config,position}),{flag:'wx'});fs.renameSync(temporary,file);}catch{try{fs.unlinkSync(temporary);}catch{}}}
+ try{if(!fs.lstatSync(file).isSymbolicLink()){const saved=JSON.parse(fs.readFileSync(file,'utf8'));config=core.settings(saved.settings);if(!saved.voicePreferenceVersion)config.voice=true;if(!saved.appearanceVersion&&config.opacity===.82)config.opacity=core.defaults.opacity;if(Number.isFinite(saved.position?.x)&&Number.isFinite(saved.position?.y))position=saved.position;}}catch{}
+ function persist(){const temporary=file+'.'+randomUUID()+'.tmp';try{fs.mkdirSync(dataDir,{recursive:true});fs.writeFileSync(temporary,JSON.stringify({appearanceVersion:1,voicePreferenceVersion:1,settings:config,position}),{flag:'wx'});fs.renameSync(temporary,file);}catch{try{fs.unlinkSync(temporary);}catch{}}}
  function display(){return core.nearest(position,screen.getAllDisplays());}
  const primary=screen.getPrimaryDisplay().workArea;
  position=position||{x:primary.x+primary.width-80,y:primary.y+Math.round(primary.height*.6)};
  position=core.clamp(position,display().workArea);
- function state(){return {config,expanded,answerVisible,busy,pinned,answer,question,error,project:project?{id:project.id,name:project.name}:null,usedProject,voicing,hovered:[...clock.reasons].some(reason=>reason.startsWith('hover:')),remaining:Math.ceil(clock.tick()/1000)};}
+ function state(){return {config,expanded,answerVisible,busy,pinned,answer,question,error,project:project?{id:project.id,name:project.name}:null,usedProject,voicing,masterVoice,hovered:[...clock.reasons].some(reason=>reason.startsWith('hover:')),remaining:Math.ceil(clock.tick()/1000)};}
  function publish(){const value=state();for(const window of Object.values(windows))if(!window.isDestroyed())window.webContents.send('quick:state',value);}
  function safeWindow(kind,width,height){
-  const window=new BrowserWindow({width,height,show:false,frame:false,transparent:true,backgroundColor:'#00000000',alwaysOnTop:true,skipTaskbar:true,resizable:false,minimizable:false,maximizable:false,fullscreenable:false,hasShadow:kind!=='orb',focusable:kind!=='orb',webPreferences:{preload:path.join(__dirname,'quick-preload.js'),sandbox:true,contextIsolation:true,nodeIntegration:false}});
+  const window=new BrowserWindow({width,height,show:false,frame:false,transparent:true,backgroundColor:'#00000000',alwaysOnTop:true,skipTaskbar:true,resizable:false,minimizable:false,maximizable:false,fullscreenable:false,hasShadow:kind!=='orb',focusable:kind!=='orb',webPreferences:{preload:path.join(__dirname,'quick-preload.js'),sandbox:true,contextIsolation:true,nodeIntegration:false,autoplayPolicy:'no-user-gesture-required'}});
   window.setAlwaysOnTop(true,'floating');window.setVisibleOnAllWorkspaces(true,{visibleOnFullScreen:true});
   window.webContents.setWindowOpenHandler(()=>({action:'deny'}));window.webContents.on('will-navigate',event=>event.preventDefault());
   window.loadFile(path.join(__dirname,'quick.html'),{query:{panel:kind}});
@@ -43,10 +43,10 @@ function createQuick({electron,backend,dataDir,mainWindow,openMain,quit,now=()=>
  function claimAudio(owner){if(owner!==windows.response.webContents)stopVoice();for(const window of [mainWindow(),...Object.values(windows)])if(window&&!window.isDestroyed()&&window.webContents!==owner)window.webContents.send('jarvis:stop-audio');}
  async function speak(){
   if(!config.voice||!masterVoice||!answer||!answerVisible)return;
-  stopVoice();const epoch=voiceEpoch;voicing=true;clock.pause('audio',true);publish();
+  error='';stopVoice();const epoch=voiceEpoch;voicing=true;clock.pause('audio',true);publish();
   try{const result=await backend('/speak','POST',JSON.stringify({message:answer.replace(/```[\s\S]*?```/g,' O exemplo está na conversa completa. ').slice(0,4000)}));
    if(epoch!==voiceEpoch||!masterVoice||!config.voice||!answerVisible)return;
-   if(!result.ok)throw Error('Não foi possível gerar o áudio.');
+   if(!result.ok||typeof result.data?.audio_base64!=='string'||!result.data.audio_base64)throw Error('Não foi possível gerar o áudio.');
    claimAudio(windows.response.webContents);windows.response.webContents.send('quick:audio',{data:result.data.audio_base64,epoch});
   }catch{if(epoch===voiceEpoch){stopVoice();error='Áudio indisponível; a resposta continua disponível.';publish();}}
  }
@@ -63,7 +63,7 @@ function createQuick({electron,backend,dataDir,mainWindow,openMain,quit,now=()=>
    if(config.voice&&masterVoice&&expanded)void speak();return {ok:true};
   }catch{if(disposed)return {ok:false};busy=false;error='Não foi possível obter a resposta. Confira o backend e tente novamente. Sua pergunta foi mantida.';clock.pause('busy',false);clock.reset(config.maxSeconds*1000);if(expanded)showAnswer();publish();return {ok:false};}
  }
- const permissions={orb:['toggle','move','state','pause'],composer:['send','state','collapse','pause'],response:['state','resize','pause','pin','hide','copy','open-main','speak','stop','claim']};
+ const permissions={orb:['toggle','move','state','pause'],composer:['send','state','collapse','pause','voice'],response:['state','resize','pause','pin','hide','copy','open-main','speak','stop','claim','voice','audio-failed','audio-ended']};
  function trusted(event,action){const role=Object.keys(windows).find(key=>event.sender===windows[key].webContents&&event.senderFrame===windows[key].webContents.mainFrame&&event.senderFrame.url===url+'?panel='+key);return role&&permissions[role].includes(action)?role:null;}
  const actions={
   state:()=>state(),toggle,collapse,hide,send,
@@ -73,6 +73,9 @@ function createQuick({electron,backend,dataDir,mainWindow,openMain,quit,now=()=>
   pin:value=>{if(typeof value!=='boolean')throw Error('Fixação inválida.');pinned=value;clock.pause('pin',value);publish();},
   copy:()=>{clock.pause('copy',true);clipboard.writeText(answer);setTimeout(()=>{clock.pause('copy',false);publish();},2000);},
   'open-main':async()=>{const result=await backend('/quick/session','GET');if(!result.ok)throw Error('Backend indisponível.');openMain(result.data.chat_id);},
+  voice:value=>{if(typeof value!=='boolean')throw Error('Preferência inválida.');config.voice=value;if(!value)stopVoice();persist();publish();},
+  'audio-failed':epoch=>{if(epoch!==voiceEpoch||!voicing)return;stopVoice();error='Não foi possível reproduzir a voz. Use Ouvir para tentar novamente.';publish();},
+  'audio-ended':epoch=>{if(epoch===voiceEpoch)stopVoice();},
   speak,stop:stopVoice,claim:()=>claimAudio(windows.response.webContents)
  };
  for(const [action,callback] of Object.entries(actions))ipcMain.handle('quick:'+action,(event,...args)=>{const role=trusted(event,action);if(!role)throw Error('Solicitação não autorizada.');if(action==='pause'&&args[0]==='hover')args[0]='hover:'+role;return callback(...args);});

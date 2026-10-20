@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.3 — 2026-10-20
+
+- Corrigido o campo de entrada do Quick Chat: 12 px de padding horizontal, borda/foco que não invadem o texto e layout flexível para preservar os caracteres e os controles.
+- Voz rápida ativada por padrão e na primeira atualização para esta versão, respeitando a voz global. Desativação posterior continua persistida. Botão de voz no compositor e ação Ouvir na resposta.
+- Reprodução automática autorizada nas janelas auxiliares; erros de reprodução deixam de ser silenciosos e permitem nova tentativa. Eventos de término/erro usam a geração do áudio para não interromper uma fala mais recente.
+- Mantidos transparência fixa, timer pausável, ícone pequeno e abertura somente do campo.
+- Verificação: 93 testes Python, 42 testes Node e dois testes reais do Electron. O campo foi conferido por geometria/captura; o player nativo reproduziu uma amostra WAV silenciosa, incluindo nova tentativa. API de voz e alto-falantes reais, DPI misto e jogos exclusivos continuam sem validação de ponta a ponta.
+
 ## 0.8.2 — 2026-10-20
 
 - Transparência fixa no Quick Chat: passar o mouse não aumenta mais a opacidade dos painéis ou do ícone. Configuração personalizada e nitidez do texto preservadas.
