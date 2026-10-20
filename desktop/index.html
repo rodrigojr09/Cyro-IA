@@ -1,21 +1,256 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>JARVIS 0.8.3</title><link rel="stylesheet" href="app.css"></head>
-<body><div class="app-layout">
-<aside id="sidebar" aria-label="Projetos e conversas"><div class="brand"><span class="brand-mark">J</span><strong>JARVIS</strong><span class="brand-caption">WORKSPACE</span></div>
-<button id="new-chat" class="primary"><i data-lucide="square-pen"></i>Novo chat<span class="shortcut">＋</span></button>
-<button id="add-project" class="quiet"><i data-lucide="folder-plus"></i>Adicionar projeto</button>
-<label class="search"><i data-lucide="search"></i><input id="nav-search" type="search" placeholder="Buscar projetos e chats" aria-label="Buscar projetos e conversas"></label>
-<nav id="navigation" aria-label="Navegação"><button id="general-nav" class="nav-item"><i data-lucide="messages-square"></i>Conversas gerais</button><div id="general-chats" class="chat-list"></div><div class="section-label">PROJETOS</div><div id="project-list"></div><p id="nav-empty" hidden>Nenhum resultado encontrado.</p></nav>
-<div class="sidebar-bottom"><button id="settings-open"><i data-lucide="settings-2"></i>Configurações</button><span class="privacy"><span class="dot"></span> Seus projetos em modo leitura</span></div></aside>
-<section class="main-panel"><header class="topbar"><button id="sidebar-toggle" class="icon-button" title="Recolher ou expandir barra lateral" aria-label="Alternar barra lateral" aria-expanded="true"><i data-lucide="panel-left"></i></button><div class="breadcrumbs"><span id="project-name">Seu espaço de trabalho</span><h1 id="conversation-name">Nova conversa</h1></div><div class="top-actions"><button id="voice-toggle" aria-pressed="true" title="Respostas por voz"><i data-lucide="volume-2"></i><span>Voz ativa</span></button><button id="manage-open" title="Gerenciar conversa e memória"><i data-lucide="ellipsis"></i></button></div></header>
-<div id="project-banner" hidden><span id="memory-state" role="status"></span><button id="select-sources"><i data-lucide="files"></i>Arquivos do projeto</button><button id="accept-partial" hidden>Continuar com análise parcial</button></div>
-<div id="conversation-scroll"><section id="welcome"><div class="welcome-mark">J</div><div class="eyebrow">SEU ASSISTENTE DE PROGRAMAÇÃO</div><h2>Como posso ajudar?</h2><p>Um espaço para explorar ideias, entender seu código<br>e continuar de onde você parou.</p><div class="suggestions"><button id="suggest-project"><i data-lucide="folder-search"></i><strong>Analisar um projeto</strong><span>Conecte uma pasta do seu computador</span></button><button id="suggest-continue"><i data-lucide="history"></i><strong>Continuar uma conversa</strong><span>Retome um assunto na barra lateral</span></button><button data-prompt="Quero investigar um erro. Vou compartilhar os detalhes."><i data-lucide="bug"></i><strong>Investigar um erro</strong><span>Encontre a causa e o próximo passo</span></button><button data-prompt="Quero desenvolver uma ideia de programação."><i data-lucide="lightbulb"></i><strong>Explorar uma ideia</strong><span>Transforme uma possibilidade em plano</span></button></div></section><main id="messages" aria-label="Histórico da conversa"></main><div id="thinking" hidden role="status"><span class="pulse"></span>JARVIS está pensando...</div></div>
-<button id="jump-bottom" hidden>Ir para a última mensagem ↓</button>
-<footer class="composer-wrap"><div id="voice-state" role="status" hidden></div><button id="voice-stop" hidden>Interromper áudio</button><div class="composer"><textarea id="input" rows="1" maxlength="6000" placeholder="Converse com o JARVIS..." aria-label="Mensagem"></textarea><div class="composer-tools"><span id="composer-context"><i data-lucide="shield-check"></i>Somente leitura</span><div><button id="microphone" disabled title="Reconhecimento de voz em uma próxima versão" aria-label="Microfone indisponível"><i data-lucide="mic"></i></button><button id="send" class="send-button" title="Enviar mensagem" aria-label="Enviar mensagem"><i data-lucide="arrow-up"></i></button></div></div></div><div class="composer-caption"><span id="status" role="status">Conectando ao núcleo...</span><span>Enter para enviar · Shift+Enter para nova linha</span></div></footer></section></div>
-<dialog id="manage-dialog"><div class="dialog-header"><h2>Conversa e memória</h2><button data-close="manage-dialog" aria-label="Fechar">×</button></div><label>Título da conversa<input id="chat-title" maxlength="120"></label><div class="actions"><button id="rename-chat">Renomear</button><button id="archive-chat">Arquivar</button><button id="delete-chat" class="danger">Excluir chat</button><button id="older-messages">Histórico anterior</button></div><hr><h3>Conhecimento do projeto</h3><div class="actions"><button id="refresh-memory">Atualizar memória</button><button id="show-knowledge">Ver IDEIA.md</button><button id="remove-project" class="danger">Remover projeto</button></div><label>Tipo de anotação<select id="note-kind"><option value="decision">Decisão confirmada</option><option value="idea">Ideia</option><option value="problem">Problema relatado</option><option value="information">Informação</option></select></label><label>Anotação<textarea id="project-note" maxlength="4000" placeholder="Informação fornecida por você"></textarea></label><button id="save-note">Salvar anotação</button></dialog>
-<dialog id="settings-dialog"><div class="dialog-header"><div><div class="eyebrow">PERSONALIZE SEU ESPAÇO</div><h2>Configurações</h2></div><button data-close="settings-dialog" aria-label="Fechar">×</button></div><div class="settings-layout"><nav id="settings-tabs" aria-label="Categorias das configurações"></nav><section id="settings-content"></section></div></dialog>
-<dialog id="knowledge-dialog"><div class="dialog-header"><h2>Memória do projeto · IDEIA.md</h2><button data-close="knowledge-dialog" aria-label="Fechar">×</button></div><article id="knowledge-content" class="markdown"></article></dialog>
-<div hidden id="compatibility-controls"><button id="minimize"></button><button id="close"></button><div id="programming-controls"><label><input type="checkbox" id="programming-mode">Análise de projetos</label><div id="legacy-roots"><button id="authorize-project">Autorizar pasta</button><select id="authorized-roots"></select><button id="revoke-root">Revogar</button></div></div></div>
-<dialog id="computer-dialog"><div class="dialog-header"><h2>Controle do computador</h2><button data-close="computer-dialog" aria-label="Fechar">×</button></div><p>As aberturas exigem confirmação. Nenhum comando arbitrário é executado.</p><div id="computer-controls"><select id="computer-action" aria-label="Ação do computador"><option value="system">Informações do sistema</option><option value="processes">Listar processos</option><option value="app:notepad">Abrir Bloco de Notas</option><option value="app:calculator">Abrir Calculadora</option><option value="app:vscode">Abrir VS Code</option><option value="folder:desktop">Abrir Área de Trabalho</option><option value="folder:documents">Abrir Documentos</option><option value="folder:downloads">Abrir Downloads</option></select><button id="computer-run">Consultar / abrir</button></div></dialog>
-<dialog id="scope-dialog"><h2>Quais arquivos fazem parte do projeto?</h2><p>A lista usa apenas nomes, tipos e tamanhos: <strong>zero tokens</strong>. Só os itens selecionados poderão ser lidos pela análise e pelo chat. Marcar uma pasta inclui fontes atuais e futuras; builds, dependências, locks e segredos continuam bloqueados.</p><div id="scope-location"></div><div class="scope-actions"><button id="scope-up">Voltar</button><button id="scope-all">Incluir pasta atual</button><button id="scope-none">Desmarcar pasta atual</button></div><div id="scope-list"></div><button id="scope-more" hidden>Carregar mais nomes</button><div id="scope-summary"></div><div id="scope-error" role="status"></div><div class="scope-actions"><button id="scope-cancel">Cancelar</button><button id="scope-save">Salvar seleção e analisar</button></div></dialog>
-<script src="vendor.js"></script><script src="ui.js"></script><script src="scope.js"></script><script src="workspace.js"></script><script src="renderer.js"></script></body></html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JARVIS 1.0.0</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside id="sidebar" aria-label="Projetos e conversas">
+        <div class="brand">
+          <span class="brand-mark">J</span><strong>JARVIS</strong
+          ><span class="brand-caption">WORKSPACE</span>
+        </div>
+        <button id="new-chat" class="primary">
+          <i data-lucide="square-pen"></i>Novo chat<span class="shortcut">＋</span>
+        </button>
+        <button id="add-project" class="quiet">
+          <i data-lucide="folder-plus"></i>Adicionar projeto
+        </button>
+        <label class="search"
+          ><i data-lucide="search"></i
+          ><input
+            id="nav-search"
+            type="search"
+            placeholder="Buscar projetos e chats"
+            aria-label="Buscar projetos e conversas"
+        /></label>
+        <nav id="navigation" aria-label="Navegação">
+          <button id="general-nav" class="nav-item">
+            <i data-lucide="messages-square"></i>Conversas gerais
+          </button>
+          <div id="general-chats" class="chat-list"></div>
+          <div class="section-label">PROJETOS</div>
+          <div id="project-list"></div>
+          <p id="nav-empty" hidden>Nenhum resultado encontrado.</p>
+        </nav>
+        <div class="sidebar-bottom">
+          <button id="settings-open"><i data-lucide="settings-2"></i>Configurações</button
+          ><span class="privacy"><span class="dot"></span> Seus projetos em modo leitura</span>
+        </div>
+      </aside>
+      <section class="main-panel">
+        <header class="topbar">
+          <button
+            id="sidebar-toggle"
+            class="icon-button"
+            title="Recolher ou expandir barra lateral"
+            aria-label="Alternar barra lateral"
+            aria-expanded="true"
+          >
+            <i data-lucide="panel-left"></i>
+          </button>
+          <div class="breadcrumbs">
+            <span id="project-name">Seu espaço de trabalho</span>
+            <h1 id="conversation-name">Nova conversa</h1>
+          </div>
+          <div class="top-actions">
+            <button id="voice-toggle" aria-pressed="true" title="Respostas por voz">
+              <i data-lucide="volume-2"></i><span>Voz ativa</span></button
+            ><button id="manage-open" title="Gerenciar conversa e memória">
+              <i data-lucide="ellipsis"></i>
+            </button>
+          </div>
+        </header>
+        <div id="project-banner" hidden>
+          <span id="memory-state" role="status"></span
+          ><button id="select-sources"><i data-lucide="files"></i>Arquivos do projeto</button
+          ><button id="accept-partial" hidden>Continuar com análise parcial</button>
+        </div>
+        <div id="conversation-scroll">
+          <section id="welcome">
+            <div class="welcome-mark">J</div>
+            <div class="eyebrow">SEU ASSISTENTE DE PROGRAMAÇÃO</div>
+            <h2>Como posso ajudar?</h2>
+            <p>
+              Um espaço para explorar ideias, entender seu código<br />e continuar de onde você
+              parou.
+            </p>
+            <div class="suggestions">
+              <button id="suggest-project">
+                <i data-lucide="folder-search"></i><strong>Analisar um projeto</strong
+                ><span>Conecte uma pasta do seu computador</span></button
+              ><button id="suggest-continue">
+                <i data-lucide="history"></i><strong>Continuar uma conversa</strong
+                ><span>Retome um assunto na barra lateral</span></button
+              ><button data-prompt="Quero investigar um erro. Vou compartilhar os detalhes.">
+                <i data-lucide="bug"></i><strong>Investigar um erro</strong
+                ><span>Encontre a causa e o próximo passo</span></button
+              ><button data-prompt="Quero desenvolver uma ideia de programação.">
+                <i data-lucide="lightbulb"></i><strong>Explorar uma ideia</strong
+                ><span>Transforme uma possibilidade em plano</span>
+              </button>
+            </div>
+          </section>
+          <main id="messages" aria-label="Histórico da conversa"></main>
+          <div id="thinking" hidden role="status">
+            <span class="pulse"></span>JARVIS está pensando...
+          </div>
+        </div>
+        <button id="jump-bottom" hidden>Ir para a última mensagem ↓</button>
+        <footer class="composer-wrap">
+          <div id="voice-state" role="status" hidden></div>
+          <button id="voice-stop" hidden>Interromper áudio</button>
+          <div class="composer">
+            <textarea
+              id="input"
+              rows="1"
+              maxlength="6000"
+              placeholder="Converse com o JARVIS..."
+              aria-label="Mensagem"
+            ></textarea>
+            <div class="composer-tools">
+              <span id="composer-context"><i data-lucide="shield-check"></i>Somente leitura</span>
+              <div>
+                <button
+                  id="microphone"
+                  disabled
+                  title="Reconhecimento de voz em uma próxima versão"
+                  aria-label="Microfone indisponível"
+                >
+                  <i data-lucide="mic"></i></button
+                ><button
+                  id="send"
+                  class="send-button"
+                  title="Enviar mensagem"
+                  aria-label="Enviar mensagem"
+                >
+                  <i data-lucide="arrow-up"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="composer-caption">
+            <span id="status" role="status">Conectando ao núcleo...</span
+            ><span>Enter para enviar · Shift+Enter para nova linha</span>
+          </div>
+        </footer>
+      </section>
+    </div>
+    <dialog id="manage-dialog">
+      <div class="dialog-header">
+        <h2>Conversa e memória</h2>
+        <button data-close="manage-dialog" aria-label="Fechar">×</button>
+      </div>
+      <label>Título da conversa<input id="chat-title" maxlength="120" /></label>
+      <div class="actions">
+        <button id="rename-chat">Renomear</button><button id="archive-chat">Arquivar</button
+        ><button id="delete-chat" class="danger">Excluir chat</button
+        ><button id="older-messages">Histórico anterior</button>
+      </div>
+      <hr />
+      <h3>Conhecimento do projeto</h3>
+      <div class="actions">
+        <button id="refresh-memory">Atualizar memória</button
+        ><button id="show-knowledge">Ver IDEIA.md</button
+        ><button id="remove-project" class="danger">Remover projeto</button>
+      </div>
+      <label
+        >Tipo de anotação<select id="note-kind">
+          <option value="decision">Decisão confirmada</option>
+          <option value="idea">Ideia</option>
+          <option value="problem">Problema relatado</option>
+          <option value="information">Informação</option>
+        </select></label
+      ><label
+        >Anotação<textarea
+          id="project-note"
+          maxlength="4000"
+          placeholder="Informação fornecida por você"
+        ></textarea></label
+      ><button id="save-note">Salvar anotação</button>
+    </dialog>
+    <dialog id="settings-dialog">
+      <div class="dialog-header">
+        <div>
+          <div class="eyebrow">PERSONALIZE SEU ESPAÇO</div>
+          <h2>Configurações</h2>
+        </div>
+        <button data-close="settings-dialog" aria-label="Fechar">×</button>
+      </div>
+      <div class="settings-layout">
+        <nav id="settings-tabs" aria-label="Categorias das configurações"></nav>
+        <section id="settings-content"></section>
+      </div>
+    </dialog>
+    <dialog id="knowledge-dialog">
+      <div class="dialog-header">
+        <h2>Memória do projeto · IDEIA.md</h2>
+        <button data-close="knowledge-dialog" aria-label="Fechar">×</button>
+      </div>
+      <article id="knowledge-content" class="markdown"></article>
+    </dialog>
+    <div hidden id="compatibility-controls">
+      <button id="minimize"></button><button id="close"></button>
+      <div id="programming-controls">
+        <label><input type="checkbox" id="programming-mode" />Análise de projetos</label>
+        <div id="legacy-roots">
+          <button id="authorize-project">Autorizar pasta</button
+          ><select id="authorized-roots"></select
+          ><button id="revoke-root">Revogar</button>
+        </div>
+      </div>
+    </div>
+    <dialog id="computer-dialog">
+      <div class="dialog-header">
+        <h2>Controle do computador</h2>
+        <button data-close="computer-dialog" aria-label="Fechar">×</button>
+      </div>
+      <p>As aberturas exigem confirmação. Nenhum comando arbitrário é executado.</p>
+      <div id="computer-controls">
+        <select id="computer-action" aria-label="Ação do computador">
+          <option value="system">Informações do sistema</option>
+          <option value="processes">Listar processos</option>
+          <option value="app:notepad">Abrir Bloco de Notas</option>
+          <option value="app:calculator">Abrir Calculadora</option>
+          <option value="app:vscode">Abrir VS Code</option>
+          <option value="folder:desktop">Abrir Área de Trabalho</option>
+          <option value="folder:documents">Abrir Documentos</option>
+          <option value="folder:downloads">Abrir Downloads</option></select
+        ><button id="computer-run">Consultar / abrir</button>
+      </div>
+    </dialog>
+    <dialog id="scope-dialog">
+      <h2>Quais arquivos fazem parte do projeto?</h2>
+      <p>
+        A lista usa apenas nomes, tipos e tamanhos: <strong>zero tokens</strong>. Só os itens
+        selecionados poderão ser lidos pela análise e pelo chat. Marcar uma pasta inclui fontes
+        atuais e futuras; builds, dependências, locks e segredos continuam bloqueados.
+      </p>
+      <div id="scope-location"></div>
+      <div class="scope-actions">
+        <button id="scope-up">Voltar</button><button id="scope-all">Incluir pasta atual</button
+        ><button id="scope-none">Desmarcar pasta atual</button>
+      </div>
+      <div id="scope-list"></div>
+      <button id="scope-more" hidden>Carregar mais nomes</button>
+      <div id="scope-summary"></div>
+      <div id="scope-error" role="status"></div>
+      <div class="scope-actions">
+        <button id="scope-cancel">Cancelar</button
+        ><button id="scope-save">Salvar seleção e analisar</button>
+      </div>
+    </dialog>
+    <script src="vendor.js"></script>
+    <script src="ui.js"></script>
+    <script src="scope.js"></script>
+    <script src="workspace.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0 — 2026-10-20
+
+- Revisão de design: contraste e espaçamento, títulos com truncamento, item ativo na sidebar, foco da busca, hierarquia de leitura, tabelas e cópia no cabeçalho do código. Layout refinado em 800×560, diálogos com nomes acessíveis e status de memória sem repetição. Transparência e comportamento do Quick Chat preservados.
+- Código JavaScript/HTML/CSS padronizado com Prettier, Python com Black e finais de linha definidos. Estilos divididos em tokens, layout, chat, diálogos e responsividade. Refatoração de formatação Python conferida por AST; somente main.py contém mudanças funcionais para o modo empacotado.
+- README reestruturado para uso/instalação/distribuição, DOCUMENT criado como referência técnica e IDEIA como visão do próprio JARVIS, separando implementação, decisões humanas, limitações e propostas futuras.
+- build.bat e pipeline Windows: testes antes da compilação, PyInstaller para o backend e Electron portátil x64 em um único exe de distribuição, ícone próprio gerado localmente e checksum SHA-256. Sem instalação automática de pacotes, assinatura digital ou publicação.
+- Runtime empacotado aguarda saúde/identidade/versão do backend, recusa ocupantes incompatíveis e supervisiona somente o processo próprio. Monitor Windows do pai evita backend órfão se o Electron for interrompido. Configuração privada fica na área de dados, nunca no artefato.
+- Compatibilidade com banners do CMD na saída JSON do npm, sem modificar a configuração do Windows. Dependências de build atualizadas e cadeia de proxy corrigida; auditoria npm sem vulnerabilidades reportadas.
+- Preservados esquemas SQLite, migração legada, memória existente, permissões de leitura, chat, voz e confirmações humanas. Não há migração destrutiva nesta versão.
+- Verificação: 96 testes Python, 50 testes Node, dois testes reais do Electron, verificações de formatação e auditoria de dependências. Portátil real iniciado duas vezes com memória temporária: saúde, autenticação, criação/persistência de chat e término do backend após interrupção do pai aprovados, sem chamada à OpenAI. APIs pagas, áudio nos alto-falantes, monitores físicos com DPI misto e Windows limpo não validados de ponta a ponta. O artefato é portátil sem assinatura Authenticode.
+
 ## 0.8.3 — 2026-10-20
 
 - Corrigido o campo de entrada do Quick Chat: 12 px de padding horizontal, borda/foco que não invadem o texto e layout flexível para preservar os caracteres e os controles.

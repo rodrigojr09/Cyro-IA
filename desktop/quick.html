@@ -1,4 +1,58 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'"><link rel="stylesheet" href="quick.css"><title>JARVIS Quick Chat</title></head><body>
-<button id="orb" title="JARVIS Quick Chat · arraste para mover" aria-label="Abrir Quick Chat">J<span></span></button>
-<section id="composer" hidden><div class="caption"><strong>JARVIS <span>QUICK CHAT</span></strong><div class="caption-actions"><button id="quick-voice-toggle" aria-label="Alternar voz do Quick Chat" aria-pressed="true">Voz ativa</button><button id="collapse" aria-label="Recolher">Esc</button></div></div><textarea id="question" rows="2" maxlength="6000" placeholder="Pergunte ao JARVIS..." aria-label="Pergunta rápida"></textarea><div class="tools"><label><input type="checkbox" id="use-project"> <span id="project-label">Usar projeto ativo</span></label><button id="send" aria-label="Enviar">↑</button></div></section>
-<section id="response" hidden><header><strong>JARVIS</strong><span id="remaining"></span><button id="pin" title="Fixar resposta" aria-pressed="false">Fixar</button><button id="close-response" aria-label="Fechar resposta">×</button></header><article id="answer" tabindex="0"></article><div class="tools"><span id="result-status" role="status"></span><button id="listen">Ouvir</button><button id="stop-audio" hidden>Parar voz</button><button id="copy">Copiar</button><button id="open-main">Abrir conversa ↗</button></div></section><script src="quick-renderer.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; media-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'"
+    />
+    <link rel="stylesheet" href="quick.css" />
+    <title>JARVIS Quick Chat</title>
+  </head>
+  <body>
+    <button id="orb" title="JARVIS Quick Chat · arraste para mover" aria-label="Abrir Quick Chat">
+      J<span></span>
+    </button>
+    <section id="composer" hidden>
+      <div class="caption">
+        <strong>JARVIS <span>QUICK CHAT</span></strong>
+        <div class="caption-actions">
+          <button
+            id="quick-voice-toggle"
+            aria-label="Alternar voz do Quick Chat"
+            aria-pressed="true"
+          >
+            Voz ativa</button
+          ><button id="collapse" aria-label="Recolher">Esc</button>
+        </div>
+      </div>
+      <textarea
+        id="question"
+        rows="2"
+        maxlength="6000"
+        placeholder="Pergunte ao JARVIS..."
+        aria-label="Pergunta rápida"
+      ></textarea>
+      <div class="tools">
+        <label
+          ><input type="checkbox" id="use-project" />
+          <span id="project-label">Usar projeto ativo</span></label
+        ><button id="send" aria-label="Enviar">↑</button>
+      </div>
+    </section>
+    <section id="response" hidden>
+      <header>
+        <strong>JARVIS</strong><span id="remaining"></span
+        ><button id="pin" title="Fixar resposta" aria-pressed="false">Fixar</button
+        ><button id="close-response" aria-label="Fechar resposta">×</button>
+      </header>
+      <article id="answer" tabindex="0"></article>
+      <div class="tools">
+        <span id="result-status" role="status"></span><button id="listen">Ouvir</button
+        ><button id="stop-audio" hidden>Parar voz</button><button id="copy">Copiar</button
+        ><button id="open-main">Abrir conversa ↗</button>
+      </div>
+    </section>
+    <script src="quick-renderer.js"></script>
+  </body>
+</html>

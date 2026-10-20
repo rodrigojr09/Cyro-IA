@@ -1,0 +1,137 @@
+dialog {
+  color: var(--text);
+  background: var(--side);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 26px;
+  width: min(720px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  box-shadow: 0 20px 70px #0006;
+}
+dialog::backdrop {
+  background: #0009;
+  backdrop-filter: blur(3px);
+}
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.dialog-header h2 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+.dialog-header button {
+  font-size: 22px;
+  color: var(--muted);
+}
+dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+dialog input,
+dialog textarea,
+dialog select {
+  width: 100%;
+}
+dialog p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+dialog button:not(.icon-button) {
+  background: var(--surface);
+}
+.actions,
+.scope-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0;
+}
+.danger {
+  color: #f1a4a4;
+}
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 25px 0;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 145px minmax(0, 1fr);
+  gap: 30px;
+  min-height: 310px;
+}
+#settings-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#settings-tabs button {
+  justify-content: flex-start;
+  background: transparent;
+  font-size: 12px;
+  color: var(--muted);
+}
+#settings-tabs .active {
+  color: var(--accent);
+  background: var(--surface);
+}
+#settings-content h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+#settings-content label:has(input[type='checkbox']) {
+  flex-direction: row;
+  align-items: center;
+}
+#settings-content input[type='checkbox'] {
+  width: 16px;
+}
+#scope-list {
+  max-height: 40vh;
+  overflow: auto;
+  margin: 16px 0;
+}
+.scope-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding: 7px 0;
+}
+.scope-row label {
+  flex: 1;
+  flex-direction: row;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.scope-row input {
+  width: 16px;
+}
+.scope-row small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.scope-row button {
+  font-size: 11px;
+}
+#scope-location,
+#scope-summary,
+#scope-error {
+  font-size: 12px;
+  margin: 12px 0;
+}
+#scope-error {
+  color: #edbb79;
+}
+#knowledge-dialog {
+  width: min(900px, 94vw);
+}

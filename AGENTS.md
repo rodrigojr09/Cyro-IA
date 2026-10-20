@@ -105,3 +105,14 @@ O frontend desktop usa dependências locais empacotadas por `npm run build` (exe
 Para o iniciador na raiz: `backend\.venv\Scripts\python.exe -m unittest -v test_start`. Preserve o uso do interpretador atual, o lock de instância e a distinção entre processos próprios e externos. Nunca encerre processos apenas por estarem usando a porta 8765.
 
 Preserve a independência das janelas do Quick Chat, o IPC por papel e o encerramento explícito pela bandeja. O X mantém na bandeja por padrão; start.py deve acompanhar a duração do processo Electron, sem encerrar o backend apenas porque a principal foi escondida. Não prometa sobreposição em jogos exclusivos quando o Windows a impedir.
+
+## 7. Organização e distribuição a partir da v1.0.0
+
+- Estilos principais ficam em `desktop/styles/`, importados por `app.css`; preserve a separação entre tokens, layout, chat, diálogos e responsividade.
+- Use `npm run format:check` em desktop e `backend\.venv\Scripts\python.exe -m black --check backend start.py test_start.py test_build.py tools` na raiz. Não formate dependências ou vendor gerado.
+- Execute também `test_build` junto de `test_start`. `npm test` inclui os contratos do backend empacotado e do parser de saída do npm.
+- `build.bat` executa `tools/build_release.py`; requer ferramentas de `backend/requirements-build.txt` e npm ci já instaladas. Não adicionar instalação automática nem publicação ao pipeline.
+- O portátil deve conter apenas código/runtime e certificados públicos de dependências; nunca .env, tokens, bancos, histórico ou projetos pessoais. Preserve a lista explícita em `desktop/electron-builder.json`.
+- O backend empacotado lê configuração privada na pasta de dados; o modo fonte continua lendo backend/.env. Não copie a chave do desenvolvedor para o executável.
+- Validação adicional do artefato: `backend\.venv\Scripts\python.exe tools/smoke_release.py`, somente com porta 8765 livre; usa dados temporários e encerra apenas processos próprios. Não confundir isso com teste em Windows limpo, API paga ou áudio real.
+- README é o guia de uso, DOCUMENT a referência técnica e IDEIA a visão do próprio JARVIS; mantenha-os coerentes e separe propostas futuras de funcionalidades verificadas.

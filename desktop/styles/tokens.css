@@ -1,0 +1,94 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --side: #111827;
+  --surface: #1b2432;
+  --border: #293241;
+  --accent: #38bdf8;
+  --text: #f3f4f6;
+  --muted: #a6afbd;
+  --reading: 780px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 9px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+button:hover {
+  background: var(--surface);
+}
+button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 1.7;
+}
+input,
+textarea,
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 0;
+}
+textarea {
+  resize: vertical;
+}
+input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+[hidden] {
+  display: none !important;
+}
+
+:root {
+  --radius: 12px;
+  --focus: #7dd3fc;
+}
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #40516a transparent;
+}

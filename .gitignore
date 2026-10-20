@@ -23,3 +23,8 @@ JARVIS_DATA/
 # Frontend gerado localmente por npm run build
 desktop/vendor.js
 desktop/vendor.js.LEGAL.txt
+
+# Artefatos de distribuição e caches de compilação
+/build/
+/release/
+*.spec

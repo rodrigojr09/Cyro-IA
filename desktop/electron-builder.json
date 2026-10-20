@@ -1,0 +1,43 @@
+{
+  "appId": "com.jarvis.assistant",
+  "productName": "JARVIS",
+  "copyright": "JARVIS",
+  "asar": true,
+  "directories": {
+    "output": "../release"
+  },
+  "files": [
+    "*.js",
+    "*.html",
+    "*.css",
+    "styles/**",
+    "vendor.js.LEGAL.txt",
+    "package.json",
+    "!*.test.js",
+    "!smoke.cjs",
+    "!quick-smoke.cjs",
+    "!vendor-entry.js",
+    "!build.cjs",
+    "!package-output.js"
+  ],
+  "extraResources": [
+    {
+      "from": "../build/backend/jarvis-backend",
+      "to": "backend",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "../build/icons/jarvis.png",
+      "to": "jarvis.png"
+    }
+  ],
+  "win": {
+    "target": "portable",
+    "icon": "../build/icons/jarvis.ico",
+    "signExecutable": false
+  },
+  "portable": {
+    "artifactName": "JARVIS-${version}-${arch}.exe",
+    "requestExecutionLevel": "user"
+  }
+}

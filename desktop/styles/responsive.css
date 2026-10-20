@@ -1,0 +1,120 @@
+.sidebar-collapsed .app-layout {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+.sidebar-collapsed #sidebar {
+  visibility: hidden;
+  overflow: hidden;
+  padding: 0;
+}
+body.large-text {
+  font-size: 16px;
+}
+body.large-text .markdown {
+  font-size: 16px;
+}
+@media (max-width: 1000px) {
+  .app-layout {
+    grid-template-columns: 225px minmax(0, 1fr);
+  }
+  .topbar {
+    padding: 15px 20px;
+  }
+  #conversation-scroll {
+    padding: 0 22px;
+  }
+  .composer-wrap {
+    padding: 10px 22px 15px;
+  }
+  .suggestions {
+    gap: 8px;
+  }
+  .suggestions button {
+    padding: 13px;
+  }
+  .composer-caption span:last-child {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.project-row .project-toggle {
+  width: 27px;
+  flex: 0 0 27px;
+}
+.project-row .project-item {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.project-row .nav-title {
+  text-align: left;
+}
+#messages:empty {
+  padding: 0;
+}
+#welcome {
+  margin-top: clamp(30px, 7vh, 85px);
+  margin-bottom: 25px;
+}
+.message.user .markdown {
+  white-space: normal;
+}
+
+@media (max-width: 850px) {
+  .app-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+  .topbar {
+    gap: 8px;
+    padding: 12px 16px;
+    height: 72px;
+  }
+  .top-actions {
+    gap: 0;
+  }
+  #voice-toggle span {
+    display: none;
+  }
+  #conversation-scroll {
+    padding: 0 18px;
+  }
+  .composer-wrap {
+    padding: 10px 18px 14px;
+  }
+  #project-banner {
+    flex-wrap: wrap;
+    padding: 8px 16px;
+  }
+  #memory-state {
+    flex-basis: 100%;
+  }
+  #welcome h2 {
+    font-size: 28px;
+  }
+  .suggestions {
+    grid-template-columns: 1fr;
+    margin-top: 24px;
+  }
+  .settings-layout {
+    grid-template-columns: 125px minmax(0, 1fr);
+    gap: 18px;
+  }
+}
+@media (max-height: 650px) {
+  #welcome {
+    margin-top: 24px;
+  }
+  .welcome-mark {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+  }
+  .suggestions {
+    margin-top: 20px;
+  }
+}
