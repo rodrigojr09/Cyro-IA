@@ -33,9 +33,9 @@ test('relógio pausa com múltiplos motivos, fixa e reinicia com nova resposta',
 });
 test('geometria considera monitores negativos, bordas e resposta acima do campo',()=>{
  const area={x:-1920,y:-100,width:1920,height:1000};
- assert.deepEqual(core.clamp({x:-3000,y:2000},area),{x:-1920,y:844});
- for(const point of [{x:-1910,y:-90},{x:-60,y:800}]){const b=core.panels(point,area,320);assert.ok(b.response.y>=area.y);assert.ok(b.response.y+b.response.height<b.input.y);assert.ok(b.input.x>=area.x);assert.ok(b.input.x+b.input.width<=area.x+area.width);assert.ok(b.input.y+b.input.height<=area.y+area.height);assert.ok(b.input.x+b.input.width<=point.x||b.input.x>=point.x+56);}
- const shape=core.circle();assert.equal(shape.length,56);assert.ok(shape[0].x>0);assert.equal(shape[28].x,1);
+ assert.deepEqual(core.clamp({x:-3000,y:2000},area),{x:-1920,y:858});
+ for(const point of [{x:-1910,y:-90},{x:-60,y:800}]){const b=core.panels(point,area,320);assert.ok(b.response.y>=area.y);assert.ok(b.response.y+b.response.height<b.input.y);assert.ok(b.input.x>=area.x);assert.ok(b.input.x+b.input.width<=area.x+area.width);assert.ok(b.input.y+b.input.height<=area.y+area.height);assert.ok(b.input.x+b.input.width<=point.x||b.input.x>=point.x+core.ICON_SIZE);}
+ const shape=core.circle();assert.equal(shape.length,42);assert.ok(shape[0].x>0);assert.equal(shape[21].x,1);
 });
 test('ícone é independente, continua visível com principal minimizada e IPC é restrito',temporary(async f=>{
  const {orb,composer,response}=f.controller.windows;orb.emit('ready-to-show');assert.equal(orb.visible,true);assert.equal(f.main.minimized,true);
@@ -77,4 +77,11 @@ test('voz do Quick Chat pausa o tempo e cede a reprodução à janela principal'
  f.controller.claimAudio(f.main.webContents);assert.equal(f.invoke('orb','state').voicing,false);
  assert.ok(f.controller.windows.response.webContents.events.some(event=>event.name==='jarvis:stop-audio'));
  f.controller.setMasterVoice(false);const before=f.requests.length;await f.invoke('response','speak');assert.equal(f.requests.length,before);
+}));
+
+test('abrir o ícone mostra só o compositor, preserva histórico e pausa ao passar sobre o campo',temporary(async f=>{
+ f.invoke('orb','toggle');assert.equal(f.requests.length,0);assert.equal(f.controller.windows.orb.bounds.width,42);
+ await f.invoke('composer','send','Uma pergunta',false);assert.equal(f.controller.windows.response.visible,true);
+ f.invoke('composer','pause','hover',true);f.advance(50000);assert.equal(f.controller.windows.response.visible,true);assert.equal(f.invoke('orb','state').hovered,true);
+ f.invoke('composer','collapse');const calls=f.requests.length;f.invoke('orb','toggle');assert.equal(f.requests.length,calls);assert.equal(f.controller.windows.composer.visible,true);assert.equal(f.controller.windows.response.visible,false);assert.equal(f.invoke('orb','state').answer,'Resposta curta de teste.');
 }));

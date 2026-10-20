@@ -7,6 +7,7 @@ window.quick.onStopAudio(stopAudio);
 window.quick.onFocus(()=>{$('question').focus();});
 function render(state){
  current=state;
+ document.body.classList.toggle('engaged',!!state.hovered);
  document.documentElement.style.setProperty('--quick-opacity',String(state.config.opacity));
  if(role==='composer'){
   $('send').disabled=state.busy;$('question').disabled=state.busy;
@@ -20,11 +21,13 @@ function render(state){
   if($('answer').textContent!==text){$('answer').textContent=text;requestAnimationFrame(()=>{const article=$('answer');article.style.flex='none';const natural=article.scrollHeight;article.style.flex='';call(window.quick.resize(Math.max(130,Math.min(400,natural+110))));});}
   $('response').classList.toggle('busy',state.busy);$('response').classList.toggle('error',!!state.error);
   $('result-status').textContent=state.voicing?'Preparando ou reproduzindo voz':state.error?'Verifique a conexão':state.usedProject?'Contexto: '+state.usedProject:'Conversa rápida';
-  $('remaining').textContent=state.busy?'Em andamento':state.pinned?'Fixada':state.voicing?'Áudio ativo':state.remaining+'s';
+  $('remaining').textContent=state.busy?'Em andamento':state.pinned?'Fixada':state.voicing?'Áudio ativo':state.hovered?'Pausado':state.remaining+'s';
   $('pin').setAttribute('aria-pressed',String(state.pinned));$('pin').textContent=state.pinned?'Desafixar':'Fixar';
   $('copy').disabled=state.busy||!state.answer;$('stop-audio').hidden=!state.voicing;
  }
 }
+const surface=$(role==='orb'?'orb':role==='composer'?'composer':'response');
+surface.onmouseenter=()=>call(window.quick.pause('hover',true));surface.onmouseleave=()=>call(window.quick.pause('hover',false));
 window.quick.onState(render);call(window.quick.state().then(render));
 if(role==='orb'){
  let drag=null,moved=false;
@@ -44,7 +47,6 @@ if(role==='composer'){
  document.addEventListener('keydown',event=>{if(event.key==='Escape')call(window.quick.collapse());});
 }
 if(role==='response'){
- $('response').onmouseenter=()=>call(window.quick.pause('hover',true));$('response').onmouseleave=()=>call(window.quick.pause('hover',false));
  document.addEventListener('selectionchange',()=>call(window.quick.pause('selection',!!window.getSelection()?.toString())));
  document.addEventListener('copy',()=>{call(window.quick.pause('copy',true));clearTimeout(copyTimer);copyTimer=setTimeout(()=>call(window.quick.pause('copy',false)),2000);});
  $('pin').onclick=()=>call(window.quick.pin(!current.pinned));$('close-response').onclick=()=>call(window.quick.hide());

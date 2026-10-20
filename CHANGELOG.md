@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.1 — 2026-10-20
+
+- Ícone do Quick Chat reduzido de 56 para 42 px, com borda mais leve, destaque discreto ao passar o mouse e geometria atualizada para todos os monitores.
+- Campo/resposta mais transparentes em repouso (62%/66%); presença do mouse no ícone ou nos painéis aumenta o contraste para 96%, mantém o texto opaco e congela o tempo com indicação Pausado.
+- Pausas de hover independentes por janela, preservando seleção, cópia, fixação e áudio. A aparência muda com transição suave, sem reduzir a nitidez do texto.
+- Abrir/reabrir o ícone apresenta somente o compositor, sem buscar histórico, iniciar IA ou reapresentar respostas antigas. Mensagens continuam preservadas na conversa completa.
+- Configuração de opacidade aceita 40–95%; o antigo padrão de 82% migra para 62%, mantendo valores personalizados.
+- Verificação: 93 testes Python, 40 testes Node, testes reais da interface principal e Quick Chat, sintaxe JavaScript e capturas. API/som reais, DPI misto e jogos exclusivos continuam sujeitos à validação manual.
+
 ## 0.8.0 — 2026-10-20
 
 - JARVIS Quick Chat com três janelas independentes: ícone circular transparente de 56 px, compositor e resposta compacta. Campo e resposta semitransparentes, com texto opaco e cantos recortados. Sem entrada adicional na barra de tarefas e sem grande região invisível bloqueando cliques.
