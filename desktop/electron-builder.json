@@ -29,6 +29,10 @@
     {
       "from": "../build/icons/jarvis.png",
       "to": "jarvis.png"
+    },
+    {
+      "from": "../build/startup/JARVIS Device Watcher.exe",
+      "to": "startup/JARVIS Device Watcher.exe"
     }
   ],
   "win": {

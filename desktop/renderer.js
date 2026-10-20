@@ -7,6 +7,23 @@ document.getElementById('close').onclick = () => window.jarvisWindow.close();
 let audio;
 let analyzing = false;
 let pollTimer;
+let streamingMessage = null;
+window.jarvisWindow.onDelta?.((delta) => {
+  if (!send.disabled || typeof delta !== 'string') return;
+  if (!streamingMessage) {
+    streamingMessage = document.createElement('div');
+    streamingMessage.className = 'message assistant';
+    messages.appendChild(streamingMessage);
+  }
+  streamingMessage.textContent += delta;
+  window.jarvisUI?.scroll(false);
+});
+const cancelChat = document.getElementById('cancel-response');
+cancelChat.hidden = true;
+cancelChat.onclick = () => window.jarvisWindow.cancelChat?.().catch(() => {});
+window.jarvisActivation?.onState?.((value) => {
+  if (!send.disabled && value.status !== 'active') status.textContent = value.message;
+});
 const programmingMode = document.getElementById('programming-mode');
 
 function renderContent(el, content) {
@@ -236,6 +253,7 @@ async function submit() {
   addMessage('user', text);
   window.jarvisUI?.scroll(true);
   send.disabled = true;
+  cancelChat.hidden = false;
   window.jarvisWorkspace?.begin();
   analyzing = programmingMode.checked;
   document.getElementById('authorize-project').disabled = true;
@@ -261,6 +279,8 @@ async function submit() {
     showProject(data.programming);
     window.jarvisUI?.busy(false);
     addMessage('assistant', data.reply);
+    streamingMessage?.remove();
+    streamingMessage = null;
     for (const action of data.pending_actions || []) showConfirmation(action);
     status.textContent = 'Gerando resposta em áudio...';
     await speak(data.speech_text || data.reply.slice(0, 4000));
@@ -269,6 +289,9 @@ async function submit() {
     addMessage('assistant', 'Erro: ' + err.message);
     status.textContent = 'Falha';
   } finally {
+    cancelChat.hidden = true;
+    streamingMessage?.remove();
+    streamingMessage = null;
     analyzing = false;
     clearTimeout(pollTimer);
     send.disabled = false;
@@ -366,6 +389,6 @@ window.jarvisWindow.onOpenChat?.((id) => {
     status.textContent = 'Conectado';
     await refreshProject();
   } catch {
-    status.textContent = 'Backend offline — inicie o Python';
+    status.textContent = 'Serviço local indisponível — reinicie o JARVIS';
   }
 })();

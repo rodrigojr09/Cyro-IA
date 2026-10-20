@@ -5,12 +5,29 @@ window.jarvisUI = (() => {
   try {
     preferences = {
       ...preferences,
-      ...JSON.parse(localStorage.getItem('jarvis.preferences') || '{}'),
+      ...JSON.parse((window.jarvisStorage || localStorage).getItem('jarvis.preferences') || '{}'),
     };
   } catch {}
+  window.jarvisWindow
+    .initialSettings?.()
+    .then((value) => {
+      if (!(window.jarvisStorage || localStorage).getItem('jarvis.setup-applied')) {
+        if (typeof value.voice === 'boolean') preferences.voice = value.voice;
+        preferences.theme = value.theme || 'dark';
+        (window.jarvisStorage || localStorage).setItem('jarvis.setup-applied', '1');
+        apply();
+      }
+      if (value.displayName)
+        $('welcome').querySelector('h2').textContent =
+          `Olá, ${value.displayName}. Como posso ajudar?`;
+    })
+    .catch(() => {});
   function persist() {
     try {
-      localStorage.setItem('jarvis.preferences', JSON.stringify(preferences));
+      (window.jarvisStorage || localStorage).setItem(
+        'jarvis.preferences',
+        JSON.stringify(preferences),
+      );
     } catch {}
   }
   function icons() {
@@ -20,6 +37,7 @@ window.jarvisUI = (() => {
     window.jarvisWindow.voicePreference?.(!!preferences.voice).catch(() => {});
     document.body.classList.toggle('sidebar-collapsed', !!preferences.collapsed);
     document.body.classList.toggle('large-text', !!preferences.largeText);
+    document.documentElement.dataset.theme = preferences.theme || 'dark';
     $('sidebar-toggle').setAttribute('aria-expanded', String(!preferences.collapsed));
     $('voice-toggle').setAttribute('aria-pressed', String(preferences.voice));
     $('voice-toggle').querySelector('span').textContent = preferences.voice
@@ -146,15 +164,15 @@ window.jarvisUI = (() => {
     Voz: () =>
       '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button><p>Microfone preparado para integração futura.</p>',
     'Inteligência artificial': () =>
-      '<h3>Inteligência artificial</h3><p>Configure sua própria chave no arquivo privado .env. Na edição portátil, ele fica na pasta de dados do JARVIS; no desenvolvimento, em backend/.env.</p><button id="setting-ai-config">Abrir configuração</button><p id="ai-config-status" role="status"></p><p>O botão abre a pasta com o arquivo selecionado. Edite OPENAI_API_KEY em um editor de texto, salve e depois encerre o JARVIS pela bandeja e abra novamente. A chave nunca aparece nesta interface e não acompanha o executável.</p><p>A seleção local de fontes não consome tokens; análise, respostas e voz utilizam a API.</p>',
+      '<h3>Inteligência artificial</h3><p>O administrador gerencia modelos, acesso, limites e a chave OpenAI no JARVIS Cloud. Este computador usa uma credencial individual protegida pelo Windows.</p><button id="setting-ai-config">Ativação e acesso</button><p id="ai-config-status" role="status"></p><p>Abra o link jarvis://activate enviado pelo administrador para ativar esta instalação. A seleção local de fontes não consome tokens; análise, respostas e voz utilizam o Cloud.</p>',
     Projetos: () =>
       '<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
     Memória: () =>
-      '<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button>',
+      '<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button><button id="setting-backups">Backups e restauração</button><p>Backups no mesmo dispositivo não protegem contra perda física. Exporte uma cópia para outro local.</p><p id="backup-status" role="status"></p>',
     'Quick Chat': () =>
       '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><label><input id="quick-tray" type="checkbox">Ao fechar a janela principal, manter na bandeja</label><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
     Aplicativo: () =>
-      '<h3>Aplicativo</h3><p>JARVIS · 1.0.1</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>',
+      '<h3>Aplicativo</h3><p>JARVIS · 3.0.0 (Cloud + Desktop em desenvolvimento)</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><button id="setting-migration">Migrar memória anterior</button><button id="setting-startup">Inicialização autorizada neste computador</button><p id="maintenance-status" role="status"></p><p>Projetos originais: acesso somente leitura.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
@@ -201,11 +219,31 @@ window.jarvisUI = (() => {
       try {
         await window.jarvisWindow.openAIConfig();
         $('ai-config-status').textContent =
-          'Pasta aberta. Edite o .env, salve e reinicie o JARVIS pela bandeja.';
+          'Configuração aberta. Salve e reinicie o JARVIS pela bandeja para aplicar.';
       } catch {
         if ($('ai-config-status'))
           $('ai-config-status').textContent =
             'Não foi possível abrir a configuração. Confira as permissões da pasta de dados.';
+      }
+    });
+    for (const [id, method] of [
+      ['setting-migration', 'openMigration'],
+      ['setting-startup', 'openStartup'],
+    ])
+      bind(id, async () => {
+        try {
+          await window.jarvisWindow[method]();
+        } catch {
+          $('maintenance-status').textContent =
+            'Este recurso da edição anterior não está disponível no JARVIS Cloud. Consulte o guia de migração.';
+        }
+      });
+    bind('setting-backups', async () => {
+      try {
+        await window.jarvisWindow.openBackups();
+      } catch {
+        $('backup-status').textContent =
+          'O gerenciador está disponível na edição empacotada. Encerre o aplicativo antes de copiar os dados.';
       }
     });
     if ($('setting-large')) {

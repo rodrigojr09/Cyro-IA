@@ -14,6 +14,7 @@ class BuildTests(unittest.TestCase):
         config = json.loads((ROOT / "desktop/electron-builder.json").read_text())
         self.assertEqual(package["version"], lock["version"])
         self.assertEqual(package["version"], lock["packages"][""]["version"])
+        self.assertEqual(package["version"], (ROOT / "VERSION").read_text().strip())
         self.assertEqual(config["win"]["target"], "portable")
         self.assertTrue(config["asar"])
         self.assertEqual(config["portable"]["requestExecutionLevel"], "user")

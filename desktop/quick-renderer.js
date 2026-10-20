@@ -119,11 +119,12 @@ if (role === 'orb') {
 if (role === 'composer') {
   window.addEventListener('focus', () => $('question').focus());
   try {
-    $('question').value = localStorage.getItem('jarvis.quick.draft') || '';
+    $('question').value =
+      (window.jarvisStorage || localStorage).getItem('jarvis.quick.draft') || '';
   } catch {}
   $('question').oninput = () => {
     try {
-      localStorage.setItem('jarvis.quick.draft', $('question').value);
+      (window.jarvisStorage || localStorage).setItem('jarvis.quick.draft', $('question').value);
     } catch {}
   };
   async function submit() {
@@ -135,7 +136,7 @@ if (role === 'composer') {
       if (result.ok) {
         $('question').value = '';
         try {
-          localStorage.removeItem('jarvis.quick.draft');
+          (window.jarvisStorage || localStorage).removeItem('jarvis.quick.draft');
         } catch {}
       }
     } catch {

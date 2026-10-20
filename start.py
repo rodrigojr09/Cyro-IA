@@ -250,9 +250,19 @@ def dependencies():
         raise LaunchError(
             "Node.js não encontrado. Instale a versão indicada no README e abra outro terminal."
         )
-    if not electron.is_file() or not (DESKTOP / "node_modules" / "esbuild").is_dir():
+    if not electron.is_file():
+        electron = (
+            ROOT
+            / "node_modules"
+            / "electron"
+            / "dist"
+            / ("electron.exe" if os.name == "nt" else "electron")
+        )
+    if not electron.is_file() or not any(
+        (base / "node_modules" / "esbuild").is_dir() for base in (DESKTOP, ROOT)
+    ):
         raise LaunchError(
-            "Dependências desktop ausentes. Execute npm ci na pasta desktop uma vez."
+            "Dependências desktop ausentes. Execute npm ci na raiz uma vez."
         )
     return node, electron
 
@@ -394,4 +404,5 @@ def main():
 
 
 if __name__ == "__main__":
+    os.environ["JARVIS_CLOUD"] = "1"
     raise SystemExit(main())

@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 app.disableHardwareAcceleration();
+ipcMain.handle('jarvis:initial-settings', () => ({}));
 app.setPath(
   'userData',
   require('node:fs').mkdtempSync(path.join(app.getPath('temp'), 'jarvis-smoke-')),

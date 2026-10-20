@@ -39,7 +39,17 @@ def main():
 
     generate(ROOT / "build/icons")
     print("[JARVIS] Executando verificações antes da compilação...", flush=True)
-    run([sys.executable, "-m", "unittest", "-q", "test_start", "test_build"])
+    run(
+        [
+            sys.executable,
+            "-m",
+            "unittest",
+            "-q",
+            "test_start",
+            "test_build",
+            "test_setup",
+        ]
+    )
     run(
         [
             sys.executable,
@@ -51,12 +61,36 @@ def main():
             "test_projects",
             "test_scope",
             "test_quick",
+            "test_portable",
+            "test_protection",
+            "test_startup",
         ],
         ROOT / "backend",
     )
     run([npm, "test"], ROOT / "desktop")
     run([npm, "run", "test:electron"], ROOT / "desktop")
     run([npm, "run", "test:quick"], ROOT / "desktop")
+    run(
+        [
+            sys.executable,
+            "-m",
+            "PyInstaller",
+            "--noconfirm",
+            "--onefile",
+            "--windowed",
+            "--name",
+            "JARVIS Device Watcher",
+            "--paths",
+            str(ROOT / "backend"),
+            "--distpath",
+            str(ROOT / "build/startup"),
+            "--workpath",
+            str(ROOT / "build/startup-work"),
+            "--specpath",
+            str(ROOT / "build"),
+            str(ROOT / "tools/startup_watcher.py"),
+        ]
+    )
     print(
         "[JARVIS] Compilando backend Python (sem .env ou dados pessoais)...", flush=True
     )
@@ -107,6 +141,10 @@ def main():
         f"{checksum}  {artifact.name}\n", encoding="utf-8"
     )
     print(f"[JARVIS] Concluído: {artifact}\n[JARVIS] SHA-256: {checksum}", flush=True)
+    if package["version"] in {"2.0.1", "2.0.1-dev.0"}:
+        from build_setup import build_setup
+
+        build_setup()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client"
+  output = "../generated/prisma"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EMPLOYEE
+}
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+enum LicenseStatus {
+  ACTIVE
+  SUSPENDED
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(100)
+  email String @unique @db.VarChar(254)
+  passwordHash String?
+  role Role @default(EMPLOYEE)
+  status UserStatus @default(ACTIVE)
+  managerId String? @db.Uuid
+  manager User? @relation("ManagedUsers", fields: [managerId], references: [id], onDelete: Restrict)
+  employees User[] @relation("ManagedUsers")
+  monthlyTokenLimit Int @default(100000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdCodes ActivationCode[] @relation("CodeCreator")
+  assignedCodes ActivationCode[] @relation("CodeAssignee")
+  devices Device[]
+  licenses License[]
+  usage UsageLog[]
+  audit AuditLog[]
+  sessions Session[]
+  budgets UsageBudget[]
+  client Client?
+  @@index([managerId, status])
+}
+model Client {
+  id String @id @db.Uuid
+  user User @relation(fields: [id], references: [id], onDelete: Restrict)
+  maxDevices Int @default(2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  devices Device[]
+  activationCodes ActivationCode[]
+}
+model SystemSettings {
+  id String @id @default("global")
+  intelligenceEnabled Boolean @default(true)
+  maxOutputTokens Int @default(3500)
+  updatedAt DateTime @updatedAt
+}
+model ActivationCode {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  createdById String @db.Uuid
+  createdBy User @relation("CodeCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  assignedUserId String? @db.Uuid
+  assignedUser User? @relation("CodeAssignee", fields: [assignedUserId], references: [id], onDelete: Restrict)
+  assignedClient Client? @relation(fields: [assignedUserId], references: [id], onDelete: Restrict, map: "ActivationCode_client_fkey")
+  expiresAt DateTime
+  consumedAt DateTime?
+  revokedAt DateTime?
+  maxUses Int @default(1)
+  uses Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([createdById, expiresAt])
+}
+model Device {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  client Client @relation(fields: [userId], references: [id], onDelete: Restrict, map: "Device_client_fkey")
+  deviceId String @unique @db.Uuid
+  name String @db.VarChar(100)
+  credentialHash String @unique
+  credentialExpiresAt DateTime
+  lastSeenAt DateTime @default(now())
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  licenses License[]
+  usage UsageLog[]
+  @@index([userId, revokedAt])
+  @@unique([id, userId])
+}
+model License {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  deviceId String @db.Uuid
+  device Device @relation(fields: [deviceId, userId], references: [id, userId], onDelete: Restrict)
+  status LicenseStatus @default(ACTIVE)
+  expiresAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([userId, deviceId])
+  @@index([deviceId, revokedAt])
+}
+model UsageLog {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  deviceId String @db.Uuid
+  device Device @relation(fields: [deviceId, userId], references: [id, userId], onDelete: Restrict)
+  model String
+  inputTokens Int
+  outputTokens Int
+  estimatedCost Decimal? @db.Decimal(16, 8)
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String? @db.Uuid
+  actor User? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action String
+  targetType String
+  targetId String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([actorId, createdAt])
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  tokenHash String @unique
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([expiresAt])
+}
+model RateLimit {
+  key String @id
+  count Int @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+model UsageBudget {
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  period String
+  charged Int @default(0)
+  reserved Int @default(0)
+  @@id([userId, period])
+}

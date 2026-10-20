@@ -1,10 +1,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-function load(file, displays = []) {
+function load(file, displays = [], storage = null) {
   try {
     if (fs.lstatSync(file).isSymbolicLink()) return null;
-    const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const value = storage ? storage.readJSON(file) : JSON.parse(fs.readFileSync(file, 'utf8'));
     const b = value.bounds;
     if (
       !b ||
@@ -35,13 +35,17 @@ function load(file, displays = []) {
     return null;
   }
 }
-function save(file, win) {
+function save(file, win, storage = null) {
   const state = {
     bounds: win.getNormalBounds(),
     maximized: win.isMaximized(),
     fullscreen: win.isFullScreen(),
   };
   const temporary = file + '.' + randomUUID() + '.tmp';
+  if (storage) {
+    storage.writeJSON(file, state);
+    return;
+  }
   let created = false;
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });

@@ -28,3 +28,19 @@ desktop/vendor.js.LEGAL.txt
 /build/
 /release/
 *.spec
+
+# Cloud + Desktop v3; private backup is never published.
+/Backup/legacy/
+/Backup/private/
+/Backup/*.local.*
+.next/
+cloud/generated/
+*.tsbuildinfo
+desktop/electron/cloud-config.json
+cloud-credential.bin*
+.vercel/
+
+# Owner-managed immutable archive
+/Backup/
+*.local.log
+/.migration-history/

@@ -1,4 +1,41 @@
+# JARVIS 3.0.0 — implementação em validação
+
+- Reconstrução a partir do arquivo manual Backup/, preservado sem alterações.
+- Client dedicado, cadastro/edição, limites individuais, máximo de dispositivos, licenças e configurações globais.
+- Ativação por campo de código ou jarvis://; credencial individual protegida, renovação antecipada e estados offline/revogação.
+- Streaming Cloud → serviço local → Electron, cancelamento e preservação de ferramentas, histórico, Quick Chat e memória.
+- Voz central opcional; ditado progressivo quando o runtime suporta, com consentimento de áudio restrito.
+- Distribuição NSIS JARVIS-Setup-3.0.0.exe, sem portátil ou dependências de desenvolvimento exigidas no destino.
+- Sem tag de release até validar Vercel/Prisma Postgres reais e Windows limpo. Resultados finais: docs/VALIDATION.md.
+
+---
+
+# Desenvolvimento 3.0.0 — 2026-10-20
+
+Destino v3.0.0 ainda não lançado; não criar tag até validação final.
+
+- Preservação local de 110 arquivos da prévia 2.0.1-dev.0, com SHA-256 e integridade SQLite, sem .git/dependências e sem publicar dados privados.
+- Monorepo npm workspaces, Next.js App Router/TypeScript e Prisma 7/Postgres central.
+- Painel administrativo com escopo por administrador, funcionários, ativações, dispositivos, métricas e auditoria.
+- Sessões opacas, senhas scrypt, bootstrap por CLI, rate limits persistentes e ativação atômica de uso único.
+- Proxy OpenAI autenticado com uso do provedor, reservas de cota, streaming, cancelamento e voz opcional.
+- Adaptação preservativa do Electron/FastAPI, deep links jarvis://, safeStorage e builder Windows NSIS; nenhuma nova distribuição portátil.
+- Origem pública escolhida pelo proprietário: https://cronosjarvis.vercel.app. Não comprova implantação.
+- Limitações e critérios pendentes de release estão em docs/VALIDATION.md. A prévia portátil anterior não foi transformada retroativamente em release.
+
+---
+
 # Changelog
+
+## Em desenvolvimento — destino v2.0.1, ainda não lançado
+
+- Caminhos portáteis pelo executável externo; diretórios persistentes do Electron no dispositivo; backend congelado recusa fallback para AppData.
+- Assistente nativo de instalação em seis etapas e motor de cópia/atualização recuperável com verificação, sem formatação ou remoção de arquivos pessoais.
+- Cofre de chave com scrypt e AES-256-GCM, senha mestra, configuração nativa, teste autenticado opcional e desbloqueio ao iniciar. Modo fonte mantém backend/.env.
+- Referências relativas ao volume para novos projetos portáteis e catálogo SQLite com esquema 3; históricos e bases individuais preservados.
+- Backups offline manuais/automáticos, retenção, exportação, integridade e restauração confirmada preservando a pasta anterior.
+- Encerramento do backend próprio por pipe; ampliação das sugestões e instruções do assistente para escritório, estudos e tarefas cotidianas; preferências iniciais de nome, tema, voz e Quick Chat.
+- Ainda faltam proteção criptográfica das conversas/memória/backups, migração guiada dos dados anteriores, inicialização autorizada por computador e validação do instalador/USB/Windows limpo. Não há release, commit de versão ou tag v2.0.1 nesta etapa.
 
 ## 1.0.1 — 2026-10-20
 

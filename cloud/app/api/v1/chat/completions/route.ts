@@ -1,0 +1,67 @@
+import OpenAI from "openai";
+import { chatSchema } from "@jarvis/shared/schemas";
+import { deviceAuth } from "@/lib/auth";
+import { body, endpoint, HttpError } from "@/lib/http";
+import { rateLimit } from "@/lib/rate-limit";
+import { reserve, settle } from "@/lib/budget";
+import { proxyCompletion } from "@/lib/proxy";
+import { db } from "@/lib/db";
+export const runtime = "nodejs";
+export const maxDuration = 120;
+export const POST = endpoint(async (request) => {
+  const device = await deviceAuth(request);
+  await rateLimit(`chat:${device.userId}`, 20, 60);
+  const input = await body(request, chatSchema);
+  const settings = await db.systemSettings.findUnique({
+    where: { id: "global" },
+  });
+  if (settings && !settings.intelligenceEnabled)
+    throw new HttpError(
+      403,
+      "Inteligência artificial suspensa pelo administrador.",
+    );
+  input.max_completion_tokens = Math.min(
+    input.max_completion_tokens,
+    settings?.maxOutputTokens ?? 3500,
+  );
+  if (
+    !(process.env.OPENAI_ALLOWED_MODELS || "")
+      .split(",")
+      .map((s) => s.trim())
+      .includes(input.model)
+  )
+    throw new HttpError(403, "Modelo não autorizado.");
+  if (!process.env.OPENAI_API_KEY)
+    throw new HttpError(503, "Provedor não configurado.");
+  const reservation = await reserve(
+    device.userId,
+    Buffer.byteLength(JSON.stringify(input.messages)) +
+      Buffer.byteLength(JSON.stringify(input.tools ?? [])) +
+      input.max_completion_tokens +
+      input.messages.length * 16 +
+      1024,
+  );
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 90000,
+    maxRetries: 0,
+  });
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(95000)]);
+  const options = {
+    model: input.model,
+    messages:
+      input.messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    tools: input.tools as
+      | OpenAI.Chat.Completions.ChatCompletionTool[]
+      | undefined,
+    max_completion_tokens: input.max_completion_tokens,
+    store: false,
+  };
+  return proxyCompletion(
+    client,
+    { ...options, stream: false },
+    input.stream,
+    signal,
+    (usage) => settle(reservation, device.id, input.model, usage),
+  );
+});

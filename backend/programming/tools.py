@@ -126,12 +126,15 @@ STAGES = {
 }
 
 
+from protected_storage import read_text, write_text
+
+
 class ProgrammingService:
     def __init__(self, storage):
         self.storage = Path(storage)
         self.roots_file = self.storage / ".programming-roots.json"
         try:
-            roots = json.loads(self.roots_file.read_text(encoding="utf-8"))
+            roots = json.loads(read_text(self.roots_file))
             if not isinstance(roots, list) or not all(
                 isinstance(root, str) for root in roots
             ):
@@ -144,15 +147,15 @@ class ProgrammingService:
 
     def authorize(self, path):
         root = self.policy.authorize(path)
-        self.roots_file.write_text(
-            json.dumps([str(item) for item in self.policy.roots]), encoding="utf-8"
+        write_text(
+            self.roots_file, json.dumps([str(item) for item in self.policy.roots])
         )
         return {"authorized": str(root), "read_only": True}
 
     def revoke(self, path):
         self.policy.roots = [root for root in self.policy.roots if str(root) != path]
-        self.roots_file.write_text(
-            json.dumps([str(item) for item in self.policy.roots]), encoding="utf-8"
+        write_text(
+            self.roots_file, json.dumps([str(item) for item in self.policy.roots])
         )
         if self.context.data["project"]:
             try:

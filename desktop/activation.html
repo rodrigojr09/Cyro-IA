@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'"
+    />
+    <title>Ativar JARVIS</title>
+    <link rel="stylesheet" href="activation.css" />
+  </head>
+  <body>
+    <main>
+      <section>
+        <div class="brand">J<span>ARVIS</span><small>DESKTOP</small></div>
+        <p class="eyebrow">SEU ASSISTENTE, CONECTADO.</p>
+        <h1>Pronto para<br />começar?</h1>
+        <p class="intro">
+          Ative o JARVIS com o código enviado pelo seu administrador. Suas conversas, projetos e
+          memória continuam neste computador.
+        </p>
+        <form id="activation-form">
+          <label for="activation-code">Código ou link de ativação</label
+          ><input
+            id="activation-code"
+            name="token"
+            placeholder="Cole seu código ou jarvis://activate…"
+            required
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="200"
+          /><button id="activate" type="submit">Ativar JARVIS →</button>
+        </form>
+        <p id="activation-status" role="status" aria-live="polite">
+          Aguardando código de ativação.
+        </p>
+        <div class="privacy">
+          ◇ Credencial individual protegida pelo Windows<br />◇ A chave OpenAI permanece no servidor
+        </div>
+      </section>
+      <div class="orb" aria-hidden="true"><b>J</b></div>
+    </main>
+    <script src="activation.js"></script>
+  </body>
+</html>

@@ -194,6 +194,7 @@ async function rendererSetup({ programming = false, reply, speechSummary } = {})
       'messages',
       'input',
       'send',
+      'cancel-response',
       'status',
       'minimize',
       'close',

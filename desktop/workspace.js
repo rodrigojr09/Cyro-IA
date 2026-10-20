@@ -152,7 +152,7 @@ window.jarvisWorkspace = (() => {
       el('chat-title').value = chat.title;
       el('archive-chat').textContent = chat.archived ? 'Restaurar' : 'Arquivar';
       try {
-        localStorage.setItem(
+        (window.jarvisStorage || localStorage).setItem(
           'jarvis.selection',
           JSON.stringify({ project: project?.id || '', chat: id }),
         );
@@ -179,7 +179,7 @@ window.jarvisWorkspace = (() => {
       if (preferred && chats.some((c) => c.id === preferred)) await openChat(preferred);
       else {
         try {
-          localStorage.setItem(
+          (window.jarvisStorage || localStorage).setItem(
             'jarvis.selection',
             JSON.stringify({ project: id || '', chat: null }),
           );
@@ -348,7 +348,9 @@ window.jarvisWorkspace = (() => {
     });
     let saved;
     try {
-      saved = JSON.parse(localStorage.getItem('jarvis.selection') || 'null');
+      saved = JSON.parse(
+        (window.jarvisStorage || localStorage).getItem('jarvis.selection') || 'null',
+      );
     } catch {}
     try {
       await catalog(saved?.project || '', saved?.chat);

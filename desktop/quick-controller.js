@@ -11,6 +11,8 @@ function createQuick({
   mainWindow,
   openMain,
   quit,
+  enabled = true,
+  stateStorage = null,
   now = () => performance.now(),
   schedule = setInterval,
   cancel = clearInterval,
@@ -39,7 +41,9 @@ function createQuick({
     clock = new core.Clock(now);
   try {
     if (!fs.lstatSync(file).isSymbolicLink()) {
-      const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const saved = stateStorage
+        ? stateStorage.readJSON(file)
+        : JSON.parse(fs.readFileSync(file, 'utf8'));
       config = core.settings(saved.settings);
       if (!saved.voicePreferenceVersion) config.voice = true;
       if (!saved.appearanceVersion && config.opacity === 0.82)
@@ -49,6 +53,15 @@ function createQuick({
     }
   } catch {}
   function persist() {
+    if (stateStorage) {
+      stateStorage.writeJSON(file, {
+        appearanceVersion: 1,
+        voicePreferenceVersion: 1,
+        settings: config,
+        position,
+      });
+      return;
+    }
     const temporary = file + '.' + randomUUID() + '.tmp';
     try {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -118,6 +131,8 @@ function createQuick({
       hasShadow: kind !== 'orb',
       focusable: kind !== 'orb',
       webPreferences: {
+        ...(stateStorage ? { partition: 'jarvis-private' } : {}),
+        ...(stateStorage ? { additionalArguments: ['--jarvis-encrypted-storage'] } : {}),
         preload: path.join(__dirname, 'quick-preload.js'),
         sandbox: true,
         contextIsolation: true,
@@ -446,7 +461,9 @@ function createQuick({
     else if (answerVisible) publish();
   }, 250);
   layout();
-  windows.orb.once('ready-to-show', () => windows.orb.showInactive());
+  windows.orb.once('ready-to-show', () => {
+    if (enabled) windows.orb.showInactive();
+  });
   persist();
   return {
     windows,

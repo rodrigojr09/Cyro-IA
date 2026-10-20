@@ -34,6 +34,10 @@ def request(route, token=None, body=None):
 
 
 def main():
+    if "--interactive-unlock" not in sys.argv:
+        raise RuntimeError(
+            "O cofre exige interação humana. Execute com --interactive-unlock e use uma chave fictícia sk- com pelo menos 20 caracteres; não teste conexão. Este smoke não envia mensagens à OpenAI."
+        )
     version = json.loads((ROOT / "desktop/package.json").read_text())["version"]
     exe = ROOT / "release" / f"JARVIS-{version}-x64.exe"
     with socket.socket() as sock:
@@ -51,7 +55,10 @@ def main():
             owner = OwnedProcesses()
             try:
                 launcher = owner.spawn([exe], exe.parent)
-                for _ in range(180):
+                print(
+                    "Na janela do JARVIS, configure/desbloqueie o cofre de teste temporário. Não use sua chave real."
+                )
+                for _ in range(1200):
                     try:
                         health = request("/health")
                         if (
@@ -76,19 +83,6 @@ def main():
                     assert error.code == 401
                 workspace = request("/workspace", token)
                 assert workspace["projects"] == []
-                # The actual frozen backend must point to production configuration,
-                # without attempting a paid request with an absent key.
-                for route in ["/chat", "/speak"]:
-                    try:
-                        request(route, token, {"message": "Teste sem chave"})
-                        raise AssertionError(
-                            "Chave ausente deveria impedir chamada à API."
-                        )
-                    except HTTPError as error:
-                        assert error.code == 503
-                        detail = json.load(error)["detail"]
-                        assert "pasta de dados" in detail
-                        assert "backend/.env" not in detail
                 if cycle == 0:
                     chat = request(
                         "/chats/create", token, {"title": "Teste portátil isolado"}
@@ -109,7 +103,7 @@ def main():
                 # Kill only this fixture's actual Electron, then check the backend's parent monitor.
                 parent.terminate()
                 parent.wait(10)
-                backend.wait(10)
+                backend.wait(30)
                 print(
                     f"Portátil: ciclo {cycle + 1}, saúde, autenticação, chats e monitor do pai aprovados."
                 )

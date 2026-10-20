@@ -96,3 +96,19 @@ test('falha de processo empacotado é tratada sem rejeição não observada', as
   await assert.rejects(runtime.start(f.config), /não iniciou/);
   assert.equal(f.kills, 0);
 });
+
+test('encerramento solicita shutdown pelo pipe privado sem matar backend saudável', async () => {
+  const f = fixture();
+  let checks = 0,
+    message;
+  f.child.stdin = new EventEmitter();
+  f.child.stdin.end = (value) => {
+    message = value;
+    f.child.emit('exit', 0);
+  };
+  f.config.health = async () => (++checks > 1 ? f.healthy : null);
+  const service = await runtime.start(f.config);
+  await service.stop();
+  assert.equal(message, 'shutdown\n');
+  assert.equal(f.kills, 0);
+});

@@ -7,7 +7,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS 1.0.1</title>
+    <title>JARVIS 3.0.0 — Cloud + Desktop</title>
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
@@ -76,10 +76,10 @@
         <div id="conversation-scroll">
           <section id="welcome">
             <div class="welcome-mark">J</div>
-            <div class="eyebrow">SEU ASSISTENTE DE PROGRAMAÇÃO</div>
+            <div class="eyebrow">SEU ASSISTENTE PESSOAL</div>
             <h2>Como posso ajudar?</h2>
             <p>
-              Um espaço para explorar ideias, entender seu código<br />e continuar de onde você
+              Um espaço para trabalhar, estudar e explorar ideias<br />e continuar de onde você
               parou.
             </p>
             <div class="suggestions">
@@ -89,12 +89,24 @@
               ><button id="suggest-continue">
                 <i data-lucide="history"></i><strong>Continuar uma conversa</strong
                 ><span>Retome um assunto na barra lateral</span></button
-              ><button data-prompt="Quero investigar um erro. Vou compartilhar os detalhes.">
-                <i data-lucide="bug"></i><strong>Investigar um erro</strong
-                ><span>Encontre a causa e o próximo passo</span></button
-              ><button data-prompt="Quero desenvolver uma ideia de programação.">
+              ><button
+                data-prompt="Ajude a escrever um e-mail. Pergunte o destinatário, o objetivo e o tom desejado."
+              >
+                <i data-lucide="mail"></i><strong>Escrever um e-mail</strong
+                ><span>Encontre as palavras para seu objetivo</span></button
+              ><button data-prompt="Quero organizar uma ideia e transformá-la em um plano.">
                 <i data-lucide="lightbulb"></i><strong>Explorar uma ideia</strong
-                ><span>Transforme uma possibilidade em plano</span>
+                ><span>Transforme uma possibilidade em plano</span></button
+              ><button
+                data-prompt="Ajude a estudar um conteúdo. Pergunte qual assunto e meu nível de conhecimento."
+              >
+                <i data-lucide="book-open"></i><strong>Estudar um assunto</strong
+                ><span>Explicações, exercícios e planos de estudo</span></button
+              ><button
+                data-prompt="Quero resumir um texto. Vou colar o conteúdo que tenho autorização para compartilhar."
+              >
+                <i data-lucide="file-text"></i><strong>Resumir um texto</strong
+                ><span>Cole o conteúdo que deseja resumir</span>
               </button>
             </div>
           </section>
@@ -133,6 +145,7 @@
                 >
                   <i data-lucide="arrow-up"></i>
                 </button>
+                <button id="cancel-response" type="button" hidden>Parar</button>
               </div>
             </div>
           </div>
@@ -252,5 +265,6 @@
     <script src="scope.js"></script>
     <script src="workspace.js"></script>
     <script src="renderer.js"></script>
+    <script src="voice-input.js"></script>
   </body>
 </html>

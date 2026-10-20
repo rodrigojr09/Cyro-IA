@@ -2,9 +2,9 @@
 setlocal
 cd /d "%~dp0"
 if exist "backend\.venv\Scripts\python.exe" (
-  "backend\.venv\Scripts\python.exe" tools\build_release.py
+  "backend\.venv\Scripts\python.exe" tools\build_cloud_desktop.py
 ) else (
-  python tools\build_release.py
+  python tools\build_cloud_desktop.py
 )
 if errorlevel 1 (
   echo.

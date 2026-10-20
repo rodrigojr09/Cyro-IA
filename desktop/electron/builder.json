@@ -1,0 +1,39 @@
+{
+  "appId": "com.jarvis.assistant",
+  "productName": "JARVIS",
+  "asar": true,
+  "directories": { "output": "../release/v3" },
+  "files": [
+    "*.js",
+    "*.html",
+    "*.css",
+    "styles/**",
+    "package.json",
+    "vendor.js.LEGAL.txt",
+    "electron/main.cjs",
+    "electron/cloud-config.json",
+    "services/cloud.js",
+    "services/local-stream.js",
+    "!*.test.js",
+    "!services/*.test.js",
+    "!vendor-entry.js",
+    "!build.cjs",
+    "!package-output.js",
+    "!portable-paths.test.js"
+  ],
+  "extraResources": [
+    { "from": "../build/v3/backend/jarvis-backend", "to": "backend", "filter": ["**/*"] },
+    { "from": "../build/icons/jarvis.png", "to": "jarvis.png" }
+  ],
+  "protocols": [{ "name": "JARVIS activation", "schemes": ["jarvis"] }],
+  "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "../build/icons/jarvis.ico" },
+  "nsis": {
+    "artifactName": "JARVIS-Setup-${version}.exe",
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "deleteAppDataOnUninstall": false
+  }
+}

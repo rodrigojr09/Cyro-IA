@@ -1,4 +1,36 @@
 const { app, BrowserWindow, ipcMain, dialog, clipboard, shell, screen } = require('electron');
+const portablePaths = require('./portable-paths');
+const dataDir = portablePaths.resolveData({
+  packaged: !!app.isPackaged,
+  executable: process.env.PORTABLE_EXECUTABLE_FILE || process.execPath,
+  override: process.env.JARVIS_DATA_DIR,
+  localAppData: process.env.LOCALAPPDATA,
+  home: require('os').homedir(),
+});
+if (app.isPackaged && process.env.JARVIS_CLOUD !== '1') {
+  if (
+    ['.restore-transaction.json', '.migration-transaction.json'].some((name) =>
+      require('node:fs').existsSync(
+        require('node:path').join(require('node:path').dirname(dataDir), name),
+      ),
+    )
+  ) {
+    const recovery = require('node:child_process').spawnSync(
+      require('node:path').join(process.resourcesPath, 'backend', 'jarvis-backend.exe'),
+      ['--recover-data'],
+      {
+        shell: false,
+        windowsHide: true,
+        stdio: 'ignore',
+        timeout: 30000,
+        env: { ...process.env, JARVIS_DATA_DIR: dataDir },
+      },
+    );
+    if (recovery.status !== 0)
+      throw Error('Não foi possível recuperar a restauração interrompida. Preserve o dispositivo.');
+  }
+  portablePaths.configureElectron(app, dataDir);
+}
 const ownsInstance = app.requestSingleInstanceLock();
 if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   app.exit(ownsInstance ? 0 : 73);
@@ -8,12 +40,6 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   const fs = require('fs/promises');
   const { pathToFileURL } = require('url');
   const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
-  const dataDir =
-    process.env.JARVIS_DATA_DIR ||
-    path.join(
-      process.env.LOCALAPPDATA || path.join(require('os').homedir(), 'AppData', 'Local'),
-      'JARVIS',
-    );
   if (!path.isAbsolute(dataDir)) throw new Error('JARVIS_DATA_DIR deve ser um caminho absoluto.');
   const routes = new Map([
     ['/health', 'GET'],
@@ -42,7 +68,9 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     quickController,
     quitting = false,
     packagedBackend,
-    backendStopped = false;
+    openBackupsOnExit = false,
+    backendStopped = false,
+    stateStorage = null;
   app.on('second-instance', () => {
     if (win) {
       if (win.isMinimized()) win.restore();
@@ -73,9 +101,14 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     }
   }
   const windowState = require('./window-state');
+  const activeStreams = new Map();
+  ipcMain.handle('jarvis:cancel-chat', (event) => {
+    if (!trusted(event)) throw Error('Solicitação não autorizada.');
+    activeStreams.get(event.sender.id)?.abort();
+  });
   const stateFile = path.join(dataDir, 'window-state.json');
   function createWindow() {
-    const saved = windowState.load(stateFile, screen?.getAllDisplays?.() || []);
+    const saved = windowState.load(stateFile, screen?.getAllDisplays?.() || [], stateStorage);
     win = new BrowserWindow({
       width: 1280,
       height: 850,
@@ -90,6 +123,12 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       backgroundColor: '#0D1117',
       ...(app.isPackaged ? { icon: path.join(process.resourcesPath, 'jarvis.png') } : {}),
       webPreferences: {
+        ...(app.isPackaged && process.env.JARVIS_CLOUD !== '1'
+          ? { partition: 'jarvis-private' }
+          : {}),
+        ...(app.isPackaged && process.env.JARVIS_CLOUD !== '1'
+          ? { additionalArguments: ['--jarvis-encrypted-storage'] }
+          : {}),
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
@@ -99,7 +138,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', (event) => event.preventDefault());
     win.on?.('close', (event) => {
-      windowState.save(stateFile, win);
+      windowState.save(stateFile, win, stateStorage);
       if (!quitting && quickController?.hideOnClose()) {
         event.preventDefault();
         win.hide();
@@ -116,7 +155,14 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     });
     if (!saved || saved.maximized) win.maximize?.();
     if (saved?.fullscreen) win.setFullScreen?.(true);
-    win.loadFile(path.join(__dirname, 'index.html'));
+    win.loadFile(
+      path.join(
+        __dirname,
+        process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_ACTIVATED !== '1'
+          ? 'activation.html'
+          : 'index.html',
+      ),
+    );
   }
   function showMain(chatId) {
     if (win) {
@@ -131,9 +177,120 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     app.quit();
   }
   function initializeDesktop() {
+    const initialSettings = require('./initial-settings').load(dataDir, stateStorage);
+    const browserStateFile = path.join(dataDir, 'config/browser-state.json');
+    const browserState = stateStorage?.readJSON(browserStateFile) || {};
+    const allowedStorage = new Set([
+      'jarvis.preferences',
+      'jarvis.setup-applied',
+      'jarvis.selection',
+      'jarvis.quick.draft',
+    ]);
+    ipcMain.on('jarvis:storage', (event, key, value, write) => {
+      const composer = quickController?.windows?.composer;
+      const quickTrusted =
+        composer &&
+        event.sender === composer.webContents &&
+        event.senderFrame === composer.webContents.mainFrame &&
+        event.senderFrame.url ===
+          pathToFileURL(path.join(__dirname, 'quick.html')).href + '?panel=composer';
+      if (
+        (!trusted(event) && !(quickTrusted && key === 'jarvis.quick.draft')) ||
+        !allowedStorage.has(key)
+      ) {
+        event.returnValue = null;
+        return;
+      }
+      try {
+        if (write) {
+          if (value !== null && (typeof value !== 'string' || value.length > 12000))
+            throw Error('Estado inválido.');
+          if (value === null) delete browserState[key];
+          else browserState[key] = value;
+          if (stateStorage) stateStorage.writeJSON(browserStateFile, browserState);
+        }
+        event.returnValue = browserState[key] ?? null;
+      } catch {
+        event.returnValue = null;
+      }
+    });
+    ipcMain.handle('jarvis:initial-settings', (event) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return initialSettings;
+    });
+    ipcMain.handle('jarvis:open-backups', async (event) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      if (process.env.JARVIS_CLOUD === '1')
+        throw Error('Backups Cloud: encerre o JARVIS e copie a pasta local de dados.');
+      if (!app.isPackaged) throw Error('Use o módulo portable_backup no desenvolvimento.');
+      const answer = await dialog.showMessageBox(win, {
+        type: 'question',
+        title: 'Backups do JARVIS',
+        message: 'Encerrar o JARVIS e abrir o gerenciador de backups?',
+        detail:
+          'O backend será encerrado antes de copiar ou restaurar bancos. Aguarde o término antes de remover o dispositivo.',
+        buttons: ['Cancelar', 'Encerrar e abrir backups'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      });
+      if (answer.response !== 1) return { canceled: true };
+      openBackupsOnExit = '--backups';
+      quitJarvis();
+      return { ok: true };
+    });
+    for (const [channel, argument, label] of [
+      ['jarvis:open-migration', '--migrate', 'migrar dados de uma versão anterior'],
+      ['jarvis:open-startup', '--startup', 'configurar a inicialização neste computador'],
+    ])
+      ipcMain.handle(channel, async (event) => {
+        if (process.env.JARVIS_CLOUD === '1')
+          throw Error('Função da edição anterior; consulte a documentação de migração.');
+        if (!trusted(event) || !app.isPackaged) throw Error('Disponível na edição portátil.');
+        const answer = await dialog.showMessageBox(win, {
+          type: 'question',
+          title: 'JARVIS',
+          message: `Encerrar o JARVIS para ${label}?`,
+          buttons: ['Cancelar', 'Continuar'],
+          defaultId: 0,
+          cancelId: 0,
+          noLink: true,
+        });
+        if (answer.response !== 1) return { canceled: true };
+        openBackupsOnExit = argument;
+        quitJarvis();
+        return { ok: true };
+      });
     ipcMain.handle('jarvis:open-ai-config', async (event) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      if (process.env.JARVIS_CLOUD === '1') {
+        await dialog.showMessageBox(win, {
+          message: 'A inteligência artificial é gerenciada pelo administrador.',
+          detail:
+            'Ative o aplicativo usando o link jarvis:// enviado pelo administrador. A chave OpenAI fica exclusivamente no Cloud.',
+        });
+        return { ok: true };
+      }
       try {
+        if (app.isPackaged) {
+          await new Promise((resolve, reject) => {
+            const child = require('node:child_process').spawn(
+              path.join(process.resourcesPath, 'backend', 'jarvis-backend.exe'),
+              ['--configure'],
+              {
+                shell: false,
+                windowsHide: true,
+                stdio: 'ignore',
+                env: { ...process.env, JARVIS_DATA_DIR: dataDir },
+              },
+            );
+            child.once('error', () => reject(Error('Configuração indisponível.')));
+            child.once('exit', (code) =>
+              code === 0 ? resolve() : reject(Error('Configuração cancelada.')),
+            );
+          });
+          return { ok: true };
+        }
         const file = await require('./ai-config').prepareConfig({
           packaged: !!app.isPackaged,
           dataDir,
@@ -277,7 +434,27 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       ) {
         throw new Error('Conteúdo inválido.');
       }
-      const result = await backend(route, method, options.body);
+      let result;
+      if (baseRoute === '/chat' && process.env.JARVIS_CLOUD === '1') {
+        if (activeStreams.has(event.sender.id)) throw Error('Uma resposta já está sendo gerada.');
+        const controller = new AbortController();
+        activeStreams.set(event.sender.id, controller);
+        try {
+          const token = (await fs.readFile(path.join(dataDir, '.local-token'), 'utf8')).trim();
+          const response = await fetch('http://127.0.0.1:8765/chat/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Jarvis-Token': token },
+            body: options.body,
+            redirect: 'error',
+            signal: AbortSignal.any([controller.signal, AbortSignal.timeout(180000)]),
+          });
+          result = await require('./services/local-stream').consume(response, (delta) => {
+            if (!event.sender.isDestroyed()) event.sender.send('jarvis:stream-delta', delta);
+          });
+        } finally {
+          activeStreams.delete(event.sender.id);
+        }
+      } else result = await backend(route, method, options.body);
       if (baseRoute === '/workspace/view' && result.ok)
         quickController?.setProject(result.data.project);
       return result;
@@ -312,6 +489,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       mainWindow: () => win,
       openMain: showMain,
       quit: quitJarvis,
+      enabled: initialSettings.quickChat !== false,
+      stateStorage,
     });
   }
   app.whenReady().then(() => {
@@ -325,9 +504,24 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         dataDir,
         executable: process.env.PORTABLE_EXECUTABLE_FILE || process.execPath,
         version: app.getVersion(),
+        attempts: 1200,
       })
-      .then((service) => {
+      .then(async (service) => {
         packagedBackend = service;
+        if (process.env.JARVIS_CLOUD === '1') {
+          initializeDesktop();
+          return;
+        }
+        const unlocked = await backend('/desktop/key', 'GET');
+        if (!unlocked.ok) throw Error('Cofre bloqueado.');
+        stateStorage = require('./encrypted-state').create(dataDir, unlocked.data.key);
+        for (const file of [
+          'config/settings.json',
+          'window-state.json',
+          'quick-state.json',
+          'config/browser-state.json',
+        ])
+          stateStorage.readJSON(path.join(dataDir, file));
         initializeDesktop();
       })
       .catch(() => {
@@ -344,7 +538,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   });
 
   process.on('uncaughtException', (error) => {
-    console.error('ERRO JARVIS:', error);
+    console.error('ERRO JARVIS: operação interrompida.');
   });
 
   app.on('before-quit', (event) => {
@@ -358,6 +552,25 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         .stop()
         .then(() => {
           backendStopped = true;
+          if (openBackupsOnExit) {
+            const child = require('node:child_process').spawn(
+              path.join(process.resourcesPath, 'backend', 'jarvis-backend.exe'),
+              [openBackupsOnExit],
+              {
+                shell: false,
+                windowsHide: true,
+                stdio: 'ignore',
+                env: { ...process.env, JARVIS_DATA_DIR: dataDir },
+              },
+            );
+            child.on('error', () => {
+              dialog.showErrorBox('JARVIS', 'Não foi possível abrir o gerenciador de backups.');
+              app.quit();
+            });
+            child.once('exit', () => app.quit());
+            win?.hide();
+            return;
+          }
           app.quit();
         })
         .catch(() => {

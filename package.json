@@ -1,0 +1,21 @@
+{
+  "name": "jarvis",
+  "version": "3.0.0",
+  "private": true,
+  "workspaces": [
+    "cloud",
+    "desktop",
+    "packages/shared"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev:cloud": "npm run dev -w @jarvis/cloud",
+    "build:cloud": "npm run build -w @jarvis/cloud",
+    "test:cloud": "npm test -w @jarvis/cloud",
+    "typecheck": "npm run typecheck -w @jarvis/cloud",
+    "db:generate": "npm run db:generate -w @jarvis/cloud",
+    "db:migrate": "npm run db:migrate -w @jarvis/cloud"
+  }
+}

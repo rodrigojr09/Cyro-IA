@@ -1,4 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
+if (process.argv.includes('--jarvis-encrypted-storage'))
+  contextBridge.exposeInMainWorld('jarvisStorage', {
+    getItem: (key) => ipcRenderer.sendSync('jarvis:storage', key),
+    setItem: (key, value) => ipcRenderer.sendSync('jarvis:storage', key, value, true),
+    removeItem: (key) => ipcRenderer.sendSync('jarvis:storage', key, null, true),
+  });
 const invoke = (name, ...args) => ipcRenderer.invoke('quick:' + name, ...args);
 contextBridge.exposeInMainWorld('quick', {
   toggle: () => invoke('toggle'),

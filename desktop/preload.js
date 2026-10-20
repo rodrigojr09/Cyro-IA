@@ -1,4 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('jarvisActivation', {
+  activate: (value) => ipcRenderer.invoke('jarvis:activate', value),
+  state: () => ipcRenderer.invoke('jarvis:cloud-state'),
+  onState: (callback) =>
+    ipcRenderer.on('jarvis:cloud-state-changed', (_event, value) => callback(value)),
+});
+if (process.argv.includes('--jarvis-encrypted-storage'))
+  contextBridge.exposeInMainWorld('jarvisStorage', {
+    getItem: (key) => ipcRenderer.sendSync('jarvis:storage', key),
+    setItem: (key, value) => ipcRenderer.sendSync('jarvis:storage', key, value, true),
+    removeItem: (key) => ipcRenderer.sendSync('jarvis:storage', key, null, true),
+  });
 let pendingChat = null,
   openCallback = null;
 ipcRenderer.on('jarvis:open-chat', (_, id) => {
@@ -9,6 +21,13 @@ ipcRenderer.on('jarvis:open-chat', (_, id) => {
   }
 });
 contextBridge.exposeInMainWorld('jarvisWindow', {
+  permitMicrophone: () => ipcRenderer.invoke('jarvis:voice-input-permission'),
+  onDelta: (callback) => ipcRenderer.on('jarvis:stream-delta', (_event, value) => callback(value)),
+  cancelChat: () => ipcRenderer.invoke('jarvis:cancel-chat'),
+  initialSettings: () => ipcRenderer.invoke('jarvis:initial-settings'),
+  openBackups: () => ipcRenderer.invoke('jarvis:open-backups'),
+  openMigration: () => ipcRenderer.invoke('jarvis:open-migration'),
+  openStartup: () => ipcRenderer.invoke('jarvis:open-startup'),
   openAIConfig: () => ipcRenderer.invoke('jarvis:open-ai-config'),
   quickSettings: () => ipcRenderer.invoke('jarvis:quick-settings'),
   configureQuick: (value) => ipcRenderer.invoke('jarvis:quick-configure', value),

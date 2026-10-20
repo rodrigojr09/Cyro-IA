@@ -11,7 +11,7 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field, ConfigDict
 from computer import (
@@ -32,12 +32,31 @@ from project_store import ProjectStore, database, now
 from project_index import ProjectIndexer
 from project_chat import ProjectChatService
 from project_scope import RegisteredReadPolicy
+import runtime_credentials
+import protected_storage
 
 ROOT = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))
-load_dotenv((data_directory() if FROZEN else ROOT) / ".env")
+CLOUD = os.getenv("JARVIS_CLOUD") == "1"
+if not FROZEN and not CLOUD:
+    load_dotenv(ROOT / ".env")
 DB = (data_directory() if FROZEN else ROOT) / "jarvis.sqlite3"
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY") or "not-configured")
+
+
+def configured_key():
+    if CLOUD:
+        import cloud_client
+
+        return "cloud-device-session" if cloud_client.ready() else None
+    return runtime_credentials.API_KEY if FROZEN else os.getenv("OPENAI_API_KEY")
+
+
+client = AsyncOpenAI(
+    api_key=configured_key() or "not-configured",
+    **({"base_url": "https://api.openai.com/v1"} if FROZEN else {}),
+)
+if CLOUD:
+    from cloud_client import client
 SESSION_TOKEN = secrets.token_urlsafe(48)
 DATA = data_directory()
 TOKEN_FILE = DATA / ".local-token"
@@ -51,7 +70,10 @@ chat_lock = asyncio.Lock()
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 SYSTEM = (
     "Você é JARVIS, um assistente pessoal em português brasileiro, objetivo e útil. "
-    "Ajude com programação e tarefas de computador. Nunca alegue ter executado ações sem ferramentas. "
+    "Ajude com tarefas cotidianas, organização de ideias, escrita e revisão de e-mails, "
+    "relatórios, estudos, exercícios, planos de estudo, explicações de planilhas e programação. "
+    "Adapte a linguagem à experiência da pessoa. Não exija um projeto para conversar. "
+    "Nunca alegue pesquisar na internet, ler documentos ou executar ações sem ferramentas que comprovem isso. "
     "Quando necessário, use apenas as ferramentas disponíveis. Não invente resultados."
 )
 SYSTEM += (
@@ -67,16 +89,14 @@ async def lifespan(app: FastAPI):
     api_gate = asyncio.Semaphore(1)
     chat_lock = asyncio.Lock()
     store = ProjectStore(DATA)
-    store.migrate(DB, ROOT)
+    if not FROZEN:
+        store.migrate(DB, ROOT)
     programming = ProgrammingService(DATA)
     indexer = ProjectIndexer(
         store,
         client,
         MODEL,
-        lambda: bool(
-            os.getenv("OPENAI_API_KEY")
-            and os.getenv("OPENAI_API_KEY") != "coloque_sua_chave_aqui"
-        ),
+        lambda: bool(configured_key() and configured_key() != "coloque_sua_chave_aqui"),
         api_gate,
     )
     await indexer.start()
@@ -90,11 +110,64 @@ async def lifespan(app: FastAPI):
             and TOKEN_FILE.read_text(encoding="utf-8") == SESSION_TOKEN
         ):
             TOKEN_FILE.unlink()
+        if FROZEN and os.getenv("JARVIS_PORTABLE") == "1":
+            from portable_backup import create_backup
+
+            try:
+                settings_file = DATA / "config/settings.json"
+                retention = (
+                    json.loads(protected_storage.read_text(settings_file)).get(
+                        "backup_retention", 5
+                    )
+                    if settings_file.exists()
+                    else 5
+                )
+                await asyncio.to_thread(
+                    create_backup, DATA, DATA.parent / "backups", retention
+                )
+            except (OSError, ValueError):
+                # A disconnected/full device must not expose paths or personal data in logs.
+                print(
+                    "JARVIS: backup de encerramento indisponível; confira o dispositivo.",
+                    file=sys.stderr,
+                )
 
 
 app = FastAPI(
-    version="1.0.1", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
+    version="3.0.0" if CLOUD else "2.0.1-dev.0",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
+
+
+@app.get("/desktop/key")
+async def desktop_key():
+    # Deliberately absent from the renderer route allowlist and AI tools.
+    if not FROZEN:
+        raise HTTPException(404, "Indisponível.")
+    return {"key": base64.b64encode(protected_storage.data_key()).decode("ascii")}
+
+
+class CloudSession(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    origin: str = Field(max_length=512)
+    credential: str = Field(min_length=43, max_length=43)
+
+
+@app.post("/desktop/cloud-session")
+async def cloud_session(req: CloudSession):
+    # Deliberately absent from renderer routes and AI tools; local auth applies.
+    if not CLOUD:
+        raise HTTPException(404, "Indisponível.")
+    import cloud_client
+
+    try:
+        cloud_client.configure(req.origin, req.credential)
+    except ValueError:
+        raise HTTPException(400, "Configuração Cloud inválida.")
+    return {"ok": True}
 
 
 @app.middleware("http")
@@ -416,13 +489,62 @@ async def chat(req: ChatRequest):
             programming.progress = "Pronto"
 
 
+@app.post("/chat/stream")
+async def chat_stream(req: ChatRequest):
+    if not CLOUD:
+        raise HTTPException(404, "Indisponível.")
+    import cloud_client
+
+    async def events():
+        queue = asyncio.Queue(maxsize=512)
+
+        async def emit(text):
+            await queue.put({"delta": text})
+
+        async def run():
+            marker = cloud_client.stream_sink.set(emit)
+            try:
+                await queue.put({"result": await chat(req)})
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                await queue.put(
+                    {
+                        "error": "Resposta interrompida. Confira a conexão, licença e limites do cliente."
+                    }
+                )
+            finally:
+                cloud_client.stream_sink.reset(marker)
+
+        task = asyncio.create_task(run())
+        try:
+            while True:
+                item = await queue.get()
+                yield "data: " + json.dumps(item, ensure_ascii=False) + "\n\n"
+                if "result" in item or "error" in item:
+                    break
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+    return StreamingResponse(
+        events(), media_type="text/event-stream", headers={"Cache-Control": "no-store"}
+    )
+
+
 def require_api_key():
-    if (
-        not os.getenv("OPENAI_API_KEY")
-        or os.getenv("OPENAI_API_KEY") == "coloque_sua_chave_aqui"
-    ):
+    if CLOUD:
+        if not configured_key():
+            raise HTTPException(
+                403, "Ative esta instalação pelo link fornecido pelo administrador."
+            )
+        return
+    if not configured_key() or configured_key() == "coloque_sua_chave_aqui":
         location = (
-            "no .env da pasta de dados do JARVIS. Abra Configurações → Inteligência artificial → Abrir configuração"
+            "no cofre da pasta de dados do JARVIS. Abra Configurações → Inteligência artificial → Configurar OpenAI API"
             if FROZEN
             else "no backend/.env"
         )

@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from .security import redact
+from protected_storage import read_text, write_text
 
 
 def memory_summary(text, limit=700):
@@ -30,7 +31,7 @@ class ProgrammingContext:
         try:
             if self.state_file.stat().st_size > 20000:
                 raise ValueError
-            loaded = json.loads(self.state_file.read_text(encoding="utf-8"))
+            loaded = json.loads(read_text(self.state_file))
             if isinstance(loaded, dict):
                 for key in ("project", "last_file", "problem", "suggestions"):
                     if isinstance(loaded.get(key), str):
@@ -46,9 +47,7 @@ class ProgrammingContext:
 
     def save(self):
         # O caminho é definido pelo JARVIS, nunca por argumento da IA.
-        self.state_file.write_text(
-            json.dumps(self.data, ensure_ascii=False), encoding="utf-8"
-        )
+        write_text(self.state_file, json.dumps(self.data, ensure_ascii=False))
 
     def select(self, path):
         value = str(path) if path is not None else None

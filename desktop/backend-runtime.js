@@ -54,6 +54,20 @@ async function start({
       'Existe outro backend na porta 8765. Encerre a outra instalação antes de continuar.',
     );
   await portAvailable();
+  const environment = {
+    ...process.env,
+    JARVIS_DATA_DIR: dataDir,
+    JARVIS_INSTALLATION: installation,
+    ...(process.env.JARVIS_CLOUD === '1' ? { JARVIS_CLOUD: '1' } : { JARVIS_PORTABLE: '1' }),
+  };
+  for (const key of [
+    'OPENAI_API_KEY',
+    'OPENAI_LOG',
+    'OPENAI_BASE_URL',
+    'OPENAI_ORG_ID',
+    'OPENAI_PROJECT_ID',
+  ])
+    delete environment[key];
   const child = spawnProcess(
     path.join(resources, 'backend', 'jarvis-backend.exe'),
     ['--parent', String(process.pid)],
@@ -61,8 +75,8 @@ async function start({
       cwd: resources,
       windowsHide: true,
       shell: false,
-      stdio: 'ignore',
-      env: { ...process.env, JARVIS_DATA_DIR: dataDir, JARVIS_INSTALLATION: installation },
+      stdio: ['pipe', 'ignore', 'ignore'],
+      env: environment,
     },
   );
   let failed = false,
@@ -75,9 +89,15 @@ async function start({
   });
   async function stop() {
     if (exited || failed) return;
-    child.kill();
-    for (let i = 0; i < 40 && !exited; i++) await wait(50);
-    if (!exited) throw Error('O backend próprio não confirmou o encerramento.');
+    if (child.stdin) {
+      child.stdin.on('error', () => {});
+      child.stdin.end('shutdown\n');
+    } else child.kill();
+    for (let i = 0; i < 300 && !exited; i++) await wait(100);
+    if (!exited) {
+      child.kill();
+      throw Error('O backend próprio não confirmou o encerramento.');
+    }
   }
   try {
     for (let i = 0; i < attempts; i++) {

@@ -1,5 +1,19 @@
 # DOCUMENT — Referência técnica do JARVIS 1.0.1
 
+## Fase 2 — trabalho ainda não lançado
+
+A versão dos metadados continua 1.0.1; o destino é 2.0.1. A documentação abaixo registra a base anterior. O [guia da fase portátil](INSTALL.md) descreve os novos fluxos, limitações e validações pendentes. Não confunda testes de diretórios temporários com validação do produto completo.
+
+- `desktop/portable-paths.js` resolve dados pelo executável externo do portátil e configura userData/sessionData/logs/crashDumps antes do lock e de ready. O perfil permanece no USB; a extração temporária do runtime ainda pertence ao empacotador.
+- `backend/portable_paths.py` fornece referências `volume:` para projetos cadastrados no mesmo volume. Fontes externas continuam com referência absoluta e podem ficar indisponíveis. A memória interna continua indexada por UUID, independente da letra.
+- O catálogo usa esquema 3, impedindo que a implementação antiga com suporte até esquema 2 interprete referências portáteis. Memórias de projeto mantêm esquema 2. A migração preserva tabelas e conteúdo, sem mover dados pessoais automaticamente.
+- `secure_vault.py`, `runtime_credentials.py` e `credential_dialog.py` isolam a chave criptografada e o desbloqueio humano. A senha não é persistida; a chave não entra no ambiente de processos-filhos. `main.py` mantém `.env` apenas no modo fonte.
+- `portable_install.py` implementa detecção, espaço/permissão, cópia verificada, diário de troca do aplicativo e preservação de dados. `tools/setup_portable.py` apresenta o assistente nativo; `tools/build_setup.py` prepara o empacotamento após a sincronização da versão 2.0.1.
+- `portable_backup.py` usa snapshots offline, integridade SQLite, manifesto de hashes, limites de extração, retenção e restauração em pasta separada. `backup_dialog.py` permite backup manual, exportação e restauração confirmada. Backups não são uma fronteira contra invasores que possam reescrever o manifesto; hashes detectam corrupção, não autenticam a origem de ZIPs.
+- O backend próprio recebe desligamento por pipe privado, sem rota HTTP/IA para encerrar processos externos. O monitor do pai solicita desligamento e aplica um limite de tempo se necessário. O encerramento gracioso para o indexador antes de gerar o backup.
+
+**Pendências impeditivas:** criptografia de conversas/memória/backups, migração guiada do AppData, inicialização autorizada por computador, verificação do artefato completo e testes reais descritos em INSTALL. A existência de GUI e motor de instalação no código não prova funcionamento do instalador compilado.
+
 Este documento descreve a implementação existente. O [README](README.md) orienta instalação e uso; o [IDEIA](IDEIA.md) registra a visão e as propostas futuras.
 
 ## Arquitetura e limites de confiança

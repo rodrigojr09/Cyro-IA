@@ -14,6 +14,16 @@
 * {
   box-sizing: border-box;
 }
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f9fc;
+  --side: #eef2f7;
+  --surface: #e3eaf3;
+  --border: #c5cfdd;
+  --accent: #0369a1;
+  --text: #172033;
+  --muted: #4c5b70;
+}
 body {
   margin: 0;
   background: var(--bg);

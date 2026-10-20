@@ -12,6 +12,8 @@ from pathlib import Path
 from programming.context import memory_summary
 from programming.security import ReadError, ReadPolicy, redact
 from project_scope import SourceSelection, SelectedReadPolicy, browse_sources
+from portable_paths import source_reference, resolve_source
+import protected_storage
 
 
 def now():
@@ -21,6 +23,10 @@ def now():
 @contextmanager
 def database(path):
     path = Path(path)
+    if protected_storage.enabled(path):
+        with protected_storage.database(path) as con:
+            yield con
+        return
     if (
         path.parent.resolve() != path.parent.absolute()
         or path.is_symlink()
@@ -30,6 +36,7 @@ def database(path):
     con = sqlite3.connect(path, timeout=10)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys=ON")
+    con.execute("PRAGMA synchronous=FULL")
     try:
         with con:
             yield con
@@ -45,6 +52,9 @@ def identifier(value):
 
 
 def atomic_text(path, content):
+    if protected_storage.enabled(path):
+        protected_storage.write_text(path, content)
+        return
     temporary = path.with_name(path.name + ".tmp")
     if (
         path.parent.resolve() != path.parent.absolute()
@@ -64,7 +74,7 @@ class ProjectStore:
         (self.root / "projects").mkdir(exist_ok=True)
         (self.root / "general").mkdir(exist_ok=True)
         with database(self.registry) as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] > 2:
+            if con.execute("PRAGMA user_version").fetchone()[0] > 3:
                 raise ReadError(
                     "Formato de catálogo mais recente que esta versão do JARVIS."
                 )
@@ -104,7 +114,7 @@ class ProjectStore:
                 con.execute(
                     "UPDATE projects SET state='selecting',progress='Confirme os arquivos do projeto antes de usar a API'"
                 )
-            con.execute("PRAGMA user_version=2")
+            con.execute("PRAGMA user_version=3")
         self.initialize_db(self.root / "general" / "project.db")
         for project in self.projects(include_removed=True):
             if self.db_path(project["id"]).is_file():
@@ -219,12 +229,17 @@ class ProjectStore:
             ).fetchone()
         if row is None or (row["removed"] and not include_removed):
             raise ReadError("Projeto não cadastrado ou removido.")
-        return dict(row)
+        return self.resolve_project(row)
+
+    def resolve_project(self, row):
+        result = dict(row)
+        result["path"] = resolve_source(result["path"], self.root)
+        return result
 
     def projects(self, include_removed=False):
         with database(self.registry) as con:
             return [
-                dict(row)
+                self.resolve_project(row)
                 for row in con.execute(
                     "SELECT * FROM projects WHERE removed=0 OR ? ORDER BY name,path",
                     (include_removed,),
@@ -245,7 +260,12 @@ class ProjectStore:
             info = original.stat()
         except OSError:
             raise ReadError("Projeto inacessível ou sem permissão.") from None
-        key = os.path.normcase(str(original)).rstrip("\\/")
+        stored = (
+            source_reference(original, self.root)
+            if os.getenv("JARVIS_PORTABLE") == "1"
+            else str(original)
+        )
+        key = os.path.normcase(stored).rstrip("\\/")
         file_id = f"{info.st_dev}:{info.st_ino}" if info.st_ino else None
         with database(self.registry) as con:
             row = con.execute(
@@ -256,7 +276,7 @@ class ProjectStore:
                 project_id = row["id"]
                 con.execute(
                     "UPDATE projects SET removed=0,path=?,path_key=?,file_identity=?,updated_at=? WHERE id=?",
-                    (str(original), key, file_id, now(), project_id),
+                    (stored, key, file_id, now(), project_id),
                 )
                 created = bool(row["memory_deleted"])
                 if created:
@@ -272,7 +292,7 @@ class ProjectStore:
                     (
                         project_id,
                         redact(name.strip() or original.name)[:120],
-                        str(original),
+                        stored,
                         key,
                         file_id,
                         stamp,

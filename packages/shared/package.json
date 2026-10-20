@@ -1,0 +1,14 @@
+{
+  "name": "@jarvis/shared",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schemas": "./schemas/index.ts",
+    "./constants": "./constants/index.ts",
+    "./types": "./types/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}
