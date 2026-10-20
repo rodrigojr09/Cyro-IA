@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
             TOKEN_FILE.unlink()
 
 
-app = FastAPI(version='0.8.1', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(version='0.8.2', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware('http')

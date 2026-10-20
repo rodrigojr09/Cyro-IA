@@ -7,7 +7,6 @@ window.quick.onStopAudio(stopAudio);
 window.quick.onFocus(()=>{$('question').focus();});
 function render(state){
  current=state;
- document.body.classList.toggle('engaged',!!state.hovered);
  document.documentElement.style.setProperty('--quick-opacity',String(state.config.opacity));
  if(role==='composer'){
   $('send').disabled=state.busy;$('question').disabled=state.busy;

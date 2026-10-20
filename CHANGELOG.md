@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2 — 2026-10-20
+
+- Transparência fixa no Quick Chat: passar o mouse não aumenta mais a opacidade dos painéis ou do ícone. Configuração personalizada e nitidez do texto preservadas.
+- Hover continua pausando o temporizador; tamanho de 42 px e abertura somente do compositor mantidos.
+- Verificação: 93 testes Python, 40 testes Node e testes reais do Electron principal/Quick Chat. O teste visual confirma transparência constante antes/depois do hover e pausa do tempo. API/som reais, DPI misto e jogos exclusivos permanecem sem validação manual completa.
+
 ## 0.8.1 — 2026-10-20
 
 - Ícone do Quick Chat reduzido de 56 para 42 px, com borda mais leve, destaque discreto ao passar o mouse e geometria atualizada para todos os monitores.

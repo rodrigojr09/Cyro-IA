@@ -19,12 +19,12 @@ app.whenReady().then(async()=>{
   await orb.webContents.executeJavaScript('window.quick.toggle()');assert.equal(composer.isVisible(),true);
   await composer.webContents.executeJavaScript(`(async()=>{document.getElementById('question').value='Qual a causa do erro no login?';await document.getElementById('send').onclick();})()`);
   assert.equal(response.isVisible(),true);assert.equal(main.isMinimized(),true);
-  assert.match(await response.webContents.executeJavaScript(`getComputedStyle(document.getElementById('response')).backgroundColor`),/0\.(66|96)/);
+  assert.match(await response.webContents.executeJavaScript(`getComputedStyle(document.getElementById('response')).backgroundColor`),/0\.66/);
   assert.equal(await response.webContents.executeJavaScript(`getComputedStyle(document.getElementById('answer')).opacity`),'1');
 assert.equal(opened.length,0);
   assert.match(await response.webContents.executeJavaScript(`document.getElementById('answer').textContent`),/sessão expirada/);
   const bounds=response.getBounds(),input=composer.getBounds();assert.ok(bounds.y+bounds.height<input.y);
-  await response.webContents.executeJavaScript(`window.quick.pause('hover',true)`);await delay(220);assert.match(await response.webContents.executeJavaScript(`getComputedStyle(document.getElementById('response')).backgroundColor`),/0\.96/);clock=60000;tick();assert.equal(response.isVisible(),true);
+  await response.webContents.executeJavaScript(`window.quick.pause('hover',true)`);await delay(220);assert.match(await response.webContents.executeJavaScript(`getComputedStyle(document.getElementById('response')).backgroundColor`),/0\.66/);clock=60000;tick();assert.equal(response.isVisible(),true);
   await response.webContents.executeJavaScript(`window.quick.pin(true)`);await response.webContents.executeJavaScript(`window.quick.pause('hover',false)`);clock=90000;tick();assert.equal(response.isVisible(),true);
   await response.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
   fs.writeFileSync(path.join(app.getPath('temp'),'jarvis-v08-quick-response.png'),(await response.webContents.capturePage()).toPNG());
