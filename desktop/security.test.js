@@ -5,11 +5,12 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { pathToFileURL } = require('node:url');
 
-function setup({ authorized = false, canceled = false } = {}) {
+function setup({ authorized = false, canceled = false, ownsInstance=true,probe=false } = {}) {
   const handlers = new Map();
   const requests = [];
   const copies = [];
   const dialogs = [];
+  const exits=[];
   const windowEvents=new Map(),external=[];let windowOptions,maximized=false,fullscreen=false;
   const frame = { url: pathToFileURL(path.join(__dirname, 'index.html')).href };
   const contents = { mainFrame: frame, setWindowOpenHandler() {}, on(name,fn) {windowEvents.set(name,fn);} };
@@ -27,12 +28,12 @@ function setup({ authorized = false, canceled = false } = {}) {
     },
     shell:{openExternal:async url=>external.push(url)},
     clipboard: { writeText: text => copies.push(text) },
-    app: { disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {} },
+    app: { requestSingleInstanceLock:()=>ownsInstance,exit:code=>exits.push(code),disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {} },
     BrowserWindow: Window,
     ipcMain: { handle: (name, fn) => handlers.set(name, fn), on() {} }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8'), {
-    __dirname, console, URL, process: { env: {}, on() {} }, AbortSignal,
+    __dirname, console, URL, process: { env: {}, argv:probe?['--jarvis-probe']:[],on() {} }, AbortSignal,
     require: name => name === 'electron' ? electron : name === './window-state' ? {load:()=>null,save(){}} : name === 'fs/promises'
       ? { readFile: async () => 'test-local-token' } : require(name),
     fetch: async (url, options) => {
@@ -40,7 +41,7 @@ function setup({ authorized = false, canceled = false } = {}) {
       return { ok: true, json: async () => ({ reply: 'Resposta' }) };
     }
   });
-  return { invoke: handlers.get('jarvis:api'), handlers, copies, dialogs,
+  return { invoke: handlers.get('jarvis:api'), handlers, copies, dialogs,exits,
     event: { sender: contents, senderFrame: frame }, requests,windowEvents,external,get windowOptions(){return windowOptions;},get maximized(){return maximized;},get fullscreen(){return fullscreen;} };
 }
 
@@ -226,4 +227,9 @@ test('links externos exigem janela confiável, protocolo web e confirmação hum
  for(const value of ['file:///C:/Windows','javascript:alert(1)','https://user:password@example.com'])await assert.rejects(open(denied.event,value));
  await open(denied.event,'https://example.com');assert.equal(denied.external.length,0);
  const approved=setup({authorized:true});await approved.handlers.get('jarvis:open-link')(approved.event,'https://example.com');assert.deepEqual(approved.external,['https://example.com/']);
+});
+
+test('Electron bloqueia segunda instância e probe não abre janela',()=>{
+ const second=setup({ownsInstance:false});assert.deepEqual(second.exits,[73]);assert.equal(second.windowOptions,undefined);
+ const probe=setup({probe:true});assert.deepEqual(probe.exits,[0]);assert.equal(probe.windowOptions,undefined);
 });

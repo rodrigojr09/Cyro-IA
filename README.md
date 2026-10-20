@@ -1,10 +1,30 @@
-# JARVIS v0.6.0 — Windows
+# JARVIS v0.7.0 — Windows
 
 Assistente pessoal em Electron e FastAPI com chat, voz, controle limitado do computador e análise de projetos originais em modo **somente leitura**. Cada projeto tem sua própria memória duradoura e várias conversas independentes.
 
 ## Instalação e execução
 
 Requisitos: Windows 10/11, Python 3.11+, Node.js 24.15+ e chave da OpenAI API com faturamento para chat, voz e análise semântica.
+
+### Iniciar com um comando
+
+Com as dependências já instaladas no Python atual e em `desktop/node_modules`, execute na raiz:
+
+```powershell
+python start.py
+```
+
+Também pode executar `python "C:\caminho\do\JARVIS\start.py"` a partir de qualquer diretório. O script usa `sys.executable`, sem trocar o interpretador ou reinstalar pacotes. Caso use o ambiente virtual instalado, ative-o antes ou execute `backend\.venv\Scripts\python.exe start.py`.
+
+Para dois cliques, abra **start.bat**. Ele utiliza `backend\.venv\Scripts\python.exe` quando esse ambiente existe; caso contrário, utiliza `python` do sistema. Erros ficam visíveis com uma pausa no terminal.
+
+O iniciador verifica instâncias existentes, identifica o backend em `127.0.0.1:8765`, aguarda `/health`, prepara os arquivos da interface com as dependências locais e abre o Electron. Fechar a janela ou pressionar **Ctrl+C** encerra os processos criados por ele. Um backend externo reutilizado permanece ativo; aplicativos abertos pelas ferramentas do backend também são preservados. Mantenha o terminal aberto enquanto utiliza o JARVIS.
+
+Uma segunda execução é bloqueada pelo sistema operacional; o Electron também tem proteção nativa, inclusive quando iniciado por `npm start`. A verificação de saúde compara a identidade da instalação, sem expor chaves ou caminhos privados. Backend antigo ou outro serviço na porta 8765 gera orientação para encerramento manual; o script nunca finaliza o ocupante da porta. Após atualizar de uma versão anterior, reinicie o backend uma vez para disponibilizar a identificação nova do `/health`.
+
+Falhas de dependências informam como corrigir a instalação uma vez. Não são executados `pip install` ou `npm install` durante a inicialização. O primeiro backend pode levar até 45 segundos para ficar pronto; falha ou timeout encerra somente os processos iniciados pelo lançador. `JARVIS_DATA_DIR`, quando utilizado, deve estar definido no ambiente do terminal para os dois processos, como na execução manual.
+
+### Primeira instalação e execução manual alternativa
 
 Backend, no PowerShell:
 
@@ -187,6 +207,15 @@ Pastas de abertura: Desktop, Documents e Downloads diretamente no perfil; pastas
 
 ## Testes e validação
 
+Na raiz, com as dependências de teste instaladas:
+
+```powershell
+backend\.venv\Scripts\python.exe -m unittest -v test_start
+```
+
+Os testes do iniciador cobrem ordem de inicialização, reutilização, dependências ausentes, porta ocupada, timeout/erro, Ctrl+C e lock. HTTP local, desligamento gracioso de Uvicorn, locks e Job Objects do Windows são exercitados com processos fictícios reais; conferem preservação de processo externo e dos aplicativos abertos pelo backend. O probe nativo do Electron também foi executado. O fluxo completo via dois cliques, fechamento manual do terminal e integrações externas ainda exigem validação humana.
+
+
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
@@ -208,7 +237,7 @@ node --check window-state.js
 node --check smoke.cjs
 ```
 
-Validação da v0.6.0: **72 testes Python, 27 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
+Validação da v0.7.0: **87 testes Python (72 backend + 15 iniciador), 28 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
 
 OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, sidebar, vários chats, Markdown, configurações, redimensionamento e dados fictícios. Maximização/F11 e validação/persistência da janela têm testes automatizados de lógica; interação nativa humana e restauração visual em diferentes monitores precisam de validação manual. Não utiliza a área de transferência real. Captura temporária: `jarvis-v06-home.png`, `jarvis-v06-chat.png` e `jarvis-v06-settings.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
 

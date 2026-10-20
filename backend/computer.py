@@ -92,7 +92,8 @@ def confirm_action(identifier, approved):
         target = folder_path(action['target'])
         command = [str(Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'explorer.exe'), str(target)]
     try:
-        subprocess.Popen(command, shell=False, stdin=subprocess.DEVNULL,
+        flags=subprocess.CREATE_BREAKAWAY_FROM_JOB if os.name=='nt' and os.getenv('JARVIS_LAUNCHER_JOB')=='1' else 0
+        subprocess.Popen(command, shell=False, creationflags=flags, stdin=subprocess.DEVNULL,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except OSError:
         return {'result': 'Não foi possível iniciar o aplicativo ou abrir a pasta.'}

@@ -55,6 +55,7 @@ class JarvisTests(unittest.TestCase):
 
     def test_open_requires_confirmation_and_replay_is_rejected(self):
         with patch.object(computer.platform, 'system', return_value='Windows'), \
+             patch.dict(computer.os.environ,{'JARVIS_LAUNCHER_JOB':'1'}), \
              patch.object(computer.subprocess, 'Popen') as launch:
             response = self.client.post('/action/open', json={'app': 'notepad'})
             action = response.json()['pending_action']
@@ -63,6 +64,7 @@ class JarvisTests(unittest.TestCase):
             self.assertEqual(self.client.post('/action/confirm', json=body).status_code, 200)
             launch.assert_called_once()
             self.assertFalse(launch.call_args.kwargs['shell'])
+            self.assertEqual(launch.call_args.kwargs['creationflags'],getattr(computer.subprocess,'CREATE_BREAKAWAY_FROM_JOB',0) if computer.os.name=='nt' else 0)
             self.assertTrue(Path(launch.call_args.args[0][0]).is_absolute())
             self.assertEqual(self.client.post('/action/confirm', json=body).status_code, 400)
 

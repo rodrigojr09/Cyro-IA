@@ -1,4 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, clipboard, shell, screen } = require('electron');
+const ownsInstance=app.requestSingleInstanceLock();
+if(!ownsInstance || (process.argv||[]).includes('--jarvis-probe')){
+    app.exit(ownsInstance?0:73);
+}else{
 app.disableHardwareAcceleration();
 const path = require('path');
 const fs = require('fs/promises');
@@ -17,6 +21,7 @@ const routes = new Map([
     ['/projects/selection', 'GET'], ['/projects/selection/save', 'POST']
 ]);
 let win;
+app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.show();win.focus();}});
 function trusted(event) {
     return event.sender === win?.webContents && event.senderFrame === win.webContents.mainFrame &&
         event.senderFrame.url === pageURL;
@@ -144,3 +149,5 @@ process.on("uncaughtException", (error) => {
 app.on("before-quit", () => {
     console.log("JARVIS está encerrando...");
 });
+
+}

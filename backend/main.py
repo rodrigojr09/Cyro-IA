@@ -1,3 +1,4 @@
+import hashlib
 import base64
 import asyncio
 import json
@@ -67,7 +68,7 @@ async def lifespan(app: FastAPI):
             TOKEN_FILE.unlink()
 
 
-app = FastAPI(version='0.6.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(version='0.7.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware('http')
@@ -255,7 +256,8 @@ async def programming_revoke(req: RootRequest):
 
 @app.get('/health')
 async def health():
-    return {'ok': True}
+    return {'ok': True, 'service':'jarvis',
+            'installation':hashlib.sha256(os.path.normcase(str(ROOT.parent)).encode()).hexdigest()}
 
 @app.get('/history')
 async def history():

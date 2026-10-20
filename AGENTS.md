@@ -100,3 +100,5 @@ node --check window-state.js
 Instale as dependências de teste de `backend/requirements-dev.txt` quando necessário. Testes automatizados de OpenAI, voz e abertura de programas usam simulações; a validação real dessas integrações deve ser identificada separadamente. Atualize estas orientações quando a estrutura do projeto mudar, preservando as regras permanentes acima.
 
 O frontend desktop usa dependências locais empacotadas por `npm run build` (executado antes de start/testes). Após atualizar dependências, use `npm ci` em desktop. Preserve a moldura nativa, a persistência de janela, a sanitização do Markdown e a validação de links externos.
+
+Para o iniciador na raiz: `backend\.venv\Scripts\python.exe -m unittest -v test_start`. Preserve o uso do interpretador atual, o lock de instância e a distinção entre processos próprios e externos. Nunca encerre processos apenas por estarem usando a porta 8765.

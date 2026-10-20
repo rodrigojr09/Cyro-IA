@@ -39,7 +39,7 @@ window.jarvisUI=(()=>{
     'Inteligência artificial':()=>'<h3>Inteligência artificial</h3><p>A conexão e os modelos são configurados no backend. Chaves de API nunca são exibidas aqui.</p><p>O chat usa contexto progressivo. A seleção local de fontes não consome tokens; análise e respostas utilizam a API.</p>',
     'Projetos':()=>'<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
     'Memória':()=>'<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button>',
-    'Aplicativo':()=>'<h3>Aplicativo</h3><p>JARVIS · 0.6.0</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>'
+    'Aplicativo':()=>'<h3>Aplicativo</h3><p>JARVIS · 0.7.0</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>'
   };
   function category(name){
     $('settings-content').innerHTML=settings[name]();

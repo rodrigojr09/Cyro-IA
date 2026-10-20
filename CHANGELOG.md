@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 — 2026-10-20
+
+- `start.py` na raiz inicia FastAPI com o interpretador Python atual, aguarda `/health`, compila a interface com dependências existentes e abre o Electron, sem instalar pacotes ou depender do diretório corrente.
+- `start.bat` permite dois cliques, preferindo o ambiente virtual já instalado; erros permanecem visíveis.
+- Lock de instância do lançador e proteção nativa do Electron, inclusive para abertura via npm start. Probe evita iniciar backend e compilação quando o aplicativo já está aberto.
+- `/health` identifica o serviço e a instalação por hash, sem chaves/caminhos privados. Backend externo reconhecido é reutilizado; serviço desconhecido/antigo na porta exige intervenção manual e nunca é encerrado.
+- Job Objects no Windows controlam os processos criados e a árvore do Electron; backend encerra por sinal gracioso, mantendo aplicativos abertos pelo usuário fora de seu Job. Processos externos não são registrados para encerramento.
+- Mensagens de progresso e tratamento de dependências ausentes, portas ocupadas, falhas/timeout e Ctrl+C. Chat, voz, projetos, memória e controle do computador preservados.
+- Testes: 87 Python (72 backend e 15 iniciador), 28 Node e Electron real. HTTP, lock, árvore de processos e preservação de processos externos verificados no Windows; probe real do Electron aprovado. Fluxo humano via dois cliques/fechamento do terminal e API/áudio externos não foram exercitados de ponta a ponta.
+
 ## 0.6.0 — 2026-10-20
 
 - Redesign desktop completo: janela nativa maximizada no primeiro uso, redimensionável, sem always-on-top, F11 e persistência validada de posição/tamanho/estado.
