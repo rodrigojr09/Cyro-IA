@@ -1,6 +1,6 @@
 # JARVIS — Ideia e visão do projeto
 
-Referência da versão 1.0.0, em 20/10/2026. Este documento do próprio JARVIS é versionado com o código; não se confunde com os IDEIA.md privados gerados para cada projeto cadastrado.
+Referência da versão 1.0.1, em 20/10/2026. Este documento do próprio JARVIS é versionado com o código; não se confunde com os IDEIA.md privados gerados para cada projeto cadastrado.
 
 ## Objetivo
 
@@ -16,6 +16,7 @@ Oferecer um ambiente desktop de conversa e assistência à programação, com ac
 - Ferramentas somente leitura para descoberta, estrutura, leitura e busca de código.
 - Controles locais limitados, sem comandos arbitrários e com confirmação humana nas aberturas.
 - Quick Chat independente, transparente, com histórico próprio, temporizador pausável e coordenação de voz.
+- Acesso à configuração privada de IA pelas configurações, sem mostrar ou embutir a chave no executável.
 - Inicialização de desenvolvimento com start.py/start.bat e pipeline de compilação Windows portátil com build.bat.
 
 A existência de uma função ou de um teste não prova que todas as combinações de Windows, hardware, projetos e serviços externos funcionam. A cobertura prática e as limitações são registradas no CHANGELOG e no DOCUMENT.

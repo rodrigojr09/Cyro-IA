@@ -474,3 +474,12 @@ test('fechar principal mantém Quick Chat na bandeja ou encerra conforme prefer�
   exit.windowEvents.get('close')({ preventDefault() {} });
   assert.equal(exit.quitCalls, 1);
 });
+
+test('configuração privada exige janela confiável e não aceita rota genérica', async () => {
+  const { handlers, event, invoke } = setup();
+  await assert.rejects(
+    handlers.get('jarvis:open-ai-config')({ ...event, sender: {} }),
+    /autorizada/,
+  );
+  await assert.rejects(invoke(event, '/config'), /autorizada/);
+});

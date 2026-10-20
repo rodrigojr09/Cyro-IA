@@ -76,6 +76,19 @@ def main():
                     assert error.code == 401
                 workspace = request("/workspace", token)
                 assert workspace["projects"] == []
+                # The actual frozen backend must point to production configuration,
+                # without attempting a paid request with an absent key.
+                for route in ["/chat", "/speak"]:
+                    try:
+                        request(route, token, {"message": "Teste sem chave"})
+                        raise AssertionError(
+                            "Chave ausente deveria impedir chamada à API."
+                        )
+                    except HTTPError as error:
+                        assert error.code == 503
+                        detail = json.load(error)["detail"]
+                        assert "pasta de dados" in detail
+                        assert "backend/.env" not in detail
                 if cycle == 0:
                     chat = request(
                         "/chats/create", token, {"title": "Teste portátil isolado"}

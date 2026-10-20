@@ -1,11 +1,11 @@
 {
   "name": "jarvis-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js",
+    "test": "node --test security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js",
     "test:electron": "electron smoke.cjs",
     "build": "node build.cjs",
     "prestart": "npm run build",

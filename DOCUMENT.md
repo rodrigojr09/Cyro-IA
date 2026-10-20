@@ -1,4 +1,4 @@
-# DOCUMENT — Referência técnica do JARVIS 1.0.0
+# DOCUMENT — Referência técnica do JARVIS 1.0.1
 
 Este documento descreve a implementação existente. O [README](README.md) orienta instalação e uso; o [IDEIA](IDEIA.md) registra a visão e as propostas futuras.
 
@@ -46,7 +46,7 @@ A configuração privada da edição portátil fica em `%LOCALAPPDATA%\JARVIS\.e
 
 O ícone JARVIS em PNG/ICO é gerado localmente por `tools/build_icon.py`, sem ferramentas gráficas externas. `package.cjs` adapta a leitura da árvore npm para tolerar banners do CMD antes do JSON, sem alterar arquivos instalados ou configurações do Windows. A compressão padrão do build é nível 5; ELECTRON_BUILDER_COMPRESSION_LEVEL permite um ajuste explícito entre 0 e 9. A cadeia de proxy do empacotador usa global-agent 4.1.3 para eliminar a dependência vulnerável de logging; a função bootstrap usada pelo download permanece disponível.
 
-O build não instala dependências e não publica nada. A instalação inicial das ferramentas deve ser feita pelo desenvolvedor. A saída é `release/JARVIS-1.0.0-x64.exe` acompanhada de SHA-256. O binário não tem assinatura Authenticode; a reputação/alertas do Windows não são controlados pelo projeto. A distribuição não inclui uma chave da OpenAI.
+O build não instala dependências e não publica nada. A instalação inicial das ferramentas deve ser feita pelo desenvolvedor. A saída é `release/JARVIS-1.0.1-x64.exe` acompanhada de SHA-256. O binário não tem assinatura Authenticode; a reputação/alertas do Windows não são controlados pelo projeto. A distribuição não inclui uma chave da OpenAI.
 
 ## Validação do executável
 
@@ -217,3 +217,9 @@ O teste real do Quick Chat verifica a principal minimizada, ícone independente,
 Chamadas reais à OpenAI, reprodução sonora e interação humana com os diálogos nativos não foram verificadas de ponta a ponta. O ambiente emite aviso de depreciação de TestClient/httpx, sem falha na suíte.
 
 Validação manual sugerida: reinicie os dois processos, confira a conversa geral migrada, cadastre um projeto de teste, selecione somente suas fontes, confirme e aguarde a análise, crie dois chats com assuntos distintos, reinicie o JARVIS e abra-os novamente. Altere manualmente um arquivo do projeto de teste e confira a atualização incremental. Teste arquivar/restaurar e remover somente o cadastro antes de qualquer escolha de apagar memória. Microfone e execução/edição de projetos permanecem fora do escopo.
+
+## Configuração privada na v1.0.1
+
+O botão Abrir configuração resolve um caminho fixo no processo principal: pasta de dados na edição portátil, backend na edição fonte. Cria um template vazio com exclusividade apenas se ausente, recusa redirecionamentos e hard links, e seleciona o arquivo no Explorer. O renderer não recebe o conteúdo nem pode fornecer um caminho. Não há rota da IA para configurar a própria chave. Após editar e salvar, encerre pela bandeja e abra novamente para carregar a configuração.
+
+A correção v1.0.1 tem 97 testes Python e 56 testes Node, além dos testes reais do Electron. O teste do portátil verifica também que chat e voz sem chave retornam 503 com orientação para a pasta de dados, sem chamada paga.

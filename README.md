@@ -1,4 +1,4 @@
-# JARVIS 1.0.0
+# JARVIS 1.0.1
 
 Assistente desktop para Windows com chat, voz, projetos e memória persistente. Analisa código local autorizado e sugere soluções **sem alterar ou executar os projetos analisados**.
 
@@ -51,13 +51,13 @@ cd ..
 Execute **`build.bat`**. Ele roda os testes e compila o backend Python e o Electron, gerando:
 
 ```text
-release/JARVIS-1.0.0-x64.exe
-release/JARVIS-1.0.0-x64.exe.sha256
+release/JARVIS-1.0.1-x64.exe
+release/JARVIS-1.0.1-x64.exe.sha256
 ```
 
 O build requer internet para baixar os runtimes do empacotador na primeira compilação, mas não instala pacotes automaticamente. Um erro interrompe o processo e mantém o terminal visível. Não executa push, upload ou publicação.
 
-Distribua somente o `.exe` e, opcionalmente, seu checksum. No primeiro uso da edição portátil, configure sua própria chave em `%LOCALAPPDATA%\JARVIS\.env`, por exemplo `OPENAI_API_KEY=SUA_CHAVE_PRIVADA`, sem compartilhar o arquivo. Feche e reabra após configurar. A distribuição não carrega a chave do desenvolvedor. O portátil extrai arquivos temporários necessários ao funcionamento e mantém a memória fora do executável. Não tem assinatura digital; uma validação em Windows limpo é recomendada antes da distribuição pública.
+Distribua somente o `.exe` e, opcionalmente, seu checksum. No primeiro uso da edição portátil, abra **Configurações → Inteligência artificial → Abrir configuração**. O JARVIS cria um .env vazio somente se ele não existir e abre a pasta com o arquivo selecionado, sem ler nem exibir a chave. Edite o arquivo em um editor de texto. Configure sua própria chave em `%LOCALAPPDATA%\JARVIS\.env`, por exemplo `OPENAI_API_KEY=SUA_CHAVE_PRIVADA`, sem compartilhar o arquivo. Encerre completamente pela bandeja e reabra após configurar; minimizar ou fechar o X não recarrega o arquivo. A distribuição não carrega a chave do desenvolvedor. O portátil extrai arquivos temporários necessários ao funcionamento e mantém a memória fora do executável. Não tem assinatura digital; uma validação em Windows limpo é recomendada antes da distribuição pública.
 
 ## Usar projetos e conversas
 
@@ -101,7 +101,7 @@ npm run test:quick
 npm run format:check
 ```
 
-A v1.0.0 foi verificada com **96 testes Python, 50 testes Node, dois testes do Electron real e inicialização/reinicialização do portátil com memória temporária**.
+A v1.0.1 foi verificada com **97 testes Python, 56 testes Node, dois testes do Electron real e inicialização/reinicialização do portátil com memória temporária**.
 
 Os testes usam projetos fictícios, bancos temporários e OpenAI simulada. Testes reais do Electron verificam renderização e interação; áudio usa uma amostra silenciosa. Chamadas pagas, som nos alto-falantes, Windows limpo, monitores físicos com DPI misto e jogos exclusivos precisam de validação separada. Não se garante sobreposição sobre jogos exclusivos.
 

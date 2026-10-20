@@ -9,6 +9,7 @@ ipcRenderer.on('jarvis:open-chat', (_, id) => {
   }
 });
 contextBridge.exposeInMainWorld('jarvisWindow', {
+  openAIConfig: () => ipcRenderer.invoke('jarvis:open-ai-config'),
   quickSettings: () => ipcRenderer.invoke('jarvis:quick-settings'),
   configureQuick: (value) => ipcRenderer.invoke('jarvis:quick-configure', value),
   voicePreference: (value) => ipcRenderer.invoke('jarvis:voice-preference', value),

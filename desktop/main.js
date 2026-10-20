@@ -131,6 +131,22 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     app.quit();
   }
   function initializeDesktop() {
+    ipcMain.handle('jarvis:open-ai-config', async (event) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      try {
+        const file = await require('./ai-config').prepareConfig({
+          packaged: !!app.isPackaged,
+          dataDir,
+          sourceDir: __dirname,
+        });
+        shell.showItemInFolder(file);
+        return { ok: true };
+      } catch {
+        throw Error(
+          'Não foi possível abrir a configuração privada. Confira as permissões da pasta de dados.',
+        );
+      }
+    });
     ipcMain.handle('jarvis:authorize-folder', async (event) => {
       if (!trusted(event)) throw new Error('Solicitação não autorizada.');
       const selected = await dialog.showOpenDialog(win, {

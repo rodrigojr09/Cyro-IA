@@ -146,7 +146,7 @@ window.jarvisUI = (() => {
     Voz: () =>
       '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button><p>Microfone preparado para integração futura.</p>',
     'Inteligência artificial': () =>
-      '<h3>Inteligência artificial</h3><p>A conexão e os modelos são configurados no backend. Chaves de API nunca são exibidas aqui.</p><p>O chat usa contexto progressivo. A seleção local de fontes não consome tokens; análise e respostas utilizam a API.</p>',
+      '<h3>Inteligência artificial</h3><p>Configure sua própria chave no arquivo privado .env. Na edição portátil, ele fica na pasta de dados do JARVIS; no desenvolvimento, em backend/.env.</p><button id="setting-ai-config">Abrir configuração</button><p id="ai-config-status" role="status"></p><p>O botão abre a pasta com o arquivo selecionado. Edite OPENAI_API_KEY em um editor de texto, salve e depois encerre o JARVIS pela bandeja e abra novamente. A chave nunca aparece nesta interface e não acompanha o executável.</p><p>A seleção local de fontes não consome tokens; análise, respostas e voz utilizam a API.</p>',
     Projetos: () =>
       '<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
     Memória: () =>
@@ -154,7 +154,7 @@ window.jarvisUI = (() => {
     'Quick Chat': () =>
       '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><label><input id="quick-tray" type="checkbox">Ao fechar a janela principal, manter na bandeja</label><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
     Aplicativo: () =>
-      '<h3>Aplicativo</h3><p>JARVIS · 1.0.0</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>',
+      '<h3>Aplicativo</h3><p>JARVIS · 1.0.1</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><p>Projetos originais: acesso somente leitura.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
@@ -197,6 +197,17 @@ window.jarvisUI = (() => {
     const bind = (id, fn) => {
       if ($(id)) $(id).onclick = fn;
     };
+    bind('setting-ai-config', async () => {
+      try {
+        await window.jarvisWindow.openAIConfig();
+        $('ai-config-status').textContent =
+          'Pasta aberta. Edite o .env, salve e reinicie o JARVIS pela bandeja.';
+      } catch {
+        if ($('ai-config-status'))
+          $('ai-config-status').textContent =
+            'Não foi possível abrir a configuração. Confira as permissões da pasta de dados.';
+      }
+    });
     if ($('setting-large')) {
       $('setting-large').checked = preferences.largeText;
       bind('setting-large', () => {

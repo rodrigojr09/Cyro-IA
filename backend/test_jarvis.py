@@ -34,6 +34,20 @@ def completion(content=None, calls=None):
 
 
 class JarvisTests(unittest.TestCase):
+    def test_missing_key_has_correct_configuration_in_source_and_portable(self):
+        for frozen, expected in [(False, "backend/.env"), (True, "pasta de dados")]:
+            with self.subTest(frozen=frozen), patch.object(
+                main, "FROZEN", frozen
+            ), patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
+                for route in ["/chat", "/speak"]:
+                    response = self.client.post(
+                        route, json={"message": "Teste sem chave"}
+                    )
+                    self.assertEqual(response.status_code, 503)
+                    self.assertIn(expected, response.json()["detail"])
+                    if frozen:
+                        self.assertNotIn("backend/.env", response.json()["detail"])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)

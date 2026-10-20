@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 — 2026-10-20
+
+- Corrigida a orientação de OPENAI_API_KEY na edição portátil: aponta para a configuração privada na pasta de dados, não para backend/.env. Chat e voz recusam chave ausente com orientação consistente.
+- Configurações → Inteligência artificial → Abrir configuração abre o arquivo selecionado no Explorer, criando template vazio somente quando necessário. Não lê, devolve, sobrescreve nem embute chaves; exige a janela principal confiável.
+- Verificação: 97 testes Python, 56 testes Node e dois testes reais do Electron. Testes cobrem os dois modos, preservação do arquivo existente, bloqueio de hard links e autorização do IPC. É necessário encerrar pela bandeja e reiniciar após editar o .env; a chave do desenvolvimento não é copiada automaticamente.
+
 ## 1.0.0 — 2026-10-20
 
 - Revisão de design: contraste e espaçamento, títulos com truncamento, item ativo na sidebar, foco da busca, hierarquia de leitura, tabelas e cópia no cabeçalho do código. Layout refinado em 800×560, diálogos com nomes acessíveis e status de memória sem repetição. Transparência e comportamento do Quick Chat preservados.

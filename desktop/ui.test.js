@@ -220,3 +220,21 @@ test('diálogos possuem nome acessível e navegação identifica a conversa ativ
   );
   dom.window.close();
 });
+
+test('configuração de IA abre somente o fluxo privado e orienta reinicialização', async () => {
+  const { w, dom } = await setup();
+  let opened = 0;
+  w.jarvisWindow.openAIConfig = async () => {
+    opened++;
+    return { ok: true };
+  };
+  w.document.getElementById('settings-open').click();
+  [...w.document.getElementById('settings-tabs').children]
+    .find((b) => b.textContent === 'Inteligência artificial')
+    .click();
+  await w.document.getElementById('setting-ai-config').onclick();
+  assert.equal(opened, 1);
+  assert.match(w.document.getElementById('ai-config-status').textContent, /reinicie/);
+  assert.equal(w.document.querySelectorAll('#settings-content input').length, 0);
+  dom.window.close();
+});

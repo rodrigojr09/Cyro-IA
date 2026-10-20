@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="1.0.0", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
+    version="1.0.1", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
 )
 
 
@@ -416,13 +416,25 @@ async def chat(req: ChatRequest):
             programming.progress = "Pronto"
 
 
-async def process_chat(req: ChatRequest):
-    global active_service
+def require_api_key():
     if (
         not os.getenv("OPENAI_API_KEY")
         or os.getenv("OPENAI_API_KEY") == "coloque_sua_chave_aqui"
     ):
-        raise HTTPException(503, "Configure OPENAI_API_KEY no backend/.env")
+        location = (
+            "no .env da pasta de dados do JARVIS. Abra Configurações → Inteligência artificial → Abrir configuração"
+            if FROZEN
+            else "no backend/.env"
+        )
+        raise HTTPException(
+            503,
+            f"Configure OPENAI_API_KEY {location}. Depois encerre o JARVIS pela bandeja e abra novamente.",
+        )
+
+
+async def process_chat(req: ChatRequest):
+    global active_service
+    require_api_key()
     chat_id = req.chat_id or store.general_chat()
     chat_info = store.chat(chat_id)
     is_quick = chat_id == store.quick_chat(create=False)
@@ -608,6 +620,7 @@ async def process_chat(req: ChatRequest):
 
 @app.post("/speak")
 async def speak(req: ChatRequest):
+    require_api_key()
     try:
         audio = await client.audio.speech.create(
             model=os.getenv("OPENAI_TTS_MODEL", "tts-1"),
