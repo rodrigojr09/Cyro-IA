@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
             TOKEN_FILE.unlink()
 
 
-app = FastAPI(version='0.5.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(version='0.6.0', lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware('http')
@@ -144,7 +144,14 @@ async def read_error_handler(request: Request, exc: ReadError):
 
 @app.get('/workspace')
 async def workspace():
-    return {'projects':store.projects(), 'general_chat_id':store.general_chat(), 'data_directory':str(DATA)}
+    projects=store.projects()
+    general_id=store.general_chat()
+    active_projects={project['id'] for project in projects}
+    with database(store.registry) as con:
+        rows=con.execute('SELECT id,project_id,title,archived,last_message_at,created_at FROM chats '
+                         'ORDER BY COALESCE(last_message_at,created_at) DESC')
+        chats=[dict(row) for row in rows if row['project_id'] is None or row['project_id'] in active_projects]
+    return {'projects':projects, 'chats':chats, 'general_chat_id':general_id, 'data_directory':str(DATA)}
 
 
 @app.post('/workspace/view')

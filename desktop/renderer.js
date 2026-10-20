@@ -10,6 +10,7 @@ let pollTimer;
 const programmingMode = document.getElementById('programming-mode');
 
 function renderContent(el, content) {
+  if(window.jarvisUI){window.jarvisUI.render(el,content);return;}
   const blocks = /```([^\n`]*)\n([\s\S]*?)(?:```|$)/g;
   let match, cursor = 0;
   while ((match = blocks.exec(content)) !== null) {
@@ -47,16 +48,19 @@ function renderContent(el, content) {
   }
 }
 function addMessage(role, content) {
+  const follow=window.jarvisUI?.nearBottom();
+  window.jarvisUI?.welcome(false);
   const el = document.createElement('div');
-  el.className = 'message ' + role;
+  el.className = 'message ' + role + (content.startsWith('Erro:')?' error':'');
   renderContent(el, content);
+  if(window.jarvisUI)window.jarvisUI.decorate(el,content);
   messages.appendChild(el);
-  messages.scrollTop = messages.scrollHeight;
+  if(window.jarvisUI){if(follow)window.jarvisUI.scroll(true);}else messages.scrollTop = messages.scrollHeight;
 }
 function showProject(data) {
   if (!data) return;
   const selected = window.jarvisWorkspace?.project || data.project;
-  document.getElementById('project-name').textContent = selected ? 'Projeto: ' + selected.name : 'Nenhum projeto selecionado';
+  if(!window.jarvisUI)document.getElementById('project-name').textContent = selected ? 'Projeto: ' + selected.name : 'Nenhum projeto selecionado';
   const roots = document.getElementById('authorized-roots');
   const previous = roots.value;
   roots.replaceChildren();
@@ -130,23 +134,43 @@ function showConfirmation(action) {
     card.appendChild(button);
   }
   messages.appendChild(card);
+  window.jarvisUI?.welcome(false);
+  window.jarvisUI?.scroll(true);
   messages.scrollTop = messages.scrollHeight;
 }
+window.jarvisStopAudio=()=>{if(audio){audio.pause();audio=null;}};
 async function speak(text) {
+  const ui=window.jarvisUI;
+  if(ui&&!ui.voice)return;
+  ui?.stopVoice();
+  const generation=ui?.audioGeneration;
+  ui?.voiceState('Preparando áudio...');
   try {
-    const data = await api('/speak', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text})});
-    if (audio) { audio.pause(); audio = null; }
+    const data = await api('/speak', {method:'POST', body:JSON.stringify({message:text})});
+    if(ui&&(generation!==ui.audioGeneration||!ui.voice))return;
+    window.jarvisStopAudio();
     audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
-    await audio.play();
-  } catch (err) { status.textContent = 'Áudio indisponível: ' + err.message; }
+    audio.onended=()=>ui?.voiceState('');
+    audio.onerror=()=>ui?.voiceState('');
+    const playing=audio;
+    await playing.play();
+    if(generation!==ui?.audioGeneration&&ui){playing.pause();return;}
+    ui?.voiceState('JARVIS está falando');
+  } catch (err) { if(!ui||generation===ui.audioGeneration){status.textContent = 'Áudio indisponível: ' + err.message;ui?.voiceState('');} }
 }
 async function submit() {
   const text = input.value.trim();
   if (!text || send.disabled) return;
+  try{if(window.jarvisWorkspace&&!window.jarvisWorkspace.chat)await window.jarvisWorkspace.newChat();}
+  catch(error){addMessage('assistant','Erro: '+error.message);return;}
   const currentChat = window.jarvisWorkspace?.chat;
   if (window.jarvisWorkspace && !currentChat) return;
   input.value = '';
+  window.jarvisUI?.resize();
+  window.jarvisUI?.stopVoice();
+  window.jarvisUI?.busy(true);
   addMessage('user', text);
+  window.jarvisUI?.scroll(true);
   send.disabled = true;
   window.jarvisWorkspace?.begin();
   analyzing = programmingMode.checked;
@@ -160,6 +184,7 @@ async function submit() {
     analyzing = false;
     clearTimeout(pollTimer);
     showProject(data.programming);
+    window.jarvisUI?.busy(false);
     addMessage('assistant', data.reply);
     for (const action of data.pending_actions || []) showConfirmation(action);
     status.textContent = 'Gerando resposta em áudio...';
@@ -173,12 +198,14 @@ async function submit() {
     programmingMode.disabled = false;
     document.getElementById('authorize-project').disabled = false;
     await refreshProject();
+    window.jarvisUI?.busy(false);
     window.jarvisWorkspace?.end();
     input.focus();
   }
 }
 send.onclick = submit;
 document.getElementById('computer-run').onclick = async () => {
+  document.getElementById('computer-dialog')?.close();
   const button = document.getElementById('computer-run');
   button.disabled = true;
   try {
@@ -202,7 +229,7 @@ document.getElementById('computer-run').onclick = async () => {
   } catch (err) { addMessage('assistant', 'Erro: ' + err.message); }
   finally { button.disabled = false; }
 };
-input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+input.addEventListener('keydown', e => { if (e.key === 'Enter'&&!e.shiftKey&&!e.isComposing) {e.preventDefault();submit();} });
 (async () => {
   try {
     await api('/health');

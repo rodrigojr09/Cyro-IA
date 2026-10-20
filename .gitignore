@@ -19,3 +19,7 @@ node_modules/
 __pycache__/
 JARVIS_DATA/
 .jarvis-data/
+
+# Frontend gerado localmente por npm run build
+desktop/vendor.js
+desktop/vendor.js.LEGAL.txt

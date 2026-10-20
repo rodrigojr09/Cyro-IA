@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, clipboard, shell, screen } = require('electron');
 app.disableHardwareAcceleration();
 const path = require('path');
 const fs = require('fs/promises');
@@ -34,15 +34,24 @@ async function backend(route, method, body) {
         throw new Error('Backend indisponível. Inicie ou reinicie o Python.');
     }
 }
+const windowState = require('./window-state');
+const stateFile = path.join(dataDir, 'window-state.json');
 function createWindow() {
+    const saved = windowState.load(stateFile, screen?.getAllDisplays?.() || []);
     win = new BrowserWindow({
-        width: 390, height: 540, minWidth: 320, minHeight: 390,
-        frame: false, alwaysOnTop: true, resizable: true,
-        backgroundColor: '#0a1020',
+        width: 1280, height: 850, ...(saved?.bounds || {}), minWidth: 800, minHeight: 560,
+        frame: true, autoHideMenuBar: true, alwaysOnTop: false, resizable: true, fullscreenable: true,
+        backgroundColor: '#0D1117',
         webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
     });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', event => event.preventDefault());
+    win.on?.('close', () => windowState.save(stateFile, win));
+    win.webContents.on('before-input-event', (event, input) => {
+        if(input.type==='keyDown' && input.key==='F11' && !input.isAutoRepeat){event.preventDefault();win.setFullScreen(!win.isFullScreen());}
+    });
+    if (!saved || saved.maximized) win.maximize?.();
+    if (saved?.fullscreen) win.setFullScreen?.(true);
     win.loadFile(path.join(__dirname, 'index.html'));
 }
 app.whenReady().then(() => {
@@ -92,12 +101,12 @@ app.whenReady().then(() => {
         }
         return backend('/chats/change','POST',JSON.stringify(body));
     });
-    let expanded = false;
-    ipcMain.handle('jarvis:expand', event => {
-        if (!trusted(event)) throw new Error('Solicitação não autorizada.');
-        expanded = !expanded;
-        win.setSize(expanded ? 780 : 390, expanded ? 720 : 540);
-        return expanded;
+    ipcMain.handle('jarvis:open-link', async(event, value) => {
+        if(!trusted(event) || typeof value!=='string' || value.length>2048) throw new Error('Link inválido.');
+        let target;try{target=new URL(value);}catch{throw new Error('Link inválido.');}
+        if(!['https:','http:'].includes(target.protocol) || target.username || target.password) throw new Error('Link bloqueado.');
+        const decision=await dialog.showMessageBox(win,{type:'question',message:'Abrir link no navegador?',detail:target.href,buttons:['Cancelar','Abrir'],defaultId:0,cancelId:0,noLink:true});
+        if(decision.response===1)await shell.openExternal(target.href);
     });
     ipcMain.handle('jarvis:copy-code', (event, text) => {
         if (!trusted(event) || typeof text !== 'string' || text.length > 100000) {
@@ -119,8 +128,8 @@ app.whenReady().then(() => {
         }
         return backend(route, method, options.body);
     });
-    ipcMain.on('window:minimize', () => win?.minimize());
-    ipcMain.on('window:close', () => win?.close());
+    ipcMain.on('window:minimize', event => {if(trusted(event))win.minimize();});
+    ipcMain.on('window:close', event => {if(trusted(event))win.close();});
     createWindow();
 });
 app.on('window-all-closed', () => {

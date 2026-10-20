@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 — 2026-10-20
+
+- Redesign desktop completo: janela nativa maximizada no primeiro uso, redimensionável, sem always-on-top, F11 e persistência validada de posição/tamanho/estado.
+- Sidebar recolhível com projetos expansíveis, chats gerais, busca de projetos/caminhos/títulos e destaques de seleção. Última conversa e preferências locais são restauradas.
+- Tela inicial com sugestões, área de leitura limitada, compositor multilinha com Enter/Shift+Enter e estados de processamento/erro.
+- Markdown sanitizado com DOMPurify, tabelas, links, código destacado e cópia de blocos/mensagens. Links externos web passam por validação e confirmação nativa; nenhum HTML executável ou navegação arbitrária é permitido.
+- Rolagem que respeita a posição de leitura, retorno à última mensagem e histórico anterior inserido sem apagar as mensagens atuais.
+- Voz automática configurável, preparação/reprodução visíveis, interrupção e invalidação de áudio atrasado ao mudar de chat. Microfone identificado como futuro; cancelamento de geração não é oferecido porque não existe no backend.
+- Configurações por categoria e gerenciamento de chat/memória em diálogos. Controle do computador, seleção de fontes, confirmações humanas, API, chats e memória existentes preservados.
+- Endpoint workspace inclui somente metadados das conversas para navegação, excluindo projetos removidos. Nenhuma migração ou reinicialização dos bancos é necessária.
+- Frontend modular em JavaScript, dependências empacotadas localmente com esbuild, ícones Lucide, Marked e Highlight.js; nenhuma CDN. Execute npm ci ao atualizar.
+- Verificação: 72 testes Python, 27 testes Node, sintaxe JavaScript, compilação e Electron real com capturas revisadas. API/voz externas simuladas; interação nativa humana e restauração em múltiplos monitores não verificadas de ponta a ponta.
+
 ## 0.5.0 — 2026-10-19
 
 - Seleção visual de pastas e arquivos antes da primeira análise, com prévia local paginada de metadados sem leitura de conteúdo nem uso da OpenAI.

@@ -319,6 +319,19 @@ class ProjectAPITests(unittest.TestCase):
         self.assertIn('B_KNOWLEDGE',sent)
         self.assertEqual(self.client.get('/chats/history',params={'chat_id':second['id']}).json()['messages'][-1]['content'],'Reply for B')
 
+    def test_sidebar_catalog_lists_metadata_without_histories_or_removed_projects(self):
+        general=main.store.create_chat(None,'General discussion')
+        project_chat=main.store.create_chat(self.project['id'],'Login investigation')
+        main.store.append(project_chat['id'],'user','HISTORY_NOT_IN_SIDEBAR')
+        data=self.client.get('/workspace').json()
+        self.assertIn(project_chat['id'],[item['id'] for item in data['chats']])
+        self.assertIn(general['id'],[item['id'] for item in data['chats']])
+        self.assertNotIn('HISTORY_NOT_IN_SIDEBAR',json.dumps(data))
+        self.client.post('/projects/remove',json={'project_id':self.project['id'],'confirmed':True,'delete_memory':False})
+        data=self.client.get('/workspace').json()
+        self.assertNotIn(project_chat['id'],[item['id'] for item in data['chats']])
+        self.assertIn(general['id'],[item['id'] for item in data['chats']])
+
     def test_destructive_operations_require_confirmation_and_original_is_untouched(self):
         chat=main.store.create_chat(self.project['id'])
         for route,body in [('/projects/remove',{'project_id':self.project['id']}),('/chats/change',{'chat_id':chat['id'],'delete':True})]:

@@ -1,10 +1,10 @@
-# JARVIS v0.5.0 — Windows
+# JARVIS v0.6.0 — Windows
 
 Assistente pessoal em Electron e FastAPI com chat, voz, controle limitado do computador e análise de projetos originais em modo **somente leitura**. Cada projeto tem sua própria memória duradoura e várias conversas independentes.
 
 ## Instalação e execução
 
-Requisitos: Windows 10/11, Python 3.11+, Node.js 22.12+ e chave da OpenAI API com faturamento para chat, voz e análise semântica.
+Requisitos: Windows 10/11, Python 3.11+, Node.js 24.15+ e chave da OpenAI API com faturamento para chat, voz e análise semântica.
 
 Backend, no PowerShell:
 
@@ -35,18 +35,30 @@ Reinicie backend e Electron após atualizar. Execute somente um backend, sem `--
 
 ## Projetos e conversas
 
-1. Clique em **+ Pasta**, escolha a pasta original de um projeto e confirme a autorização nativa. O cadastro abre a seleção de fontes: navegue nas pastas e marque/desmarque arquivos antes de iniciar a análise. A prévia lista apenas nomes, tipos e tamanhos, sem ler conteúdo nem chamar a OpenAI.
+1. Clique em **Adicionar projeto**, escolha a pasta original de um projeto e confirme a autorização nativa. O cadastro abre a seleção de fontes: navegue nas pastas e marque/desmarque arquivos antes de iniciar a análise. A prévia lista apenas nomes, tipos e tamanhos, sem ler conteúdo nem chamar a OpenAI.
 2. Clique em **Salvar seleção e analisar** para iniciar a análise em segundo plano dos arquivos escolhidos, com consumo da OpenAI API. Acompanhe o estado da memória. A primeira conversa só fica disponível após uma análise bem-sucedida dentro dos limites, ou após clicar explicitamente em **Continuar com análise parcial**. Sem chave/API, ainda é produzida uma base estática parcial, cuja utilização exige essa aceitação.
-3. Escolha o projeto e um chat nos seletores. Projetos com nomes iguais são diferenciados pelo caminho. Selecionar a mesma pasta novamente reutiliza o UUID, os chats e a memória existentes; não duplica o cadastro.
-4. Use **+ Chat** para outro assunto. O chat carrega o IDEIA.md atual e o resumo daquela conversa; criar outro chat no projeto ativo não dispara uma varredura nem uma análise completa.
-5. Em **Gerenciar conversas e memória**, altere o título, arquive/restaure/exclua chats, consulte páginas anteriores do histórico, veja o IDEIA.md e solicite atualização da memória.
+3. Escolha o projeto na barra lateral, expanda sua lista e clique em um chat. A busca encontra nomes de projetos, caminhos e títulos de conversas. Projetos com nomes iguais são diferenciados pelo caminho. Selecionar a mesma pasta novamente reutiliza o UUID, os chats e a memória existentes; não duplica o cadastro.
+4. Use **Novo chat** para outro assunto. O chat carrega o IDEIA.md atual e o resumo daquela conversa; criar outro chat no projeto ativo não dispara uma varredura nem uma análise completa.
+5. No botão **⋯** do cabeçalho, altere o título, arquive/restaure/exclua chats, consulte páginas anteriores do histórico, veja o IDEIA.md e solicite atualização da memória.
 6. Registre decisões, ideias, problemas ou informações no formulário próprio. Essas anotações são identificadas como fornecidas pelo usuário e preservadas nas atualizações; hipóteses da IA não viram decisões humanas automaticamente.
 7. **Remover projeto** oferece duas escolhas distintas: remover somente o cadastro, mantendo a memória para recuperar ao cadastrar a mesma pasta; ou apagar também a memória interna daquele projeto. Ambas preservam a pasta original. A exclusão de chats e o arquivamento têm confirmação nativa. A conversa geral que recebeu a migração é protegida contra exclusão, podendo ser arquivada.
-8. Use **↔** para alternar entre a janela flutuante compacta e o modo expandido. Durante uma resposta, a troca de projeto/chat e um novo envio ficam bloqueados para evitar mistura visual de conversas.
+8. A janela abre maximizada no primeiro uso, com moldura nativa do Windows. Pode ser redimensionada (mínimo 800×560), minimizada e fechada normalmente. **F11** alterna tela cheia. Tamanho, posição e estados de maximização/tela cheia são salvos ao fechar; posições fora dos monitores disponíveis são descartadas. Durante uma resposta, a troca de projeto/chat e um novo envio ficam bloqueados.
 
-**Conversas gerais** continuam disponíveis no seletor. Não recebem automaticamente conhecimento de nenhum projeto e não têm ferramentas de leitura de projetos. Nelas, desmarcar o modo de análise oferece os controles locais anteriores. Chats de projeto ficam obrigatoriamente em modo de leitura.
+**Conversas gerais** continuam disponíveis na barra lateral. Não recebem automaticamente conhecimento de nenhum projeto e não têm ferramentas de leitura de projetos. Os controles locais estão em **Configurações → Aplicativo → Controle do computador**, disponíveis nas conversas gerais. Chats de projeto ficam obrigatoriamente em modo de leitura.
 
 Exemplos: “Explique a arquitetura”, “Procure onde getUsers é usado”, “Leia index.ts do backend”, “Investigue o login”, “Compare frontend e backend” e “Mostre uma correção sem alterar os arquivos”. Quando houver arquivos duplicados, informe um dos caminhos apresentados. Sugestões aparecem em blocos de código selecionáveis e copiáveis; a voz usa uma explicação curta, sem ler centenas de linhas.
+
+## Interface desktop
+
+A sidebar tem projetos expansíveis, chats gerais e busca por metadados; não utiliza selects para navegação. O botão ao lado do título recolhe a sidebar. A última conversa aberta, a preferência de voz, o texto ampliado e a sidebar recolhida são restaurados entre sessões. A tela inicial oferece ações interativas; digitar uma primeira mensagem cria uma conversa quando necessário.
+
+O compositor aceita várias linhas: **Enter envia**, **Shift+Enter quebra a linha**. Respostas aceitam Markdown sanitizado, títulos, listas, tabelas, links e blocos de código com linguagem, destaque e cópia. Há cópia da mensagem inteira. Links web exigem confirmação nativa e abrem no navegador externo; protocolos de execução e arquivos locais são bloqueados. HTML arbitrário, atributos executáveis e imagens remotas não são renderizados. A rolagem preserva a leitura quando você sobe no histórico e oferece um botão para voltar ao fim.
+
+O cabeçalho permite ativar/desativar a voz; o rodapé indica preparação/reprodução e permite interromper o áudio. Trocar de conversa interrompe a reprodução e invalida respostas de áudio atrasadas. O microfone está indisponível, identificado como integração futura. O backend ainda não suporta cancelar a geração do chat; nenhum botão de cancelamento fictício é mostrado.
+
+**Configurações** organiza Aparência, Voz, Inteligência artificial, Projetos, Memória e Aplicativo. Modelo e credenciais continuam configurados exclusivamente no backend; a interface nunca lê o `.env`. Gerenciamento de título, arquivamento, exclusão, anotações e memória fica no menu **⋯** do cabeçalho.
+
+O frontend permanece em JavaScript modular, reaproveitando a integração existente. `npm start` compila dependências locais antes de abrir: Marked, DOMPurify, Highlight.js e Lucide. Nenhuma CDN é utilizada. Execute `npm ci` ao atualizar para instalar as novas dependências, incluindo as de desenvolvimento para a compilação.
 
 ## Seleção de fontes e economia de tokens
 
@@ -156,7 +168,10 @@ Electron → preload isolado → ponte autenticada → FastAPI → memória do p
 | `backend/computer.py` | Ações locais da v0.2, com listas fixas e confirmações. |
 | `desktop/main.js` / `preload.js` | Janela, token, rotas permitidas, diálogos nativos e cópia segura. |
 | `desktop/workspace.js` | Projetos, conversas, memória, estados e gerenciamento da interface. |
-| `desktop/renderer.js` / `index.html` | Chat flutuante, código como texto, áudio e layout compacto/expandido. |
+| `desktop/index.html` / `app.css` | Layout desktop, sidebar, compositor e diálogos responsivos. |
+| `desktop/ui.js` / `vendor-entry.js` | Markdown sanitizado, código, ícones, configurações, rolagem e indicadores. |
+| `desktop/renderer.js` | Chat, áudio, confirmação humana e controles do computador. |
+| `desktop/window-state.js` | Validação e persistência das dimensões/estados da janela. |
 
 Ferramentas de programação: `list_projects`, `select_project`, `list_directory`, `read_file`, `search_files`, `search_code`, `get_project_structure`, `analyze_project`, `get_file_context` e `read_knowledge`. Em chats cadastrados, listar/selecionar/analisar reutiliza somente o projeto daquele chat; mudar de projeto exige a interface. `read_knowledge` acessa apenas documentos internos previstos, sem caminho arbitrário.
 
@@ -166,7 +181,7 @@ Para compatibilidade, `/history` e `/chat` sem `chat_id` referem-se à conversa 
 
 ## Controles do computador preservados
 
-Nas conversas gerais, desmarque o modo de análise para usar os controles antigos. Bloco de Notas e Calculadora têm executáveis fixos em System32; VS Code é localizado somente nas instalações padrão de usuário/Program Files. Não se usa PATH nem argumentos da IA.
+Nas conversas gerais, abra **Configurações → Aplicativo → Controle do computador**. Bloco de Notas e Calculadora têm executáveis fixos em System32; VS Code é localizado somente nas instalações padrão de usuário/Program Files. Não se usa PATH nem argumentos da IA.
 
 Pastas de abertura: Desktop, Documents e Downloads diretamente no perfil; pastas inexistentes/redirecionadas são bloqueadas. Essas permissões de abertura não autorizam automaticamente análise de código. Cada abertura exige confirmação humana, expira em 120 segundos e só pode ser confirmada uma vez. Processos retornam apenas PID/nome, até 200; o sistema retorna arquitetura, versão, CPUs, memória e disco. Exclusões de arquivos, encerramento de processos e comandos arbitrários continuam indisponíveis.
 
@@ -188,12 +203,14 @@ node --check preload.js
 node --check renderer.js
 node --check workspace.js
 node --check scope.js
+node --check ui.js
+node --check window-state.js
 node --check smoke.cjs
 ```
 
-Validação da v0.5.0: **71 testes Python, 17 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
+Validação da v0.6.0: **72 testes Python, 27 testes Node e teste do Electron real**, além de sintaxe JavaScript. Cobre cadastro/duplicatas Windows, bases independentes, geração de conhecimento, múltiplos chats, migração idempotente, isolamento, cache, hashes, dependências transitivas, memória reutilizada, dados sensíveis, interrupções, reinicialização e exclusão segura. Projetos fictícios são verificados por hashes; nenhuma alteração intencional do teste é confundida com escrita do assistente.
 
-OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, vários chats e dados fictícios. Não utiliza a área de transferência real. Captura temporária: `jarvis-v04-smoke.png` e `jarvis-v05-scope.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
+OpenAI, voz e abertura de programas são simulados; não há custos de API nos testes. O Electron é exercitado em janela oculta, com preload real, sidebar, vários chats, Markdown, configurações, redimensionamento e dados fictícios. Maximização/F11 e validação/persistência da janela têm testes automatizados de lógica; interação nativa humana e restauração visual em diferentes monitores precisam de validação manual. Não utiliza a área de transferência real. Captura temporária: `jarvis-v06-home.png`, `jarvis-v06-chat.png` e `jarvis-v06-settings.png` no diretório temporário do usuário. Quando symlinks não são permitidos no Windows, o atributo de redirecionamento é simulado nos testes; hard links são testados no sistema real.
 
 Chamadas reais à OpenAI, reprodução sonora e interação humana com os diálogos nativos não foram verificadas de ponta a ponta. O ambiente emite aviso de depreciação de TestClient/httpx, sem falha na suíte.
 

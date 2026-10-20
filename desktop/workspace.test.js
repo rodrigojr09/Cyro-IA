@@ -49,9 +49,9 @@ async function setup({partial=false,delayed=false}={}){
 
 test('projetos e chats trocam histórico sem contaminar o contexto e novo chat reutiliza memória',async()=>{
   const {elements,window,calls}=await setup();
-  elements['project-select'].value='project-a';await elements['project-select'].onchange();
+  await window.jarvisWorkspace.view('project-a','first');
   assert.equal(window.jarvisWorkspace.chat.id,'first');
-  elements['chat-select'].value='second';await elements['chat-select'].onchange();
+  await window.jarvisWorkspace.view('project-a','second');
   assert.equal(window.jarvisWorkspace.chat.id,'second');
   assert.equal(elements.messages.children[0].textContent,'Contexto second');
   await elements['new-chat'].onclick();
@@ -62,25 +62,27 @@ test('projetos e chats trocam histórico sem contaminar o contexto e novo chat r
 
 test('análise parcial bloqueia a conversa até aceitação explícita',async()=>{
   const {elements,window}=await setup({partial:true});
-  elements['project-select'].value='project-a';await elements['project-select'].onchange();
+  await window.jarvisWorkspace.view('project-a','first');
   assert.equal(window.jarvisWorkspace.chat,null);
   assert.equal(elements.send.disabled,true);
   assert.equal(elements['accept-partial'].hidden,false);
   await elements['accept-partial'].onclick();
-  assert.equal(window.jarvisWorkspace.chat.id,'first');
+  assert.equal(window.jarvisWorkspace.chat,null);
+  await window.jarvisWorkspace.newChat();
+  assert.equal(window.jarvisWorkspace.chat.id,'new');
   assert.equal(elements.send.disabled,false);
 });
 
 test('resposta em andamento mantém seleção e envio bloqueados mesmo durante atualização da interface',async()=>{
   const {elements,window,calls,resolve}=await setup({delayed:true});
-  elements['project-select'].value='project-a';await elements['project-select'].onchange();
+  await window.jarvisWorkspace.view('project-a','first');
   elements.input.value='Investigue o login';
   const running=elements.send.onclick();
   await new Promise(done=>setImmediate(done));
   window.jarvisWorkspace.controls();
   assert.equal(elements.send.disabled,true);
-  assert.equal(elements['project-select'].disabled,true);
-  assert.equal(elements['chat-select'].disabled,true);
+  assert.equal(elements['general-nav'].disabled,true);
+  assert.equal(elements['add-project'].disabled,true);
   assert.equal(JSON.parse(calls.find(item=>item.route==='/chat').options.body).chat_id,'first');
   resolve();await running;
   assert.equal(elements.send.disabled,false);

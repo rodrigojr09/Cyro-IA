@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   copyCode: text => ipcRenderer.invoke('jarvis:copy-code', text),
   removeProject: id => ipcRenderer.invoke('jarvis:remove-project', id),
   manageChat: (id, action, title) => ipcRenderer.invoke('jarvis:manage-chat', id, action, title),
-  expand: () => ipcRenderer.invoke('jarvis:expand'),
+  openLink: url => ipcRenderer.invoke('jarvis:open-link', url),
   minimize: () => ipcRenderer.send('window:minimize'),
   close: () => ipcRenderer.send('window:close')
 });

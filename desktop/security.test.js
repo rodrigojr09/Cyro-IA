@@ -10,10 +10,14 @@ function setup({ authorized = false, canceled = false } = {}) {
   const requests = [];
   const copies = [];
   const dialogs = [];
+  const windowEvents=new Map(),external=[];let windowOptions,maximized=false,fullscreen=false;
   const frame = { url: pathToFileURL(path.join(__dirname, 'index.html')).href };
-  const contents = { mainFrame: frame, setWindowOpenHandler() {}, on() {} };
+  const contents = { mainFrame: frame, setWindowOpenHandler() {}, on(name,fn) {windowEvents.set(name,fn);} };
   class Window {
-    constructor() { this.webContents = contents; }
+    constructor(options) { windowOptions=options;this.webContents = contents; }
+    maximize(){maximized=true;}
+    setFullScreen(value){fullscreen=value;}
+    isFullScreen(){return fullscreen;}
     loadFile() {}
   }
   const electron = {
@@ -21,14 +25,15 @@ function setup({ authorized = false, canceled = false } = {}) {
       showOpenDialog: async (_, options) => { dialogs.push(options); return { canceled, filePaths: ['C:\\Projects'] }; },
       showMessageBox: async (_, options) => { dialogs.push(options); return { response: authorized ? 1 : 0 }; }
     },
+    shell:{openExternal:async url=>external.push(url)},
     clipboard: { writeText: text => copies.push(text) },
     app: { disableHardwareAcceleration() {}, whenReady: () => ({ then: fn => fn() }), on() {} },
     BrowserWindow: Window,
     ipcMain: { handle: (name, fn) => handlers.set(name, fn), on() {} }
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'main.js'), 'utf8'), {
-    __dirname, console, process: { env: {}, on() {} }, AbortSignal,
-    require: name => name === 'electron' ? electron : name === 'fs/promises'
+    __dirname, console, URL, process: { env: {}, on() {} }, AbortSignal,
+    require: name => name === 'electron' ? electron : name === './window-state' ? {load:()=>null,save(){}} : name === 'fs/promises'
       ? { readFile: async () => 'test-local-token' } : require(name),
     fetch: async (url, options) => {
       requests.push({ url, options });
@@ -36,7 +41,7 @@ function setup({ authorized = false, canceled = false } = {}) {
     }
   });
   return { invoke: handlers.get('jarvis:api'), handlers, copies, dialogs,
-    event: { sender: contents, senderFrame: frame }, requests };
+    event: { sender: contents, senderFrame: frame }, requests,windowEvents,external,get windowOptions(){return windowOptions;},get maximized(){return maximized;},get fullscreen(){return fullscreen;} };
 }
 
 test('IPC permite somente a janela principal e rotas registradas', async () => {
@@ -208,4 +213,17 @@ test('interface autoriza por diálogo e permite revogar uma raiz', async () => {
   elements['authorized-roots'].value = 'C:\\Desktop';
   await elements['revoke-root'].onclick();
   assert.equal(JSON.parse(requests.find(item => item.route === '/programming/revoke').options.body).path, 'C:\\Desktop');
+});
+
+test('janela nativa inicia maximizada, redimensionável e F11 alterna fullscreen',()=>{
+ const fixture=setup();assert.equal(fixture.windowOptions.frame,true);assert.equal(fixture.windowOptions.alwaysOnTop,false);assert.equal(fixture.windowOptions.resizable,true);assert.ok(fixture.windowOptions.minWidth>=800);assert.equal(fixture.maximized,true);
+ let prevented=false;fixture.windowEvents.get('before-input-event')({preventDefault(){prevented=true;}},{type:'keyDown',key:'F11'});assert.equal(prevented,true);assert.equal(fixture.fullscreen,true);
+ fixture.windowEvents.get('before-input-event')({preventDefault(){}},{type:'keyDown',key:'F11'});assert.equal(fixture.fullscreen,false);
+});
+test('links externos exigem janela confiável, protocolo web e confirmação humana',async()=>{
+ const denied=setup(),open=denied.handlers.get('jarvis:open-link');
+ await assert.rejects(open({...denied.event,sender:{}},'https://example.com'));
+ for(const value of ['file:///C:/Windows','javascript:alert(1)','https://user:password@example.com'])await assert.rejects(open(denied.event,value));
+ await open(denied.event,'https://example.com');assert.equal(denied.external.length,0);
+ const approved=setup({authorized:true});await approved.handlers.get('jarvis:open-link')(approved.event,'https://example.com');assert.deepEqual(approved.external,['https://example.com/']);
 });
