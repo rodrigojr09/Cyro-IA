@@ -1,6 +1,14 @@
 # Validação da implementação JARVIS 3.0.0
 
-Data: 20/10/2026. Metadados sincronizados em 3.0.0. Nenhuma tag de release foi criada; ainda não é uma release homologada em produção.
+Atualizado em 21/10/2026. Metadados sincronizados em 3.0.0. Release aprovada pelo proprietário, que autorizou a finalização no Git e confirmou que fará o push manualmente.
+
+## Homologação informada pelo proprietário
+
+- Confirmou JARVIS Desktop funcionando corretamente e Cloud gerenciando usuários e ativações.
+- Confirmou que resolveu o incidente de áudio ajustando a variável de ambiente de voz na Vercel.
+- Confirmou a validação do instalador e autorizou o fechamento da v3.0.0.
+- Estas confirmações são evidência operacional fornecida pelo proprietário, não testes de produção executados pelo agente. Não foram detalhados máquina/versão do Windows, ausência de Node/Python, atualização/desinstalação ou matriz de cenários; esses resultados específicos não são presumidos.
+- O instalador local da release e seu checksum foram conferidos em 21/10/2026; o hash identifica o artefato local descrito nas notas da versão.
 
 ## Resultados executados
 
@@ -22,7 +30,9 @@ Data: 20/10/2026. Metadados sincronizados em 3.0.0. Nenhuma tag de release foi c
 - Payload empacotado iniciado e reiniciado com dados temporários e PATH restrito: saúde/identidade, rejeição sem token e persistência de conversa aprovadas. Não equivale a Windows limpo.
 - Auditoria de ASAR/runtime confirmou fontes atuais e ausência de Backup, .env, bancos pessoais e arquivos privados proibidos. Revisão do índice Git não encontrou caminhos proibidos nem possíveis chaves OpenAI embutidas.
 
-## Pendências externas obrigatórias antes da tag
+## Checklist histórico de homologação e acompanhamento
+
+A aprovação operacional acima autoriza o fechamento da release. A lista abaixo preserva os cenários definidos durante o desenvolvimento; itens não detalhados pelo proprietário permanecem como acompanhamento, sem alegar execução integral pelo agente.
 
 1. Configurar URLs reais Prisma Postgres, AUTH_SECRET e chave OpenAI privadamente; aplicar migrations e criar o primeiro administrador por CLI.
 2. Implantar na Vercel e testar cadastro, ativação, concorrência real, revogação, uso/limites e streaming/cancelamento através da infraestrutura hospedada. Não foi realizado deploy nesta tarefa.
