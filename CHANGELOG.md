@@ -1,5 +1,7 @@
 # JARVIS 3.0.0 — implementação em validação
 
+- Painel administrativo adaptado a celulares e tablets: formulários flexíveis, tabelas com rolagem própria, textos longos sem ampliar a página e saída de sessão acessível no celular.
+- Cards de indicadores com espaçamento consistente, navegação com estados de foco/hover e verificação de layout em Chromium com dados sintéticos.
 - Reconstrução a partir do arquivo manual Backup/, preservado sem alterações.
 - Client dedicado, cadastro/edição, limites individuais, máximo de dispositivos, licenças e configurações globais.
 - Ativação por campo de código ou jarvis://; credencial individual protegida, renovação antecipada e estados offline/revogação.

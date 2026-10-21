@@ -23,6 +23,7 @@ Requisitos: Node 22.12+, npm e Python compatível com requirements do backend. N
 
 ```powershell
 npm ci
+npm exec -w jarvis-desktop -- install-electron
 # Somente se cloud/.env ainda não existir:
 Copy-Item cloud/.env.example cloud/.env
 # Preencha URLs reais do Prisma Postgres e segredos privadamente.
@@ -58,6 +59,8 @@ npm run test:quick
 npm run test:cloud-electron
 npm run format:check
 ```
+
+Para verificar a responsividade do painel, execute `npm run test:admin-layout` na raiz. A verificação utiliza Chromium/Electron com as páginas reais e dados sintéticos locais, em larguras de 320, 390, 768, 1024 e 1440 pixels. As capturas ficam em `build/admin-layout/`; esse teste não acessa a Vercel nem valida autenticação.
 
 Testes externos usam mocks quando indicado; compilação não comprova implantação. docs/VALIDATION.md registra resultados e pendências. Banco real, chamadas pagas, voz e Windows limpo têm validações separadas.
 

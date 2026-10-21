@@ -131,7 +131,7 @@ export default function Dashboard({ section }: { section: string }) {
           <i>CLOUD</i>
         </Link>
         <p className="nav-label">WORKSPACE</p>
-        <nav>
+        <nav aria-label="Navegação administrativa">
           {links.map(([id, icon, label]) => (
             <Link
               key={id}
@@ -706,12 +706,19 @@ function Table({
   rows: React.ReactNode[][];
 }) {
   return rows.length ? (
-    <div className="table-wrap">
+    <div
+      className="table-wrap"
+      role="region"
+      aria-label={heads.join(", ")}
+      tabIndex={0}
+    >
       <table>
         <thead>
           <tr>
             {heads.map((h) => (
-              <th key={h}>{h}</th>
+              <th scope="col" key={h}>
+                {h}
+              </th>
             ))}
           </tr>
         </thead>
