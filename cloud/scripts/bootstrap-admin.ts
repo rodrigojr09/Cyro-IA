@@ -11,7 +11,7 @@ try {
   if (!name || name.length > 100) throw Error("Configure BOOTSTRAP_NAME.");
   const encoded = await passwordHash(input.password);
   await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(31000001)`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(31000001)`;
     if (await tx.user.count({ where: { role: "SUPER_ADMIN" } }))
       throw Error("Administrador inicial já existe.");
     const user = await tx.user.create({

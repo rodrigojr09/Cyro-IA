@@ -14,7 +14,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:validate": "prisma validate",
     "db:seed": "tsx prisma/seed.ts",
-    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
+    "admin:bootstrap": "prisma generate && tsx scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@jarvis/shared": "*",
