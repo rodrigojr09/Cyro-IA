@@ -1,5 +1,6 @@
 # JARVIS 3.0.0 — implementação em validação
 
+- Voz: Desktop preserva mensagens seguras do Cloud sobre habilitação, licença e limites, em vez de exibir apenas InternalServerError. Cloud distingue configuração recusada pelo provedor, limite e timeout, sem registrar texto ou segredos.
 - Painel administrativo adaptado a celulares e tablets: formulários flexíveis, tabelas com rolagem própria, textos longos sem ampliar a página e saída de sessão acessível no celular.
 - Cards de indicadores com espaçamento consistente, navegação com estados de foco/hover e verificação de layout em Chromium com dados sintéticos.
 - Reconstrução a partir do arquivo manual Backup/, preservado sem alterações.

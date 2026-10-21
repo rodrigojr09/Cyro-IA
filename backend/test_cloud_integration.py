@@ -93,6 +93,48 @@ class CloudIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 401)
 
+    def test_speech_preserves_safe_cloud_errors_and_hides_unknown_details(self):
+        import httpx
+        from openai import AsyncOpenAI
+
+        for status, payload, expected in [
+            (
+                503,
+                "Voz não habilitada pelo administrador.",
+                "Voz não habilitada pelo administrador.",
+            ),
+            (
+                429,
+                "Limite mensal de tokens atingido.",
+                "Limite mensal de tokens atingido.",
+            ),
+            (403, "Instalação sem licença ativa.", "Instalação sem licença ativa."),
+            (
+                503,
+                "private-provider-data",
+                "Serviço de voz indisponível no Cloud. Tente novamente.",
+            ),
+        ]:
+            with self.subTest(status=status, payload=payload):
+                transport = httpx.MockTransport(
+                    lambda request: httpx.Response(status, json={"error": payload})
+                )
+                sdk = AsyncOpenAI(
+                    api_key="test-device-only",
+                    base_url="https://cloud.example.test/api/v1",
+                    max_retries=0,
+                    http_client=httpx.AsyncClient(transport=transport),
+                )
+                with patch.object(cloud_client, "_client", sdk), patch.object(
+                    main, "CLOUD", True
+                ), patch.object(main, "client", cloud_client.client):
+                    response = self.client.post(
+                        "/speak", json={"message": "Teste de voz"}
+                    )
+                self.assertEqual(response.status_code, status)
+                self.assertEqual(response.json()["detail"], expected)
+                self.assertNotIn("private-provider-data", response.text)
+
 
 if __name__ == "__main__":
     unittest.main()

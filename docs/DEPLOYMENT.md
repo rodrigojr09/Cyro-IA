@@ -48,7 +48,13 @@ Para distribuição, configurar JARVIS_CLOUD_ORIGIN com o domínio HTTPS real (l
 Artefato gerado: release/v3/JARVIS-Setup-3.0.0.exe, apontando para https://cronosjarvis.vercel.app. O executável ainda não tem assinatura Authenticode e não constitui release aprovada. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após compilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo.
 
 
-## Checklist externo restante
+## Diagnóstico da voz
+
+`OPENAI_VOICE_ENABLED` precisa ser exatamente `true` no ambiente Production da Vercel; alterações nas variáveis exigem um novo deploy. `OPENAI_API_KEY` também deve estar configurada somente no Cloud. A configuração padrão mantém voz paga desabilitada. O modelo de texto em `OPENAI_ALLOWED_MODELS` não habilita síntese de voz.
+
+O SDK Python utiliza `InternalServerError` também para respostas HTTP 503 do próprio Cloud. A mensagem isolada não comprova falha da OpenAI: pode indicar voz desabilitada ou configuração ausente. O Desktop atualizado mostra mensagens seguras específicas. Em falhas do provedor, o log `voice.failed` contém apenas status upstream e indicação de timeout; não registra texto, chave ou mensagem bruta do provedor. Conferir o status da rota `/api/v1/audio/speech` nos logs da Vercel. Testes automatizados usam respostas simuladas; não certificam áudio pago em produção.
+
+## Checklist de implantação
 
 1. Criar/selecionar Prisma Postgres e preencher DATABASE_URL (TCP PostgreSQL) e DIRECT_URL privadamente.
 2. Configurar AUTH_SECRET aleatório, APP_ORIGIN=https://cronosjarvis.vercel.app, OPENAI_API_KEY e modelos permitidos no ambiente seguro da Vercel. Preços são opcionais; sem preço não exibir custo como zero confirmado.

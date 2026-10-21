@@ -6,7 +6,7 @@ import time
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, APIStatusError, APITimeoutError, APIConnectionError
 
 _client = None
 stream_sink = contextvars.ContextVar("jarvis_stream_sink", default=None)
@@ -111,11 +111,54 @@ class Completions:
         )
 
 
+class CloudSpeechError(RuntimeError):
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+
+
+# Only messages authored by our Cloud may be displayed; never expose raw SDK errors.
+SPEECH_MESSAGES = {
+    "Voz não habilitada pelo administrador.",
+    "Chave OpenAI não configurada no Cloud.",
+    "Inteligência artificial suspensa.",
+    "Instalação sem licença ativa.",
+    "Ativação necessária.",
+    "Funcionário inativo.",
+    "Limite mensal de tokens atingido.",
+    "Muitas tentativas. Aguarde.",
+    "Dados inválidos.",
+    "Síntese de voz indisponível.",
+    "Configuração de voz recusada pela OpenAI. Contate o administrador.",
+    "Limite ou saldo da OpenAI indisponível para voz. Contate o administrador.",
+    "A síntese de voz demorou demais. Tente novamente.",
+}
+
+
 class Speech:
     async def create(self, **kwargs):
         if _client is None:
             raise RuntimeError("Ativação necessária.")
-        return await _client.audio.speech.create(**kwargs)
+        try:
+            return await _client.audio.speech.create(**kwargs)
+        except APIStatusError as exc:
+            message = exc.body.get("error") if isinstance(exc.body, dict) else exc.body
+            if not isinstance(message, str) or message not in SPEECH_MESSAGES:
+                message = "Serviço de voz indisponível no Cloud. Tente novamente."
+            status = (
+                exc.status_code
+                if exc.status_code in {400, 401, 403, 429, 502, 503, 504}
+                else 502
+            )
+            raise CloudSpeechError(status, message) from exc
+        except APITimeoutError as exc:
+            raise CloudSpeechError(
+                504, "A síntese de voz demorou demais. Tente novamente."
+            ) from exc
+        except APIConnectionError as exc:
+            raise CloudSpeechError(
+                503, "Sem conexão com o Cloud para gerar áudio."
+            ) from exc
 
 
 client = SimpleNamespace(

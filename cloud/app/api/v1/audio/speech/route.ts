@@ -5,6 +5,7 @@ import { body, endpoint, HttpError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { reserve, settle } from "@/lib/budget";
 import { db } from "@/lib/db";
+import { speechError } from "@/lib/speech-error";
 const schema = z
   .object({
     model: z.literal("tts-1"),
@@ -23,11 +24,10 @@ export const POST = endpoint(async (request) => {
   if (settings && !settings.intelligenceEnabled)
     throw new HttpError(403, "Inteligência artificial suspensa.");
   await rateLimit(`voice:${device.userId}`, 5, 60);
-  if (
-    process.env.OPENAI_VOICE_ENABLED !== "true" ||
-    !process.env.OPENAI_API_KEY
-  )
+  if (process.env.OPENAI_VOICE_ENABLED !== "true")
     throw new HttpError(503, "Voz não habilitada pelo administrador.");
+  if (!process.env.OPENAI_API_KEY)
+    throw new HttpError(503, "Chave OpenAI não configurada no Cloud.");
   const input = await body(request, schema);
   // Separate character quota; speech API returns binary, not token usage.
   await rateLimit(
@@ -58,8 +58,14 @@ export const POST = endpoint(async (request) => {
     return new Response(await audio.arrayBuffer(), {
       headers: { "Content-Type": "audio/mpeg", "Cache-Control": "no-store" },
     });
-  } catch {
+  } catch (error) {
+    // Do not log text, credentials or raw provider messages.
+    console.error("voice.failed", {
+      upstreamStatus:
+        error instanceof OpenAI.APIError ? error.status : undefined,
+      timeout: error instanceof OpenAI.APIConnectionTimeoutError,
+    });
     await settle(reservation, device.id, input.model, null);
-    throw new HttpError(502, "Síntese de voz indisponível.");
+    throw speechError(error);
   }
 });

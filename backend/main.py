@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from openai import AsyncOpenAI
+from cloud_client import CloudSpeechError
 from pydantic import BaseModel, Field, ConfigDict
 from computer import (
     ApplicationRequest,
@@ -751,6 +752,8 @@ async def speak(req: ChatRequest):
             response_format="mp3",
         )
         return {"audio_base64": base64.b64encode(audio.content).decode("ascii")}
+    except CloudSpeechError as exc:
+        raise HTTPException(exc.status, str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             502, f"Falha na síntese de voz: {type(exc).__name__}"
