@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { activationSchema, employeeSchema } from "@jarvis/shared/schemas";
+import { employeeSchema } from "@jarvis/shared/schemas";
 import { db } from "@/lib/db";
 import { admin } from "@/lib/auth";
 import { canManage, scope } from "@/lib/policy";
 import { body, endpoint, HttpError, requireOrigin } from "@/lib/http";
-import { generateActivation } from "@/lib/activation";
 import { passwordHash } from "@/lib/crypto";
 import { rateLimit } from "@/lib/rate-limit";
 const command = z.discriminatedUnion("action", [
@@ -12,7 +11,7 @@ const command = z.discriminatedUnion("action", [
     .object({
       action: z.literal("client.create"),
       data: employeeSchema.extend({
-        password: z.string().min(12).max(256).optional(),
+        password: z.string().min(12).max(256),
       }),
     })
     .strict(),
@@ -23,13 +22,8 @@ const command = z.discriminatedUnion("action", [
       name: z.string().trim().min(1).max(100),
       status: z.enum(["ACTIVE", "DISABLED"]),
       monthlyTokenLimit: z.number().int().min(0).max(100000000),
+      password: z.string().min(12).max(256).optional(),
     })
-    .strict(),
-  z
-    .object({ action: z.literal("activation.create"), data: activationSchema })
-    .strict(),
-  z
-    .object({ action: z.literal("activation.revoke"), id: z.string().uuid() })
     .strict(),
   z
     .object({ action: z.literal("device.revoke"), id: z.string().uuid() })
@@ -73,7 +67,7 @@ export const GET = endpoint(async (request) => {
     take: 100,
   });
   const userScope = scope(actor);
-  const [devices, activations, usage, audit] = await Promise.all([
+  const [devices, usage, audit] = await Promise.all([
     db.device.findMany({
       where: { user: userScope },
       select: {
@@ -84,19 +78,6 @@ export const GET = endpoint(async (request) => {
         revokedAt: true,
         createdAt: true,
         user: { select: { name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
-    db.activationCode.findMany({
-      where: actor.role === "SUPER_ADMIN" ? {} : { createdById: actor.id },
-      select: {
-        id: true,
-        assignedUserId: true,
-        expiresAt: true,
-        consumedAt: true,
-        revokedAt: true,
-        createdAt: true,
       },
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -132,30 +113,15 @@ export const GET = endpoint(async (request) => {
   const month = new Date(
     new Date().toISOString().slice(0, 7) + "-01T00:00:00.000Z",
   );
-  const [total, active, authorized, pending, monthly] = await Promise.all([
+  const [total, active, authorized, monthly] = await Promise.all([
     db.user.count({ where: { ...userScope, role: "EMPLOYEE" } }),
     db.user.count({
       where: { ...userScope, role: "EMPLOYEE", status: "ACTIVE" },
     }),
     db.device.count({
       where: {
-        user: userScope,
         revokedAt: null,
-        licenses: {
-          some: {
-            status: "ACTIVE",
-            revokedAt: null,
-            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-          },
-        },
-      },
-    }),
-    db.activationCode.count({
-      where: {
-        ...(actor.role === "SUPER_ADMIN" ? {} : { createdById: actor.id }),
-        consumedAt: null,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
+        user: { ...userScope, status: "ACTIVE" },
       },
     }),
     db.usageLog.aggregate({
@@ -167,14 +133,12 @@ export const GET = endpoint(async (request) => {
     actor: { name: actor.name, role: actor.role },
     employees,
     devices,
-    activations,
     usage,
     audit,
     metrics: {
       employees: total,
       active,
       devices: authorized,
-      pending,
       tokens:
         (monthly._sum.inputTokens ?? 0) + (monthly._sum.outputTokens ?? 0),
       cost: monthly._sum.estimatedCost,
@@ -186,14 +150,6 @@ export const POST = endpoint(async (request) => {
   const actor = await admin();
   await rateLimit(`admin:${actor.id}`, 60, 60);
   const input = await body(request, command);
-  if (input.action === "activation.create")
-    return Response.json(
-      await generateActivation(
-        actor,
-        input.data.assignedUserId,
-        input.data.expiresInHours,
-      ),
-    );
   await db.$transaction(async (tx) => {
     if (input.action === "client.create") {
       if (
@@ -211,10 +167,7 @@ export const POST = endpoint(async (request) => {
           role: input.data.role,
           managerId: actor.id,
           monthlyTokenLimit: input.data.monthlyTokenLimit,
-          passwordHash:
-            input.data.role === "ADMIN"
-              ? await passwordHash(input.data.password!)
-              : null,
+          passwordHash: await passwordHash(input.data.password),
           ...(input.data.role === "EMPLOYEE" ? { client: { create: {} } } : {}),
         },
       });
@@ -243,23 +196,13 @@ export const POST = endpoint(async (request) => {
           name: input.name,
           status: input.status,
           monthlyTokenLimit: input.monthlyTokenLimit,
+          ...(input.password
+            ? { passwordHash: await passwordHash(input.password) }
+            : {}),
         },
       });
-      if (input.status === "DISABLED")
+      if (input.status === "DISABLED" || input.password)
         await tx.session.deleteMany({ where: { userId: user.id } });
-    } else if (input.action === "activation.revoke") {
-      const code = await tx.activationCode.findUnique({
-        where: { id: input.id },
-      });
-      if (
-        !code ||
-        (actor.role !== "SUPER_ADMIN" && code.createdById !== actor.id)
-      )
-        throw new HttpError(403, "Código fora do escopo.");
-      await tx.activationCode.update({
-        where: { id: input.id },
-        data: { revokedAt: new Date() },
-      });
     } else {
       const device = await tx.device.findUnique({
         where: { id: input.id },
@@ -271,10 +214,7 @@ export const POST = endpoint(async (request) => {
         where: { id: input.id },
         data: { revokedAt: new Date() },
       });
-      await tx.license.updateMany({
-        where: { deviceId: input.id },
-        data: { revokedAt: new Date(), status: "SUSPENDED" },
-      });
+      await tx.session.deleteMany({ where: { deviceId: input.id } });
     }
     await tx.auditLog.create({
       data: {

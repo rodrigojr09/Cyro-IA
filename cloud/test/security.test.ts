@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canManage, canActivate } from "../lib/policy";
+import { canManage } from "../lib/policy";
 import { hash, token, passwordHash, passwordMatches } from "../lib/crypto";
 import { body, HttpError, requireOrigin } from "../lib/http";
-import { activateSchema, chatSchema } from "@jarvis/shared/schemas";
+import { loginSchema, chatSchema } from "@jarvis/shared/schemas";
 process.env.AUTH_SECRET = "test-only-secret-never-use-in-production-123456";
 test("rodada de ferramentas aceita mensagem assistant sem conteúdo textual", () => {
   assert.ok(
@@ -39,20 +39,6 @@ test("ADMIN gerencia apenas seus funcionários; funcionário não administra", (
   );
   assert.ok(canManage({ id: "root", role: "SUPER_ADMIN" }, employee));
 });
-test("ativação rejeita expiração, consumo e revogação", () => {
-  const code = {
-    revokedAt: null,
-    consumedAt: null,
-    expiresAt: new Date(Date.now() + 10000),
-    uses: 0,
-    maxUses: 1,
-  };
-  assert.ok(canActivate(code));
-  assert.ok(!canActivate({ ...code, expiresAt: new Date(0) }));
-  assert.ok(!canActivate({ ...code, revokedAt: new Date() }));
-  assert.ok(!canActivate({ ...code, consumedAt: new Date() }));
-  assert.ok(!canActivate({ ...code, uses: 1 }));
-});
 test("tokens aleatórios e hashes autenticados não revelam originais", () => {
   const a = token();
   assert.equal(a.length, 43);
@@ -82,7 +68,7 @@ test("schemas recusam consumo do cliente, ferramentas inválidas e campos extras
     }).success,
   );
   assert.ok(
-    !activateSchema.safeParse({ token: "short", deviceId: "foo", name: "test" })
+    !loginSchema.safeParse({ email: "invalid", password: "short" })
       .success,
   );
 });
@@ -104,7 +90,7 @@ test("mutações web exigem origem e corpo limitado", async () => {
         headers: { "Content-Type": "application/json" },
         body: '"' + "x".repeat(140000) + '"',
       }),
-      activateSchema,
+      loginSchema,
     ),
     (error: unknown) => error instanceof HttpError && error.status === 413,
   );

@@ -34,7 +34,10 @@ function render(state) {
     $('project-label').textContent = state.project
       ? 'Usar ' + state.project.name
       : 'Nenhum projeto ativo';
-    if (state.error && state.question && !$('question').value) $('question').value = state.question;
+    if (state.error && !state.answer && state.question && !$('question').value) {
+      $('question').value = state.question;
+      $('question').oninput?.();
+    }
   }
   if (role === 'response') {
     const text = state.busy ? 'Preparando uma resposta curta...' : state.answer || state.error;
@@ -117,6 +120,7 @@ if (role === 'orb') {
   };
 }
 if (role === 'composer') {
+  let submitting = false;
   window.addEventListener('focus', () => $('question').focus());
   try {
     $('question').value =
@@ -124,25 +128,32 @@ if (role === 'composer') {
   } catch {}
   $('question').oninput = () => {
     try {
-      (window.jarvisStorage || localStorage).setItem('jarvis.quick.draft', $('question').value);
+      const storage = window.jarvisStorage || localStorage;
+      if ($('question').value) storage.setItem('jarvis.quick.draft', $('question').value);
+      else storage.removeItem('jarvis.quick.draft');
     } catch {}
   };
   async function submit() {
     const text = $('question').value.trim();
-    if (!text || current.busy) return;
+    if (!text || current.busy || submitting) return;
+    submitting = true;
     $('send').disabled = true;
+    $('question').value = '';
+    $('question').oninput();
+    function restore() {
+      if (!$('question').value) {
+        $('question').value = text;
+        $('question').oninput();
+      }
+    }
     try {
       const result = await window.quick.send(text, $('use-project').checked);
-      if (result.ok) {
-        $('question').value = '';
-        try {
-          (window.jarvisStorage || localStorage).removeItem('jarvis.quick.draft');
-        } catch {}
-      }
+      if (!result.ok) restore();
     } catch {
-      $('question').value = text;
+      restore();
     } finally {
-      $('send').disabled = false;
+      submitting = false;
+      $('send').disabled = !!current.busy;
     }
   }
   $('quick-voice-toggle').onclick = () => call(window.quick.voice(!current.config.voice));

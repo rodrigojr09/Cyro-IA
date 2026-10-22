@@ -48,7 +48,7 @@ def ready():
 class Completions:
     async def create(self, **kwargs):
         if _client is None:
-            raise RuntimeError("Ative o JARVIS pelo link fornecido pelo administrador.")
+            raise RuntimeError("Entre no JARVIS com sua conta.")
         # SDK response-only annotations/refusal fields must not break the next tool round.
         allowed = {"role", "content", "tool_call_id", "tool_calls"}
         kwargs["messages"] = [
@@ -122,8 +122,8 @@ SPEECH_MESSAGES = {
     "Voz não habilitada pelo administrador.",
     "Chave OpenAI não configurada no Cloud.",
     "Inteligência artificial suspensa.",
-    "Instalação sem licença ativa.",
-    "Ativação necessária.",
+    "Sessão inválida ou acesso bloqueado. Entre novamente.",
+    "Entre para continuar.",
     "Funcionário inativo.",
     "Limite mensal de tokens atingido.",
     "Muitas tentativas. Aguarde.",
@@ -138,7 +138,7 @@ SPEECH_MESSAGES = {
 class Speech:
     async def create(self, **kwargs):
         if _client is None:
-            raise RuntimeError("Ativação necessária.")
+            raise RuntimeError("Entre para continuar.")
         try:
             return await _client.audio.speech.create(**kwargs)
         except APIStatusError as exc:

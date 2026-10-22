@@ -21,7 +21,7 @@ window.jarvisWindow.onDelta?.((delta) => {
 const cancelChat = document.getElementById('cancel-response');
 cancelChat.hidden = true;
 cancelChat.onclick = () => window.jarvisWindow.cancelChat?.().catch(() => {});
-window.jarvisActivation?.onState?.((value) => {
+window.jarvisAuth?.onState?.((value) => {
   if (!send.disabled && value.status !== 'active') status.textContent = value.message;
 });
 const programmingMode = document.getElementById('programming-mode');
@@ -392,3 +392,7 @@ window.jarvisWindow.onOpenChat?.((id) => {
     status.textContent = 'Serviço local indisponível — reinicie o JARVIS';
   }
 })();
+
+document.getElementById('logout')?.addEventListener('click', async () => {
+  await window.jarvisAuth.logout();
+});

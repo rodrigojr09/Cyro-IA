@@ -1,3 +1,5 @@
+> Documento histórico de versões anteriores. Para o fluxo vigente de login e os testes da v4, consulte [V4.md](docs/V4.md).
+
 # JARVIS Portable Edition — 2.0.1-dev.0
 
 **Prévia em validação; não é a release v2.0.1 concluída.** Não há tag de release. O sufixo de desenvolvimento diferencia os artefatos dos binários anteriores. Windows 10/11 x64 é o alvo; testes nesta máquina não substituem os testes em outro Windows e em USB físico descritos em PORTABLE-VALIDATION.md.

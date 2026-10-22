@@ -164,15 +164,15 @@ window.jarvisUI = (() => {
     Voz: () =>
       '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button><p>Microfone preparado para integração futura.</p>',
     'Inteligência artificial': () =>
-      '<h3>Inteligência artificial</h3><p>O administrador gerencia modelos, acesso, limites e a chave OpenAI no JARVIS Cloud. Este computador usa uma credencial individual protegida pelo Windows.</p><button id="setting-ai-config">Ativação e acesso</button><p id="ai-config-status" role="status"></p><p>Abra o link jarvis://activate enviado pelo administrador para ativar esta instalação. A seleção local de fontes não consome tokens; análise, respostas e voz utilizam o Cloud.</p>',
+      '<h3>Inteligência artificial</h3><p>O administrador gerencia modelos, acesso, limites e a chave OpenAI no JARVIS Cloud. Este computador usa uma credencial individual protegida pelo Windows.</p><button id="setting-ai-config">Login e acesso</button><p id="ai-config-status" role="status"></p><p>Entre com o e-mail e a senha cadastrados pelo administrador. A seleção local de fontes não consome tokens; análise, respostas e voz utilizam o Cloud.</p>',
     Projetos: () =>
       '<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
     Memória: () =>
       '<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button><button id="setting-backups">Backups e restauração</button><p>Backups no mesmo dispositivo não protegem contra perda física. Exporte uma cópia para outro local.</p><p id="backup-status" role="status"></p>',
     'Quick Chat': () =>
-      '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><label><input id="quick-tray" type="checkbox">Ao fechar a janela principal, manter na bandeja</label><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
+      '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o JARVIS será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
     Aplicativo: () =>
-      '<h3>Aplicativo</h3><p>JARVIS · 3.0.0 (Cloud + Desktop em desenvolvimento)</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><button id="setting-migration">Migrar memória anterior</button><button id="setting-startup">Inicialização autorizada neste computador</button><p id="maintenance-status" role="status"></p><p>Projetos originais: acesso somente leitura.</p>',
+      '<h3>Aplicativo</h3><p>JARVIS · 4.0.0 (Cloud + Desktop em desenvolvimento)</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><button id="setting-migration">Migrar memória anterior</button><button id="setting-startup">Inicialização autorizada neste computador</button><p id="maintenance-status" role="status"></p><p>Projetos originais: acesso somente leitura.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
@@ -189,7 +189,6 @@ window.jarvisUI = (() => {
           $('quick-min').value = value.minSeconds;
           $('quick-max').value = value.maxSeconds;
           $('quick-voice').checked = value.voice;
-          $('quick-tray').checked = value.closeToTray;
         })
         .catch(() => {
           if ($('quick-config-status'))
@@ -203,7 +202,7 @@ window.jarvisUI = (() => {
             minSeconds: Number($('quick-min').value),
             maxSeconds: Number($('quick-max').value),
             voice: $('quick-voice').checked,
-            closeToTray: $('quick-tray').checked,
+            closeToTray: false,
           });
           $('quick-config-status').textContent = 'Preferências salvas.';
         } catch {

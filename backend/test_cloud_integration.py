@@ -108,7 +108,7 @@ class CloudIntegrationTests(unittest.TestCase):
                 "Limite mensal de tokens atingido.",
                 "Limite mensal de tokens atingido.",
             ),
-            (403, "Instalação sem licença ativa.", "Instalação sem licença ativa."),
+            (403, "Sessão inválida ou acesso bloqueado. Entre novamente.", "Sessão inválida ou acesso bloqueado. Entre novamente."),
             (
                 503,
                 "private-provider-data",

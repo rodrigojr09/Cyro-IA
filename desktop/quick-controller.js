@@ -485,7 +485,7 @@ function createQuick({
       if (!value) stopVoice();
     },
     claimAudio,
-    hideOnClose: () => config.closeToTray && !!tray,
+    hideOnClose: () => false,
     destroy() {
       if (disposed) return;
       disposed = true;

@@ -1,3 +1,5 @@
+> Documento histórico de versões anteriores. Para o fluxo vigente de login e os testes da v4, consulte [V4.md](V4.md).
+
 # Validação da implementação JARVIS 3.0.0
 
 Data: 20/10/2026. Metadados sincronizados em 3.0.0. Nenhuma tag de release foi criada; ainda não é uma release homologada em produção.

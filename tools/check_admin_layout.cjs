@@ -19,11 +19,10 @@ async function prepare() {
         const employee={id:'client-1',name:long,email:'email.muito.longo.para.validar.layout@example.test',role:'EMPLOYEE',status:'ACTIVE',monthlyTokenLimit:100000000};
         const fixture={actor:{name:long,role:'SUPER_ADMIN'},employees:[employee],
           devices:[{id:'device-1',name:long,userId:employee.id,user:{name:long},lastSeenAt:new Date().toISOString(),revokedAt:null}],
-          activations:[{id:'activation-1',assignedUserId:employee.id,expiresAt:'2099-01-01',consumedAt:null,revokedAt:null}],
           usage:[{id:'usage-1',userId:employee.id,user:{name:long},model:'gpt-4.1-mini',inputTokens:1000,outputTokens:200,estimatedCost:'0.001',createdAt:new Date().toISOString()}],
-          audit:[{id:'audit-1',action:'activation.create',targetType:'ActivationCode',createdAt:new Date().toISOString()}]};
-        const management={licenses:[{id:'license-1',user:{name:long},device:{name:long},status:'ACTIVE',expiresAt:null}],clients:[{id:employee.id,user:{name:long},maxDevices:2}],settings:{intelligenceEnabled:true,maxOutputTokens:3500},canConfigure:true};
-        window.fetch=async (url,options)=>({ok:true,status:200,json:async()=>options?.method==='POST'?{token:'a'.repeat(43),link:'jarvis://activate?token='+'a'.repeat(43)}:String(url).includes('management')?management:fixture});
+          audit:[{id:'audit-1',action:'desktop.login',targetType:'Device',createdAt:new Date().toISOString()}]};
+        const management={settings:{intelligenceEnabled:true,maxOutputTokens:3500},canConfigure:true};
+        window.fetch=async (url,options)=>({ok:true,status:200,json:async()=>options?.method==='POST'?{ok:true}:String(url).includes('management')?management:fixture});
         const section=new URLSearchParams(location.search).get('section');
         createRoot(document.getElementById('root')).render(section==='login'?<Login/>:<Dashboard section={section}/>);`,
       resolveDir: root,
@@ -91,9 +90,7 @@ async function render() {
         "login",
         "dashboard",
         "clients",
-        "activations",
         "devices",
-        "licenses",
         "usage",
         "settings",
         "audit",
@@ -105,17 +102,6 @@ async function render() {
         await window.webContents.executeJavaScript(
           `new Promise((resolve,reject)=>{let tries=0;const poll=()=>{const ready=${JSON.stringify(section)}==='login'?document.querySelector('form'):document.querySelector('.employee-row, table, .metrics, .form-grid');if(ready) requestAnimationFrame(()=>requestAnimationFrame(resolve));else if(++tries>100)reject(Error('Render timeout'));else setTimeout(poll,20)};poll()})`,
         );
-        if (section === "activations") {
-          await window.webContents.executeJavaScript(`
-            document.querySelector('select[name="employee"]').value='client-1';
-            document.querySelector('.form-grid').requestSubmit();
-            new Promise((resolve,reject)=>{let tries=0;const poll=()=>{
-              if(document.querySelector('.generated'))requestAnimationFrame(()=>requestAnimationFrame(resolve));
-              else if(++tries>100)reject(Error('Activation preview timeout'));
-              else setTimeout(poll,20);
-            };poll()});
-          `);
-        }
         const geometry = await window.webContents.executeJavaScript(
           `({width:innerWidth,scroll:document.documentElement.scrollWidth,logoutVisible:!!document.querySelector('[aria-label="Sair"]')?.getClientRects().length,tallestField:Math.max(0,...Array.from(document.querySelectorAll('.form-grid label,.employee-row label,.generated label'),label=>label.getBoundingClientRect().height))})`,
         );

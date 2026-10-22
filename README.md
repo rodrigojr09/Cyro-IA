@@ -1,86 +1,54 @@
-# JARVIS 3 — Cloud + Desktop
+# JARVIS 4 — Cloud administrativo + Desktop
 
-**Implementação v3.0.0 em validação. Sem tag de release até validar Cloud real e Windows limpo.**
+Versão 4.0.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 22/10/2026. Evidências e limites de validação estão em [docs/V4.md](docs/V4.md); não foi criada tag de release.
 
-O Electron é o aplicativo dos funcionários. O Next.js na Vercel centraliza administração, autenticação, licenças e chamadas OpenAI. Prisma ORM 7 + Prisma Postgres armazenam dados centrais; FastAPI e SQLite preservam memória, histórico, projetos e ferramentas locais autorizadas. Não há nova edição em pendrive.
+O Cloud possui somente o administrativo e as APIs do aplicativo. A raiz e o painel exigem autenticação; a única página de entrada é `/login`. Não há site público, cadastro público, códigos de ativação, deep links ou gestão de licenças.
 
-Origem pública definida pelo proprietário: **https://cronosjarvis.vercel.app**. A existência desta configuração não comprova implantação ou conexão ao banco.
+O administrador cadastra nome, e-mail e senha e libera ou bloqueia o usuário. Contas ADMIN e SUPER_ADMIN ativas também entram no Desktop com o mesmo e-mail e senha do painel. O Desktop exige login antes de abrir o workspace ou criar o Quick Chat. A sessão é salva com Electron safeStorage (DPAPI no Windows); a senha não é salva. Ao iniciar e a cada cinco minutos, o Desktop valida a sessão no Cloud. Falha de validação fecha o Quick Chat e retorna ao login; indisponibilidade de rede preserva a sessão protegida para nova tentativa. Fechar a janela principal encerra o aplicativo. Minimizar mantém o aplicativo aberto.
 
-## Estrutura
-
-- `Backup/`: arquivo manual do proprietário, mantido somente para leitura e reaproveitamento.
-- `cloud/`: Next.js, painel, API, Prisma schema/migration, bootstrap e testes.
-- `desktop/`: interface existente; `electron/` contém entrada v3 e instalador NSIS; `services/` contém ativação e proteção de credenciais.
-- `backend/`: componente local reaproveitado, sem acesso direto à OpenAI no modo Cloud.
-- `packages/shared/`: contratos, tipos, schemas e constantes compartilhados.
-- `docs/`: arquitetura, migração, implantação, segurança e validação.
-
-Os arquivos originais não foram movidos destrutivamente. Snapshot anterior inclui alterações ainda não commitadas e arquivos privados; **nunca publicar Backup/legacy**. Consulte Backup/MANIFEST.md.
+OpenAI e PostgreSQL ficam exclusivamente no Cloud. Memória, projetos e ferramentas autorizadas permanecem no componente local FastAPI/SQLite. Confirmações humanas e IPC restrito são preservados. `Backup/` é arquivo manual somente leitura e não participa do runtime.
 
 ## Desenvolvimento
 
-Requisitos: Node 22.12+, npm e Python compatível com requirements do backend. No Windows, preparar backend/.venv e instalar requirements-dev.txt previamente. Na raiz:
+Para iniciar o ambiente local já configurado, dê dois cliques em `start.bat`. Ele inicia o Cloud em `http://localhost:3000`, aguarda a página de login responder e abre o JARVIS Desktop conectado a essa origem. Ao fechar o JARVIS, o iniciador encerra também o Cloud que iniciou. Se a porta 3000 estiver ocupada, avisa sem encerrar serviços existentes. As configurações privadas permanecem em `cloud/.env`; o Desktop não recebe os segredos do Cloud. O iniciador não instala dependências nem aplica migrations.
+
+Node 22.12+, npm e Python com `backend/requirements-dev.txt`. Na raiz:
 
 ```powershell
 npm ci
-npm exec -w jarvis-desktop -- install-electron
-# Somente se cloud/.env ainda não existir:
-Copy-Item cloud/.env.example cloud/.env
-# Preencha URLs reais do Prisma Postgres e segredos privadamente.
+# Se cloud/.env ainda não existir, copie cloud/.env.example e preencha privadamente.
 npm run db:generate
 npm run db:deploy -w @jarvis/cloud
 npm run admin:bootstrap -w @jarvis/cloud
 npm run dev:cloud
 ```
 
-Bootstrap exige BOOTSTRAP_EMAIL, BOOTSTRAP_NAME e BOOTSTRAP_PASSWORD temporários em ambiente privado; não há senha administrativa fixa. Remova essas variáveis após criar o primeiro SUPER_ADMIN. Veja docs/DEPLOYMENT.md.
+O bootstrap usa BOOTSTRAP_EMAIL, BOOTSTRAP_NAME e BOOTSTRAP_PASSWORD temporários; não existe senha padrão. Remova essas variáveis após criar o primeiro SUPER_ADMIN. O Desktop não recebe OPENAI_API_KEY nem DATABASE_URL.
 
-Em outro terminal:
+Em outro terminal, com os requisitos Python instalados:
 
 ```powershell
 $env:JARVIS_CLOUD_ORIGIN = 'http://localhost:3000'
-backend\.venv\Scripts\python.exe tools/start_cloud.py
+python tools/start_cloud.py
 ```
 
-O desktop não deve receber OPENAI_API_KEY nem DATABASE_URL. Abra o link jarvis://activate recebido do administrador. Memória/ferramentas continuam locais; configurações de portabilidade anteriores são históricas. Não importar automaticamente perfis de desenvolvimento.
+## Atualização da v3
 
-## Testes
+Aplicar todas as migrations, incluindo `20261022000000_desktop_login`, antes de usar o Desktop v4. Essa migration adiciona sessões por dispositivo, remove as credenciais antigas de Device e revoga códigos antigos. Usuários existentes sem senha precisam receber uma nova senha no administrativo. Cadastros, consumo, auditoria e registros históricos de licenças são preservados; esses registros não concedem acesso na v4. O arquivo protegido antigo não autentica a v4.
+
+## Verificação e build
 
 ```powershell
 npm run test:cloud
 npm run typecheck
 npm run build:cloud
-cd backend
-.venv\Scripts\python.exe -m unittest -v test_cloud test_cloud_integration test_jarvis test_programming test_projects test_scope test_quick test_portable test_protection test_startup
-cd ../desktop
-npm test
-npm run test:electron
-npm run test:quick
-npm run test:cloud-electron
-npm run format:check
+npm test -w jarvis-desktop
+npm run test:electron -w jarvis-desktop
+npm run test:quick -w jarvis-desktop
+npm run test:cloud-electron -w jarvis-desktop
+npm run test:admin-layout
+python -m unittest discover -s backend -p 'test_*.py'
+python -m unittest -q test_start test_cloud_build test_build test_setup
 ```
 
-Para verificar a responsividade do painel, execute `npm run test:admin-layout` na raiz. A verificação utiliza Chromium/Electron com as páginas reais e dados sintéticos locais, em larguras de 320, 390, 768, 1024 e 1440 pixels. As capturas ficam em `build/admin-layout/`; esse teste não acessa a Vercel nem valida autenticação.
-
-Testes externos usam mocks quando indicado; compilação não comprova implantação. docs/VALIDATION.md registra resultados e pendências. Banco real, chamadas pagas, voz e Windows limpo têm validações separadas.
-
-## Instalador tradicional Windows
-
-Instale requirements-build.txt e dependências npm previamente. Configure a origem HTTPS real e execute build.bat:
-
-```powershell
-$env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
-.\build.bat
-```
-
-O pipeline v3 usa PyInstaller para o componente local e NSIS para o Electron; não instala dependências, não publica nem faz push. Saída: `release/v3/JARVIS-Setup-3.0.0.exe`. A existência do executável não significa release aprovada. O aplicativo instalado deverá dispensar Python/Node; esse requisito precisa ser testado em outro Windows sem essas instalações. O instalador foi gerado e o payload foi iniciado/reiniciado com PATH restrito e dados temporários. Isso não certifica instalação em Windows limpo. Consulte docs/VALIDATION.md.
-
-## Documentação
-
-- [Arquitetura](docs/ARCHITECTURE.md)
-- [Migração e preservação](docs/MIGRATION.md)
-- [Vercel e Prisma Postgres](docs/DEPLOYMENT.md)
-- [Segurança](docs/SECURITY.md)
-- [Validação e impedimentos da release](docs/VALIDATION.md)
-
-DOCUMENT.md, INSTALL.md e PORTABLE-VALIDATION.md da raiz ainda contêm referências históricas da prévia anterior; o guia vigente é README + docs/. IDEIA.md permanece preservado.
+O pipeline Windows `tools/build_cloud_desktop.py` exige uma origem HTTPS real e gera `release/v4/JARVIS-Setup-4.0.0.exe`, sem publicar. Consulte [validação da v4](docs/V4.md) e [implantação](docs/DEPLOYMENT.md). O build local não comprova implantação, áudio pago ou funcionamento em Windows limpo.

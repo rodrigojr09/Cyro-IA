@@ -1,6 +1,5 @@
 export type Role = "SUPER_ADMIN" | "ADMIN" | "EMPLOYEE";
-export type ActivationResult = {
+export type LoginResult = {
   credential: string;
   expiresAt: string;
-  user: { id: string; name: string };
 };

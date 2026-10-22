@@ -1,4 +1,10 @@
-# Conectar ao novo repositório GitHub
+# Publicação do JARVIS v4
+
+Destino atual: repositório privado `rodrigojr09/Jarvis`, branch `master`, com integração automática ao projeto Vercel `jarvis-v0-1`. Domínio Cloud: `https://cronosjarvis.vercel.app`. Em 22/10/2026, o proprietário autorizou o envio da v4.0.0 à nuvem e a compilação do instalador. Publicar somente o código revisado, sem `.env`, bancos, perfis, `Backup/`, `build/` ou `release/`. Não criar tag antes das validações exigidas. Evidências e limitações em [V4.md](V4.md).
+
+O instalador usa a origem HTTPS de produção e é gerado localmente pelo pipeline `tools/build_cloud_desktop.py`, com saída `release/v4/JARVIS-Setup-4.0.0.exe` e checksum SHA-256. O envio ao GitHub não substitui a confirmação de que a Vercel concluiu o deploy do mesmo commit.
+
+## Histórico de configuração
 
 O projeto está na branch master, com o histórico anterior preservado. O remoto que apontava para Backup/ foi removido. Nenhum push foi executado.
 

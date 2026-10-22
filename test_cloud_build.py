@@ -11,14 +11,14 @@ ROOT = Path(__file__).resolve().parent
 
 
 class CloudBuildTests(unittest.TestCase):
-    def test_installed_target_and_protocol(self):
+    def test_installed_target_without_activation_protocol(self):
         config = json.loads((ROOT / "desktop/electron/builder.json").read_text())
         self.assertEqual(config["win"]["target"][0]["target"], "nsis")
-        self.assertEqual(config["protocols"][0]["schemes"], ["jarvis"])
+        self.assertNotIn("protocols", config)
         self.assertFalse(config["nsis"]["deleteAppDataOnUninstall"])
         self.assertNotIn("**/*", config["files"])
         self.assertEqual(
-            config["extraResources"][0]["from"], "../build/v3/backend/jarvis-backend"
+            config["extraResources"][0]["from"], "../build/v4/backend/jarvis-backend"
         )
         self.assertNotIn("Backup", json.dumps(config))
         self.assertNotIn(".env", json.dumps(config))
@@ -47,7 +47,7 @@ class CloudBuildTests(unittest.TestCase):
 
     def test_credential_file_excluded_from_git(self):
         ignored = (ROOT / ".gitignore").read_text()
-        self.assertIn("cloud-credential.bin*", ignored)
+        self.assertIn("cloud-session-v4.bin*", ignored)
         self.assertIn("/Backup/legacy/", ignored)
 
 

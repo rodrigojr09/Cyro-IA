@@ -1,32 +1,30 @@
 import type { Role } from "@jarvis/shared/types";
 export type Actor = { id: string; role: Role };
-export type DeviceAccess = {
-  userId: string;
-  revokedAt: Date | null;
-  credentialExpiresAt: Date;
-  user: { status: string; role: string; client: unknown };
-  licenses: {
-    userId: string;
-    status: string;
-    revokedAt: Date | null;
-    expiresAt: Date | null;
-  }[];
-};
-export function canUseDevice(device: DeviceAccess | null, now = new Date()) {
+export function canLoginDesktop(user: { status: string; role: string } | null) {
   return (
-    !!device &&
-    !!device.user.client &&
-    device.user.role === "EMPLOYEE" &&
-    !device.revokedAt &&
-    device.credentialExpiresAt > now &&
-    device.user.status === "ACTIVE" &&
-    device.licenses.some(
-      (license) =>
-        license.userId === device.userId &&
-        license.status === "ACTIVE" &&
-        !license.revokedAt &&
-        (!license.expiresAt || license.expiresAt > now),
-    )
+    !!user &&
+    user.status === "ACTIVE" &&
+    ["EMPLOYEE", "ADMIN", "SUPER_ADMIN"].includes(user.role)
+  );
+}
+export type DesktopSession = {
+  userId: string;
+  expiresAt: Date;
+  user: { role: string; status: string; client: unknown };
+  device: { userId: string; revokedAt: Date | null } | null;
+};
+export function canUseSession(
+  session: DesktopSession | null,
+  now = new Date(),
+) {
+  return (
+    !!session &&
+    session.expiresAt > now &&
+    canLoginDesktop(session.user) &&
+    !!session.user.client &&
+    !!session.device &&
+    session.device.userId === session.userId &&
+    !session.device.revokedAt
   );
 }
 export function canManage(
@@ -44,21 +42,4 @@ export function scope(actor: Actor) {
   return actor.role === "SUPER_ADMIN"
     ? {}
     : { managerId: actor.id, role: "EMPLOYEE" as const };
-}
-export function canActivate(
-  code: {
-    revokedAt: Date | null;
-    consumedAt: Date | null;
-    expiresAt: Date;
-    uses: number;
-    maxUses: number;
-  },
-  now = new Date(),
-) {
-  return (
-    !code.revokedAt &&
-    !code.consumedAt &&
-    code.expiresAt > now &&
-    code.uses < code.maxUses
-  );
 }

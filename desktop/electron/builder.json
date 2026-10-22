@@ -2,7 +2,9 @@
   "appId": "com.jarvis.assistant",
   "productName": "JARVIS",
   "asar": true,
-  "directories": { "output": "../release/v3" },
+  "directories": {
+    "output": "../release/v4"
+  },
   "files": [
     "*.js",
     "*.html",
@@ -22,11 +24,29 @@
     "!portable-paths.test.js"
   ],
   "extraResources": [
-    { "from": "../build/v3/backend/jarvis-backend", "to": "backend", "filter": ["**/*"] },
-    { "from": "../build/icons/jarvis.png", "to": "jarvis.png" }
+    {
+      "from": "../build/v4/backend/jarvis-backend",
+      "to": "backend",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "../build/icons/jarvis.png",
+      "to": "jarvis.png"
+    }
   ],
-  "protocols": [{ "name": "JARVIS activation", "schemes": ["jarvis"] }],
-  "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "../build/icons/jarvis.ico" },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "../build/icons/jarvis.ico"
+  },
   "nsis": {
     "artifactName": "JARVIS-Setup-${version}.exe",
     "oneClick": false,

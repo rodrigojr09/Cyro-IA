@@ -1,12 +1,21 @@
 // Keep the existing windows, IPC allowlists, Quick Chat and confirmation workflow.
 process.env.JARVIS_CLOUD = '1';
+delete process.env.JARVIS_AUTHENTICATED;
 delete process.env.JARVIS_PORTABLE;
 for (const key of Object.keys(process.env)) if (key.startsWith('OPENAI_')) delete process.env[key];
 const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const cloud = require('../services/cloud');
-const dataDir = process.env.JARVIS_DATA_DIR || path.join(app.getPath('appData'), 'JARVIS');
+const dataDir =
+  process.env.JARVIS_DATA_DIR ||
+  (app.isPackaged
+    ? path.join(app.getPath('appData'), 'JARVIS')
+    : require('../portable-paths').resolveData({
+        packaged: false,
+        localAppData: process.env.LOCALAPPDATA,
+        home: require('node:os').homedir(),
+      }));
 process.env.JARVIS_DATA_DIR = dataDir;
 require('../portable-paths').configureElectron(app, dataDir);
 let service;
@@ -49,41 +58,66 @@ ipcMain.handle('jarvis:voice-input-permission', async (event) => {
   microphoneGrants.set(event.sender.id, Date.now() + 10000);
   return true;
 });
-function trusted(event, activationOnly = false) {
-  const expected = require('node:url').pathToFileURL(
-    path.join(__dirname, '..', 'activation.html'),
-  ).href;
+function trusted(event, loginOnly = false) {
+  const expected = require('node:url').pathToFileURL(path.join(__dirname, '..', 'login.html')).href;
   const main = require('node:url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   return (
     event.senderFrame === event.sender.mainFrame &&
-    (event.senderFrame.url === expected || (!activationOnly && event.senderFrame.url === main))
+    (event.senderFrame.url === expected || (!loginOnly && event.senderFrame.url === main))
   );
 }
 async function unlock() {
-  process.env.JARVIS_ACTIVATED = '1';
+  process.env.JARVIS_AUTHENTICATED = '1';
+  app.emit('jarvis:session-changed', true);
   for (const win of BrowserWindow.getAllWindows()) {
-    if (win.webContents.getURL().endsWith('/activation.html'))
+    if (win.webContents.getURL().endsWith('/login.html'))
       await win.loadFile(path.join(__dirname, '..', 'index.html'));
   }
 }
-async function activate(value) {
-  if (!service || typeof value !== 'string') throw Error('Ativação indisponível.');
-  const link = value.startsWith('jarvis:') ? value : `jarvis://activate?token=${value}`;
-  cloud.parseActivation(link);
-  await publish(await service.activate(link, require('node:os').hostname()));
-  await unlock();
+async function login(value) {
+  if (!service) throw Error('Login indisponível.');
+  await service.login(value, require('node:os').hostname());
+  try {
+    await publish(service.current());
+    await unlock();
+  } catch {
+    await lock();
+    const error = Error(
+      'Conta autenticada. Não foi possível conectar o serviço local. Reinicie o JARVIS.',
+    );
+    error.code = 'DESKTOP_SESSION';
+    throw error;
+  }
 }
-ipcMain.handle('jarvis:activate', async (event, value) => {
+ipcMain.handle('jarvis:login', async (event, value) => {
   if (!trusted(event, true)) throw Error('Solicitação não autorizada.');
-  const pending = queue.then(() => activate(value));
+  const pending = queue.then(() => login(value));
   queue = pending.catch(() => {});
   try {
     await pending;
     return { ok: true };
-  } catch {
-    throw Error('Ativação recusada. Confira código, conexão e limite de dispositivos.');
+  } catch (error) {
+    if (error.code === 'DESKTOP_SESSION') throw Error(error.message);
+    throw Error('Login recusado. Confira e-mail, senha, acesso e conexão.');
   }
 });
+ipcMain.handle('jarvis:logout', async (event) => {
+  if (!trusted(event)) throw Error('Solicitação não autorizada.');
+  const pending = queue.then(async () => {
+    await lock();
+    await service?.logout().catch(() => {});
+  });
+  queue = pending.catch(() => {});
+  await pending;
+});
+async function lock() {
+  delete process.env.JARVIS_AUTHENTICATED;
+  app.emit('jarvis:session-changed', false);
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.webContents.getURL() === mainPage)
+      await win.loadFile(path.join(__dirname, '..', 'login.html'));
+  }
+}
 ipcMain.handle('jarvis:cloud-state', (event) => {
   if (!trusted(event)) throw Error('Solicitação não autorizada.');
   return service?.state() || { status: 'inactive', message: 'Inicializando conexão…' };
@@ -107,43 +141,6 @@ async function publish(session) {
   }
   throw Error('Serviço local indisponível. Reinicie o JARVIS.');
 }
-function receive(value) {
-  // Validate before queueing, and never log a URL containing a temporary token.
-  try {
-    cloud.parseActivation(value);
-  } catch {
-    return;
-  }
-  queue = queue
-    .then(async () => {
-      await app.whenReady();
-      if (!service) throw Error('Cloud ainda não configurado.');
-      const answer = await dialog.showMessageBox({
-        type: 'question',
-        message: 'Ativar esta instalação do JARVIS?',
-        detail: 'O código recebido vinculará este computador ao funcionário autorizado.',
-        buttons: ['Cancelar', 'Ativar'],
-        defaultId: 0,
-        cancelId: 0,
-      });
-      if (answer.response !== 1) return;
-      await activate(value);
-      await dialog.showMessageBox({ message: 'JARVIS ativado. Você já pode conversar.' });
-    })
-    .catch(() =>
-      dialog.showErrorBox(
-        'JARVIS — ativação',
-        'Ativação indisponível. Confira o link, a conexão e a configuração do Cloud.',
-      ),
-    );
-}
-app.on('open-url', (event, value) => {
-  event.preventDefault();
-  receive(value);
-});
-app.on('second-instance', (_event, args) => {
-  for (const value of args) if (value.startsWith('jarvis:')) receive(value);
-});
 app
   .whenReady()
   .then(async () => {
@@ -154,27 +151,43 @@ app
       ).origin;
     if (!origin) throw Error('Configure JARVIS_CLOUD_ORIGIN antes de iniciar.');
     service = cloud.createCloud({ safeStorage, dataDir, origin, packaged: app.isPackaged });
-    const saved = await service.load();
-    if (saved) {
-      await service.refresh().catch(() => {});
-      await publish(service.current());
-      if (service.state().status !== 'revoked') await unlock();
-    }
     const monitor = setInterval(
-      async () => {
-        if (!service.current()) return;
-        await service.refresh().catch(() => {});
-        if (service.state().status === 'active') await publish(service.current()).catch(() => {});
-        for (const window of BrowserWindow.getAllWindows())
-          window.webContents.send('jarvis:cloud-state-changed', service.state());
+      () => {
+        queue = queue
+          .then(async () => {
+            if (!service.current()) return;
+            await service.refresh().catch(() => {});
+            if (service.state().status === 'active') {
+              try {
+                await publish(service.current());
+                await unlock();
+              } catch {
+                await lock();
+              }
+            } else await lock();
+            for (const window of BrowserWindow.getAllWindows())
+              window.webContents.send('jarvis:cloud-state-changed', service.state());
+          })
+          .catch(() => lock());
       },
-      15 * 60 * 1000,
+      5 * 60 * 1000,
     );
     monitor.unref();
-    if (app.isPackaged) app.setAsDefaultProtocolClient('jarvis');
-    else
-      app.setAsDefaultProtocolClient('jarvis', process.execPath, [path.resolve(__dirname, '..')]);
-    for (const value of process.argv) if (value.startsWith('jarvis:')) receive(value);
+    queue = queue.then(async () => {
+      const saved = await service.load().catch(() => null);
+      if (saved) {
+        await service.refresh().catch(() => {});
+        if (service.state().status === 'active') {
+          try {
+            await publish(service.current());
+            await unlock();
+          } catch {
+            await lock();
+          }
+        }
+      }
+    });
+    await queue;
   })
   .catch(() =>
     dialog.showErrorBox(

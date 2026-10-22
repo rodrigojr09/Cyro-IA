@@ -3,21 +3,8 @@ const assert = require('node:assert/strict');
 const { mkdtemp, rm, readFile } = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const { parseActivation, cloudOrigin, createCloud } = require('./cloud');
+const { cloudOrigin, createCloud } = require('./cloud');
 const code = 'a'.repeat(43);
-test('protocolo aceita somente ativação com um único token válido', () => {
-  assert.equal(parseActivation(`jarvis://activate?token=${code}`), code);
-  for (const value of [
-    `https://activate?token=${code}`,
-    `jarvis://activate?token=${code}&token=${code}`,
-    `jarvis://activate/other?token=${code}`,
-    `jarvis://user@activate?token=${code}`,
-    `jarvis://activate?token=${code}#frag`,
-    `jarvis://activate?token=${code}&next=x`,
-    'jarvis://activate?token=short',
-  ])
-    assert.throws(() => parseActivation(value));
-});
 test('origem exige HTTPS em distribuição e não aceita credenciais/caminho', () => {
   assert.equal(cloudOrigin('https://jarvis.example.test'), 'https://jarvis.example.test');
   assert.equal(cloudOrigin('http://localhost:3000', false), 'http://localhost:3000');
@@ -29,7 +16,7 @@ test('origem exige HTTPS em distribuição e não aceita credenciais/caminho', (
   ])
     assert.throws(() => cloudOrigin(url));
 });
-test('credencial individual usa armazenamento protegido e não persiste código temporário', async () => {
+test('sessão de login usa armazenamento protegido e nunca persiste a senha', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'jarvis-cloud-test-'));
   try {
     const safeStorage = {
@@ -44,7 +31,7 @@ test('credencial individual usa armazenamento protegido e não persiste código 
       origin: 'https://jarvis.example.test',
       fetcher: async (_url, options) => {
         calls++;
-        assert.equal(JSON.parse(options.body).token, code);
+        assert.equal(JSON.parse(options.body).password, 'password-for-test-only');
         return {
           ok: true,
           json: async () => ({ credential: 'b'.repeat(43), expiresAt: '2030-01-01' }),
@@ -52,11 +39,13 @@ test('credencial individual usa armazenamento protegido e não persiste código 
       },
     });
     assert.equal(await service.load(), null);
-    await service.activate(`jarvis://activate?token=${code}`, 'Teste');
-    const persisted = await readFile(path.join(directory, 'cloud-credential.bin'), 'utf8');
-    assert.ok(!persisted.includes(code));
+    await service.login(
+      { email: 'user@example.test', password: 'password-for-test-only' },
+      'Teste',
+    );
+    const persisted = await readFile(path.join(directory, 'cloud-session-v4.bin'), 'utf8');
+    assert.ok(!persisted.includes('password-for-test-only'));
     assert.ok(!persisted.includes('b'.repeat(43)));
-    await assert.rejects(service.activate(`jarvis://activate?token=${code}`, 'Teste'));
     assert.equal(calls, 1);
     const restored = createCloud({
       safeStorage,
@@ -64,6 +53,54 @@ test('credencial individual usa armazenamento protegido e não persiste código 
       origin: 'https://jarvis.example.test',
     });
     assert.equal((await restored.load()).credential, 'b'.repeat(43));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('sessão revogada é apagada; falha de conexão bloqueia sem perder login salvo', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'jarvis-session-test-'));
+  const safeStorage = {
+    isEncryptionAvailable: () => true,
+    encryptString: (v) => Buffer.from(v),
+    decryptString: (v) => v.toString(),
+  };
+  let status = 200;
+  const service = createCloud({
+    safeStorage,
+    dataDir: directory,
+    origin: 'https://jarvis.example.test',
+    fetcher: async (url) => {
+      if (url.endsWith('/login'))
+        return { ok: true, json: async () => ({ credential: code, expiresAt: '2030-01-01' }) };
+      if (status === 0) throw Error('offline');
+      return { ok: status === 200, status, json: async () => ({ active: true }) };
+    },
+  });
+  try {
+    await service.login(
+      { email: 'user@example.test', password: 'password-for-test-only' },
+      'Teste',
+    );
+    status = 0;
+    await assert.rejects(service.refresh());
+    assert.equal(service.state().status, 'offline');
+    assert.ok(service.current());
+    status = 200;
+    await service.refresh();
+    assert.equal(service.state().status, 'active');
+    status = 401;
+    await assert.rejects(service.refresh());
+    assert.equal(service.state().status, 'revoked');
+    assert.equal(service.current(), null);
+    await assert.rejects(readFile(path.join(directory, 'cloud-session-v4.bin')));
+    await service.login(
+      { email: 'user@example.test', password: 'password-for-test-only' },
+      'Teste',
+    );
+    status = 200;
+    await service.logout();
+    assert.equal(service.current(), null);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

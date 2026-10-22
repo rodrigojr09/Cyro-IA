@@ -41,7 +41,7 @@ def main():
     if package["version"] != root_package["version"]:
         raise SystemExit("Metadados divergentes.")
     run([npm, "run", "test:cloud"])
-    run([sys.executable, "-m", "unittest", "-q", "test_start", "test_cloud_build"])
+    run([sys.executable, "-m", "unittest", "-q", "test_start", "test_start_local", "test_cloud_build"])
     run([npm, "run", "typecheck"])
     run([npm, "run", "build:cloud"])
     run([npm, "test"], ROOT / "desktop")
@@ -64,6 +64,7 @@ def main():
     run([npm, "run", "test:electron"], ROOT / "desktop")
     run([npm, "run", "test:quick"], ROOT / "desktop")
     run([npm, "run", "test:cloud-electron"], ROOT / "desktop")
+    run([npm, "run", "test:session-electron"], ROOT / "desktop")
     run(
         [
             sys.executable,
@@ -78,11 +79,11 @@ def main():
             "--paths",
             str(ROOT / "backend"),
             "--distpath",
-            str(ROOT / "build/v3/backend"),
+            str(ROOT / "build/v4/backend"),
             "--workpath",
-            str(ROOT / "build/v3/work"),
+            str(ROOT / "build/v4/work"),
             "--specpath",
-            str(ROOT / "build/v3"),
+            str(ROOT / "build/v4"),
             "--collect-submodules",
             "uvicorn",
             str(ROOT / "backend/cloud_entry.py"),
@@ -106,7 +107,7 @@ def main():
         ROOT / "desktop",
     )
     run([sys.executable, str(ROOT / "tools/audit_cloud_artifact.py")])
-    artifact = ROOT / "release/v3" / f"JARVIS-Setup-{package['version']}.exe"
+    artifact = ROOT / "release/v4" / f"JARVIS-Setup-{package['version']}.exe"
     with artifact.open("rb") as stream:
         checksum = hashlib.file_digest(stream, "sha256").hexdigest()
     artifact.with_suffix(".exe.sha256").write_text(

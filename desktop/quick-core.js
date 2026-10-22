@@ -6,7 +6,7 @@
     minSeconds: 5,
     maxSeconds: 30,
     voice: true,
-    closeToTray: true,
+    closeToTray: false,
     opacity: 0.62,
   };
   function settings(value = {}) {
@@ -31,6 +31,7 @@
       typeof result.closeToTray !== 'boolean'
     )
       throw Error('Confira a velocidade (80–600) e os tempos (3–120 segundos).');
+    result.closeToTray = false;
     return result;
   }
   function duration(text, config = defaults) {

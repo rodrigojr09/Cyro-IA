@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
-contextBridge.exposeInMainWorld('jarvisActivation', {
-  activate: (value) => ipcRenderer.invoke('jarvis:activate', value),
+contextBridge.exposeInMainWorld('jarvisAuth', {
+  login: (value) => ipcRenderer.invoke('jarvis:login', value),
+  logout: () => ipcRenderer.invoke('jarvis:logout'),
   state: () => ipcRenderer.invoke('jarvis:cloud-state'),
   onState: (callback) =>
     ipcRenderer.on('jarvis:cloud-state-changed', (_event, value) => callback(value)),

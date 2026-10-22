@@ -18,13 +18,6 @@ type Device = {
   lastSeenAt: string;
   revokedAt: string | null;
 };
-type Activation = {
-  id: string;
-  assignedUserId: string;
-  expiresAt: string;
-  consumedAt: string | null;
-  revokedAt: string | null;
-};
 type Usage = {
   id: string;
   userId: string;
@@ -45,24 +38,20 @@ type Data = {
   actor: { name: string; role: string };
   employees: Employee[];
   devices: Device[];
-  activations: Activation[];
   usage: Usage[];
   audit: Audit[];
   metrics?: {
     employees: number;
     active: number;
     devices: number;
-    pending: number;
     tokens: number;
     cost: string | null;
   };
 };
 const links = [
   ["dashboard", "◈", "Visão geral"],
-  ["clients", "♙", "Clientes"],
-  ["activations", "⌁", "Ativações"],
+  ["clients", "♙", "Usuários"],
   ["devices", "▣", "Dispositivos"],
-  ["licenses", "◇", "Licenças"],
   ["settings", "⚙", "Configurações"],
   ["usage", "▥", "Consumo"],
   ["audit", "≡", "Auditoria"],
@@ -74,10 +63,6 @@ export default function Dashboard({ section }: { section: string }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [generated, setGenerated] = useState<{
-    token: string;
-    link: string;
-  } | null>(null);
   const load = useCallback(async () => {
     try {
       const response = await fetch(
@@ -109,7 +94,6 @@ export default function Dashboard({ section }: { section: string }) {
       });
       const response = await result.json();
       if (!result.ok) throw Error(response.error);
-      if (response.token) setGenerated(response);
       setNotice("Operação concluída.");
       await load();
       return true;
@@ -120,8 +104,6 @@ export default function Dashboard({ section }: { section: string }) {
       setBusy(false);
     }
   }
-  const pending = (a: Activation) =>
-    !a.consumedAt && !a.revokedAt && new Date(a.expiresAt) > new Date();
   const title = links.find((l) => l[0] === section)?.[2];
   return (
     <div className="shell">
@@ -238,12 +220,6 @@ export default function Dashboard({ section }: { section: string }) {
                         data.devices.filter((d) => !d.revokedAt).length,
                       "Dispositivos autorizados",
                     ],
-                    [
-                      "Códigos pendentes",
-                      data.metrics?.pending ??
-                        data.activations.filter(pending).length,
-                      "Aguardando ativação",
-                    ],
                   ].map(([label, value, detail]) => (
                     <article className="card metric" key={String(label)}>
                       <p>{label}</p>
@@ -254,41 +230,12 @@ export default function Dashboard({ section }: { section: string }) {
                 </div>
                 <div className="dashboard-grid">
                   <section className="card">
-                    <div className="card-title">
-                      <h2>Ativações recentes</h2>
-                      <Link href="/activations">Ver todas ↗</Link>
-                    </div>
-                    {data.activations.slice(0, 6).map((a) => (
-                      <div className="activity" key={a.id}>
-                        <span className="activity-icon">⌁</span>
-                        <div>
-                          <b>
-                            {data.employees.find(
-                              (e) => e.id === a.assignedUserId,
-                            )?.name || "Cliente"}
-                          </b>
-                          <small>
-                            {a.consumedAt
-                              ? `Ativado em ${date(a.consumedAt)}`
-                              : `Expira em ${date(a.expiresAt)}`}
-                          </small>
-                        </div>
-                        <span
-                          className={`badge ${a.consumedAt ? "active" : ""}`}
-                        >
-                          {a.revokedAt
-                            ? "Revogado"
-                            : a.consumedAt
-                              ? "Concluído"
-                              : pending(a)
-                                ? "Pendente"
-                                : "Expirado"}
-                        </span>
-                      </div>
-                    ))}
-                    {!data.activations.length && (
-                      <Empty text="Nenhuma ativação registrada. Gere o primeiro código para conectar um cliente." />
-                    )}
+                    <h2>Acesso por login</h2>
+                    <p>
+                      Cadastre usuários com e-mail e senha e controle o acesso
+                      ao Desktop.
+                    </p>
+                    <Link href="/clients">Gerenciar usuários →</Link>
                   </section>
                   <section className="card consumption">
                     <span className="eyebrow">INTELIGÊNCIA ARTIFICIAL</span>
@@ -302,9 +249,7 @@ export default function Dashboard({ section }: { section: string }) {
                     <div className="divider" />
                     <h3>Alertas administrativos</h3>
                     <p className="muted">
-                      {data.activations.some(pending)
-                        ? "Existem códigos aguardando ativação. Confira os prazos de validade."
-                        : "Nenhum código aguardando ativação."}
+                      O Desktop verifica a sessão a cada cinco minutos.
                     </p>
                     <p className="muted">
                       Custos sem preço configurado aparecem como indisponíveis.
@@ -317,7 +262,7 @@ export default function Dashboard({ section }: { section: string }) {
               <>
                 <section className="card">
                   <h2>
-                    Cadastrar cliente{" "}
+                    Cadastrar usuário{" "}
                     {data.actor.role === "SUPER_ADMIN" && "ou administrador"}
                   </h2>
                   <form
@@ -371,18 +316,19 @@ export default function Dashboard({ section }: { section: string }) {
                             <option value="ADMIN">Administrador</option>
                           </select>
                         </label>
-                        <label>
-                          Senha inicial (somente administrador)
-                          <input
-                            name="password"
-                            type="password"
-                            minLength={12}
-                            maxLength={256}
-                            autoComplete="new-password"
-                          />
-                        </label>
                       </>
                     )}
+                    <label>
+                      Senha inicial
+                      <input
+                        name="password"
+                        type="password"
+                        required
+                        minLength={12}
+                        maxLength={256}
+                        autoComplete="new-password"
+                      />
+                    </label>
                     <button disabled={busy}>Cadastrar</button>
                   </form>
                 </section>
@@ -405,6 +351,9 @@ export default function Dashboard({ section }: { section: string }) {
                           name: values.get("name"),
                           status: values.get("status"),
                           monthlyTokenLimit: Number(values.get("limit")),
+                          ...(values.get("password")
+                            ? { password: values.get("password") }
+                            : {}),
                         });
                       }}
                     >
@@ -433,6 +382,16 @@ export default function Dashboard({ section }: { section: string }) {
                           <option value="DISABLED">Desativado</option>
                         </select>
                       </label>
+                      <label>
+                        Nova senha (opcional)
+                        <input
+                          name="password"
+                          type="password"
+                          minLength={12}
+                          maxLength={256}
+                          autoComplete="new-password"
+                        />
+                      </label>
                       <button
                         disabled={busy || e.role === "SUPER_ADMIN"}
                         className="secondary"
@@ -441,127 +400,6 @@ export default function Dashboard({ section }: { section: string }) {
                       </button>
                     </form>
                   ))}
-                </section>
-              </>
-            )}
-            {section === "activations" && (
-              <>
-                <section className="card">
-                  <h2>Conectar uma instalação</h2>
-                  <p className="muted">
-                    Cada código permite uma ativação. Envie o link diretamente
-                    ao cliente; o código só é exibido agora.
-                  </p>
-                  <form
-                    className="form-grid"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const values = new FormData(event.currentTarget);
-                      void command({
-                        action: "activation.create",
-                        data: {
-                          assignedUserId: values.get("employee"),
-                          expiresInHours: Number(values.get("hours")),
-                        },
-                      });
-                    }}
-                  >
-                    <label>
-                      Cliente
-                      <select name="employee" required>
-                        <option value="">Selecione</option>
-                        {data.employees
-                          .filter(
-                            (e) =>
-                              e.role === "EMPLOYEE" && e.status === "ACTIVE",
-                          )
-                          .map((e) => (
-                            <option key={e.id} value={e.id}>
-                              {e.name}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
-                    <label>
-                      Validade em horas
-                      <input
-                        name="hours"
-                        type="number"
-                        min={1}
-                        max={168}
-                        defaultValue={24}
-                      />
-                    </label>
-                    <button disabled={busy}>+ Gerar ativação</button>
-                  </form>
-                  {generated && (
-                    <div className="generated">
-                      <label>
-                        Link privado
-                        <input readOnly value={generated.link} />
-                      </label>
-                      <button
-                        className="secondary"
-                        onClick={() =>
-                          navigator.clipboard
-                            .writeText(generated.link)
-                            .catch(() => setError("Copie o link manualmente."))
-                        }
-                      >
-                        Copiar link
-                      </button>
-                      <button
-                        className="secondary"
-                        onClick={() =>
-                          navigator.clipboard
-                            .writeText(generated.token)
-                            .catch(() =>
-                              setError("Copie o código manualmente."),
-                            )
-                        }
-                      >
-                        Copiar código
-                      </button>
-                      <button
-                        className="ghost"
-                        onClick={() => setGenerated(null)}
-                      >
-                        Ocultar
-                      </button>
-                    </div>
-                  )}
-                </section>
-                <section className="card">
-                  <h2>Histórico de ativações</h2>
-                  <Table
-                    heads={["Cliente", "Expiração", "Estado", "Ação"]}
-                    rows={data.activations.map((a) => [
-                      data.employees.find((e) => e.id === a.assignedUserId)
-                        ?.name || "Cliente",
-                      date(a.expiresAt),
-                      a.revokedAt
-                        ? "Revogado"
-                        : a.consumedAt
-                          ? "Utilizado"
-                          : pending(a)
-                            ? "Pendente"
-                            : "Expirado",
-                      <button
-                        className="ghost danger"
-                        disabled={busy || !pending(a)}
-                        onClick={() => {
-                          if (confirm("Revogar este código?"))
-                            void command({
-                              action: "activation.revoke",
-                              id: a.id,
-                            });
-                        }}
-                        key={a.id}
-                      >
-                        Revogar
-                      </button>,
-                    ])}
-                  />
                 </section>
               </>
             )}
@@ -588,7 +426,7 @@ export default function Dashboard({ section }: { section: string }) {
                       onClick={() => {
                         if (
                           confirm(
-                            "Revogar o dispositivo e sua licença? O acesso ao Cloud será bloqueado.",
+                            "Bloquear este dispositivo e encerrar suas sessões?",
                           )
                         )
                           void command({ action: "device.revoke", id: d.id });
@@ -661,9 +499,7 @@ export default function Dashboard({ section }: { section: string }) {
                 />
               </section>
             )}
-            {["licenses", "settings"].includes(section) && (
-              <Management section={section} />
-            )}
+            {section === "settings" && <Management section={section} />}
             {section === "audit" && (
               <section className="card">
                 <h2>Registro de auditoria</h2>
@@ -684,7 +520,7 @@ export default function Dashboard({ section }: { section: string }) {
         )}
         <footer>
           JARVIS · Arquitetura Cloud + Desktop{" "}
-          <span>v3.0.0 · desenvolvimento</span>
+          <span>v4.0.0 · desenvolvimento</span>
         </footer>
       </main>
     </div>

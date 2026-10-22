@@ -29,7 +29,7 @@ desktop/vendor.js.LEGAL.txt
 /release/
 *.spec
 
-# Cloud + Desktop v3; private backup is never published.
+# Cloud + Desktop v4; private backup is never published.
 /Backup/legacy/
 /Backup/private/
 /Backup/*.local.*
@@ -44,3 +44,5 @@ cloud-credential.bin*
 /Backup/
 *.local.log
 /.migration-history/
+
+cloud-session-v4.bin*

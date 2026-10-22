@@ -1,17 +1,4 @@
 import { z } from "zod";
-export const activateSchema = z
-  .object({
-    token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
-    deviceId: z.string().uuid(),
-    name: z.string().trim().min(1).max(100),
-  })
-  .strict();
-export const activationSchema = z
-  .object({
-    assignedUserId: z.string().uuid(),
-    expiresInHours: z.number().int().min(1).max(168),
-  })
-  .strict();
 export const loginSchema = z
   .object({
     email: z

@@ -8,7 +8,7 @@ export const GET = endpoint(async (request) => {
   return Response.json({
     active: true,
     user: { id: device.userId, name: device.user.name },
-    expiresAt: device.credentialExpiresAt,
+    expiresAt: device.expiresAt,
   });
 });
 export const POST = endpoint(async (request) => {
@@ -17,13 +17,12 @@ export const POST = endpoint(async (request) => {
   const value = token(),
     expiresAt = new Date(Date.now() + 90 * 86400000);
   // Compare old hash to prevent parallel renewals both returning valid credentials.
-  const result = await db.device.updateMany({
+  const result = await db.session.updateMany({
     where: {
-      id: device.id,
-      credentialHash: device.credentialHash,
-      revokedAt: null,
+      id: device.sessionId,
+      tokenHash: device.tokenHash,
     },
-    data: { credentialHash: hash(value), credentialExpiresAt: expiresAt },
+    data: { tokenHash: hash(value), expiresAt },
   });
   if (result.count !== 1)
     return Response.json(
@@ -31,4 +30,10 @@ export const POST = endpoint(async (request) => {
       { status: 409 },
     );
   return Response.json({ credential: value, expiresAt });
+});
+
+export const DELETE = endpoint(async (request) => {
+  const device = await deviceAuth(request);
+  await db.session.deleteMany({ where: { id: device.sessionId } });
+  return Response.json({ ok: true });
 });

@@ -46,6 +46,6 @@ npm run admin:bootstrap -w @jarvis/cloud
 
 O bootstrap exige BOOTSTRAP_EMAIL, BOOTSTRAP_NAME e BOOTSTRAP_PASSWORD temporários no ambiente local seguro. Remova essas variáveis depois. Não colocar senha na linha de comando ou no Git. Não executar migrations automaticamente em todo build de preview.
 
-Depois do deploy, testar login, cadastro de cliente, código/deep link, ativação no Desktop, licença, revogação e consumo. A configuração acima está preparada no código, mas uma implantação real ainda depende das suas contas e variáveis privadas.
+Depois do deploy, testar login, cadastro de cliente, login no Desktop, sessão automática, bloqueio, logout e consumo. A configuração acima está preparada no código, mas uma implantação real ainda depende das suas contas e variáveis privadas.
 
 Referências: [Vercel — monorepos](https://vercel.com/docs/monorepos/monorepo-faq), [Vercel — build](https://vercel.com/docs/builds/configure-a-build), [npm ci e workspaces](https://docs.npmjs.com/cli/commands/npm-ci/).

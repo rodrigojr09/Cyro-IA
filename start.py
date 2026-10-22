@@ -146,8 +146,8 @@ class OwnedProcesses:
         self.jobs.append(job)
         return job
 
-    def spawn(self, args, cwd, preserve_descendants=False):
-        kwargs = {"cwd": str(cwd), "env": dict(os.environ)}
+    def spawn(self, args, cwd, preserve_descendants=False, env=None):
+        kwargs = {"cwd": str(cwd), "env": dict(os.environ if env is None else env)}
         kwargs["env"].pop("ELECTRON_RUN_AS_NODE", None)
         if self.job and preserve_descendants:
             kwargs["env"]["JARVIS_LAUNCHER_JOB"] = "1"
@@ -335,7 +335,7 @@ def launch():
                     "Falha ao compilar a interface. Confira as dependências desktop instaladas."
                 )
             say(
-                "Abrindo o Electron. Use Encerrar JARVIS na bandeja ou pressione Ctrl+C para encerrar."
+                "Abrindo o Electron. Feche a janela do JARVIS ou pressione Ctrl+C para encerrar."
             )
             frontend = owned.spawn([electron, DESKTOP], DESKTOP)
             while frontend.poll() is None:

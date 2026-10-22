@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { db } from "./db";
 import { hash } from "./crypto";
 import { HttpError } from "./http";
-import { canUseDevice } from "./policy";
+import { canUseSession } from "./policy";
+
 export const COOKIE =
   process.env.NODE_ENV === "production"
     ? "__Host-jarvis-session"
@@ -17,6 +18,7 @@ export async function admin() {
   });
   if (
     !session ||
+    session.deviceId !== null ||
     session.expiresAt <= new Date() ||
     session.user.status !== "ACTIVE" ||
     session.user.role === "EMPLOYEE"
@@ -28,17 +30,26 @@ export async function deviceAuth(request: Request) {
   const value = request.headers
     .get("authorization")
     ?.match(/^Bearer ([\w-]{43})$/)?.[1];
-  if (!value) throw new HttpError(401, "Ativação necessária.");
-  const device = await db.device.findUnique({
-    where: { credentialHash: hash(value) },
-    include: { user: { include: { client: true } }, licenses: true },
+  if (!value) throw new HttpError(401, "Entre para continuar.");
+  const session = await db.session.findUnique({
+    where: { tokenHash: hash(value) },
+    include: { device: true, user: { include: { client: true } } },
   });
   const now = new Date();
-  if (!device || !canUseDevice(device, now))
-    throw new HttpError(403, "Instalação sem licença ativa.");
+  if (!session || !session.device || !canUseSession(session, now))
+    throw new HttpError(
+      401,
+      "Sessão inválida ou acesso bloqueado. Entre novamente.",
+    );
   await db.device.update({
-    where: { id: device.id },
+    where: { id: session.device.id },
     data: { lastSeenAt: now },
   });
-  return device;
+  return {
+    ...session.device,
+    user: session.user,
+    sessionId: session.id,
+    expiresAt: session.expiresAt,
+    tokenHash: session.tokenHash,
+  };
 }

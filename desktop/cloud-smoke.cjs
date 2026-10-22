@@ -1,25 +1,26 @@
-// Real Electron + activation UI + DPAPI; HTTP Cloud is a local fixture, never paid.
+// Real Electron + login UI + DPAPI; HTTP Cloud is a local fixture, never paid.
 const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
 const http = require('node:http');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const assert = require('node:assert/strict');
-const { createCloud, parseActivation } = require('./services/cloud');
+const { createCloud } = require('./services/cloud');
 app.disableHardwareAcceleration();
 let window, server;
 const timer = setTimeout(() => app.exit(1), 45000);
 app.whenReady().then(async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'jarvis-activation-smoke-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'jarvis-login-smoke-'));
   try {
-    let activated = false;
+    let loggedIn = false;
     server = http.createServer(async (request, response) => {
-      if (request.url === '/api/activate') {
+      if (request.url === '/api/device/login') {
         let text = '';
         for await (const chunk of request) text += chunk;
         const body = JSON.parse(text);
-        assert.equal(body.token, 'a'.repeat(43));
-        activated = true;
+        assert.equal(body.email, 'user@example.test');
+        assert.equal(body.password, 'password-for-test-only');
+        loggedIn = true;
         response.writeHead(200, { 'Content-Type': 'application/json' });
         response.end(
           JSON.stringify({
@@ -45,11 +46,11 @@ app.whenReady().then(async () => {
     });
     await service.load();
     ipcMain.handle('jarvis:cloud-state', () => service.state());
-    ipcMain.handle('jarvis:activate', async (event, value) => {
+    ipcMain.handle('jarvis:login', async (event, value) => {
       assert.equal(event.sender, window.webContents);
       assert.equal(event.senderFrame, window.webContents.mainFrame);
-      assert.ok(event.senderFrame.url.endsWith('/activation.html'));
-      await service.activate(`jarvis://activate?token=${value}`, 'Computador de teste');
+      assert.ok(event.senderFrame.url.endsWith('/login.html'));
+      await service.login(value, 'Computador de teste');
       await service.refresh();
       return { ok: true };
     });
@@ -62,31 +63,30 @@ app.whenReady().then(async () => {
         sandbox: true,
       },
     });
-    await window.loadFile(path.join(__dirname, 'activation.html'));
+    await window.loadFile(path.join(__dirname, 'login.html'));
     await window.webContents.executeJavaScript(
-      `document.getElementById('activation-code').value = '${'a'.repeat(43)}'; document.getElementById('activation-form').requestSubmit();`,
+      `document.getElementById('login-email').value = 'user@example.test'; document.getElementById('login-password').value = 'password-for-test-only'; document.getElementById('login-form').requestSubmit();`,
     );
     for (let i = 0; i < 100; i++) {
       if (
         await window.webContents.executeJavaScript(
-          "document.getElementById('activation-status').textContent.includes('concluída')",
+          "document.getElementById('login-status').textContent.includes('Conectado')",
         )
       )
         break;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    assert.ok(activated);
+    assert.ok(loggedIn);
     assert.equal(service.state().status, 'active');
     assert.equal(await window.webContents.executeJavaScript('typeof require'), 'undefined');
     assert.equal(
-      await window.webContents.executeJavaScript('typeof window.jarvisActivation.credential'),
+      await window.webContents.executeJavaScript('typeof window.jarvisAuth.credential'),
       'undefined',
     );
-    const encrypted = await fs.readFile(path.join(dir, 'cloud-credential.bin'));
+    const encrypted = await fs.readFile(path.join(dir, 'cloud-session-v4.bin'));
     assert.ok(!encrypted.includes(Buffer.from('b'.repeat(43))));
-    assert.equal(parseActivation(`jarvis://activate?token=${'a'.repeat(43)}`), 'a'.repeat(43));
     console.log(
-      'Electron Cloud: tela de ativação, HTTP, autenticação individual, isolamento e safeStorage real aprovados (Cloud simulado).',
+      'Electron Cloud: tela de login, HTTP, autenticação individual, isolamento e safeStorage real aprovados (Cloud simulado).',
     );
     clearTimeout(timer);
     window.destroy();
@@ -97,7 +97,7 @@ app.whenReady().then(async () => {
     clearTimeout(timer);
     window?.destroy();
     server?.close();
-    console.error('Falha no smoke de ativação Electron Cloud.');
+    console.error('Falha no smoke de login Electron Cloud.');
     app.exit(1);
   }
 });

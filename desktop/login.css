@@ -92,7 +92,7 @@ button:focus-visible {
   outline: 2px solid #50e3d4;
   outline-offset: 3px;
 }
-#activation-status {
+#login-status {
   font-size: 12px;
   min-height: 35px;
   color: #a2c8c2;

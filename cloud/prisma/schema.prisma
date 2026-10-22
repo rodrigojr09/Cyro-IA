@@ -80,12 +80,11 @@ model Device {
   client Client @relation(fields: [userId], references: [id], onDelete: Restrict, map: "Device_client_fkey")
   deviceId String @unique @db.Uuid
   name String @db.VarChar(100)
-  credentialHash String @unique
-  credentialExpiresAt DateTime
   lastSeenAt DateTime @default(now())
   revokedAt DateTime?
   createdAt DateTime @default(now())
   licenses License[]
+  sessions Session[]
   usage UsageLog[]
   @@index([userId, revokedAt])
   @@unique([id, userId])
@@ -128,6 +127,8 @@ model AuditLog {
   @@index([actorId, createdAt])
 }
 model Session {
+  deviceId String? @db.Uuid
+  device Device? @relation(fields: [deviceId, userId], references: [id, userId], onDelete: Cascade)
   id String @id @default(uuid()) @db.Uuid
   tokenHash String @unique
   userId String @db.Uuid
@@ -135,6 +136,7 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   @@index([expiresAt])
+  @@index([deviceId])
 }
 model RateLimit {
   key String @id

@@ -4,7 +4,7 @@
 
 O proprietário deve criar o projeto Prisma Postgres e copiar privadamente suas URLs reais para DATABASE_URL e DIRECT_URL; criar um projeto Vercel ligado a este repositório; escolher o domínio HTTPS definitivo; gerar AUTH_SECRET aleatório de pelo menos 32 caracteres e configurar OPENAI_API_KEY somente no Cloud. Não enviar valores privados pelo chat ou salvá-los em commits. Não foi inventada URL de conexão nem criada implantação nesta tarefa.
 
-Use o mesmo AUTH_SECRET nas instâncias de uma implantação. Trocar esse segredo invalida hashes de sessões, ativações e credenciais existentes; exige plano de rotação. Preview deve usar outro banco e segredo, sem dados de produção. Não configurar valores privados com prefixo NEXT_PUBLIC_. Segredos BOOTSTRAP_* são temporários, apenas para CLI local segura.
+Use o mesmo AUTH_SECRET nas instâncias de uma implantação. Trocar esse segredo invalida hashes de sessões existentes; exige plano de rotação. Preview deve usar outro banco e segredo, sem dados de produção. Não configurar valores privados com prefixo NEXT_PUBLIC_. Segredos BOOTSTRAP_* são temporários, apenas para CLI local segura.
 
 ## Instalação de desenvolvimento
 
@@ -31,7 +31,7 @@ Importe o monorepo, selecione Root Directory cloud e habilite acesso a arquivos 
 
 Configure DATABASE_URL, DIRECT_URL, AUTH_SECRET, APP_ORIGIN (origem HTTPS exata), OPENAI_API_KEY, OPENAI_ALLOWED_MODELS e preços opcionais. Habilite voz conscientemente com OPENAI_VOICE_ENABLED=true. Runtime Node, sem Edge. maxDuration=120 depende do plano Vercel; validar limites de streaming e timeout do plano escolhido. Aplicar migrations separadamente antes do deploy; não aplicá-las automaticamente em cada preview/build concorrente.
 
-Validação necessária: login, criação de funcionário, ativação simultânea de um código, revogação, chamada simulada/real autorizada, persistência de uso, streaming e cancelamento atravessando a Vercel. Não foi efetuado teste pago da OpenAI. Consultar as faturas do provedor para reconciliação, especialmente chamadas com uso desconhecido.
+Validação necessária: login, criação de funcionário, login Desktop e restauração da sessão, revogação, chamada simulada/real autorizada, persistência de uso, streaming e cancelamento atravessando a Vercel. Não foi efetuado teste pago da OpenAI. Consultar as faturas do provedor para reconciliação, especialmente chamadas com uso desconhecido.
 
 ## Desktop de desenvolvimento e build Windows
 
@@ -45,7 +45,7 @@ backend\.venv\Scripts\python.exe tools/start_cloud.py
 
 Para distribuição, configurar JARVIS_CLOUD_ORIGIN com o domínio HTTPS real (localhost é recusado no pacote), instalar requisitos de requirements-build.txt previamente e executar build.bat. A configuração pública da origem é gravada em desktop/electron/cloud-config.json e fica fora do Git. PyInstaller compila cloud_entry.py; electron-builder usa electron/builder.json e NSIS. Não embute .env, banco ou chave OpenAI.
 
-Artefato gerado: release/v3/JARVIS-Setup-3.0.0.exe, apontando para https://cronosjarvis.vercel.app. O executável ainda não tem assinatura Authenticode e não constitui release aprovada. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após compilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo.
+Artefato esperado da v4: release/v4/JARVIS-Setup-4.0.0.exe, apontando para https://cronosjarvis.vercel.app. O executável ainda não tem assinatura Authenticode e não constitui release aprovada. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após compilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo.
 
 
 ## Diagnóstico da voz
@@ -58,6 +58,6 @@ O SDK Python utiliza `InternalServerError` também para respostas HTTP 503 do pr
 
 1. Criar/selecionar Prisma Postgres e preencher DATABASE_URL (TCP PostgreSQL) e DIRECT_URL privadamente.
 2. Configurar AUTH_SECRET aleatório, APP_ORIGIN=https://cronosjarvis.vercel.app, OPENAI_API_KEY e modelos permitidos no ambiente seguro da Vercel. Preços são opcionais; sem preço não exibir custo como zero confirmado.
-3. Aplicar as duas migrations e executar o bootstrap seguro do primeiro administrador por CLI com BOOTSTRAP_* temporários. Remover BOOTSTRAP_* depois.
-4. Implantar cloud/ com acesso ao workspace packages/shared e executar os fluxos reais de cadastro, código, ativação, concorrência, licença/revogação, streaming e limites.
-5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, protocolo e preservação dos dados. Depois decidir a tag v3.0.0.
+3. Aplicar todas as migrations, incluindo a de login Desktop v4, e executar o bootstrap seguro do primeiro administrador por CLI com BOOTSTRAP_* temporários. Remover BOOTSTRAP_* depois.
+4. Implantar cloud/ com acesso ao workspace packages/shared e executar os fluxos reais de cadastro, login, sessão, bloqueio de acesso, logout, streaming e limites.
+5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, login automático e preservação dos dados. Depois decidir a tag v4.0.0.

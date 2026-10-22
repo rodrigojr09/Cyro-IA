@@ -1,3 +1,15 @@
+# JARVIS 4.0.0 — 22/10/2026, em validação
+
+- Corrigido acesso de ADMIN/SUPER_ADMIN ao Desktop: perfil criado após senha válida; sessão, bloqueio e logout mantêm as mesmas proteções, sem mudar o papel administrativo.
+
+- Cloud somente administrativo e APIs; raiz protegida, sem site ou cadastro público.
+- Acesso Desktop por e-mail e senha definidos pelo administrador; bloqueio de usuário e troca de senha invalidam sessões.
+- Removidos emissão de códigos, ativação por protocolo e gestão de licenças. Registros históricos não autorizam acesso.
+- Login antes do workspace e do Quick Chat; sessão protegida salva sem guardar senha, com validação na abertura e a cada cinco minutos.
+- Falha de validação retorna ao login e encerra o Quick Chat. Fechar a janela encerra o JARVIS, inclusive com preferência antiga de bandeja.
+- Migração de sessões por dispositivo e remoção das credenciais antigas; metadados e saída Windows atualizados para v4.
+- Publicação na nuvem e compilação autorizadas pelo proprietário em 22/10/2026; sem tag de release antecipada. Evidências e limitações em docs/V4.md.
+
 # JARVIS 3.0.0 — implementação em validação
 
 - Voz: Desktop preserva mensagens seguras do Cloud sobre habilitação, licença e limites, em vez de exibir apenas InternalServerError. Cloud distingue configuração recusada pelo provedor, limite e timeout, sem registrar texto ou segredos.

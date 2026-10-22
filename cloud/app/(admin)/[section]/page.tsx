@@ -10,10 +10,7 @@ export default async function Page({
     ![
       "dashboard",
       "clients",
-      "employees",
-      "activations",
       "devices",
-      "licenses",
       "settings",
       "usage",
       "audit",

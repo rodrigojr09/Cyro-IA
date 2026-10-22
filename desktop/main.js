@@ -82,10 +82,13 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     return (
       event.sender === win?.webContents &&
       event.senderFrame === win.webContents.mainFrame &&
+      (process.env.JARVIS_CLOUD !== '1' || process.env.JARVIS_AUTHENTICATED === '1') &&
       event.senderFrame.url === pageURL
     );
   }
   async function backend(route, method, body) {
+    if (process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1')
+      throw Error('Entre com sua conta.');
     try {
       const token = (await fs.readFile(path.join(dataDir, '.local-token'), 'utf8')).trim();
       const response = await fetch('http://127.0.0.1:8765' + route, {
@@ -139,10 +142,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     win.webContents.on('will-navigate', (event) => event.preventDefault());
     win.on?.('close', (event) => {
       windowState.save(stateFile, win, stateStorage);
-      if (!quitting && quickController?.hideOnClose()) {
-        event.preventDefault();
-        win.hide();
-      } else if (!quitting) {
+      if (!quitting) {
         event.preventDefault();
         quitJarvis();
       }
@@ -158,8 +158,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     win.loadFile(
       path.join(
         __dirname,
-        process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_ACTIVATED !== '1'
-          ? 'activation.html'
+        process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1'
+          ? 'login.html'
           : 'index.html',
       ),
     );
@@ -267,7 +267,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         await dialog.showMessageBox(win, {
           message: 'A inteligência artificial é gerenciada pelo administrador.',
           detail:
-            'Ative o aplicativo usando o link jarvis:// enviado pelo administrador. A chave OpenAI fica exclusivamente no Cloud.',
+            'Entre com o e-mail e a senha cadastrados pelo administrador. A chave OpenAI fica exclusivamente no Cloud.',
         });
         return { ok: true };
       }
@@ -482,16 +482,27 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       quickController?.claimAudio(event.sender);
     });
     createWindow();
-    quickController = require('./quick-controller').createQuick({
-      electron: require('electron'),
-      backend,
-      dataDir,
-      mainWindow: () => win,
-      openMain: showMain,
-      quit: quitJarvis,
-      enabled: initialSettings.quickChat !== false,
-      stateStorage,
-    });
+    function syncQuick(authenticated) {
+      if (!authenticated) {
+        for (const controller of activeStreams.values()) controller.abort();
+        quickController?.destroy();
+        quickController = null;
+        return;
+      }
+      if (quickController) return;
+      quickController = require('./quick-controller').createQuick({
+        electron: require('electron'),
+        backend,
+        dataDir,
+        mainWindow: () => win,
+        openMain: showMain,
+        quit: quitJarvis,
+        enabled: initialSettings.quickChat !== false,
+        stateStorage,
+      });
+    }
+    app.on('jarvis:session-changed', syncQuick);
+    syncQuick(process.env.JARVIS_CLOUD !== '1' || process.env.JARVIS_AUTHENTICATED === '1');
   }
   app.whenReady().then(() => {
     if (!app.isPackaged) {
@@ -534,7 +545,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   });
   app.on('window-all-closed', () => {
     console.log('Todas as janelas foram fechadas.');
-    if (quitting) app.quit();
+    app.quit();
   });
 
   process.on('uncaughtException', (error) => {

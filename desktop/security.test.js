@@ -11,12 +11,15 @@ function setup({
   ownsInstance = true,
   probe = false,
   quickToTray = true,
+  cloud = false,
+  authenticated = false,
 } = {}) {
   const handlers = new Map();
   const requests = [];
   const copies = [];
   const dialogs = [];
   const exits = [];
+  const appEvents = new Map();
   const windowEvents = new Map(),
     external = [];
   let windowOptions,
@@ -73,7 +76,9 @@ function setup({
       exit: (code) => exits.push(code),
       disableHardwareAcceleration() {},
       whenReady: () => ({ then: (fn) => fn() }),
-      on() {},
+      on(name, fn) {
+        appEvents.set(name, fn);
+      },
       quit() {
         quitCalls++;
       },
@@ -85,7 +90,13 @@ function setup({
     __dirname,
     console,
     URL,
-    process: { env: {}, argv: probe ? ['--jarvis-probe'] : [], on() {} },
+    process: {
+      env: cloud
+        ? { JARVIS_CLOUD: '1', ...(authenticated ? { JARVIS_AUTHENTICATED: '1' } : {}) }
+        : {},
+      argv: probe ? ['--jarvis-probe'] : [],
+      on() {},
+    },
     AbortSignal,
     require: (name) =>
       name === 'electron'
@@ -123,7 +134,11 @@ function setup({
     event: { sender: contents, senderFrame: frame },
     requests,
     windowEvents,
+    appEvents,
     external,
+    get destroyCalls() {
+      return destroyCalls;
+    },
     get windowOptions() {
       return windowOptions;
     },
@@ -460,7 +475,7 @@ test('Electron bloqueia segunda instância e probe não abre janela', () => {
   assert.equal(probe.windowOptions, undefined);
 });
 
-test('fechar principal mantém Quick Chat na bandeja ou encerra conforme preferência', () => {
+test('fechar principal encerra mesmo com preferência antiga de bandeja', () => {
   let prevented = false;
   const tray = setup();
   tray.windowEvents.get('close')({
@@ -469,8 +484,8 @@ test('fechar principal mantém Quick Chat na bandeja ou encerra conforme prefer�
     },
   });
   assert.equal(prevented, true);
-  assert.equal(tray.hidden, true);
-  assert.equal(tray.quitCalls, 0);
+  assert.equal(tray.hidden, false);
+  assert.equal(tray.quitCalls, 1);
   const exit = setup({ quickToTray: false });
   exit.windowEvents.get('close')({ preventDefault() {} });
   assert.equal(exit.quitCalls, 1);
@@ -483,4 +498,14 @@ test('configuração privada exige janela confiável e não aceita rota genéric
     /autorizada/,
   );
   await assert.rejects(invoke(event, '/config'), /autorizada/);
+});
+
+test('Cloud bloqueia IPC e Quick Chat antes do login e destrói Quick Chat ao perder sessão', async () => {
+  const locked = setup({ cloud: true });
+  await assert.rejects(locked.invoke(locked.event, '/history'), /autorizada/);
+  assert.equal(locked.requests.length, 0);
+  const active = setup({ cloud: true, authenticated: true });
+  await active.invoke(active.event, '/history');
+  active.appEvents.get('jarvis:session-changed')(false);
+  assert.equal(active.destroyCalls, 1);
 });
