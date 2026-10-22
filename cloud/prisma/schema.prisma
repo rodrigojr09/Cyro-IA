@@ -40,6 +40,7 @@ model User {
   sessions Session[]
   budgets UsageBudget[]
   client Client?
+  conversations Conversation[]
   @@index([managerId, status])
 }
 model Client {
@@ -151,4 +152,33 @@ model UsageBudget {
   charged Int @default(0)
   reserved Int @default(0)
   @@id([userId, period])
+}
+
+// Only general conversations live here. Projects and their chats stay on device.
+model Conversation {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot String? @db.VarChar(16)
+  title String @db.VarChar(120)
+  archived Boolean @default(false)
+  summary String @default("")
+  createdAt DateTime @default(now())
+  lastMessageAt DateTime?
+  messages ChatMessage[]
+  @@unique([userId, slot])
+  @@index([userId, lastMessageAt])
+}
+
+model ChatMessage {
+  id Int @id @default(autoincrement())
+  conversationId String @db.Uuid
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  requestId String @db.Uuid
+  role String @db.VarChar(16)
+  content String
+  scope String @default("") @db.VarChar(32)
+  createdAt DateTime @default(now())
+  @@unique([conversationId, requestId])
+  @@index([conversationId, id])
 }

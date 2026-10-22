@@ -92,6 +92,11 @@ async def lifespan(app: FastAPI):
     store = ProjectStore(DATA)
     if not FROZEN:
         store.migrate(DB, ROOT)
+    if CLOUD:
+        from cloud_conversations import CloudConversations
+        from cloud_client import conversation_request
+
+        store = CloudConversations(store, conversation_request)
     programming = ProgrammingService(DATA)
     indexer = ProjectIndexer(
         store,
@@ -135,7 +140,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="4.0.0" if CLOUD else "2.0.1-dev.0",
+    version="4.1.0" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -227,6 +232,36 @@ class ScopeRequest(WorkspaceRequest):
     exclude: list[str] = Field(default_factory=list, max_length=500)
 
 
+class SizeRequest(WorkspaceRequest):
+    include: list[str] | None = Field(default=None, max_length=300)
+    exclude: list[str] = Field(default_factory=list, max_length=500)
+
+
+@app.post("/projects/selection/size")
+async def project_selection_size(req: SizeRequest):
+    from project_scope import selection_size, SourceSelection, MAX_PROJECT_BYTES
+
+    project = store.project(req.project_id)
+    scope = (
+        store.scope(req.project_id)
+        if req.include is None
+        else {"include": req.include, "exclude": req.exclude}
+    )
+    total = await asyncio.to_thread(
+        selection_size,
+        project["path"],
+        SourceSelection(scope["include"], scope["exclude"]),
+        False,
+    )
+    return {
+        "selected_bytes": total,
+        "max_bytes": MAX_PROJECT_BYTES,
+        "within_limit": total <= MAX_PROJECT_BYTES,
+        "metadata_only": True,
+        "api_calls": 0,
+    }
+
+
 @app.get("/projects/selection")
 async def project_selection(project_id: str, path: str = ".", offset: int = 0):
     return await asyncio.to_thread(store.selection_preview, project_id, path, offset)
@@ -238,7 +273,9 @@ async def save_project_selection(req: ScopeRequest):
         raise HTTPException(
             409, "Aguarde a análise ou resposta terminar antes de alterar a seleção."
         )
-    result = store.set_scope(req.project_id, req.include, req.exclude)
+    result = await asyncio.to_thread(
+        store.set_scope, req.project_id, req.include, req.exclude
+    )
     if result["selection_changed"]:
         indexer.enqueue(req.project_id)
     return {
@@ -249,11 +286,16 @@ async def save_project_selection(req: ScopeRequest):
 
 @app.exception_handler(ReadError)
 async def read_error_handler(request: Request, exc: ReadError):
-    return JSONResponse(status_code=400, content={"detail": str(exc)})
+    from project_scope import ProjectSizeError
+
+    return JSONResponse(
+        status_code=413 if isinstance(exc, ProjectSizeError) else 400,
+        content={"detail": str(exc)},
+    )
 
 
 @app.get("/workspace")
-async def workspace():
+def workspace():
     projects = store.projects()
     general_id = store.general_chat()
     active_projects = {project["id"] for project in projects}
@@ -265,6 +307,12 @@ async def workspace():
         chats = [
             dict(row)
             for row in rows
+            if row["project_id"] is None or row["project_id"] in active_projects
+        ]
+    if CLOUD:
+        chats = [
+            row
+            for row in store.all_chats()
             if row["project_id"] is None or row["project_id"] in active_projects
         ]
     return {
@@ -295,8 +343,10 @@ async def workspace_view(req: WorkspaceRequest):
         store.export_knowledge(project["id"])
     return {
         "project": store.project(req.project_id) if project else None,
-        "chats": store.chats(req.project_id),
-        "archived_chats": store.chats(req.project_id, archived=True),
+        "chats": await asyncio.to_thread(store.chats, req.project_id),
+        "archived_chats": await asyncio.to_thread(
+            store.chats, req.project_id, archived=True
+        ),
     }
 
 
@@ -309,6 +359,7 @@ async def register_project(req: ProjectRequest):
 
 @app.post("/projects/refresh")
 async def refresh_project(req: WorkspaceRequest):
+    await asyncio.to_thread(store.validate_project_size, req.project_id)
     indexer.enqueue(req.project_id)
     return store.project(req.project_id)
 
@@ -345,7 +396,7 @@ async def project_knowledge(project_id: str, name: str = "IDEIA.md"):
 
 
 @app.post("/chats/create")
-async def create_chat(req: ChatCreate):
+def create_chat(req: ChatCreate):
     return store.create_chat(req.project_id, req.title)
 
 
@@ -355,11 +406,13 @@ async def change_chat(req: ChatChange):
         raise HTTPException(400, "Confirme a exclusão ou o arquivamento da conversa.")
     if chat_lock.locked():
         raise HTTPException(409, "Aguarde a resposta em andamento.")
-    return store.change_chat(req.chat_id, req.title, req.archived, req.delete)
+    return await asyncio.to_thread(
+        store.change_chat, req.chat_id, req.title, req.archived, req.delete
+    )
 
 
 @app.get("/chats/history")
-async def chat_history(chat_id: str, before: int | None = None):
+def chat_history(chat_id: str, before: int | None = None):
     return {
         "chat": store.chat(chat_id, allow_archived=True),
         "messages": store.history(chat_id, before=before),
@@ -408,7 +461,7 @@ async def health():
 
 
 @app.get("/history")
-async def history():
+def history():
     return [
         {key: item[key] for key in ("role", "content")}
         for item in store.history(store.general_chat(), limit=30)
@@ -456,8 +509,14 @@ async def system_info():
 
 
 @app.get("/quick/session")
-async def quick_session():
-    return {"chat_id": store.quick_chat()}
+def quick_session(project_id: str | None = None):
+    return {
+        "chat_id": (
+            store.project_quick_chat(project_id)
+            if CLOUD and project_id
+            else store.quick_chat()
+        )
+    }
 
 
 class QuickRequest(BaseModel):
@@ -468,10 +527,15 @@ class QuickRequest(BaseModel):
 
 @app.post("/quick/chat")
 async def quick_chat(req: QuickRequest):
+    chat_id = (
+        await asyncio.to_thread(store.project_quick_chat, req.project_id)
+        if CLOUD and req.project_id
+        else await asyncio.to_thread(store.quick_chat)
+    )
     return await chat(
         ChatRequest(
             message=req.message,
-            chat_id=store.quick_chat(),
+            chat_id=chat_id,
             quick_project_id=req.project_id,
         )
     )
@@ -496,6 +560,16 @@ async def chat_stream(req: ChatRequest):
         raise HTTPException(404, "Indisponível.")
     import cloud_client
 
+    # Return an HTTP error before opening the SSE stream; recheck during processing
+    # as files can change between this request and the actual model call.
+    project_id = req.quick_project_id
+    if req.chat_id:
+        project_id = (await asyncio.to_thread(store.chat, req.chat_id))[
+            "project_id"
+        ] or project_id
+    if project_id:
+        await asyncio.to_thread(store.validate_project_size, project_id)
+
     async def events():
         queue = asyncio.Queue(maxsize=512)
 
@@ -508,10 +582,12 @@ async def chat_stream(req: ChatRequest):
                 await queue.put({"result": await chat(req)})
             except asyncio.CancelledError:
                 raise
+            except ReadError as exc:
+                await queue.put({"error": str(exc)})
             except Exception:
                 await queue.put(
                     {
-                        "error": "Resposta interrompida. Confira a conexão, licença e limites do cliente."
+                        "error": "Resposta interrompida. Confira a conexão, sessão e limites da conta."
                     }
                 )
             finally:
@@ -558,9 +634,19 @@ def require_api_key():
 async def process_chat(req: ChatRequest):
     global active_service
     require_api_key()
-    chat_id = req.chat_id or store.general_chat()
-    chat_info = store.chat(chat_id)
-    is_quick = chat_id == store.quick_chat(create=False)
+    chat_id = req.chat_id or await asyncio.to_thread(store.general_chat)
+    chat_info = await asyncio.to_thread(store.chat, chat_id)
+    is_quick = not chat_info["project_id"] and chat_id == await asyncio.to_thread(
+        store.quick_chat, create=False
+    )
+    if req.quick_project_id and CLOUD:
+        # Project context must never be persisted in a general Cloud conversation,
+        # nor may a caller rebind an ordinary local chat to a different project.
+        is_quick = chat_info[
+            "project_id"
+        ] == req.quick_project_id and chat_id == await asyncio.to_thread(
+            store.project_quick_chat, req.quick_project_id
+        )
     if req.quick_project_id and not is_quick:
         raise ReadError("Contexto rápido disponível somente no Quick Chat.")
     effective_project = req.quick_project_id if is_quick else chat_info["project_id"]
@@ -576,6 +662,7 @@ async def process_chat(req: ChatRequest):
     )
     if effective_project:
         owner = store.project(effective_project)
+        await asyncio.to_thread(store.validate_project_size, effective_project)
         if not owner["scope_confirmed"]:
             raise ReadError(
                 "Confirme Arquivos do projeto antes de usar o chat. Nenhuma chamada de IA foi feita."
@@ -597,16 +684,22 @@ async def process_chat(req: ChatRequest):
         )
     service = (
         ProjectChatService(store, {**chat_info, "project_id": effective_project})
-        if req.chat_id
+        if req.chat_id or CLOUD
         else programming
     )
-    if not req.chat_id:
+    if not req.chat_id and not CLOUD:
         service.policy = RegisteredReadPolicy(service.policy.roots, store)
     active_service = service
     mode = "programming" if effective_project or is_quick else req.mode
     previous = list(
         reversed(
-            store.history(chat_id, limit=20, for_model=True, context_scope=quick_scope)
+            await asyncio.to_thread(
+                store.history,
+                chat_id,
+                limit=20,
+                for_model=True,
+                context_scope=quick_scope,
+            )
         )
     )
     messages = [{"role": "system", "content": SYSTEM}]
@@ -615,7 +708,7 @@ async def process_chat(req: ChatRequest):
             {
                 "role": "system",
                 "content": "Modo JARVIS Quick Chat: responda diretamente, preferencialmente em 30 a 80 palavras, no idioma da conversa. "
-                "Evite introduções e grandes blocos de código. Em programação, apresente causa provável e solução objetiva. "
+                "Evite introduções e respostas longas. Adapte a ajuda ao tema; em programação, apresente causa provável e solução objetiva. "
                 "Use mais palavras se necessário para precisão, completude e alertas importantes; não corte informações essenciais. "
                 "Contexto de projeto só existe se explicitamente incluído nesta requisição. Não execute ações no computador.",
             }
@@ -624,7 +717,7 @@ async def process_chat(req: ChatRequest):
         messages.append(
             {
                 "role": "system",
-                "content": "Conversa geral independente, sem acesso a código de projetos. "
+                "content": "Conversa geral independente, sem acesso a arquivos de projetos. "
                 "Para investigar arquivos, o usuário deve abrir um projeto cadastrado pela interface.",
             }
         )
@@ -709,7 +802,9 @@ async def process_chat(req: ChatRequest):
                     )
 
     if is_quick:
-        store.append(chat_id, "user", req.message, context_scope=quick_scope)
+        await asyncio.to_thread(
+            store.append, chat_id, "user", req.message, context_scope=quick_scope
+        )
     try:
         reply, pending_actions = await converse(
             client, MODEL, messages, mode, service, api_gate, record_usage
@@ -723,11 +818,17 @@ async def process_chat(req: ChatRequest):
     else:
         stored_user, stored_reply = req.message, reply
     if not is_quick:
-        store.append(chat_id, "user", req.message if req.chat_id else stored_user)
-    store.append(
+        await asyncio.to_thread(
+            store.append,
+            chat_id,
+            "user",
+            req.message if req.chat_id or CLOUD else stored_user,
+        )
+    await asyncio.to_thread(
+        store.append,
         chat_id,
         "assistant",
-        reply if req.chat_id else stored_reply,
+        reply if req.chat_id or CLOUD else stored_reply,
         context_scope=quick_scope,
     )
     for action in pending_actions:

@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-async function setup({ partial = false, delayed = false } = {}) {
+async function setup({ partial = false, delayed = false, oversized = false } = {}) {
   const calls = [];
   const timers = [];
   let resolveChat;
@@ -66,6 +66,12 @@ async function setup({ partial = false, delayed = false } = {}) {
       chats.push(first);
       data = project;
     } else if (route === '/programming/status') data = { project: null, roots: [] };
+    else if (route === '/projects/selection/size')
+      data = {
+        selected_bytes: oversized ? 6291456 : 1024,
+        max_bytes: 5242880,
+        within_limit: !oversized,
+      };
     else if (route === '/chat') {
       if (delayed)
         await new Promise((resolve) => {
@@ -93,7 +99,7 @@ async function setup({ partial = false, delayed = false } = {}) {
       pause() {}
     },
   });
-  for (const file of ['workspace.js', 'renderer.js'])
+  for (const file of ['scope.js', 'workspace.js', 'renderer.js'])
     vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   await new Promise((resolve) => setImmediate(resolve));
   return { window, elements, calls, timers, resolve: () => resolveChat() };
@@ -129,6 +135,16 @@ test('análise parcial bloqueia a conversa até aceitação explícita', async (
   await window.jarvisWorkspace.newChat();
   assert.equal(window.jarvisWorkspace.chat.id, 'new');
   assert.equal(elements.send.disabled, false);
+});
+
+test('Desktop preserva a pergunta e bloqueia envio quando o projeto ultrapassa 5 MB', async () => {
+  const { elements, window, calls } = await setup({ oversized: true });
+  await window.jarvisWorkspace.view('project-a', 'first');
+  elements.input.value = 'Pergunta que deve ser preservada';
+  await elements.send.onclick();
+  assert.equal(elements.input.value, 'Pergunta que deve ser preservada');
+  assert.ok(!calls.some((call) => call.route === '/chat'));
+  assert.match(elements.messages.children.at(-1).textContent, /5 MB/);
 });
 
 test('resposta em andamento mantém seleção e envio bloqueados mesmo durante atualização da interface', async () => {

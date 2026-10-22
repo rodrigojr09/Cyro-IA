@@ -254,7 +254,7 @@ class ReaderTests(unittest.TestCase):
         with self.assertRaises(ReadError):
             self.run_tool("read_file", path="main.py", end_line=300)
         large = self.project / "large.ts"
-        large.write_text("x" * (128 * 1024 + 1), encoding="utf-8")
+        large.write_text("x" * (5 * 1024 * 1024 + 1), encoding="utf-8")
         try:
             with self.assertRaises(ReadError):
                 self.service.policy.read(large)

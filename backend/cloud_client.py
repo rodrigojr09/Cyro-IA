@@ -9,11 +9,13 @@ from urllib.parse import urlparse
 from openai import AsyncOpenAI, APIStatusError, APITimeoutError, APIConnectionError
 
 _client = None
+_storage_origin = None
+_storage_credential = None
 stream_sink = contextvars.ContextVar("jarvis_stream_sink", default=None)
 
 
 def configure(origin, credential):
-    global _client
+    global _client, _storage_origin, _storage_credential
     parsed = urlparse(origin)
     local_dev = (
         not getattr(__import__("sys"), "frozen", False)
@@ -39,6 +41,41 @@ def configure(origin, credential):
         timeout=100,
         max_retries=0,
     )
+    _storage_origin = origin.rstrip("/")
+    _storage_credential = credential
+
+
+def conversation_request(command):
+    """Private backend transport; never expose the credential to the renderer."""
+    import httpx
+    from programming.security import ReadError
+
+    if not _storage_origin or not _storage_credential:
+        raise ReadError("Entre no JARVIS com sua conta.")
+    for attempt in range(2):
+        try:
+            response = httpx.post(
+                _storage_origin + "/api/device/chats",
+                headers={"Authorization": "Bearer " + _storage_credential},
+                json=command,
+                timeout=20,
+                follow_redirects=False,
+            )
+            if response.status_code in (401, 403):
+                raise ReadError("Sessão encerrada. Entre novamente no JARVIS.")
+            if response.status_code == 404:
+                raise ReadError(
+                    "Conversa indisponível. Atualize o Cloud e confira sua conta."
+                )
+            if response.status_code == 400:
+                raise ReadError("Conversa inexistente, arquivada ou operação inválida.")
+            response.raise_for_status()
+            return response.json()
+        except (httpx.HTTPError, ValueError):
+            if attempt:
+                raise ReadError(
+                    "Não foi possível acessar os chats na nuvem. Verifique a conexão e tente novamente."
+                ) from None
 
 
 def ready():

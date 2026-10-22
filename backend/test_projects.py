@@ -223,10 +223,10 @@ class IndexTests(unittest.IsolatedAsyncioTestCase):
         idea = self.store.knowledge(project["id"])
         for section in [
             "Objetivo",
-            "Tecnologias",
-            "Arquitetura",
-            "Funcionalidades",
-            "Banco de dados",
+            "Materiais e formatos",
+            "Organização do projeto",
+            "Conteúdos e entregas",
+            "Referências e dados",
             "Hipótese",
             "Última análise",
         ]:

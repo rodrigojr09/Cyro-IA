@@ -520,7 +520,7 @@ export default function Dashboard({ section }: { section: string }) {
         )}
         <footer>
           JARVIS · Arquitetura Cloud + Desktop{" "}
-          <span>v4.0.0 · desenvolvimento</span>
+          <span>v4.1.0</span>
         </footer>
       </main>
     </div>

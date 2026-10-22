@@ -41,7 +41,17 @@ def main():
     if package["version"] != root_package["version"]:
         raise SystemExit("Metadados divergentes.")
     run([npm, "run", "test:cloud"])
-    run([sys.executable, "-m", "unittest", "-q", "test_start", "test_start_local", "test_cloud_build"])
+    run(
+        [
+            sys.executable,
+            "-m",
+            "unittest",
+            "-q",
+            "test_start",
+            "test_start_local",
+            "test_cloud_build",
+        ]
+    )
     run([npm, "run", "typecheck"])
     run([npm, "run", "build:cloud"])
     run([npm, "test"], ROOT / "desktop")
@@ -53,6 +63,8 @@ def main():
             "-q",
             "test_cloud",
             "test_cloud_integration",
+            "test_cloud_conversations",
+            "test_project_limits",
             "test_jarvis",
             "test_programming",
             "test_projects",

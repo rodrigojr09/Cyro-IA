@@ -13,10 +13,30 @@ for (const key of Object.keys(process.env))
   if (key.startsWith('OPENAI_') || ['DATABASE_URL', 'DIRECT_URL', 'AUTH_SECRET'].includes(key))
     delete process.env[key];
 const expiresAt = new Date(Date.now() + 90 * 86400000).toISOString();
+const general = {
+  id: '11111111-1111-4111-8111-111111111111',
+  project_id: null,
+  title: 'Conversa geral',
+  archived: 0,
+  summary: '',
+  created_at: new Date().toISOString(),
+  last_message_at: null,
+};
 const server = http.createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json');
   if (request.url === '/api/device/login' || request.url === '/api/device/session') {
     response.end(JSON.stringify({ active: true, credential: 'b'.repeat(43), expiresAt }));
+  } else if (request.url === '/api/device/chats') {
+    let raw = '';
+    request.on('data', (chunk) => (raw += chunk));
+    request.on('end', () => {
+      const command = JSON.parse(raw);
+      response.end(
+        JSON.stringify(
+          command.action === 'list' ? [general] : command.action === 'history' ? [] : general,
+        ),
+      );
+    });
   } else {
     response.statusCode = 404;
     response.end('{}');

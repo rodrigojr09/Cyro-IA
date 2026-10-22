@@ -32,6 +32,7 @@ function createQuick({
     error = '',
     project = null,
     usedProject = null,
+    lastChatId = null,
     voiceEpoch = 0,
     voicing = false,
     disposed = false,
@@ -283,6 +284,19 @@ function createQuick({
     showAnswer();
     publish();
     try {
+      if (selected) {
+        const size = await backend(
+          '/projects/selection/size',
+          'POST',
+          JSON.stringify({ project_id: selected.id }),
+        );
+        if (!size.ok)
+          throw Error(size.data?.detail || 'Não foi possível conferir o tamanho do projeto.');
+        if (!Number.isFinite(size.data.selected_bytes) || !Number.isFinite(size.data.max_bytes))
+          throw Error('Não foi possível conferir o tamanho do projeto.');
+        if (!size.data.within_limit || size.data.selected_bytes > size.data.max_bytes)
+          throw Error('O projeto ultrapassa 5 MB. Remova arquivos da seleção antes de enviar.');
+      }
       const result = await backend(
         '/quick/chat',
         'POST',
@@ -291,6 +305,7 @@ function createQuick({
       if (disposed) return { ok: false };
       if (!result.ok) throw Error(result.data?.detail || 'Não foi possível consultar o backend.');
       answer = result.data.reply;
+      lastChatId = result.data.chat_id || null;
       busy = false;
       clock.pause('busy', false);
       clock.reset(core.duration(answer, config));
@@ -298,11 +313,12 @@ function createQuick({
       publish();
       if (config.voice && masterVoice && expanded) void speak();
       return { ok: true };
-    } catch {
+    } catch (failure) {
       if (disposed) return { ok: false };
       busy = false;
-      error =
-        'Não foi possível obter a resposta. Confira o backend e tente novamente. Sua pergunta foi mantida.';
+      error = failure.message?.includes('5 MB')
+        ? failure.message
+        : 'Não foi possível obter a resposta. Confira o backend e tente novamente. Sua pergunta foi mantida.';
       clock.pause('busy', false);
       clock.reset(config.maxSeconds * 1000);
       if (expanded) showAnswer();
@@ -387,6 +403,10 @@ function createQuick({
       }, 2000);
     },
     'open-main': async () => {
+      if (lastChatId) {
+        openMain(lastChatId);
+        return;
+      }
       const result = await backend('/quick/session', 'GET');
       if (!result.ok) throw Error('Backend indisponível.');
       openMain(result.data.chat_id);

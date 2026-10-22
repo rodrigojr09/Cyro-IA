@@ -147,7 +147,7 @@ class ScopeTests(unittest.IsolatedAsyncioTestCase):
         self.store.set_scope(self.project["id"], [], [])
         await self.index.index(self.project["id"])
         self.assertFalse(self.client.chat.completions.create.await_count)
-        self.assertEqual(self.store.project(self.project["id"])["state"], "empty")
+        self.assertEqual(self.store.project(self.project["id"])["state"], "ready")
 
     async def test_folder_selection_inherits_new_files_but_single_file_does_not(self):
         self.store.set_scope(self.project["id"], ["src"], ["src/helper.ts"])

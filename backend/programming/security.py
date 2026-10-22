@@ -67,6 +67,16 @@ EXTENSIONS = {
     ".xml",
     ".ini",
     ".cfg",
+    ".csv",
+    ".tsv",
+    ".rst",
+    ".adoc",
+    ".org",
+    ".tex",
+    ".bib",
+    ".srt",
+    ".vtt",
+    ".ics",
 }
 PLAIN_NAMES = {"dockerfile", "makefile", "requirements.txt", ".gitignore"}
 SECRET_NAMES = re.compile(
@@ -91,7 +101,7 @@ SECRET_EXTENSIONS = {
     ".keystore",
     ".jks",
 }
-MAX_FILE_BYTES = 128 * 1024
+MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_LINE_CHARS = 1000
 MAX_READ_CHARS = 12000
 GENERATED_NAMES = {
@@ -164,7 +174,7 @@ def redact(text):
         text,
     )
     assignment = (
-        r'[\w"\x27.-]*(?:api[_-]?key|private[_-]?key|secret|token|password|passwd|credential|'
+        r'(?<![\w"\x27.-])[\w"\x27.-]*(?:api[_-]?key|private[_-]?key|secret|token|password|passwd|credential|'
         r'database[_-]?url|connection[_-]?string)[\w"\x27.-]*\s*[:=]\s*'
     )
     # Preserva aspas/vírgulas de manifests JSON, inclusive quando um nome de biblioteca contém "token".
@@ -271,7 +281,7 @@ class ReadPolicy:
     def snapshot(self, value, base=None):
         path = self.resolve(value, base)
         if not readable_name(path.name):
-            raise ReadError("Tipo de arquivo não permitido para leitura de código.")
+            raise ReadError("Tipo de arquivo não permitido para leitura de texto.")
         try:
             info = path.stat()
             if (
@@ -280,7 +290,7 @@ class ReadPolicy:
                 or info.st_nlink > 1
             ):
                 raise ReadError(
-                    "Arquivo não regular, com hard links ou maior que 128 KiB."
+                    "Arquivo não regular, com hard links ou maior que 5 MB."
                 )
             # Modo rb é a única abertura de arquivos de projetos usada pelo leitor.
             with path.open("rb") as handle:

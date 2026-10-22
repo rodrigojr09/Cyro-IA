@@ -33,7 +33,20 @@ window.jarvisScope = (() => {
         );
     }
     el('scope-summary').textContent =
-      `${include.size} inclusão(ões), ${exclude.size} exclusão(ões). Seleção local: zero tokens.`;
+      `${include.size} inclusão(ões), ${exclude.size} exclusão(ões). Máximo: 5 MB no total. Seleção local: zero tokens.`;
+  }
+  async function check(projectId, selection = null) {
+    const data = await api('/projects/selection/size', {
+      method: 'POST',
+      body: JSON.stringify({ project_id: projectId, ...(selection || {}) }),
+    });
+    if (!Number.isFinite(data.selected_bytes) || !Number.isFinite(data.max_bytes))
+      throw new Error('Não foi possível conferir o tamanho dos arquivos.');
+    if (!data.within_limit || data.selected_bytes > data.max_bytes)
+      throw new Error(
+        `A seleção tem ${(data.selected_bytes / 1048576).toFixed(2)} MB e ultrapassa o limite de 5 MB. Remova arquivos antes de enviar.`,
+      );
+    return data;
   }
   function choose(path, checked) {
     for (const rules of [include, exclude])
@@ -114,6 +127,9 @@ window.jarvisScope = (() => {
         saving = true;
         el('scope-save').disabled = true;
         try {
+          const size = await check(owner.id, { include: [...include], exclude: [...exclude] });
+          el('scope-summary').textContent =
+            `${(size.selected_bytes / 1048576).toFixed(2)} MB de 5 MB. Seleção local: zero tokens.`;
           const result = await api('/projects/selection/save', {
             method: 'POST',
             body: JSON.stringify({
@@ -157,5 +173,5 @@ window.jarvisScope = (() => {
       el('scope-cancel').onclick = () => el('scope-dialog').close();
     }
   }
-  return { open };
+  return { open, check };
 })();

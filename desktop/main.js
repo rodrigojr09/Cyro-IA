@@ -42,6 +42,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
   if (!path.isAbsolute(dataDir)) throw new Error('JARVIS_DATA_DIR deve ser um caminho absoluto.');
   const routes = new Map([
+    ['/projects/selection/size', 'POST'],
     ['/health', 'GET'],
     ['/history', 'GET'],
     ['/chat', 'POST'],

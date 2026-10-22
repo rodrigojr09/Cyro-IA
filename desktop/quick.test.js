@@ -107,11 +107,13 @@ function fixture(directory, backend) {
         : {
             ok: true,
             data:
-              args[0] === '/quick/session'
-                ? { chat_id: 'quick-id' }
-                : args[0] === '/speak'
-                  ? { audio_base64: 'bXAz' }
-                  : { reply: 'Resposta curta de teste.' },
+              args[0] === '/projects/selection/size'
+                ? { selected_bytes: 1024, max_bytes: 5242880, within_limit: true }
+                : args[0] === '/quick/session'
+                  ? { chat_id: 'quick-id' }
+                  : args[0] === '/speak'
+                    ? { audio_base64: 'bXAz' }
+                    : { reply: 'Resposta curta de teste.' },
           };
     },
     dataDir: directory,
@@ -341,6 +343,25 @@ test('erro temporário mantém pergunta e permite nova tentativa', async () => {
     assert.equal(f.invoke('orb', 'state').question, 'Mantenha esta pergunta');
     fail = false;
     assert.equal((await f.invoke('composer', 'send', 'Mantenha esta pergunta', false)).ok, true);
+  } finally {
+    f.controller.destroy();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('Quick Chat avisa sobre 5 MB antes de enviar conteúdo do projeto', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jarvis-quick-limit-'));
+  const f = fixture(dir, async (route) => {
+    assert.equal(route, '/projects/selection/size');
+    return { ok: true, data: { selected_bytes: 6291456, max_bytes: 5242880, within_limit: false } };
+  });
+  try {
+    f.controller.setProject({ id: 'project-id', name: 'Estudo' });
+    f.invoke('orb', 'toggle');
+    assert.equal((await f.invoke('composer', 'send', 'Analise minhas notas', true)).ok, false);
+    assert.match(f.invoke('orb', 'state').error, /5 MB/);
+    assert.equal(f.invoke('orb', 'state').question, 'Analise minhas notas');
+    assert.ok(!f.requests.some((request) => request[0] === '/quick/chat'));
   } finally {
     f.controller.destroy();
     fs.rmSync(dir, { recursive: true, force: true });

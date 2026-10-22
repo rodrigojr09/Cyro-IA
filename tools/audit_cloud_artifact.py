@@ -36,6 +36,10 @@ def audit():
             "preload.js",
             "renderer.js",
             "index.html",
+            "ui.js",
+            "workspace.js",
+            "scope.js",
+            "package.json",
             "electron/main.cjs",
             "voice-input.js",
             "services/cloud.js",
@@ -50,7 +54,12 @@ def audit():
             for part in name.split("/"):
                 item = item["files"][part]
             stream.seek(offset + int(item["offset"]))
-            if stream.read(item["size"]) != (ROOT / "desktop" / name).read_bytes():
+            packaged = stream.read(item["size"])
+            source = (ROOT / "desktop" / name).read_bytes()
+            if name == "package.json":
+                if json.loads(packaged)["version"] != json.loads(source)["version"]:
+                    raise RuntimeError("Payload contém versão desatualizada.")
+            elif packaged != source:
                 raise RuntimeError("Payload contém código desatualizado.")
     for file in payload.rglob("*"):
         if not file.is_file():

@@ -11,7 +11,13 @@ from pathlib import Path
 
 from programming.context import memory_summary
 from programming.security import ReadError, ReadPolicy, redact
-from project_scope import SourceSelection, SelectedReadPolicy, browse_sources
+from project_scope import (
+    SourceSelection,
+    SelectedReadPolicy,
+    browse_sources,
+    selection_size,
+    MAX_PROJECT_BYTES,
+)
 from portable_paths import source_reference, resolve_source
 import protected_storage
 
@@ -336,6 +342,7 @@ class ProjectStore:
         return {
             **browse_sources(project["path"], path, offset),
             "selection": self.scope(project_id),
+            "max_bytes": MAX_PROJECT_BYTES,
         }
 
     def set_scope(self, project_id, include, exclude):
@@ -344,6 +351,7 @@ class ProjectStore:
         validator = ReadPolicy([project["path"]])
         for rule in selection.include:
             validator.resolve(rule, project["path"])
+        total_bytes = selection_size(project["path"], selection)
         old = self.scope(project_id)
         if old["confirmed"] and old["revision"] == selection.revision:
             return {**self.project(project_id), "selection_changed": False}
@@ -383,7 +391,19 @@ class ProjectStore:
                 (now(), project_id),
             )
         self.export_knowledge(project_id)
-        return {**self.project(project_id), "selection_changed": True}
+        return {
+            **self.project(project_id),
+            "selection_changed": True,
+            "selected_bytes": total_bytes,
+            "max_bytes": MAX_PROJECT_BYTES,
+        }
+
+    def validate_project_size(self, project_id):
+        project = self.project(project_id)
+        scope = self.scope(project_id)
+        return selection_size(
+            project["path"], SourceSelection(scope["include"], scope["exclude"])
+        )
 
     def update_project(self, project_id, **values):
         allowed = {

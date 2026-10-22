@@ -77,6 +77,8 @@ ipcMain.handle('jarvis:api', (_, route, options) => {
     chats.push(data);
   } else if (route === '/programming/status')
     data = { progress: 'Pronto', project: null, roots: [] };
+  else if (route === '/projects/selection/size')
+    data = { selected_bytes: 1024, max_bytes: 5242880, within_limit: true };
   else if (route === '/chat') {
     submittedChat = JSON.parse(options.body).chat_id;
     data = {

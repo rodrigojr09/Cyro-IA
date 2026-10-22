@@ -7,7 +7,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS 4.0.0 — Cloud + Desktop</title>
+    <title>JARVIS 4.1.0 — Cloud + Desktop</title>
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
@@ -86,7 +86,7 @@
             <div class="suggestions">
               <button id="suggest-project">
                 <i data-lucide="folder-search"></i><strong>Analisar um projeto</strong
-                ><span>Conecte uma pasta do seu computador</span></button
+                ><span>Estudos, escrita, planejamento ou software</span></button
               ><button id="suggest-continue">
                 <i data-lucide="history"></i><strong>Continuar uma conversa</strong
                 ><span>Retome um assunto na barra lateral</span></button
@@ -246,6 +246,8 @@
         A lista usa apenas nomes, tipos e tamanhos: <strong>zero tokens</strong>. Só os itens
         selecionados poderão ser lidos pela análise e pelo chat. Marcar uma pasta inclui fontes
         atuais e futuras; builds, dependências, locks e segredos continuam bloqueados.
+        O total selecionado deve ser de no máximo <strong>5 MB</strong> (5.242.880 bytes).
+        Use textos, notas, CSV e outros formatos de texto compatíveis. PDF, imagens e documentos binários não são lidos nesta versão.
       </p>
       <div id="scope-location"></div>
       <div class="scope-actions">

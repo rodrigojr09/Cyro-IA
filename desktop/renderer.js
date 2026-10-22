@@ -234,15 +234,21 @@ async function speak(text) {
     }
   }
 }
+let preflighting = false;
 async function submit() {
   const text = input.value.trim();
-  if (!text || send.disabled) return;
+  if (!text || send.disabled || preflighting) return;
+  preflighting = true;
   try {
+    const project = window.jarvisWorkspace?.project;
+    if (project) await window.jarvisScope.check(project.id);
     if (window.jarvisWorkspace && !window.jarvisWorkspace.chat)
       await window.jarvisWorkspace.newChat();
   } catch (error) {
     addMessage('assistant', 'Erro: ' + error.message);
     return;
+  } finally {
+    preflighting = false;
   }
   const currentChat = window.jarvisWorkspace?.chat;
   if (window.jarvisWorkspace && !currentChat) return;
@@ -364,7 +370,8 @@ async function openQueuedQuick() {
     }
     const id = quickToOpen;
     quickToOpen = null;
-    await window.jarvisWorkspace.catalog('', id);
+    const result = await api('/chats/history?chat_id=' + encodeURIComponent(id));
+    await window.jarvisWorkspace.catalog(result.chat.project_id || '', id);
   } catch {
     quickToOpen = null;
     status.textContent = 'Não foi possível abrir o Quick Chat. Confira o backend.';

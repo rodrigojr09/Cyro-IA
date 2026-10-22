@@ -24,3 +24,12 @@ test('stream local recompõe eventos partidos e UTF-8', async () => {
 test('stream interrompido não inventa resposta concluída', async () => {
   await assert.rejects(consume(new Response('data: {"delta":"partial"}\n\n'), () => {}));
 });
+
+test('erro 413 do servidor preserva o aviso de tamanho antes do streaming', async () => {
+  const result = await consume(
+    new Response(JSON.stringify({ detail: 'O projeto ultrapassa 5 MB.' }), { status: 413 }),
+    () => assert.fail('Nenhum delta esperado'),
+  );
+  assert.equal(result.ok, false);
+  assert.match(result.data.detail, /5 MB/);
+});

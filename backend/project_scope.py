@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import time
+import stat
 from pathlib import Path, PureWindowsPath
 
 from programming.security import (
@@ -15,6 +16,72 @@ from programming.security import (
     readable_name,
     sensitive,
 )
+
+MAX_PROJECT_BYTES = 5 * 1024 * 1024
+
+
+class ProjectSizeError(ReadError):
+    pass
+
+
+def selection_size(root, selection, enforce=True):
+    """Count selected files once, using metadata only; fail closed on incomplete scans."""
+    root = Path(root)
+    policy = SelectedReadPolicy(root, selection)
+    total, visited, seen = 0, 0, set()
+    deadline = time.monotonic() + 3
+    stack = [(rule, 0) for rule in selection.include]
+    while stack:
+        relative, depth = stack.pop()
+        if relative.casefold() in seen:
+            continue
+        seen.add(relative.casefold())
+        visited += 1
+        if visited > 2000 or depth > 32 or time.monotonic() > deadline:
+            raise ReadError(
+                "Não foi possível conferir o limite de 5 MB. Selecione menos arquivos ou subpastas menores."
+            )
+        # Protected/generated paths and redirects are never eligible sources.
+        if any(
+            part.casefold() in IGNORED or sensitive(part) or generated(part)
+            for part in Path(relative).parts
+        ):
+            continue
+        try:
+            path = policy.resolve(relative, root)
+            info = path.stat()
+            if path.is_dir():
+                with os.scandir(path) as entries:
+                    for entry in entries:
+                        if len(stack) + visited >= 2000:
+                            raise ReadError(
+                                "Não foi possível conferir o limite de 5 MB. Selecione menos arquivos ou subpastas menores."
+                            )
+                        child = Path(entry.path).relative_to(root).as_posix()
+                        if selection.navigable(child):
+                            stack.append((child, depth + 1))
+            elif (
+                selection.selected(relative)
+                and stat.S_ISREG(info.st_mode)
+                and info.st_nlink == 1
+            ):
+                total += info.st_size
+                if enforce and total > MAX_PROJECT_BYTES:
+                    raise ProjectSizeError(
+                        "O total dos arquivos selecionados ultrapassa 5 MB. Remova arquivos da seleção antes de analisar ou conversar."
+                    )
+        except OSError:
+            raise ReadError(
+                "Não foi possível conferir o tamanho dos arquivos. Verifique a pasta antes de analisar."
+            ) from None
+        except ReadError as exc:
+            if "5 MB" in str(exc):
+                raise
+            # A forbidden link is excluded, but an inaccessible file cannot certify a budget.
+            if (root / relative).is_symlink():
+                continue
+            raise
+    return total
 
 
 def relative_rule(value):

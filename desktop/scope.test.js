@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-async function setup(confirmed = false) {
+async function setup(confirmed = false, over = false) {
   class Element {
     constructor() {
       this.children = [];
@@ -31,6 +31,8 @@ async function setup(confirmed = false) {
   };
   const api = async (route, options) => {
     calls.push({ route, options });
+    if (route === '/projects/selection/size')
+      return { selected_bytes: over ? 6291456 : 1024, max_bytes: 5242880, within_limit: !over };
     if (options) return { selection_changed: true };
     const relative = new URLSearchParams(route.split('?')[1]).get('path');
     return {
@@ -96,4 +98,12 @@ test('reabrir respeita regras salvas e seleção de pasta inclui descendentes', 
   assert.equal(elements['scope-list'].children[1].children[0].children[0].checked, false);
   elements['scope-all'].onclick();
   assert.equal(elements['scope-list'].children[1].children[0].children[0].checked, true);
+});
+
+test('Desktop avisa sobre 5 MB antes de salvar a seleção', async () => {
+  const { elements, calls } = await setup(false, true);
+  await elements['scope-save'].onclick();
+  assert.match(elements['scope-error'].textContent, /5 MB/);
+  assert.equal(elements['scope-dialog'].open, true);
+  assert.ok(!calls.some((call) => call.route === '/projects/selection/save'));
 });

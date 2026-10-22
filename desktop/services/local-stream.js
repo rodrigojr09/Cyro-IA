@@ -1,6 +1,13 @@
 async function consume(response, onDelta) {
-  if (!response.ok || !response.body)
+  if (!response.ok) {
+    try {
+      const data = await response.json();
+      if (typeof data.detail === 'string')
+        return { ok: false, data: { detail: data.detail.slice(0, 512) } };
+    } catch {}
     return { ok: false, data: { detail: 'Conexão local indisponível.' } };
+  }
+  if (!response.body) return { ok: false, data: { detail: 'Conexão local indisponível.' } };
   const decoder = new TextDecoder();
   let buffer = '',
     result;

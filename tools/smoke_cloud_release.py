@@ -46,7 +46,13 @@ def main():
     previous_env = dict(os.environ)
     with tempfile.TemporaryDirectory(prefix="jarvis-cloud-runtime-") as temporary:
         try:
-            os.environ["JARVIS_DATA_DIR"] = temporary
+            data = Path(temporary) / "data"
+            source = Path(temporary) / "source"
+            source.mkdir()
+            (source / "notes.txt").write_text(
+                "Projeto local de teste", encoding="utf-8"
+            )
+            os.environ["JARVIS_DATA_DIR"] = str(data)
             os.environ["PATH"] = str(Path(os.environ["SystemRoot"]) / "System32")
             os.environ.pop("ELECTRON_RUN_AS_NODE", None)
             for name in list(os.environ):
@@ -74,19 +80,30 @@ def main():
                         time.sleep(0.5)
                     else:
                         raise RuntimeError("Serviço local não iniciou.")
-                    token = (Path(temporary) / ".local-token").read_text().strip()
+                    token = (data / ".local-token").read_text().strip()
                     try:
                         request("/workspace")
                         raise AssertionError("API local sem autenticação.")
                     except HTTPError as error:
                         assert error.code == 401
-                    workspace = request("/workspace", token)
+                    try:
+                        request("/workspace", token)
+                        raise AssertionError("Histórico Cloud disponível sem login.")
+                    except HTTPError as error:
+                        assert error.code == 400
                     if cycle == 0:
                         chat_id = request(
-                            "/chats/create", token, {"title": "Smoke Cloud privado"}
+                            "/projects/register",
+                            token,
+                            {"path": str(source), "name": "Smoke privado"},
                         )["id"]
                     else:
-                        assert any(chat["id"] == chat_id for chat in workspace["chats"])
+                        listing = request(
+                            "/projects/selection?project_id=" + chat_id, token
+                        )
+                        assert any(
+                            item["name"] == "notes.txt" for item in listing["entries"]
+                        )
                 finally:
                     owner.close()
                 for _ in range(100):

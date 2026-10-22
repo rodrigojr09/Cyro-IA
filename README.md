@@ -1,12 +1,14 @@
 # JARVIS 4 — Cloud administrativo + Desktop
 
-Versão 4.0.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 22/10/2026. Evidências e limites de validação estão em [docs/V4.md](docs/V4.md); não foi criada tag de release.
+Versão 4.1.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 22/10/2026. Evidências e limites de validação estão em [docs/V4_1.md](docs/V4_1.md) e [docs/CHATS.md](docs/CHATS.md); histórico da v4 inicial em [docs/V4.md](docs/V4.md). Não foi criada tag de release.
 
 O Cloud possui somente o administrativo e as APIs do aplicativo. A raiz e o painel exigem autenticação; a única página de entrada é `/login`. Não há site público, cadastro público, códigos de ativação, deep links ou gestão de licenças.
 
 O administrador cadastra nome, e-mail e senha e libera ou bloqueia o usuário. Contas ADMIN e SUPER_ADMIN ativas também entram no Desktop com o mesmo e-mail e senha do painel. O Desktop exige login antes de abrir o workspace ou criar o Quick Chat. A sessão é salva com Electron safeStorage (DPAPI no Windows); a senha não é salva. Ao iniciar e a cada cinco minutos, o Desktop valida a sessão no Cloud. Falha de validação fecha o Quick Chat e retorna ao login; indisponibilidade de rede preserva a sessão protegida para nova tentativa. Fechar a janela principal encerra o aplicativo. Minimizar mantém o aplicativo aberto.
 
-OpenAI e PostgreSQL ficam exclusivamente no Cloud. Memória, projetos e ferramentas autorizadas permanecem no componente local FastAPI/SQLite. Confirmações humanas e IPC restrito são preservados. `Backup/` é arquivo manual somente leitura e não participa do runtime.
+OpenAI e PostgreSQL ficam exclusivamente no Cloud. Chats gerais e Quick Chat geral ficam no mesmo PostgreSQL, isolados pela conta; o Quick Chat usa uma conversa fixa por usuário. Projetos, seus chats, memória e permissões permanecem no componente local FastAPI/SQLite. Projetos podem tratar de estudos, escrita, planejamento, pesquisa ou software, com até 5 MB de arquivos selecionados no total. Desktop verifica o tamanho antes do envio e o backend local rejeita excessos com HTTP 413. Confirmações humanas e IPC restrito são preservados. `Backup/` é arquivo manual somente leitura e não participa do runtime.
+
+As alterações de chats Cloud exigem a migration `20261022120000_cloud_chats` e publicação conjunta do Cloud e Desktop. Consulte [armazenamento de conversas e limites](docs/CHATS.md). Históricos locais antigos não são enviados automaticamente.
 
 ## Desenvolvimento
 
