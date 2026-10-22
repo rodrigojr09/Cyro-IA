@@ -45,7 +45,7 @@ backend\.venv\Scripts\python.exe tools/start_cloud.py
 
 Para distribuição, configurar JARVIS_CLOUD_ORIGIN com o domínio HTTPS real (localhost é recusado no pacote), instalar requisitos de requirements-build.txt previamente e executar build.bat. A configuração pública da origem é gravada em desktop/electron/cloud-config.json e fica fora do Git. PyInstaller compila cloud_entry.py; electron-builder usa electron/builder.json e NSIS. Não embute .env, banco ou chave OpenAI.
 
-Artefato gerado: release/v3/JARVIS-Setup-3.0.0.exe, apontando para https://cronosjarvis.vercel.app. Release aprovada pelo proprietário em 21/10/2026 após confirmar a validação do instalador. O executável não tem assinatura Authenticode. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após recompilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo. Evidências e escopo da confirmação manual em docs/VALIDATION.md.
+Artefato gerado: release/v3/JARVIS-Setup-3.0.0.exe, apontando para https://cronosjarvis.vercel.app. O executável ainda não tem assinatura Authenticode e não constitui release aprovada. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após compilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo.
 
 
 ## Diagnóstico da voz

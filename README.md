@@ -1,10 +1,10 @@
 # JARVIS 3 — Cloud + Desktop
 
-**v3.0.0 — release aprovada pelo proprietário em 21/10/2026, após validação operacional do Desktop, Cloud e instalador.** Veja [notas da versão](docs/RELEASE-3.0.0.md) e [evidências de validação](docs/VALIDATION.md).
+**Implementação v3.0.0 em validação. Sem tag de release até validar Cloud real e Windows limpo.**
 
 O Electron é o aplicativo dos funcionários. O Next.js na Vercel centraliza administração, autenticação, licenças e chamadas OpenAI. Prisma ORM 7 + Prisma Postgres armazenam dados centrais; FastAPI e SQLite preservam memória, histórico, projetos e ferramentas locais autorizadas. Não há nova edição em pendrive.
 
-Cloud de produção: **https://cronosjarvis.vercel.app**. Funcionamento do Desktop, administração Cloud e ativações confirmado pelo proprietário.
+Origem pública definida pelo proprietário: **https://cronosjarvis.vercel.app**. A existência desta configuração não comprova implantação ou conexão ao banco.
 
 ## Estrutura
 
@@ -73,7 +73,7 @@ $env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
 .\build.bat
 ```
 
-O pipeline v3 usa PyInstaller para o componente local e NSIS para o Electron; não instala dependências, não publica nem faz push. Saída: `release/v3/JARVIS-Setup-3.0.0.exe`, com checksum no arquivo `.exe.sha256`. O proprietário confirmou a validação do instalador. O pacote inclui o componente local e não exige Node/Python de desenvolvimento; o teste automatizado anterior com PATH restrito e a confirmação manual não documentam uma matriz completa de Windows limpo, atualização ou desinstalação. O instalador está sem assinatura digital. Consulte docs/VALIDATION.md.
+O pipeline v3 usa PyInstaller para o componente local e NSIS para o Electron; não instala dependências, não publica nem faz push. Saída: `release/v3/JARVIS-Setup-3.0.0.exe`. A existência do executável não significa release aprovada. O aplicativo instalado deverá dispensar Python/Node; esse requisito precisa ser testado em outro Windows sem essas instalações. O instalador foi gerado e o payload foi iniciado/reiniciado com PATH restrito e dados temporários. Isso não certifica instalação em Windows limpo. Consulte docs/VALIDATION.md.
 
 ## Documentação
 

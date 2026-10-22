@@ -1,7 +1,4 @@
-# JARVIS 3.0.0 — 2026-10-21
-
-- Release aprovada pelo proprietário após confirmar Desktop e Cloud funcionando, voz habilitada e instalador validado. Evidência e limites da validação em docs/VALIDATION.md; notas da versão em docs/RELEASE-3.0.0.md.
-- Removido o exemplo obsoleto de chave OpenAI no backend local; configuração vigente exclusivamente em cloud/.env.example e na Vercel.
+# JARVIS 3.0.0 — implementação em validação
 
 - Voz: Desktop preserva mensagens seguras do Cloud sobre habilitação, licença e limites, em vez de exibir apenas InternalServerError. Cloud distingue configuração recusada pelo provedor, limite e timeout, sem registrar texto ou segredos.
 - Painel administrativo adaptado a celulares e tablets: formulários flexíveis, tabelas com rolagem própria, textos longos sem ampliar a página e saída de sessão acessível no celular.
@@ -12,13 +9,13 @@
 - Streaming Cloud → serviço local → Electron, cancelamento e preservação de ferramentas, histórico, Quick Chat e memória.
 - Voz central opcional; ditado progressivo quando o runtime suporta, com consentimento de áudio restrito.
 - Distribuição NSIS JARVIS-Setup-3.0.0.exe, sem portátil ou dependências de desenvolvimento exigidas no destino.
-- Tag local de release: v3.0.0. Publicação no remoto a cargo do proprietário; nenhum push automático.
+- Sem tag de release até validar Vercel/Prisma Postgres reais e Windows limpo. Resultados finais: docs/VALIDATION.md.
 
 ---
 
 # Desenvolvimento 3.0.0 — 2026-10-20
 
-Registro histórico da preparação, anterior à aprovação da release em 21/10/2026.
+Destino v3.0.0 ainda não lançado; não criar tag até validação final.
 
 - Preservação local de 110 arquivos da prévia 2.0.1-dev.0, com SHA-256 e integridade SQLite, sem .git/dependências e sem publicar dados privados.
 - Monorepo npm workspaces, Next.js App Router/TypeScript e Prisma 7/Postgres central.
