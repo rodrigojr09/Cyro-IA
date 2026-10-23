@@ -79,6 +79,7 @@ def main():
     run([npm, "run", "test:quick"], ROOT / "desktop")
     run([npm, "run", "test:cloud-electron"], ROOT / "desktop")
     run([npm, "run", "test:session-electron"], ROOT / "desktop")
+    run([npm, "run", "test:clipboard"], ROOT / "desktop")
     run(
         [
             sys.executable,
@@ -93,11 +94,11 @@ def main():
             "--paths",
             str(ROOT / "backend"),
             "--distpath",
-            str(ROOT / "build/v4/backend"),
+            str(ROOT / "build/v5/backend"),
             "--workpath",
-            str(ROOT / "build/v4/work"),
+            str(ROOT / "build/v5/work"),
             "--specpath",
-            str(ROOT / "build/v4"),
+            str(ROOT / "build/v5"),
             "--collect-submodules",
             "uvicorn",
             str(ROOT / "backend/cloud_entry.py"),
@@ -121,7 +122,7 @@ def main():
         ROOT / "desktop",
     )
     run([sys.executable, str(ROOT / "tools/audit_cloud_artifact.py")])
-    artifact = ROOT / "release/v4" / f"JARVIS-Setup-{package['version']}.exe"
+    artifact = ROOT / "release/v5" / f"JARVIS-Setup-{package['version']}.exe"
     with artifact.open("rb") as stream:
         checksum = hashlib.file_digest(stream, "sha256").hexdigest()
     artifact.with_suffix(".exe.sha256").write_text(

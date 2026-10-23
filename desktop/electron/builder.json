@@ -3,7 +3,7 @@
   "productName": "JARVIS",
   "asar": true,
   "directories": {
-    "output": "../release/v4"
+    "output": "../release/v5"
   },
   "files": [
     "*.js",
@@ -25,7 +25,7 @@
   ],
   "extraResources": [
     {
-      "from": "../build/v4/backend/jarvis-backend",
+      "from": "../build/v5/backend/jarvis-backend",
       "to": "backend",
       "filter": ["**/*"]
     },

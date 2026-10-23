@@ -56,3 +56,14 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   minimize: () => ipcRenderer.send('window:minimize'),
   close: () => ipcRenderer.send('window:close'),
 });
+
+contextBridge.exposeInMainWorld('jarvisClipboard', {
+  state: () => ipcRenderer.invoke('clipboard:state'),
+  configure: (value) => ipcRenderer.invoke('clipboard:configure', value),
+  claim: () => ipcRenderer.invoke('clipboard:claim'),
+  dismiss: (id) => ipcRenderer.invoke('clipboard:dismiss', id),
+  discard: () => ipcRenderer.invoke('clipboard:discard'),
+  openLink: (id) => ipcRenderer.invoke('clipboard:open-link', id),
+  onState: (callback) => ipcRenderer.on('clipboard:state', (_event, value) => callback(value)),
+  onSound: (callback) => ipcRenderer.on('clipboard:sound', (_event, value) => callback(value)),
+});

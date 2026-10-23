@@ -73,6 +73,7 @@ window.jarvisWorkspace = (() => {
     el('programming-mode').onchange?.();
     el('manage-open').disabled = busy || loading || (!chat && !project);
     renderNavigation();
+    window.dispatchEvent?.(new Event('jarvis:chat-selected'));
   }
   function button(text, kind, action, title) {
     const item = document.createElement('button');

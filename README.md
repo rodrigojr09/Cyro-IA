@@ -1,6 +1,6 @@
-# JARVIS 4 — Cloud administrativo + Desktop
+# JARVIS 5 — Cloud administrativo + Desktop
 
-Versão 4.2.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 23/10/2026. Requisitos, testes e limitações estão em [docs/V4_2.md](docs/V4_2.md), [docs/ATTACHMENTS.md](docs/ATTACHMENTS.md) e [docs/STORAGE-SETTINGS.md](docs/STORAGE-SETTINGS.md). Histórico em [docs/V4_1.md](docs/V4_1.md).
+Versão alvo 5.0.0, em desenvolvimento e validação. A v5 foi autorizada pelo proprietário; não representa nova implantação ou release. O histórico da base 4.2.0 permanece documentado. Requisitos, testes e limitações estão em [docs/V4_2.md](docs/V4_2.md), [docs/ATTACHMENTS.md](docs/ATTACHMENTS.md) e [docs/STORAGE-SETTINGS.md](docs/STORAGE-SETTINGS.md). Histórico em [docs/V4_1.md](docs/V4_1.md).
 
 O Cloud possui somente o administrativo e as APIs do aplicativo. A raiz e o painel exigem autenticação; a única página de entrada é `/login`. Não há site público, cadastro público, códigos de ativação, deep links ou gestão de licenças.
 
@@ -9,6 +9,16 @@ O administrador cadastra nome, e-mail e senha e libera ou bloqueia o usuário. C
 OpenAI e PostgreSQL ficam exclusivamente no Cloud. Chats gerais e Quick Chat geral ficam no mesmo PostgreSQL, isolados pela conta; o Quick Chat usa uma conversa fixa por usuário. Projetos, seus chats, memória e permissões permanecem no componente local FastAPI/SQLite. Projetos podem tratar de estudos, escrita, planejamento, pesquisa ou software, com até 5 MB de arquivos selecionados no total. Desktop verifica o tamanho antes do envio e o backend local rejeita excessos com HTTP 413. Confirmações humanas e IPC restrito são preservados. `Backup/` é arquivo manual somente leitura e não participa do runtime.
 
 As alterações de chats Cloud exigem a migration `20261022120000_cloud_chats` e publicação conjunta do Cloud e Desktop. Consulte [armazenamento de conversas e limites](docs/CHATS.md). Históricos locais antigos não são enviados automaticamente.
+
+## Assistente de área de transferência — v5
+
+Em Configurações → Área de transferência, marque o consentimento e salve para ativar. Desativado por padrão, com pausa, desativação, descarte, som opcional e volume. A voz global desligada também silencia a notificação.
+
+Uma cópia válida de texto, código ou link gera um aviso sonoro discreto e indicadores vermelhos no ícone da barra de tarefas e no Quick Chat, sem abrir janelas nem mudar o foco. O primeiro chat aberto reivindica o conteúdo no Electron e remove ambos os indicadores. As ações aparecem em uma faixa compacta acima do campo de mensagem, com prévia editável somente após a escolha e confirmação antes de enviar. Clique em “Texto copiado”, “Código copiado”, “Link copiado” ou “Imagem copiada” para expandir/recolher o conteúdo original. O link também pode ser aberto no navegador, após confirmação e validação local.
+
+O conteúdo fica somente em memória, por até 10 minutos, sem histórico ou envio automático. Uma nova cópia substitui somente a pendente, preservando a edição já aberta. Limite local de 5.400 caracteres/21.600 bytes; a mensagem preparada mantém o limite existente de 6.000 caracteres. Anexos, cotas e limites de projetos continuam no fluxo existente. Conteúdo grande é recusado, sem corte silencioso. Possíveis credenciais são filtradas, mas a detecção não é infalível. Imagens oferecem somente prévia local ao clicar no título: PNG de até 5 MB e 50 MP, reduzido para até 1.536 px e 350 KB. Não há envio/análise de imagens pelo clipboard; conteúdo visual não passa por OCR ou filtro de credenciais. Outros formatos não oferecem ações.
+
+Consulte [implementação e validação v5](docs/V5.md) para cobertura, verificações reais e limitações.
 
 ## Desenvolvimento
 
@@ -53,7 +63,7 @@ python -m unittest discover -s backend -p 'test_*.py'
 python -m unittest -q test_start test_cloud_build test_build test_setup
 ```
 
-O pipeline Windows `tools/build_cloud_desktop.py` exige uma origem HTTPS real e gera `release/v4/JARVIS-Setup-4.0.0.exe`, sem publicar. Consulte [validação da v4](docs/V4.md) e [implantação](docs/DEPLOYMENT.md). O build local não comprova implantação, áudio pago ou funcionamento em Windows limpo.
+O pipeline Windows `tools/build_cloud_desktop.py` exige uma origem HTTPS real e gera `release/v5/JARVIS-Setup-5.0.0.exe`, sem publicar. Consulte [validação da v4](docs/V4.md) e [implantação](docs/DEPLOYMENT.md). O build local não comprova implantação, áudio pago ou funcionamento em Windows limpo.
 
 ## Autoria
 

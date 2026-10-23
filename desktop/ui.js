@@ -169,13 +169,15 @@ window.jarvisUI = (() => {
       '<h3>Chats arquivados</h3><p>Restaure uma conversa para que ela apareça novamente na barra lateral.</p><div id="archived-chat-list"></div><p id="archived-status" role="status"></p>',
     'Quick Chat': () =>
       '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o JARVIS será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
+    'Área de transferência': () => '<p>Carregando preferências...</p>',
     Conta: () =>
       '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o JARVIS é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
     Sobre: () =>
-      '<h3>Sobre o JARVIS</h3><p>JARVIS · v4.2.0</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
+      '<h3>Sobre o JARVIS</h3><p>JARVIS · v5.0.0</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
+    if (name === 'Área de transferência') void window.jarvisClipboardSettings?.();
     if (name === 'Armazenamento') void window.jarvisStorageUsage?.show();
     if (name === 'Chats arquivados') void window.jarvisWorkspace?.showArchived();
     for (const button of $('settings-tabs').children)

@@ -166,3 +166,26 @@ test('resposta em andamento mantém seleção e envio bloqueados mesmo durante a
   await running;
   assert.equal(elements.send.disabled, false);
 });
+
+test('envio confirmado do clipboard respeita 5 MB, tamanho da mensagem e não cria chat', async () => {
+  const { elements, window, calls } = await setup({ oversized: true });
+  await window.jarvisWorkspace.view('project-a', 'first');
+  elements.input.value = 'Rascunho normal preservado';
+  await window.jarvisClipboardSend('Resuma o conteúdo copiado.');
+  assert.equal(elements.input.value, 'Rascunho normal preservado');
+  assert.ok(!calls.some((call) => call.route === '/chat' || call.route === '/chats/create'));
+  const count = calls.length;
+  assert.equal(await window.jarvisClipboardSend('x'.repeat(6001)), false);
+  assert.equal(calls.length, count);
+});
+
+test('clipboard não cria conversa em visão sem chat e não inclui anexos pendentes sem revisão', async () => {
+  const { window, calls } = await setup({ partial: true });
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(await window.jarvisClipboardSend('Explique o texto copiado.'), false);
+  assert.ok(!calls.some((call) => call.route === '/chat' || call.route === '/chats/create'));
+  await window.jarvisWorkspace.view(null, 'general');
+  window.jarvisAttachments = { has: () => true };
+  assert.equal(await window.jarvisClipboardSend('Explique o texto copiado.'), false);
+  assert.ok(!calls.some((call) => call.route === '/chat'));
+});

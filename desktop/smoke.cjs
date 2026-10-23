@@ -4,6 +4,13 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 app.disableHardwareAcceleration();
+// This legacy fixture does not run the clipboard service; its state stays disabled.
+ipcMain.handle('clipboard:state', () => ({
+  pending: false,
+  owned: {},
+  settings: { enabled: false },
+}));
+ipcMain.handle('clipboard:claim', () => ({ ok: false, reason: 'DISABLED' }));
 ipcMain.handle('jarvis:initial-settings', () => ({}));
 app.setPath(
   'userData',

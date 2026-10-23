@@ -36,7 +36,8 @@ function createQuick({
     voiceEpoch = 0,
     voicing = false,
     disposed = false,
-    responseHeight = 230;
+    responseHeight = 230,
+    composerHeight = 150;
   const windows = {},
     shapeSizes = {},
     clock = new core.Clock(now);
@@ -166,7 +167,7 @@ function createQuick({
   function layout() {
     position = core.clamp(position, display().workArea);
     windows.orb.setBounds({ ...position, width: core.ICON_SIZE, height: core.ICON_SIZE });
-    const bounds = core.panels(position, display().workArea, responseHeight);
+    const bounds = core.panels(position, display().workArea, responseHeight, composerHeight);
     windows.composer.setBounds(bounds.input);
     windows.response.setBounds(bounds.response);
     if (process.platform === 'win32')
@@ -328,7 +329,7 @@ function createQuick({
   }
   const permissions = {
     orb: ['toggle', 'move', 'state', 'pause'],
-    composer: ['send', 'state', 'collapse', 'pause', 'voice'],
+    composer: ['resize-input', 'send', 'state', 'collapse', 'pause', 'voice'],
     response: [
       'state',
       'resize',
@@ -373,6 +374,11 @@ function createQuick({
       layout();
       if (save) persist();
       return position;
+    },
+    'resize-input': (height) => {
+      if (!Number.isFinite(height) || height < 150 || height > 480) throw Error('Altura inválida.');
+      composerHeight = height;
+      layout();
     },
     resize: (height) => {
       if (!Number.isFinite(height) || height < 90 || height > 600) throw Error('Altura inválida.');

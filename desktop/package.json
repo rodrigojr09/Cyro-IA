@@ -1,11 +1,11 @@
 {
   "name": "jarvis-desktop",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test attachments.test.js quick-renderer.test.js session.test.js security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js portable-paths.test.js encrypted-state.test.js services/cloud.test.js services/local-stream.test.js",
+    "test": "node --test attachments.test.js quick-renderer.test.js session.test.js security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js portable-paths.test.js encrypted-state.test.js services/cloud.test.js services/local-stream.test.js clipboard.test.js clipboard-service.test.js clipboard-ui.test.js",
     "test:electron": "electron smoke.cjs",
     "build": "node build.cjs",
     "prestart": "npm run build",
@@ -16,7 +16,9 @@
     "format:check": "prettier --check \"*.js\" \"*.cjs\" \"*.html\" \"*.css\" \"styles/*.css\" \"*.json\"",
     "package": "npm run build && electron-builder --config electron/builder.json --win --publish never",
     "test:cloud-electron": "electron cloud-smoke.cjs",
-    "test:session-electron": "electron session-smoke.cjs"
+    "test:session-electron": "electron session-smoke.cjs",
+    "test:clipboard": "electron clipboard-smoke.cjs",
+    "pretest:clipboard": "npm run build"
   },
   "devDependencies": {
     "electron": "^44.9.0",

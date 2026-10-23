@@ -12,6 +12,13 @@ const fs = require('node:fs'),
   path = require('node:path'),
   assert = require('node:assert/strict');
 app.disableHardwareAcceleration();
+// This legacy fixture does not run the clipboard service; its state stays disabled.
+ipcMain.handle('clipboard:state', () => ({
+  pending: false,
+  owned: {},
+  settings: { enabled: false },
+}));
+ipcMain.handle('clipboard:claim', () => ({ ok: false, reason: 'DISABLED' }));
 const temp = fs.mkdtempSync(path.join(app.getPath('temp'), 'jarvis-quick-smoke-'));
 app.setPath('userData', path.join(temp, 'profile'));
 let main,

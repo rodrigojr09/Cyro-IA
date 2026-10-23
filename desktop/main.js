@@ -70,6 +70,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   ]);
   let win,
     quickController,
+    clipboardManager,
     quitting = false,
     packagedBackend,
     openBackupsOnExit = false,
@@ -145,6 +146,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: true,
+        backgroundThrottling: false,
+        autoplayPolicy: 'no-user-gesture-required',
       },
     });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -526,13 +529,24 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ipcMain.handle('jarvis:voice-preference', (event, value) => {
       if (!trusted(event) || typeof value !== 'boolean') throw Error('Solicitação não autorizada.');
       quickController?.setMasterVoice(value);
+      clipboardManager?.setMasterSound(value);
     });
     ipcMain.handle('jarvis:audio-claim', (event) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       quickController?.claimAudio(event.sender);
     });
     createWindow();
+    clipboardManager = require('./clipboard-service').install({
+      electron: require('electron'),
+      dataDir,
+      stateStorage,
+      mainWindow: () => win,
+      quickWindows: () => quickController?.windows || {},
+      authenticated: () =>
+        process.env.JARVIS_CLOUD !== '1' || process.env.JARVIS_AUTHENTICATED === '1',
+    });
     function syncQuick(authenticated) {
+      clipboardManager.setActive(authenticated);
       if (!authenticated) {
         for (const controller of activeStreams.values()) controller.abort();
         quickController?.destroy();
@@ -603,6 +617,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   });
 
   app.on('before-quit', (event) => {
+    clipboardManager?.destroy();
     if (packagedBackend && !backendStopped) {
       event.preventDefault();
       quitting = true;

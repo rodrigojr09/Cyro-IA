@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def audit():
-    payload = ROOT / "release/v4/win-unpacked"
+    payload = ROOT / "release/v5/win-unpacked"
     archive = payload / "resources/app.asar"
     with archive.open("rb") as stream:
         fields = struct.unpack("<4I", stream.read(16))
@@ -52,6 +52,10 @@ def audit():
             "quick-renderer.js",
             "quick-controller.js",
             "quick-preload.js",
+            "clipboard-manager.js",
+            "clipboard-service.js",
+            "clipboard-ui.js",
+            "clipboard.css",
         ]:
             item = header
             for part in name.split("/"):

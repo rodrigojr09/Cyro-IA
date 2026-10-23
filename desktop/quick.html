@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; media-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; media-src data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'"
     />
     <link rel="stylesheet" href="quick.css" />
     <title>JARVIS Quick Chat</title>
+    <link rel="stylesheet" href="clipboard.css" />
   </head>
   <body>
     <button id="orb" title="JARVIS Quick Chat · arraste para mover" aria-label="Abrir Quick Chat">
@@ -54,5 +55,6 @@
       </div>
     </section>
     <script src="quick-renderer.js"></script>
+    <script src="clipboard-ui.js"></script>
   </body>
 </html>

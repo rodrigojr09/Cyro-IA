@@ -101,25 +101,27 @@ function setup({
     require: (name) =>
       name === 'electron'
         ? electron
-        : name === './quick-controller'
-          ? {
-              createQuick: () => ({
-                getSettings: () => ({}),
-                setSettings: (v) => v,
-                setProject() {},
-                setMasterVoice() {},
-                claimAudio() {},
-                hideOnClose: () => quickToTray,
-                destroy() {
-                  destroyCalls++;
-                },
-              }),
-            }
-          : name === './window-state'
-            ? { load: () => null, save() {} }
-            : name === 'fs/promises'
-              ? { readFile: async () => 'test-local-token' }
-              : require(name),
+        : name === './clipboard-service'
+          ? { install: () => ({ setActive() {}, setMasterSound() {}, destroy() {} }) }
+          : name === './quick-controller'
+            ? {
+                createQuick: () => ({
+                  getSettings: () => ({}),
+                  setSettings: (v) => v,
+                  setProject() {},
+                  setMasterVoice() {},
+                  claimAudio() {},
+                  hideOnClose: () => quickToTray,
+                  destroy() {
+                    destroyCalls++;
+                  },
+                }),
+              }
+            : name === './window-state'
+              ? { load: () => null, save() {} }
+              : name === 'fs/promises'
+                ? { readFile: async () => 'test-local-token' }
+                : require(name),
     fetch: async (url, options) => {
       requests.push({ url, options });
       return { ok: true, json: async () => ({ reply: 'Resposta' }) };

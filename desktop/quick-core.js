@@ -57,11 +57,11 @@
       Math.max(a.y - p.y, 0, p.y - a.y - a.height) ** 2
     );
   }
-  function panels(point, area, height = 260) {
+  function panels(point, area, height = 260, composerHeight = 150) {
     const leftSpace = point.x - area.x - 18,
       rightSpace = area.x + area.width - point.x - ICON_SIZE - 18;
     const width = Math.max(180, Math.min(360, area.width - 16, Math.max(leftSpace, rightSpace))),
-      inputHeight = Math.min(150, area.height - 16);
+      inputHeight = Math.min(composerHeight, area.height - 16);
     const preferred = leftSpace >= width ? point.x - width - 10 : point.x + ICON_SIZE + 10;
     const x = Math.round(
       Math.max(area.x + 8, Math.min(preferred, area.x + area.width - width - 8)),

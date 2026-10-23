@@ -120,6 +120,11 @@ if (role === 'orb') {
   };
 }
 if (role === 'composer') {
+  document.body.classList.add('clipboard-composer');
+  window.jarvisClipboardSend = async (text) => {
+    if (current.busy || !text.trim() || text.length > 6000) return false;
+    return (await window.quick.send(text, $('use-project').checked)).ok;
+  };
   let submitting = false;
   window.addEventListener('focus', () => $('question').focus());
   try {

@@ -231,6 +231,7 @@ test('configurações mostram só preferências e armazenamento sem opções té
     'Armazenamento',
     'Chats arquivados',
     'Quick Chat',
+    'Área de transferência',
     'Conta',
     'Sobre',
   ]);

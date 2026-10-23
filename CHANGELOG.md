@@ -1,3 +1,12 @@
+# JARVIS 5.0.0 — 23/10/2026, em validação
+
+- Assistente de clipboard opt-in, com monitor único no Electron, baseline silencioso, intervalo de 850 ms e conteúdo efêmero em memória.
+- Indicadores sincronizados no overlay Windows e no ícone flutuante, som PCM local com volume, intervalo mínimo e respeito ao silêncio global.
+- Atribuição atômica ao primeiro chat, faixa compacta de ações locais para texto/código/link e prévia editável somente após a escolha, com confirmação explícita pelo fluxo de envio existente.
+- Substituição da cópia pendente sem sobrescrever edição; pausa, desativação, descarte e expiração em 10 minutos.
+- IPC por janela/frame autenticado, limites de conteúdo, filtros preventivos de credenciais e validação de URLs. Nenhum novo endpoint Cloud ou histórico permanente de clipboard.
+- Título clicável expande/recolhe o conteúdo original. Imagens têm prévia local limitada a 5 MB/50 MP na captura e 1.536 px/350 KB na prévia; sem envio/análise de imagem pelo clipboard. Validação do shell Windows e audição física são registradas separadamente dos testes automatizados em docs/V5.md. Sem publicação, push ou tag de release.
+
 # JARVIS 4.0.0 — 22/10/2026, em validação
 
 - Corrigido acesso de ADMIN/SUPER_ADMIN ao Desktop: perfil criado após senha válida; sessão, bloqueio e logout mantêm as mesmas proteções, sem mudar o papel administrativo.

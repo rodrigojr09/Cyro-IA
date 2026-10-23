@@ -18,7 +18,7 @@ class CloudBuildTests(unittest.TestCase):
         self.assertFalse(config["nsis"]["deleteAppDataOnUninstall"])
         self.assertNotIn("**/*", config["files"])
         self.assertEqual(
-            config["extraResources"][0]["from"], "../build/v4/backend/jarvis-backend"
+            config["extraResources"][0]["from"], "../build/v5/backend/jarvis-backend"
         )
         self.assertNotIn("Backup", json.dumps(config))
         self.assertNotIn(".env", json.dumps(config))

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('quick', {
   state: () => invoke('state'),
   openMain: () => invoke('open-main'),
   resize: (height) => invoke('resize', height),
+  resizeInput: (height) => invoke('resize-input', height),
   pause: (reason, value) => invoke('pause', reason, value),
   pin: (value) => invoke('pin', value),
   hide: () => invoke('hide'),
@@ -28,4 +29,15 @@ contextBridge.exposeInMainWorld('quick', {
   onState: (callback) => ipcRenderer.on('quick:state', (_, data) => callback(data)),
   onFocus: (callback) => ipcRenderer.on('quick:focus', () => callback()),
   onStopAudio: (callback) => ipcRenderer.on('jarvis:stop-audio', () => callback()),
+});
+
+contextBridge.exposeInMainWorld('jarvisClipboard', {
+  state: () => ipcRenderer.invoke('clipboard:state'),
+  configure: (value) => ipcRenderer.invoke('clipboard:configure', value),
+  claim: () => ipcRenderer.invoke('clipboard:claim'),
+  dismiss: (id) => ipcRenderer.invoke('clipboard:dismiss', id),
+  discard: () => ipcRenderer.invoke('clipboard:discard'),
+  openLink: (id) => ipcRenderer.invoke('clipboard:open-link', id),
+  onState: (callback) => ipcRenderer.on('clipboard:state', (_event, value) => callback(value)),
+  onSound: (callback) => ipcRenderer.on('clipboard:sound', (_event, value) => callback(value)),
 });

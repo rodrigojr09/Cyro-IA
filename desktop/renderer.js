@@ -239,10 +239,22 @@ async function speak(text) {
   }
 }
 let preflighting = false;
-async function submit() {
+async function submit(clipboardText) {
+  const fromClipboard = typeof clipboardText === 'string';
+  if (fromClipboard && (!window.jarvisWorkspace?.chat || window.jarvisAttachments?.has()))
+    return false;
   if (window.jarvisStorageUsage?.blocked) return;
-  const text = input.value.trim() || (window.jarvisAttachments?.has() ? 'Analise os anexos.' : '');
-  if (!text || send.disabled || preflighting || window.jarvisAttachments?.loading()) return;
+  const text =
+    (fromClipboard ? clipboardText : input.value).trim() ||
+    (window.jarvisAttachments?.has() ? 'Analise os anexos.' : '');
+  if (
+    !text ||
+    text.length > 6000 ||
+    send.disabled ||
+    preflighting ||
+    window.jarvisAttachments?.loading()
+  )
+    return false;
   preflighting = true;
   try {
     const project = window.jarvisWorkspace?.project;
@@ -259,7 +271,7 @@ async function submit() {
   if (window.jarvisWorkspace && !currentChat) return;
   const attachmentIds = window.jarvisAttachments?.ids() || [];
   window.jarvisAttachments?.busy(true);
-  input.value = '';
+  if (!fromClipboard) input.value = '';
   window.jarvisUI?.resize();
   window.jarvisUI?.stopVoice();
   window.jarvisUI?.busy(true);
@@ -304,6 +316,7 @@ async function submit() {
     status.textContent = 'Gerando resposta em áudio...';
     await speak(data.speech_text || data.reply.slice(0, 4000));
     if (!status.textContent.startsWith('Áudio indisponível')) status.textContent = 'Pronto';
+    return true;
   } catch (err) {
     addMessage('assistant', 'Erro: ' + err.message);
     status.textContent = 'Falha';
@@ -325,6 +338,7 @@ async function submit() {
   }
 }
 send.onclick = submit;
+window.jarvisClipboardSend = (text) => submit(text);
 document.getElementById('computer-run').onclick = async () => {
   document.getElementById('computer-dialog')?.close();
   const button = document.getElementById('computer-run');
