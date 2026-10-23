@@ -376,6 +376,16 @@ async def assist(writer, request, client, model, available, cancel_event=None):
         ) from None
     if req.intent_override:
         result.intent = req.intent_override
+    # Text edits default to the open document. The model need not ask for a
+    # destination already fixed by the UI; CHAT still never creates a proposal.
+    if active and result.intent != "CHAT" and result.operation in {"append", "replace"}:
+        if not result.targetDocumentId:
+            result.targetDocumentId = active["id"]
+        if result.intent == "ORGANIZE" and not req.intent_override:
+            result.intent = "INSTRUCT"
+        if result.operation == "replace" and not result.blockIds:
+            read_blocks = (context["active"] or {}).get("nearby_blocks", [])
+            result.blockIds = [b["id"] for b in read_blocks if not b.get("partial")]
     proposed = None
     if (
         req.chat_id

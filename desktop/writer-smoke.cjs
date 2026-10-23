@@ -147,6 +147,30 @@ app.whenReady().then(async () => {
     assert.equal(await execute('!!document.getElementById("new-chat")'), false);
     await execute('document.getElementById("writer-edit").click()');
     await waitFor('!!document.querySelector("#writer-paper textarea")');
+    assert.equal(
+      await execute(
+        '(()=>{const t=document.querySelector("#writer-paper textarea"),p=document.getElementById("writer-paper");return t.getBoundingClientRect().width > p.clientWidth*.7 && getComputedStyle(t).color === "rgb(23, 43, 58)";})()',
+      ),
+      true,
+    );
+    await execute(
+      '(()=>{const t=document.querySelector("#writer-paper textarea");t.focus();t.setSelectionRange(0,5);t.dispatchEvent(new Event("select"));document.getElementById("input").focus();})()',
+    );
+    assert.equal(
+      await execute('!!document.querySelector(".writer-block-editor.writer-selected")'),
+      true,
+    );
+    await execute('document.getElementById("writer-selection").click()');
+    assert.equal(
+      await execute('document.getElementById("writer-selection").textContent'),
+      'Documento inteiro',
+    );
+    window.showInactive();
+    await pause(300);
+    fs.writeFileSync(
+      path.join(directory, 'writer-editor.png'),
+      (await window.webContents.capturePage()).toPNG(),
+    );
     await execute(
       '(()=>{const field=document.querySelector("#writer-paper textarea");field.value="Lucas abriu a porta. Sua mão tremia.";field.dispatchEvent(new Event("input",{bubbles:true}));return window.jarvisWriterUI.flush();})()',
     );

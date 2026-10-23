@@ -206,8 +206,12 @@ test('Writer: limpar seleção usa documento inteiro e mostra o escopo considera
   try {
     await f.w.jarvisWriterUI.open();
     assert.equal(f.get('writer-selection').textContent, 'Documento inteiro');
-    f.get('writer-paper').querySelector('.writer-block').click();
-    assert.equal(f.get('writer-selection').textContent, 'Trecho selecionado');
+    const block = f.get('writer-paper').querySelector('.writer-block');
+    const range = f.w.document.createRange();
+    range.selectNodeContents(block);
+    f.w.getSelection().addRange(range);
+    f.get('writer-paper').dispatchEvent(new f.w.MouseEvent('mouseup', { bubbles: true }));
+    assert.match(f.get('writer-selection').textContent, /Trecho selecionado/);
     f.get('writer-selection').click();
     f.get('writer-input').value = 'Revise o documento.';
     f.get('writer-send').click();
@@ -217,6 +221,52 @@ test('Writer: limpar seleção usa documento inteiro e mostra o escopo considera
       f.get('writer-messages').querySelector('.writer-context-note').textContent,
       'Documento inteiro considerado.',
     );
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: selecionar texto mantém o escopo e o destaque ao focar o chat; clique simples usa documento inteiro', async () => {
+  const f = fixture(true);
+  try {
+    await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+    const block = f.get('writer-paper').querySelector('.writer-block');
+    block.click();
+    assert.equal(f.get('writer-selection').textContent, 'Documento inteiro');
+    const range = f.w.document.createRange();
+    range.selectNodeContents(block);
+    f.w.getSelection().addRange(range);
+    f.get('writer-paper').dispatchEvent(new f.w.MouseEvent('mouseup', { bubbles: true }));
+    f.get('input').focus();
+    f.w.getSelection().removeAllRanges();
+    assert(block.classList.contains('writer-selected'));
+    f.get('input').value = 'Explique este trecho';
+    await f.w.jarvisWriterUI.submit();
+    const request = f.calls.find((c) => c.action === 'assist').payload;
+    assert.deepEqual(request.selected_block_ids, [f.document.blocks[0].id]);
+    assert.equal(request.selected_text, 'Lucas abriu a porta.');
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: focar edição não seleciona o bloco; trecho marcado permanece ao passar ao chat', async () => {
+  const f = fixture(true);
+  try {
+    await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+    f.get('writer-edit').click();
+    await pause();
+    const field = f.get('writer-paper').querySelector('textarea');
+    field.focus();
+    assert.equal(f.get('writer-selection').textContent, 'Documento inteiro');
+    field.setSelectionRange(0, 5);
+    field.dispatchEvent(new f.w.Event('select'));
+    f.get('input').focus();
+    assert.match(f.get('writer-selection').textContent, /Trecho selecionado/);
+    assert(field.closest('.writer-block-editor').classList.contains('writer-selected'));
+    f.get('writer-selection').click();
+    assert.equal(f.get('writer-selection').textContent, 'Documento inteiro');
+    f.get('input').value = 'Revise tudo';
+    await f.w.jarvisWriterUI.submit();
+    assert.deepEqual(f.calls.find((c) => c.action === 'assist').payload.selected_block_ids, []);
   } finally {
     f.dom.window.close();
   }

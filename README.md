@@ -28,6 +28,8 @@ A IA requer consentimento nas preferências do projeto e reutiliza o Cloud auten
 
 O formato editorial usa contrato estrito no mesmo proxy Cloud. Para esta atualização, reinicie o ambiente completo pelo `start.bat`, incluindo o serviço Cloud local e o aplicativo; apenas reabrir o Writer não recarrega o serviço Python. Em distribuição, Cloud e Desktop precisam da atualização correspondente.
 
+Marcar um trecho mantém a seleção destacada ao focar o chat. Clique em **Trecho selecionado · limpar ×** para voltar ao **Documento inteiro**; apenas clicar ou focar um parágrafo não limita o contexto. O editor integrado usa campos claros e largura completa.
+
 Consulte [uso, arquitetura, limites, testes e limitações do Writer](docs/WRITER.md). Para a exportação Word, instale os requisitos Python atualizados (`python-docx`); o aplicativo instalado precisa de um novo empacotamento para incorporar o recurso.
 
 ## Desenvolvimento

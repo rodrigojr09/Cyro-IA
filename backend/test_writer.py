@@ -62,6 +62,42 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_revision_defaults_to_whole_active_document_without_model_destination(
+        self,
+    ):
+        self.save(self.doc, [block("Primeiro parágrafo."), block("Último parágrafo.")])
+        doc = self.writer.get(self.doc["id"])
+        chat = self.writer.bind_chat(doc["id"])
+        packet = response(
+            doc,
+            "",
+            "ORGANIZE",
+            "replace",
+            targetDocumentId=None,
+            blockIds=[],
+            blocks=[block("Documento ampliado.")],
+        )
+        result = await assist(
+            self.writer,
+            dict(
+                request_id=uid(),
+                chat_id=chat["id"],
+                document_id=doc["id"],
+                base_version=doc["version"],
+                message="muito resumido",
+            ),
+            client(packet),
+            "fixture",
+            True,
+        )
+        self.assertEqual(result["intent"], "INSTRUCT")
+        self.assertEqual(result["proposal"]["plan"]["targetDocumentId"], doc["id"])
+        self.assertEqual(
+            result["proposal"]["plan"]["blockIds"], [b["id"] for b in doc["blocks"]]
+        )
+        self.assertEqual(result["context_notice"], "Documento inteiro considerado.")
+        self.assertEqual(self.writer.get(doc["id"])["blocks"], doc["blocks"])
+
     async def test_linked_file_question_preserves_original_and_approval_updates_it(
         self,
     ):

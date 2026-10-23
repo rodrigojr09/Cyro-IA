@@ -2,6 +2,10 @@
 
 ## Uso
 
+Para revisar apenas um trecho, marque o texto na prévia ou no editor. O destaque e o escopo permanecem quando você clica no chat. Um clique simples no parágrafo ou o foco no campo de edição não seleciona o bloco. **Trecho selecionado · limpar ×** remove a seleção; **Documento inteiro** indica o escopo padrão. Documentos longos continuam priorizados de baixo para cima até o limite, com aviso de leitura parcial. O editor integrado usa campos claros com largura completa. Propostas textuais que omitam o destino usam o arquivo ativo e os blocos efetivamente lidos; não substituem trechos parciais ou fora do contexto.
+
+Correção de seleção/edição validada em 23/10/2026: 126 testes Desktop, 39 específicos Writer e 178 Python completos aprovados. Electron real verificou largura/cor do campo de edição, preservação de seleção ao focar o chat, limpeza para Documento inteiro e os fluxos de aprovação/salvamento/conflito. Captura do editor inspecionada visualmente. Provedor de IA sintético; esta validação não representa chamada paga ou nova implantação Cloud.
+
 O **+** ao lado de **Conversas** cria uma conversa geral. O **+** ao lado de cada projeto oferece **Chat do projeto** e **JARVIS Writer**. O botão grande Novo Chat foi removido. O Writer usa o chat padrão com prévia do documento à direita, sem abrir uma tela separada.
 
 Escolha **Criar arquivo** (nome e destino no diálogo do Windows) ou **Escolher arquivo**. São aceitos TXT/Markdown UTF-8 e Word simples (.docx). Cada conversa trabalha em um arquivo. Documentos anteriores aparecem na navegação normal, preservando mensagens e revisões; também estão em Continuar na escolha do arquivo. Chats arquivados são somente para leitura.

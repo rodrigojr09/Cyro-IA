@@ -529,22 +529,39 @@
   border-radius: 7px;
   padding: 8px;
 }
-#writer-dialog .writer-block-editor select,
-#writer-dialog .writer-block-editor textarea {
+#writer-paper .writer-block-editor select,
+#writer-paper .writer-block-editor textarea {
   background: white;
   color: #172b3a;
   border-color: #c5d4dd;
 }
-#writer-dialog .writer-block-editor textarea {
+#writer-paper .writer-block-editor textarea {
   width: 100%;
+  display: block;
+  box-sizing: border-box;
+  line-height: 1.7;
+  font: inherit;
+  padding: 12px;
   margin-top: 5px;
   resize: vertical;
-  min-height: 65px;
+  min-height: 180px;
 }
-#writer-dialog .writer-block-editor button {
+#writer-paper .writer-block-editor select {
+  max-width: 100%;
+  display: block;
+}
+#writer-paper .writer-block-editor button {
   color: #4a6170;
   background: #e7eef2;
   font-size: 10px;
+}
+#writer-paper .writer-selected {
+  outline: 2px solid #4a9deb;
+  outline-offset: 3px;
+}
+::highlight(writer-selection) {
+  background: #b8d9ff;
+  color: #122b43;
 }
 #writer-preferences,
 #writer-prompt,

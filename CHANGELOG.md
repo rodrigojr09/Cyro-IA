@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Writer: editor integrado com campos claros e largura completa; clicar/focar um parágrafo não restringe mais o contexto. Seleção explícita persiste com destaque ao focar o chat, com botão para limpar e voltar ao documento inteiro. Revisões textuais sem destino informado pela IA utilizam o documento ativo e os blocos lidos, preservando limites, confirmação e proteção de trechos parciais.
+
 - Writer integrado ao chat padrão, com prévia à direita, um arquivo por conversa e migração dos documentos anteriores sem perder revisões. Removido o botão Novo Chat; criação pelo + de Conversas ou pelo + de cada projeto (Chat do projeto / JARVIS Writer). Arquivos TXT/Markdown/Word simples criados ou escolhidos pelo diálogo nativo, com atualização do original após aprovação e bloqueio de sobrescrita se houver edição externa. Perguntas sobre o arquivo não geram alterações; limites existentes mantidos.
 
 - Writer passa a exigir chamada editorial única com schema estrito, escolha nominal da função e chamadas paralelas desativadas no proxy Cloud existente. Comentários como “muito resumido” orientam uma ampliação do texto atual; limites e aprovação permanecem. Falhas deixam a mensagem editável sem duplicar tentativas no chat. Melhorado contraste do texto confirmado na prévia.

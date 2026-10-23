@@ -34,6 +34,27 @@
     selectedBlocks = [],
     selectedText = '';
   const collapsed = new Set();
+  function paintSelection() {
+    for (const element of $('writer-paper').querySelectorAll('[data-block]'))
+      element.classList.toggle('writer-selected', selectedBlocks.includes(element.dataset.block));
+    $('writer-selection').textContent = selectedBlocks.length
+      ? 'Trecho selecionado · limpar ×'
+      : 'Documento inteiro';
+  }
+  function clearSelection() {
+    selectedBlocks = [];
+    selectedText = '';
+    window.CSS?.highlights?.delete('writer-selection');
+    paintSelection();
+  }
+  function rememberSelection(ids, text, range = null) {
+    selectedBlocks = ids;
+    selectedText = text.slice(0, 2000);
+    window.CSS?.highlights?.delete('writer-selection');
+    if (range && window.CSS?.highlights && window.Highlight)
+      window.CSS.highlights.set('writer-selection', new Highlight(range.cloneRange()));
+    paintSelection();
+  }
   const root = document.createElement('dialog');
   root.id = 'writer-dialog';
   root.setAttribute('aria-labelledby', 'writer-heading');
@@ -315,10 +336,7 @@
       el.dataset.marker = block.type === 'bullet' ? '•' : '1.';
     }
     if (block.type !== 'pagebreak') inline(el, block.text);
-    el.onclick = () => {
-      selectedBlocks = [block.id];
-      $('writer-selection').textContent = 'Trecho selecionado';
-    };
+    el.classList.toggle('writer-selected', selectedBlocks.includes(block.id));
     return el;
   }
   function renderPreview() {
@@ -362,6 +380,8 @@
       for (const block of doc.blocks) {
         const row = document.createElement('div');
         row.className = 'writer-block-editor';
+        row.dataset.block = block.id;
+        row.classList.toggle('writer-selected', selectedBlocks.includes(block.id));
         const type = document.createElement('select');
         type.setAttribute('aria-label', 'Formato do bloco');
         for (const [value, label] of Object.entries({
@@ -388,22 +408,23 @@
         input.setAttribute('aria-label', 'Texto do bloco');
         input.oninput = () => {
           block.text = input.value;
+          clearSelection();
           changed();
         };
         input.onselect = () => {
-          selectedBlocks = [block.id];
-          selectedText = input.value.slice(input.selectionStart, input.selectionEnd).slice(0, 2000);
-          $('writer-selection').textContent = 'Trecho selecionado';
+          if (input.selectionEnd > input.selectionStart)
+            rememberSelection(
+              [block.id],
+              input.value.slice(input.selectionStart, input.selectionEnd),
+            );
+          else if (document.activeElement === input) clearSelection();
         };
-        input.onfocus = () => {
-          selectedBlocks = [block.id];
-          selectedText = '';
-          $('writer-selection').textContent = 'Trecho selecionado';
-        };
+        input.onmouseup = input.onselect;
         const remove = document.createElement('button');
         remove.textContent = 'Remover bloco';
         remove.onclick = () => {
           doc.blocks = doc.blocks.filter((b) => b.id !== block.id);
+          if (selectedBlocks.includes(block.id)) clearSelection();
           changed();
           renderPreview();
         };
@@ -564,6 +585,7 @@
       const next = await command('get', { id, include_removed: true });
       selectedBlocks = [];
       selectedText = '';
+      window.CSS?.highlights?.delete('writer-selection');
       proposal = null;
       editing = false;
       doc = next;
@@ -1027,14 +1049,14 @@
     if (!editing) {
       const selection = window.getSelection();
       if (selection && !selection.isCollapsed && $('writer-paper').contains(selection.anchorNode)) {
-        selectedText = selection.toString().slice(0, 2000);
         const range = selection.getRangeAt(0);
-        selectedBlocks = [...$('writer-paper').querySelectorAll('.writer-block')]
+        const ids = [...$('writer-paper').querySelectorAll('.writer-block:not(.writer-removed)')]
           .filter((el) => range.intersectsNode(el))
           .map((el) => el.dataset.block)
           .slice(0, 100);
-        $('writer-selection').textContent = selectedBlocks.length + ' blocos selecionados';
-      }
+        if (ids.length) rememberSelection(ids, selection.toString(), range);
+        else clearSelection();
+      } else clearSelection();
     }
   });
   for (const action of ['undo', 'redo'])
@@ -1251,9 +1273,11 @@
     tree();
   };
   $('writer-selection').onclick = () => {
-    selectedBlocks = [];
-    selectedText = '';
-    $('writer-selection').textContent = 'Documento inteiro';
+    clearSelection();
+    window.getSelection()?.removeAllRanges();
+    for (const field of $('writer-paper').querySelectorAll('textarea'))
+      if (field.selectionStart !== field.selectionEnd)
+        field.setSelectionRange(field.selectionEnd, field.selectionEnd);
   };
   $('writer-toggle-files').onclick = () => root.classList.toggle('writer-files-visible');
   $('writer-toggle-preview').onclick = () => {
