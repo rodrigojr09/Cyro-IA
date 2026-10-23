@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Corrigido alinhamento das preferências do Writer: caixas de seleção compactas à esquerda dos textos, com quebra de linha e espaçamento consistentes. Conferência visual e fluxo Writer validados no Electron real.
+
 - JARVIS Writer integrado aos projetos existentes: múltiplos arquivos e chats próprios, nome escolhido na criação, árvore à esquerda, conversa central e prévia à direita com diferenças em azul.
 - Edição estruturada independente da IA, salvamento manual transacional, propostas com versão-base, confirmação de alterações importantes, classificação híbrida corrigível, cancelamento e inserção automática conservadora.
 - Revisões persistentes com originais, desfazer/refazer sequenciais e em lote, restauração como nova revisão, remoção recuperável, isolamento e retenção sem descarte silencioso de versões importantes.

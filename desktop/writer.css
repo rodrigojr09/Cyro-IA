@@ -452,6 +452,22 @@
   display: block;
   margin: 12px 0;
 }
+#writer-preferences label:has(> input[type='checkbox']) {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 0;
+  line-height: 1.6;
+  cursor: pointer;
+}
+#writer-preferences input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  padding: 0;
+  accent-color: #8de0c2;
+}
 #writer-preferences textarea,
 #writer-preferences input:not([type='checkbox']),
 #writer-prompt input {
