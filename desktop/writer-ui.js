@@ -61,8 +61,8 @@
   root.innerHTML = `<header class="writer-header"><div><span class="writer-eyebrow">JARVIS WRITER</span><h2 id="writer-heading">Escrita do projeto</h2></div><span id="writer-save-state" role="status">Salvo</span><button id="writer-retry" hidden>Tentar salvar</button><button id="writer-compare-save" hidden>Comparar edição</button><button id="writer-settings">Preferências</button><button id="writer-close" aria-label="Fechar Writer">×</button></header>
   <div class="writer-workspace"><aside class="writer-files"><div class="writer-files-heading"><strong>Arquivos e chats</strong><button id="writer-new" title="Novo chat Writer">＋</button></div><div id="writer-recent"></div><nav id="writer-tree" aria-label="Documentos Writer"></nav><button id="writer-new-folder">Nova pasta</button><button id="writer-trash">Itens removidos</button><div class="writer-file-tools"><button id="writer-rename">Renomear</button><button id="writer-duplicate">Duplicar</button><button id="writer-move">Mover</button><button id="writer-delete">Remover</button></div></aside>
   <section class="writer-conversation"><div class="writer-chat-heading"><div><strong id="writer-chat-title">Escolha um arquivo</strong><p>Converse, escreva ou peça uma revisão.</p></div><button id="writer-toggle-files">Arquivos</button><button id="writer-toggle-preview" aria-expanded="true">Documento</button></div><div id="writer-messages" aria-live="polite"></div>
-  <div id="writer-proposal" hidden><div><span id="writer-intent-badge"></span><strong id="writer-proposal-title"></strong></div><p id="writer-proposal-reason"></p><p id="writer-countdown" role="status"></p><div class="writer-proposal-actions"><button id="writer-approve">Aprovar alteração</button><button id="writer-reject">Rejeitar</button><button id="writer-adjust">Ajustar</button><button id="writer-show-target">Ver documento</button></div><label>Interpretar como<select id="writer-correct-intent"><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><div id="writer-adjust-area" hidden><label>Proposta editável<textarea id="writer-adjust-text" maxlength="12000"></textarea></label><button id="writer-apply-adjusted">Aplicar texto ajustado</button></div></div>
-  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><label>Modo<select id="writer-mode"><option value="">Híbrido</option><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
+  <div id="writer-proposal" hidden><div><span id="writer-intent-badge"></span><strong id="writer-proposal-title"></strong></div><p id="writer-proposal-reason"></p><p id="writer-countdown" role="status"></p><div class="writer-proposal-actions"><button id="writer-approve">Aprovar alteração</button><button id="writer-reject">Rejeitar</button><button id="writer-adjust">Ajustar</button><button id="writer-show-target">Ver documento</button></div><div id="writer-adjust-area" hidden><label>Proposta editável<textarea id="writer-adjust-text" maxlength="12000"></textarea></label><button id="writer-apply-adjusted">Aplicar texto ajustado</button></div></div>
+  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
   <aside class="writer-preview"><header><div><span>PRÉVIA DO DOCUMENTO</span><strong id="writer-filename">Nenhum arquivo</strong></div><button id="writer-edit" aria-pressed="false">Editar</button><button id="writer-collapse-assistant" aria-pressed="false" title="Ampliar documento">Ampliar</button></header><div class="writer-document-tools"><button id="writer-undo">Desfazer</button><button id="writer-redo">Refazer</button><button id="writer-history">Revisões</button><button id="writer-export">Exportar</button><span id="writer-word-count">0 palavras</span></div><p id="writer-preview-notice"></p><nav id="writer-outline" aria-label="Seções do documento"></nav><div id="writer-paper" tabindex="0"></div><div id="writer-edit-tools" hidden><button id="writer-add-block">＋ Parágrafo</button><button id="writer-bold">Negrito</button><button id="writer-italic">Itálico</button></div></aside></div>`;
   document.body.append(root);
   let layout, chatColumn, preview, writerStrip;
@@ -138,13 +138,6 @@
   conflictDialog.innerHTML = `<h3 id="writer-save-conflict-title">Recuperar edição pendente</h3><p>Compare antes de substituir. A versão salva ficará no histórico.</p><div class="writer-comparison"><section><h4>Salvo no projeto</h4><pre id="writer-conflict-server"></pre></section><section><h4>Sua edição aberta</h4><pre id="writer-conflict-draft"></pre></section></div><button id="writer-conflict-apply">Salvar minha edição como nova revisão</button><button id="writer-conflict-close">Manter edição aberta</button></dialog>`;
   document.body.append(conflictDialog);
   let comparedVersion = null;
-  const labels = {
-    WRITE: 'Escrita',
-    INSTRUCT: 'Orientação',
-    ORGANIZE: 'Organização',
-    CHAT: 'Conversa',
-    MANUAL: 'Organização',
-  };
   const status = (text, error = false) => {
     $('writer-status').textContent = text;
     $('writer-status').classList.toggle('error', error);
@@ -507,14 +500,12 @@
       $('writer-send').setAttribute('aria-label', $('writer-send').title);
     } else $('writer-send').textContent = visible ? 'Aprovar e enviar' : 'Enviar ao Writer';
     if (!visible) return;
-    $('writer-intent-badge').textContent = labels[proposal.intent] || 'Proposta';
+    $('writer-intent-badge').textContent = 'Alteração proposta';
     $('writer-proposal-title').textContent = describe(proposal.plan);
     $('writer-proposal-reason').textContent =
       proposal.base !== doc?.version && proposal.node === doc?.id
         ? 'A versão-base mudou. Solicite uma nova versão ou compare o histórico.'
         : 'Revise o azul à direita. Enviar a próxima mensagem aprova esta alteração. Para descartá-la, clique em Rejeitar antes de continuar.';
-    $('writer-correct-intent').value = proposal.intent === 'MANUAL' ? 'ORGANIZE' : proposal.intent;
-    $('writer-correct-intent').disabled = proposal.intent === 'MANUAL';
     $('writer-approve').disabled = !!(proposal.node === doc?.id && proposal.base !== doc?.version);
     if (embeddedActive && window.jarvisWorkspace?.chat?.archived)
       $('writer-approve').disabled = true;
@@ -614,12 +605,6 @@
     }
     const row = document.createElement('div');
     row.className = 'writer-message ' + role;
-    if (intent) {
-      const badge = document.createElement('span');
-      badge.className = 'writer-intent';
-      badge.textContent = labels[intent] || intent;
-      row.append(badge);
-    }
     const text = document.createElement('p');
     text.textContent = content;
     row.append(text);
@@ -687,20 +672,20 @@
     return result;
   }
   let sending = false;
-  async function send(override = null, textOverride = null) {
+  async function send() {
     if (assistantBusy || sending) return;
     sending = true;
     if (embeddedActive) window.jarvisWorkspace?.begin();
     $('writer-send').disabled = true;
     try {
-      return await prepareSend(override, textOverride);
+      return await prepareSend();
     } finally {
       sending = false;
       $('writer-send').disabled = assistantBusy;
       if (embeddedActive) window.jarvisWorkspace?.end();
     }
   }
-  async function prepareSend(override = null, textOverride = null) {
+  async function prepareSend() {
     await flush();
     if (!doc || doc.deleted || doc.kind === 'folder')
       throw Error('Escolha ou crie um arquivo para o chat Writer.');
@@ -711,7 +696,7 @@
         'Autorize o uso da IA Cloud nas preferências. A edição manual já está disponível.',
       );
     }
-    const text = (textOverride ?? $('writer-input').value).trim();
+    const text = $('writer-input').value.trim();
     if (!text || text.length > 6000) return;
     stopAuto();
     if (proposal?.state === 'PENDING') {
@@ -746,30 +731,15 @@
         base_version: doc.version,
         selected_block_ids: selectedBlocks,
         selected_text: selectedText,
-        intent_override: override || $('writer-mode').value || null,
+        intent_override: null,
       });
       if (epoch !== generation) return;
-      // Corrections apply to this message only, not every subsequent chat turn.
-      if (embeddedActive) $('writer-mode').value = '';
       const replyRow = bubble('assistant', result.reply, result.intent);
       if (result.context_notice) {
         const note = document.createElement('small');
         note.className = 'writer-context-note';
         note.textContent = result.context_notice;
         replyRow.prepend(note);
-      }
-      if (!result.proposal) {
-        const correction = document.createElement('select');
-        correction.setAttribute('aria-label', 'Corrigir intenção desta mensagem');
-        for (const [value, label] of Object.entries(labels).filter(([value]) => value !== 'MANUAL'))
-          correction.add(new Option(label, value));
-        correction.value = result.intent;
-        correction.onchange = () => {
-          $('writer-mode').value = correction.value;
-          $('writer-input').value = text;
-          status('Intenção corrigida. Revise a mensagem e envie novamente para preparar a ação.');
-        };
-        replyRow.append(correction);
       }
       proposal = result.proposal;
       if (proposal) {
@@ -784,9 +754,7 @@
         let remaining = result.cancel_seconds;
         const update = () => {
           $('writer-countdown').textContent =
-            'Inserção inequívoca em ' +
-            remaining +
-            ' s. Rejeite ou corrija a intenção para cancelar.';
+            'Inserção inequívoca em ' + remaining + ' s. Clique em Rejeitar para cancelar.';
         };
         update();
         if (remaining === 0) {
@@ -968,13 +936,6 @@
       });
   $('writer-approve').onclick = () => run(() => decide(true));
   $('writer-reject').onclick = () => run(() => decide(false));
-  $('writer-correct-intent').onchange = () =>
-    run(async () => {
-      const next = $('writer-correct-intent').value;
-      stopAuto();
-      await decide(false);
-      await send(next, currentMessage);
-    });
   $('writer-adjust').onclick = () => {
     stopAuto();
     if (['append', 'replace'].includes(proposal.plan.operation)) {
@@ -1356,7 +1317,6 @@
       'writer-reject',
       'writer-adjust',
       'writer-apply-adjusted',
-      'writer-correct-intent',
       'writer-restore',
     ]) {
       $(id).disabled = archived;

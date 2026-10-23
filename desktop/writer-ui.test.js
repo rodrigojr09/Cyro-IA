@@ -399,20 +399,18 @@ test('Writer: criação pede nome do arquivo e exportação oferece seleção re
     f.dom.window.close();
   }
 });
-test('Writer: corrigir a intenção de uma mensagem não prende as seguintes no modo Conversa', async () => {
+test('Writer: conversa e propostas não exibem seletores de interpretação', async () => {
   const f = fixture(true);
   try {
     await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
-    f.get('writer-mode').value = 'CHAT';
-    f.get('input').value = 'Explique o texto';
-    await f.w.jarvisWriterUI.submit();
-    assert.equal(f.get('writer-mode').value, '');
+    assert.equal(f.get('writer-mode'), null);
+    assert.equal(f.get('writer-correct-intent'), null);
     f.get('input').value = 'Muito resumido';
     await f.w.jarvisWriterUI.submit();
-    assert.deepEqual(
-      f.calls.filter((c) => c.action === 'assist').map((c) => c.payload.intent_override),
-      ['CHAT', null],
-    );
+    assert.equal(f.get('messages').querySelector('select'), null);
+    assert.equal(f.get('writer-proposal').querySelector('select'), null);
+    assert.equal(f.calls.find((c) => c.action === 'assist').payload.intent_override, null);
+    assert.equal(f.get('writer-proposal').hidden, false);
   } finally {
     f.dom.window.close();
   }

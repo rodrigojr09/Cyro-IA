@@ -22,6 +22,8 @@ Consulte [implementação e validação v5](docs/V5.md) para cobertura, verifica
 
 ## JARVIS Writer — exclusivo dos projetos
 
+Escreva seus pedidos e correções diretamente no chat. O Writer interpreta cada mensagem automaticamente, sem menus de modo; as alterações continuam destacadas para aprovação.
+
 Comentários curtos como “Muito resumido” preparam uma revisão no arquivo ativo, limitada ao trecho selecionado quando houver. Alterações continuam pendentes de aprovação; o arquivo e a posição conhecidos não precisam ser informados novamente.
 
 Use **+** ao lado de **Conversas** para criar uma conversa geral. No **+** ao lado do nome do projeto, escolha **Chat do projeto** ou **JARVIS Writer**. O botão grande Novo Chat foi removido. O Writer é uma conversa padrão com prévia à direita, dedicada a um arquivo criado ou escolhido no diálogo do Windows; não abre uma tela separada. A conversa ocupa o centro; a sidebar direita mostra o documento e destaca em azul as alterações propostas, com remoções riscadas. Aprovar, rejeitar, ajustar, editar manualmente, desfazer/refazer e recuperar revisões ficam no mesmo ambiente.
