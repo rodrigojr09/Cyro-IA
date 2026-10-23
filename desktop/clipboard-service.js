@@ -31,6 +31,7 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
   }
   const manager = core.createClipboardManager({
     clipboard: electron.clipboard,
+    nativeImage: electron.nativeImage,
     config,
     changed: broadcast,
     sound(volume) {

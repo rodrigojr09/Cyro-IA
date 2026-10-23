@@ -28,6 +28,29 @@ function finish(code, message) {
 }
 app.whenReady().then(async () => {
   try {
+    // Exercise this installed Electron's real, read-only Windows API before synthetic copies.
+    let nativeReads = 0,
+      nativeReadSucceeded = false;
+    const nativeManager = require('./clipboard-manager').createClipboardManager({
+      clipboard: {
+        read: async () => {
+          nativeReads++;
+          const items = await electron.clipboard.read();
+          nativeReadSucceeded = true;
+          return items;
+        },
+      },
+      nativeImage: electron.nativeImage,
+      config: { ...require('./clipboard-manager').defaults, enabled: true },
+      schedule: () => 1,
+      cancel() {},
+    });
+    nativeManager.setActive(true);
+    await nativeManager.tick();
+    assert.equal(nativeReads, 1);
+    assert.equal(nativeReadSucceeded, true);
+    assert.equal(nativeManager.state().pending, false);
+    nativeManager.destroy();
     // Existing page scripts may request unrelated services. Keep those local and synthetic.
     for (const name of [
       'jarvis:initial-settings',
@@ -61,9 +84,13 @@ app.whenReady().then(async () => {
       electron: {
         ...electron,
         clipboard: {
-          availableFormats: () => (copiedImage ? ['image/png'] : ['text/plain']),
-          readText: () => text,
-          readImage: () => copiedImage,
+          read: async () => [
+            new electron.ClipboardItem(
+              copiedImage
+                ? { 'image/png': new Blob([copiedImage.toPNG()], { type: 'image/png' }) }
+                : { 'text/plain': new Blob([text], { type: 'text/plain' }) },
+            ),
+          ],
         },
       },
       dataDir: directory,
@@ -106,6 +133,7 @@ app.whenReady().then(async () => {
       'window.jarvisClipboard.configure({enabled:true,sound:true,volume:0.1})',
     );
     manager.setActive(true);
+    await manager.tick();
     manager.setMasterSound(true);
     quick.setMasterVoice(false);
     main.show();
@@ -113,7 +141,7 @@ app.whenReady().then(async () => {
     await delay(150);
     focusedBefore = BrowserWindow.getFocusedWindow();
     text = 'Texto copiado para teste no Electron';
-    manager.tick();
+    await manager.tick();
     await delay(120);
     assert.equal(main.isMinimized(), true);
     assert.equal(BrowserWindow.getFocusedWindow(), focusedBefore);
@@ -209,7 +237,7 @@ app.whenReady().then(async () => {
     main.focus();
     await delay(150);
     text = 'Uma segunda cópia para o chat principal';
-    manager.tick();
+    await manager.tick();
     await main.webContents.executeJavaScript(
       "window.dispatchEvent(new Event('jarvis:chat-selected'));void 0;",
     );
@@ -245,7 +273,7 @@ app.whenReady().then(async () => {
     await orb.webContents.executeJavaScript('window.quick.toggle()');
     await delay(120);
     copiedImage = electron.nativeImage.createFromBitmap(pixels, { width: 240, height: 140 });
-    manager.tick();
+    await manager.tick();
     await composer.webContents.executeJavaScript(
       "window.dispatchEvent(new Event('focus'));void 0;",
     );
@@ -307,7 +335,7 @@ app.whenReady().then(async () => {
     copiedImage = null;
     // Two nearly simultaneous IPC claims: focus authorization and atomic state allow one winner.
     text = 'Terceira cópia para disputa';
-    manager.tick();
+    await manager.tick();
     const results = await Promise.all([
       main.webContents.executeJavaScript('window.jarvisClipboard.claim()'),
       composer.webContents.executeJavaScript('window.jarvisClipboard.claim()'),
@@ -321,7 +349,7 @@ app.whenReady().then(async () => {
     assert.equal(manager.state().pending, false);
     assert.equal(sends, 0);
     console.log(
-      'Electron real: janela minimizada, ausência de foco automático, orb, overlay API, WAV decodificado/reproduzido sem som físico, IPC, exclusividade e confirmação: OK. Entrada clipboard e backend sintéticos; shell visual e audição não certificados.',
+      'Electron real: leitura nativa Windows sem escrita, ClipboardItem/Blob assíncronos, janela minimizada, ausência de foco automático, orb, overlay API, WAV decodificado/reproduzido sem som físico, IPC, exclusividade e confirmação: OK. Alterações de conteúdo e backend sintéticos; shell visual e audição não certificados.',
     );
     console.log('Capturas de validação: ' + directory);
     finish(0);

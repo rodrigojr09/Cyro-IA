@@ -79,8 +79,50 @@ function classify(text) {
     );
   return { contentType: code ? 'code' : 'text', text };
 }
+// Read dimensions before NativeImage decodes a modern ClipboardItem's encoded bytes.
+function imageDimensions(bytes) {
+  if (
+    bytes.length >= 24 &&
+    bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) &&
+    bytes.toString('ascii', 12, 16) === 'IHDR'
+  )
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  if (bytes.length >= 4 && bytes[0] === 255 && bytes[1] === 216) {
+    let offset = 2;
+    while (offset + 4 < bytes.length) {
+      if (bytes[offset++] !== 255) return null;
+      while (bytes[offset] === 255) offset++;
+      const marker = bytes[offset++];
+      if (marker === 217 || marker === 218) return null;
+      if (marker === 1 || (marker >= 208 && marker <= 215)) continue;
+      if (offset + 2 > bytes.length) return null;
+      const length = bytes.readUInt16BE(offset);
+      if (length < 2 || offset + length > bytes.length) return null;
+      if ([192, 193, 194].includes(marker) && length >= 8)
+        return { height: bytes.readUInt16BE(offset + 3), width: bytes.readUInt16BE(offset + 5) };
+      offset += length;
+    }
+  }
+  if (
+    bytes.length >= 30 &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' &&
+    bytes.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    const kind = bytes.toString('ascii', 12, 16);
+    if (kind === 'VP8X')
+      return { width: 1 + bytes.readUIntLE(24, 3), height: 1 + bytes.readUIntLE(27, 3) };
+    if (kind === 'VP8L' && bytes[20] === 47) {
+      const bits = bytes.readUInt32LE(21);
+      return { width: (bits & 16383) + 1, height: ((bits >>> 14) & 16383) + 1 };
+    }
+    if (kind === 'VP8 ' && bytes.subarray(23, 26).equals(Buffer.from([157, 1, 42])))
+      return { width: bytes.readUInt16LE(26) & 16383, height: bytes.readUInt16LE(28) & 16383 };
+  }
+  return null;
+}
 function createClipboardManager({
   clipboard,
+  nativeImage,
   changed = () => {},
   sound = () => {},
   now = Date.now,
@@ -95,7 +137,9 @@ function createClipboardManager({
     active = false,
     disposed = false,
     lastSound = -Infinity,
-    masterSound = false;
+    masterSound = false,
+    generation = 0,
+    reading = null;
   const claims = new Map();
   function publish() {
     changed(state());
@@ -115,56 +159,93 @@ function createClipboardManager({
     return { id, contentType, contentReference, createdAt, status, claimedBy, acknowledgedAt };
   }
   function clear() {
+    generation++;
+    reading = null;
     pending = null;
     claims.clear();
     lastHash = null;
     publish();
   }
-  function read() {
-    const formats = clipboard.availableFormats();
-    if (formats.some((format) => /image|bitmap|dib|png|jpeg/i.test(format))) {
-      const image = clipboard.readImage?.();
-      if (!image || image.isEmpty()) return null;
-      const size = image.getSize();
-      if (
-        !Number.isInteger(size.width) ||
-        !Number.isInteger(size.height) ||
-        size.width <= 0 ||
-        size.height <= 0 ||
-        size.width * size.height > MAX_IMAGE_PIXELS
-      )
-        return null;
-      const original = image.toPNG();
-      if (!original.length || original.length > MAX_IMAGE_SOURCE_BYTES) return null;
-      const hash = createHash('sha256').update('image:').update(original).digest('hex');
-      if (hash === lastHash) return { hash, content: null };
-      const ratio = Math.min(1, MAX_IMAGE_EDGE / Math.max(size.width, size.height));
-      let width = Math.max(1, Math.round(size.width * ratio)),
-        height = Math.max(1, Math.round(size.height * ratio));
-      let preview = image.resize({ width, height, quality: 'good' }).toPNG();
-      // Match existing attachment preview bounds without storing the original or using Cloud.
-      for (let attempt = 0; preview.length > MAX_IMAGE_PREVIEW_BYTES && attempt < 20; attempt++) {
-        width = Math.max(1, Math.floor(width * 0.8));
-        height = Math.max(1, Math.floor(height * 0.8));
-        preview = image.resize({ width, height, quality: 'good' }).toPNG();
-      }
-      if (!preview.length || preview.length > MAX_IMAGE_PREVIEW_BYTES) return null;
-      return {
-        hash,
-        content: {
-          contentType: 'image',
-          imageData: 'data:image/png;base64,' + preview.toString('base64'),
-          width,
-          height,
-        },
-      };
+  function captureImage(image) {
+    if (!image || image.isEmpty()) return null;
+    const size = image.getSize();
+    if (
+      !Number.isInteger(size.width) ||
+      !Number.isInteger(size.height) ||
+      size.width <= 0 ||
+      size.height <= 0 ||
+      size.width * size.height > MAX_IMAGE_PIXELS
+    )
+      return null;
+    const original = image.toPNG();
+    if (!original.length || original.length > MAX_IMAGE_SOURCE_BYTES) return null;
+    const hash = createHash('sha256').update('image:').update(original).digest('hex');
+    if (hash === lastHash) return { hash, content: null };
+    const ratio = Math.min(1, MAX_IMAGE_EDGE / Math.max(size.width, size.height));
+    let width = Math.max(1, Math.round(size.width * ratio)),
+      height = Math.max(1, Math.round(size.height * ratio));
+    let preview = image.resize({ width, height, quality: 'good' }).toPNG();
+    // Match existing attachment preview bounds without storing the original or using Cloud.
+    for (let attempt = 0; preview.length > MAX_IMAGE_PREVIEW_BYTES && attempt < 20; attempt++) {
+      width = Math.max(1, Math.floor(width * 0.8));
+      height = Math.max(1, Math.floor(height * 0.8));
+      preview = image.resize({ width, height, quality: 'good' }).toPNG();
     }
-    const text = clipboard.readText();
+    if (!preview.length || preview.length > MAX_IMAGE_PREVIEW_BYTES) return null;
+    return {
+      hash,
+      content: {
+        contentType: 'image',
+        imageData: 'data:image/png;base64,' + preview.toString('base64'),
+        width,
+        height,
+      },
+    };
+  }
+  function captureText(text) {
+    if (typeof text !== 'string') return null;
     if (text.length > MAX_CHARS || Buffer.byteLength(text, 'utf8') > MAX_BYTES) return null;
     return {
       hash: createHash('sha256').update('text:').update(text).digest('hex'),
       content: classify(text),
     };
+  }
+  function read() {
+    if (typeof clipboard.read === 'function') return readModern();
+    const formats = clipboard.availableFormats();
+    if (formats.some((format) => /image|bitmap|dib|png|jpeg/i.test(format)))
+      return captureImage(clipboard.readImage?.());
+    return captureText(clipboard.readText());
+  }
+  async function readModern() {
+    const items = await clipboard.read();
+    const imageItem = items.find((item) =>
+      item.types.some((type) => ['image/png', 'image/jpeg', 'image/webp'].includes(type)),
+    );
+    if (imageItem) {
+      const type = imageItem.types.find((type) =>
+        ['image/png', 'image/jpeg', 'image/webp'].includes(type),
+      );
+      const blob = await imageItem.getType(type);
+      if (!blob.size || blob.size > MAX_IMAGE_SOURCE_BYTES || !nativeImage) return null;
+      const bytes = Buffer.from(await blob.arrayBuffer());
+      const size = imageDimensions(bytes);
+      if (
+        !size ||
+        size.width <= 0 ||
+        size.height <= 0 ||
+        size.width * size.height > MAX_IMAGE_PIXELS
+      )
+        return null;
+      return captureImage(nativeImage.createFromBuffer(bytes));
+    }
+    const item = items.find((entry) =>
+      entry.types.some((type) => /^text\/plain(?:;|$)/i.test(type)),
+    );
+    if (!item) return null;
+    const blob = await item.getType(item.types.find((type) => /^text\/plain(?:;|$)/i.test(type)));
+    if (blob.size > MAX_BYTES) return null;
+    return captureText(await blob.text());
   }
   function expire() {
     let dirty = false;
@@ -179,43 +260,60 @@ function createClipboardManager({
       }
     if (dirty) publish();
   }
+  function accept(capture, baseline, epoch) {
+    if (epoch !== generation || disposed || !active || !preferences.enabled || preferences.paused)
+      return;
+    const hash = capture?.hash ?? null;
+    if (baseline || hash === lastHash) {
+      lastHash = hash;
+      return;
+    }
+    lastHash = hash;
+    const content = capture?.content ?? null;
+    // An invalid/latest copy must not leave an older pending copy available.
+    pending = content
+      ? {
+          ...content,
+          id: randomUUID(),
+          contentReference: randomUUID(),
+          createdAt: now(),
+          status: 'PENDING',
+          claimedBy: null,
+          acknowledgedAt: null,
+        }
+      : null;
+    publish();
+    if (
+      pending &&
+      preferences.sound &&
+      masterSound &&
+      preferences.volume > 0 &&
+      now() - lastSound >= 2000
+    ) {
+      lastSound = now();
+      sound(preferences.volume);
+    }
+  }
   function tick(baseline = false) {
     if (disposed || !active || !preferences.enabled || preferences.paused) return;
     expire();
+    if (reading) return reading;
+    const epoch = generation;
     try {
       const capture = read();
-      const hash = capture?.hash ?? null;
-      if (baseline || hash === lastHash) {
-        lastHash = hash;
-        return;
+      if (capture && typeof capture.then === 'function') {
+        const task = capture
+          .then((value) => accept(value, baseline, epoch))
+          .catch(() => {})
+          .finally(() => {
+            if (reading === task) reading = null;
+          });
+        reading = task;
+        return task;
       }
-      lastHash = hash;
-      const content = capture?.content ?? null;
-      // An invalid/latest copy must not leave an older pending copy available.
-      pending = content
-        ? {
-            ...content,
-            id: randomUUID(),
-            contentReference: randomUUID(),
-            createdAt: now(),
-            status: 'PENDING',
-            claimedBy: null,
-            acknowledgedAt: null,
-          }
-        : null;
-      publish();
-      if (
-        pending &&
-        preferences.sound &&
-        masterSound &&
-        preferences.volume > 0 &&
-        now() - lastSound >= 2000
-      ) {
-        lastSound = now();
-        sound(preferences.volume);
-      }
+      accept(capture, baseline, epoch);
     } catch {
-      /* Clipboard can temporarily be locked by another Windows application. */
+      /* A locked clipboard is retried on the next interval. Never log copied content. */
     }
   }
   function restart() {

@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Corrigida leitura nativa no Electron 44: API assíncrona ClipboardItem/Blob, sem polling sobreposto; leituras antigas são invalidadas ao pausar/desativar. Teste real de leitura Windows, sem escrita no clipboard, e regressões de limites e concorrência.
+
 - Assistente de clipboard opt-in, com monitor único no Electron, baseline silencioso, intervalo de 850 ms e conteúdo efêmero em memória.
 - Indicadores sincronizados no overlay Windows e no ícone flutuante, som PCM local com volume, intervalo mínimo e respeito ao silêncio global.
 - Atribuição atômica ao primeiro chat, faixa compacta de ações locais para texto/código/link e prévia editável somente após a escolha, com confirmação explícita pelo fluxo de envio existente.

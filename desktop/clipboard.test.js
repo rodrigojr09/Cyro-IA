@@ -289,3 +289,131 @@ test('imagem acima de 5 MB, 50 MP ou vazia não gera conteúdo ou som', () => {
   assert.equal(f.manager.state().pending, false);
   assert.equal(f.sounds.length, 0);
 });
+
+test('Electron moderno lê ClipboardItem/Blob assíncronos sem métodos legados', async () => {
+  let text = 'Texto inicial',
+    reads = 0;
+  const f = core.createClipboardManager({
+    clipboard: {
+      read: async () => {
+        reads++;
+        return [{ types: ['text/plain'], getType: async () => new Blob([text]) }];
+      },
+    },
+    config: { ...core.defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  f.setActive(true);
+  await f.tick();
+  assert.equal(f.state().pending, false);
+  for (const [copy, type] of [
+    ['Uma nova frase de teste', 'text'],
+    ['const valor = 3;', 'code'],
+    ['https://example.com/', 'link'],
+  ]) {
+    text = copy;
+    await f.tick();
+    assert.equal(f.state().notification.contentType, type);
+  }
+  const claim = f.claim('main');
+  assert.equal(claim.notification.text, text);
+  assert.equal(f.claim('quick').ok, false);
+  assert.equal(reads, 4);
+  f.destroy();
+});
+test('leitura assíncrona não sobrepõe polling e resultado atrasado não reaparece após pausar', async () => {
+  let resolve,
+    calls = 0;
+  const f = core.createClipboardManager({
+    clipboard: {
+      read: () => {
+        calls++;
+        return new Promise((done) => (resolve = done));
+      },
+    },
+    config: { ...core.defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  f.setActive(true);
+  const first = f.tick();
+  assert.equal(f.tick(), first);
+  assert.equal(calls, 1);
+  f.configure({ paused: true });
+  resolve([{ types: ['text/plain'], getType: async () => new Blob(['Conteúdo atrasado']) }]);
+  await first;
+  assert.equal(f.state().pending, false);
+  assert.deepEqual(f.state().owned, {});
+  f.destroy();
+});
+test('Blob grande é recusado antes de ler o corpo e falha nativa permite nova tentativa', async () => {
+  let stage = 0,
+    bodyRead = false;
+  const f = core.createClipboardManager({
+    clipboard: {
+      read: async () => {
+        if (stage === 0) throw Error('clipboard temporariamente bloqueado');
+        if (stage === 1)
+          return [
+            {
+              types: ['text/plain'],
+              getType: async () => ({
+                size: core.MAX_BYTES + 1,
+                text: async () => {
+                  bodyRead = true;
+                  return 'inválido';
+                },
+              }),
+            },
+          ];
+        return [{ types: ['text/plain'], getType: async () => new Blob(['Nova cópia válida']) }];
+      },
+    },
+    config: { ...core.defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  f.setActive(true);
+  await f.tick();
+  stage = 1;
+  await f.tick();
+  assert.equal(bodyRead, false);
+  assert.equal(f.state().pending, false);
+  stage = 2;
+  await f.tick();
+  assert.equal(f.state().pending, true);
+  f.destroy();
+});
+
+test('dimensões do Blob PNG são limitadas antes da decodificação nativa', async () => {
+  let image = false,
+    decoded = false;
+  const bytes = Buffer.alloc(24);
+  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(bytes);
+  bytes.write('IHDR', 12);
+  bytes.writeUInt32BE(10000, 16);
+  bytes.writeUInt32BE(10000, 20);
+  const f = core.createClipboardManager({
+    clipboard: {
+      read: async () =>
+        image ? [{ types: ['image/png'], getType: async () => new Blob([bytes]) }] : [],
+    },
+    nativeImage: {
+      createFromBuffer: () => {
+        decoded = true;
+        throw Error('não deve decodificar');
+      },
+    },
+    config: { ...core.defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  f.setActive(true);
+  await f.tick();
+  image = true;
+  await f.tick();
+  assert.equal(decoded, false);
+  assert.equal(f.state().pending, false);
+  f.destroy();
+});
