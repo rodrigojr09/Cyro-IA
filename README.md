@@ -20,6 +20,14 @@ O conteúdo fica somente em memória, por até 10 minutos, sem histórico ou env
 
 Consulte [implementação e validação v5](docs/V5.md) para cobertura, verificações reais e limitações.
 
+## JARVIS Writer — exclusivo dos projetos
+
+Abra um projeto e clique em **JARVIS Writer**. Ao criar um chat Writer, escolha o nome do arquivo. A conversa ocupa o centro; a sidebar direita mostra o documento e destaca em azul as alterações propostas, com remoções riscadas. Aprovar, rejeitar, ajustar, editar manualmente, desfazer/refazer e recuperar revisões ficam no mesmo ambiente.
+
+A IA requer consentimento nas preferências do projeto e reutiliza o Cloud autenticado. Só escrita inequívoca pode ser adicionada automaticamente; revisões importantes e organização exigem aprovação. A edição manual funciona sem a IA, respeitando a autenticação existente. Documentos e histórico ficam no SQLite do projeto, com limites e transações; os arquivos de origem permanecem intactos. Exportação real para Word (.docx), além de Markdown/TXT, permite arquivo atual, seleção ou projeto completo.
+
+Consulte [uso, arquitetura, limites, testes e limitações do Writer](docs/WRITER.md). Para a exportação Word, instale os requisitos Python atualizados (`python-docx`); o aplicativo instalado precisa de um novo empacotamento para incorporar o recurso.
+
 ## Desenvolvimento
 
 Para iniciar o ambiente local já configurado, dê dois cliques em `start.bat`. Ele inicia o Cloud em `http://localhost:3000`, aguarda a página de login responder e abre o JARVIS Desktop conectado a essa origem. Ao fechar o JARVIS, o iniciador encerra também o Cloud que iniciou. Se a porta 3000 estiver ocupada, avisa sem encerrar serviços existentes. As configurações privadas permanecem em `cloud/.env`; o Desktop não recebe os segredos do Cloud. O iniciador não instala dependências nem aplica migrations.

@@ -10,6 +10,7 @@
     <title>JARVIS 5.0.0 — Cloud + Desktop</title>
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="clipboard.css" />
+    <link rel="stylesheet" href="writer.css" />
   </head>
   <body>
     <div class="app-layout">
@@ -71,6 +72,7 @@
           </div>
         </header>
         <div id="project-banner" hidden>
+          <button id="writer-open" type="button">JARVIS Writer</button>
           <span id="memory-state" role="status"></span
           ><button id="project-settings-open">Configurações do projeto</button
           ><button id="select-sources"><i data-lucide="files"></i>Arquivos do projeto</button
@@ -209,6 +211,7 @@
           placeholder="Objetivos, contexto e orientações para todos os chats deste projeto"
         ></textarea>
       </label>
+      <button id="project-writer-settings" type="button">Preferências do JARVIS Writer</button>
       <button id="save-project-settings">Salvar projeto</button>
       <button id="project-select-sources">Selecionar arquivos do projeto</button>
       <h3>Conhecimento do projeto</h3>
@@ -315,5 +318,6 @@
     <script src="renderer.js"></script>
     <script src="voice-input.js"></script>
     <script src="clipboard-ui.js"></script>
+    <script src="writer-ui.js"></script>
   </body>
 </html>

@@ -1,5 +1,11 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- JARVIS Writer integrado aos projetos existentes: múltiplos arquivos e chats próprios, nome escolhido na criação, árvore à esquerda, conversa central e prévia à direita com diferenças em azul.
+- Edição estruturada independente da IA, salvamento manual transacional, propostas com versão-base, confirmação de alterações importantes, classificação híbrida corrigível, cancelamento e inserção automática conservadora.
+- Revisões persistentes com originais, desfazer/refazer sequenciais e em lote, restauração como nova revisão, remoção recuperável, isolamento e retenção sem descarte silencioso de versões importantes.
+- Contexto seletivo e consentimento por projeto pelo cliente Cloud existente, sem novos endpoints públicos ou chave OpenAI no Desktop. Limites de fontes preservados e tetos editoriais explícitos.
+- Exportação OOXML real com python-docx, Word como padrão, seleção de capítulos/projeto, Markdown/TXT e gravação nativa atômica. Testes e limitações (incluindo ausência de LibreOffice para renderização) em docs/WRITER.md.
+
 - Corrigidas opções de clipboard no principal: prévia em Nova conversa sem criar chat antes da confirmação, reivindicação quando a detecção chega após o foco e tratamento de notificação nova durante solicitação anterior. Restauração da janela minimizada testada com foco nativo real.
 
 - Corrigida leitura nativa no Electron 44: API assíncrona ClipboardItem/Blob, sem polling sobreposto; leituras antigas são invalidadas ao pausar/desativar. Teste real de leitura Windows, sem escrita no clipboard, e regressões de limites e concorrência.

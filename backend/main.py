@@ -1127,3 +1127,18 @@ async def speak(req: ChatRequest):
         raise HTTPException(
             502, f"Falha na síntese de voz: {type(exc).__name__}"
         ) from exc
+
+
+# Writer shares the authenticated local service and existing Cloud client, not filesystem tools.
+from writer_api import install as install_writer
+
+install_writer(
+    app,
+    lambda: {
+        "store": store,
+        "client": client,
+        "model": MODEL,
+        "cloud": CLOUD,
+        "available": bool(configured_key()),
+    },
+)

@@ -71,6 +71,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   let win,
     quickController,
     clipboardManager,
+    writerController,
     quitting = false,
     packagedBackend,
     openBackupsOnExit = false,
@@ -156,6 +157,21 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       windowState.save(stateFile, win, stateStorage);
       if (!quitting) {
         event.preventDefault();
+        if (writerController?.isDirty()) {
+          dialog
+            .showMessageBox(win, {
+              type: 'warning',
+              message: 'Há alterações do Writer ainda não salvas.',
+              detail: 'Aguarde a indicação Salvo. Sair agora pode perder a edição pendente.',
+              buttons: ['Manter aberto', 'Sair sem salvar'],
+              defaultId: 0,
+              cancelId: 0,
+            })
+            .then((result) => {
+              if (result.response === 1) quitJarvis();
+            });
+          return;
+        }
         quitJarvis();
       }
     });
@@ -534,6 +550,13 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ipcMain.handle('jarvis:audio-claim', (event) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       quickController?.claimAudio(event.sender);
+    });
+    writerController = require('./writer-ipc').install({
+      ipcMain,
+      dialog,
+      trusted,
+      mainWindow: () => win,
+      backend,
     });
     createWindow();
     clipboardManager = require('./clipboard-service').install({

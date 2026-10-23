@@ -67,3 +67,10 @@ contextBridge.exposeInMainWorld('jarvisClipboard', {
   onState: (callback) => ipcRenderer.on('clipboard:state', (_event, value) => callback(value)),
   onSound: (callback) => ipcRenderer.on('clipboard:sound', (_event, value) => callback(value)),
 });
+
+contextBridge.exposeInMainWorld('jarvisWriter', {
+  command: (value) => ipcRenderer.invoke('writer:command', value),
+  cancel: (project) => ipcRenderer.invoke('writer:cancel', project),
+  export: (value) => ipcRenderer.invoke('writer:export', value),
+  dirty: (value) => ipcRenderer.invoke('writer:dirty', value),
+});

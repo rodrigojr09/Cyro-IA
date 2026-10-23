@@ -6,3 +6,4 @@ psutil>=6,<8
 cryptography>=46,<49
 Pillow>=12,<13
 pypdf>=6,<7
+python-docx>=1.2,<2

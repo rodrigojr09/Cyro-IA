@@ -5,7 +5,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test attachments.test.js quick-renderer.test.js session.test.js security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js portable-paths.test.js encrypted-state.test.js services/cloud.test.js services/local-stream.test.js clipboard.test.js clipboard-service.test.js clipboard-ui.test.js",
+    "test": "node --test attachments.test.js quick-renderer.test.js session.test.js security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js portable-paths.test.js encrypted-state.test.js services/cloud.test.js services/local-stream.test.js clipboard.test.js clipboard-service.test.js clipboard-ui.test.js writer-ui.test.js writer-ipc.test.js",
     "test:electron": "electron smoke.cjs",
     "build": "node build.cjs",
     "prestart": "npm run build",
@@ -18,7 +18,9 @@
     "test:cloud-electron": "electron cloud-smoke.cjs",
     "test:session-electron": "electron session-smoke.cjs",
     "test:clipboard": "electron clipboard-smoke.cjs",
-    "pretest:clipboard": "npm run build"
+    "pretest:clipboard": "npm run build",
+    "test:writer": "electron writer-smoke.cjs",
+    "pretest:writer": "npm run build"
   },
   "devDependencies": {
     "electron": "^44.9.0",

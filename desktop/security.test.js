@@ -7,6 +7,7 @@ const { pathToFileURL } = require('node:url');
 
 function setup({
   authorized = false,
+  writerDirty = false,
   canceled = false,
   ownsInstance = true,
   probe = false,
@@ -101,27 +102,29 @@ function setup({
     require: (name) =>
       name === 'electron'
         ? electron
-        : name === './clipboard-service'
-          ? { install: () => ({ setActive() {}, setMasterSound() {}, destroy() {} }) }
-          : name === './quick-controller'
-            ? {
-                createQuick: () => ({
-                  getSettings: () => ({}),
-                  setSettings: (v) => v,
-                  setProject() {},
-                  setMasterVoice() {},
-                  claimAudio() {},
-                  hideOnClose: () => quickToTray,
-                  destroy() {
-                    destroyCalls++;
-                  },
-                }),
-              }
-            : name === './window-state'
-              ? { load: () => null, save() {} }
-              : name === 'fs/promises'
-                ? { readFile: async () => 'test-local-token' }
-                : require(name),
+        : name === './writer-ipc'
+          ? { install: () => ({ isDirty: () => writerDirty }) }
+          : name === './clipboard-service'
+            ? { install: () => ({ setActive() {}, setMasterSound() {}, destroy() {} }) }
+            : name === './quick-controller'
+              ? {
+                  createQuick: () => ({
+                    getSettings: () => ({}),
+                    setSettings: (v) => v,
+                    setProject() {},
+                    setMasterVoice() {},
+                    claimAudio() {},
+                    hideOnClose: () => quickToTray,
+                    destroy() {
+                      destroyCalls++;
+                    },
+                  }),
+                }
+              : name === './window-state'
+                ? { load: () => null, save() {} }
+                : name === 'fs/promises'
+                  ? { readFile: async () => 'test-local-token' }
+                  : require(name),
     fetch: async (url, options) => {
       requests.push({ url, options });
       return { ok: true, json: async () => ({ reply: 'Resposta' }) };
@@ -558,4 +561,16 @@ test('limpeza local/nuvem exige confirmação nativa e janela autenticada; API g
     locked.handlers.get('jarvis:clear-storage')(locked.event, 'cloud'),
     /autorizada/,
   );
+});
+
+test('Writer pendente bloqueia encerramento até descarte explícito', async () => {
+  const keep = setup({ writerDirty: true });
+  keep.windowEvents.get('close')({ preventDefault() {} });
+  await Promise.resolve();
+  assert.equal(keep.quitCalls, 0);
+  assert.match(keep.dialogs.at(-1).message, /Writer/);
+  const discard = setup({ writerDirty: true, authorized: true });
+  discard.windowEvents.get('close')({ preventDefault() {} });
+  await Promise.resolve();
+  assert.equal(discard.quitCalls, 1);
 });

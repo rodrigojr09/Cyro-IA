@@ -56,6 +56,9 @@ def audit():
             "clipboard-service.js",
             "clipboard-ui.js",
             "clipboard.css",
+            "writer-ui.js",
+            "writer-ipc.js",
+            "writer.css",
         ]:
             item = header
             for part in name.split("/"):
