@@ -70,6 +70,13 @@ async def create(**kwargs):
         result.update(
             intent="CHAT", reply="Lucas abriu a porta.", blocks=[], blockIds=[]
         )
+    if feedback:
+        props = kwargs["tools"][0]["function"]["parameters"]["properties"]
+        assert props["intent"]["enum"] == ["INSTRUCT"]
+        assert props["operation"]["enum"] == ["replace"]
+        assert props["targetDocumentId"]["enum"] == [active["id"]]
+        # Regression: older output mislabeled a revision WRITE and omitted the target.
+        result.update(intent="WRITE", targetDocumentId=None, blockIds=[])
     return NS(
         choices=[
             NS(

@@ -81,6 +81,11 @@ function fixture(embedded = false) {
       }
       if (value.action === 'assist') {
         if (cloudFailure) return { ok: false, data: { detail: 'Cloud indisponível' } };
+        if (p.intent_override === 'CHAT')
+          return {
+            ok: true,
+            data: { intent: 'CHAT', reply: 'Conversa sobre o arquivo.', proposal: null },
+          };
         pending = {
           id: randomUUID(),
           node: document.id,
@@ -390,6 +395,24 @@ test('Writer: criação pede nome do arquivo e exportação oferece seleção re
     await pause();
     assert.deepEqual(Array.from(f.exported[0].document_ids), [f.document.id]);
     assert.equal(f.exported[0].format, 'docx');
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: corrigir a intenção de uma mensagem não prende as seguintes no modo Conversa', async () => {
+  const f = fixture(true);
+  try {
+    await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+    f.get('writer-mode').value = 'CHAT';
+    f.get('input').value = 'Explique o texto';
+    await f.w.jarvisWriterUI.submit();
+    assert.equal(f.get('writer-mode').value, '');
+    f.get('input').value = 'Muito resumido';
+    await f.w.jarvisWriterUI.submit();
+    assert.deepEqual(
+      f.calls.filter((c) => c.action === 'assist').map((c) => c.payload.intent_override),
+      ['CHAT', null],
+    );
   } finally {
     f.dom.window.close();
   }

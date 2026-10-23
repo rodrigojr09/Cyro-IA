@@ -749,6 +749,8 @@
         intent_override: override || $('writer-mode').value || null,
       });
       if (epoch !== generation) return;
+      // Corrections apply to this message only, not every subsequent chat turn.
+      if (embeddedActive) $('writer-mode').value = '';
       const replyRow = bubble('assistant', result.reply, result.intent);
       if (result.context_notice) {
         const note = document.createElement('small');

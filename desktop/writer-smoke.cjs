@@ -229,7 +229,7 @@ app.whenReady().then(async () => {
     await waitFor('document.getElementById("status").textContent.includes("original atualizado")');
     assert.match(fs.readFileSync(sourcePath, 'utf8'), /lentamente/);
     await execute(
-      'document.getElementById("input").value="muito resumido";window.jarvisWriterUI.submit()',
+      '(()=>{const block=document.querySelector("#writer-paper .writer-block");const range=document.createRange();range.selectNodeContents(block);window.getSelection().addRange(range);document.getElementById("writer-paper").dispatchEvent(new MouseEvent("mouseup",{bubbles:true}));document.getElementById("input").focus();document.getElementById("input").value="muito resumido";return window.jarvisWriterUI.submit();})()',
     );
     assert.equal(await execute('document.getElementById("writer-proposal").hidden'), false);
     await execute(

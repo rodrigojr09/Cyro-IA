@@ -62,6 +62,106 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_selected_feedback_constrains_schema_and_normalizes_write_revision(
+        self,
+    ):
+        self.save(self.doc, [block("Primeiro."), block("Último.")])
+        doc = self.writer.get(self.doc["id"])
+        chat = self.writer.bind_chat(doc["id"])
+        selected = doc["blocks"][-1]["id"]
+
+        def provider(kwargs):
+            props = kwargs["tools"][0]["function"]["parameters"]["properties"]
+            self.assertEqual(props["intent"]["enum"], ["INSTRUCT"])
+            self.assertEqual(props["operation"]["enum"], ["replace"])
+            self.assertEqual(props["targetDocumentId"]["enum"], [doc["id"]])
+            self.assertEqual(props["blockIds"]["items"]["enum"], [selected])
+            return response(
+                doc,
+                "",
+                "WRITE",
+                "replace",
+                targetDocumentId=None,
+                blockIds=[],
+                blocks=[block("Último, agora desenvolvido.")],
+            )
+
+        output = await assist(
+            self.writer,
+            dict(
+                request_id=uid(),
+                chat_id=chat["id"],
+                document_id=doc["id"],
+                base_version=doc["version"],
+                message="Muito resumido",
+                selected_block_ids=[selected],
+            ),
+            client(provider),
+            "fixture",
+            True,
+        )
+        self.assertEqual(output["intent"], "INSTRUCT")
+        self.assertEqual(output["proposal"]["plan"]["blockIds"], [selected])
+        self.assertFalse(output["proposal"]["auto"])
+        self.assertEqual(self.writer.get(doc["id"])["blocks"], doc["blocks"])
+
+    async def test_write_replace_is_revision_without_asking_known_destination(self):
+        self.save(self.doc, [block("Texto atual.")])
+        doc = self.writer.get(self.doc["id"])
+        output = await assist(
+            self.writer,
+            dict(
+                request_id=uid(),
+                document_id=doc["id"],
+                base_version=doc["version"],
+                message="Reescreva este texto",
+            ),
+            client(
+                response(
+                    doc,
+                    "",
+                    "WRITE",
+                    "replace",
+                    blockIds=[doc["blocks"][0]["id"]],
+                    blocks=[block("Texto revisado.")],
+                )
+            ),
+            "fixture",
+            True,
+        )
+        self.assertEqual(output["intent"], "INSTRUCT")
+        self.assertIsNotNone(output["proposal"])
+        self.assertNotIn("Qual documento", output["reply"])
+
+    async def test_feedback_respects_explicit_chat_and_rejects_empty_revision(self):
+        self.save(self.doc, [block("Texto atual.")])
+        doc = self.writer.get(self.doc["id"])
+        request = dict(
+            request_id=uid(),
+            document_id=doc["id"],
+            base_version=doc["version"],
+            message="Muito resumido",
+            intent_override="CHAT",
+        )
+        output = await assist(
+            self.writer,
+            request,
+            client(response(doc, "", "CHAT", reply="Podemos desenvolver a ideia.")),
+            "fixture",
+            True,
+        )
+        self.assertIsNone(output["proposal"])
+        request.update(request_id=uid(), intent_override=None)
+        with self.assertRaisesRegex(ReadError, "não preparou a revisão"):
+            await assist(
+                self.writer,
+                request,
+                client(response(doc, "", "CHAT", reply="Qual documento?")),
+                "fixture",
+                True,
+            )
+        self.assertEqual(self.writer.get(doc["id"])["blocks"], doc["blocks"])
+
     async def test_revision_defaults_to_whole_active_document_without_model_destination(
         self,
     ):
