@@ -15,6 +15,9 @@
     openingLink = false;
   const $ = (id) => document.getElementById(id);
   const attempt = (promise) => promise.catch(() => {});
+  const draftContext = () => 'draft:' + (window.jarvisWorkspace?.project?.id || 'general');
+  const mainContext = () =>
+    window.jarvisWorkspace ? window.jarvisWorkspace.chat?.id || draftContext() : null;
   const parent = composer
     ? $('composer')
     : !panel
@@ -61,8 +64,9 @@
     pendingButton.onclick = () => attempt(claim());
     $('clipboard-ignore').onclick = async () => {
       if (sending || !owned) return;
-      await bridge.dismiss(owned.id);
-      clearCard();
+      const dismissedId = owned.id;
+      await bridge.dismiss(dismissedId);
+      if (owned?.id === dismissedId) clearCard();
       render();
     };
     $('clipboard-confirm').onclick = async () => {
@@ -72,7 +76,7 @@
         feedback('A mensagem deve ter de 1 a 6.000 caracteres.');
         return;
       }
-      if (!composer && (!context || window.jarvisWorkspace?.chat?.id !== context)) {
+      if (!composer && (!context || mainContext() !== context)) {
         feedback('Volte ao chat em que abriu este conteúdo, ou ignore-o.');
         return;
       }
@@ -83,7 +87,7 @@
       try {
         const result = openingLink
           ? await bridge.openLink(claimId)
-          : await window.jarvisClipboardSend?.(text);
+          : await window.jarvisClipboardSend?.(text, context);
         if (result === true) {
           await bridge.dismiss(claimId);
           clearCard();
@@ -135,7 +139,7 @@
   }
   function show(item) {
     owned = item;
-    context = composer ? null : window.jarvisWorkspace?.chat?.id;
+    context = composer ? null : mainContext();
     const labels = {
       text: 'Texto copiado',
       code: 'Código copiado',
@@ -206,7 +210,10 @@
     }
     if (parent) {
       if (owned && snapshot.owned[owner] !== owned.id) clearCard();
-      const sameChat = composer || !owned || window.jarvisWorkspace?.chat?.id === context;
+      // A draft acquires a saved chat only after its explicitly confirmed send.
+      if (!composer && sending && context === draftContext() && window.jarvisWorkspace?.chat)
+        context = window.jarvisWorkspace.chat.id;
+      const sameChat = composer || !owned || mainContext() === context;
       card.hidden = !owned || !sameChat;
       pendingButton.hidden = !snapshot.pending || !!owned;
       area.hidden = card.hidden && pendingButton.hidden;
@@ -217,6 +224,7 @@
     if (
       !parent ||
       owned ||
+      sending ||
       requesting ||
       document.visibilityState === 'hidden' ||
       !document.hasFocus()
@@ -224,25 +232,32 @@
       return;
     if (
       !composer &&
-      (!window.jarvisWorkspace?.chat || $('send')?.disabled || $('settings-dialog')?.open)
+      (!mainContext() ||
+        window.jarvisWorkspace?.canNavigate === false ||
+        $('settings-dialog')?.open)
     )
       return;
     requesting = true;
+    const requestedId = snapshot?.notification?.id;
     try {
       const result = await bridge.claim();
       if (result.ok) show(result.notification);
     } finally {
       requesting = false;
+      // Polling can discover a copy while an earlier focus request is still in flight.
+      if (snapshot?.pending && snapshot.notification?.id !== requestedId) attempt(claim());
     }
   }
   bridge.onState((value) => {
     snapshot = value;
     render();
+    if (value.pending) attempt(claim());
   });
   attempt(
     bridge.state().then((value) => {
       snapshot = value;
       render();
+      if (value.pending) attempt(claim());
     }),
   );
   if (!panel)
@@ -253,6 +268,8 @@
       attempt(audio.play());
     });
   window.addEventListener('focus', () => attempt(claim()));
+  window.addEventListener('focusin', () => attempt(claim()));
+  document.addEventListener('visibilitychange', () => attempt(claim()));
   if (composer) window.quick.onFocus(() => attempt(claim()));
   window.addEventListener('jarvis:chat-selected', () => {
     render();

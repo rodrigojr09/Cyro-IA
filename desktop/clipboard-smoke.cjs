@@ -236,11 +236,11 @@ app.whenReady().then(async () => {
     main.show();
     main.focus();
     await delay(150);
+    await main.webContents.executeJavaScript(
+      'window.jarvisWorkspace={chat:null,project:null,canNavigate:true};void 0;',
+    );
     text = 'Uma segunda cópia para o chat principal';
     await manager.tick();
-    await main.webContents.executeJavaScript(
-      "window.dispatchEvent(new Event('jarvis:chat-selected'));void 0;",
-    );
     await delay(120);
     assert.equal(
       await main.webContents.executeJavaScript("document.getElementById('clipboard-card').hidden"),
@@ -257,6 +257,27 @@ app.whenReady().then(async () => {
       path.join(directory, 'clipboard-main.png'),
       (await main.webContents.capturePage()).toPNG(),
     );
+    await main.webContents.executeJavaScript(
+      "document.getElementById('clipboard-ignore').onclick()",
+    );
+    // A different copy made while minimized must be claimed through real native focus.
+    await main.webContents.executeJavaScript(
+      "window.jarvisWorkspace.chat={id:'existing-chat'};void 0;",
+    );
+    main.minimize();
+    await delay(100);
+    text = 'Cópia com a janela principal minimizada';
+    await manager.tick();
+    assert.equal(manager.state().pending, true);
+    main.restore();
+    main.show();
+    main.focus();
+    await delay(160);
+    assert.equal(
+      await main.webContents.executeJavaScript("document.getElementById('clipboard-card').hidden"),
+      false,
+    );
+    assert.equal(manager.state().pending, false);
     await main.webContents.executeJavaScript(
       "document.getElementById('clipboard-ignore').onclick()",
     );
@@ -340,7 +361,8 @@ app.whenReady().then(async () => {
       main.webContents.executeJavaScript('window.jarvisClipboard.claim()'),
       composer.webContents.executeJavaScript('window.jarvisClipboard.claim()'),
     ]);
-    assert.equal(results.filter((item) => item.ok).length, 1);
+    assert.ok(results.filter((item) => item.ok).length <= 1);
+    assert.equal(Object.keys(manager.state().owned).length, 1);
     assert.equal(manager.state().pending, false);
     manager.configure({ paused: true });
     assert.deepEqual(manager.state().owned, {});

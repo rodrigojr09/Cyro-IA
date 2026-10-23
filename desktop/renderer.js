@@ -239,10 +239,9 @@ async function speak(text) {
   }
 }
 let preflighting = false;
-async function submit(clipboardText) {
+async function submit(clipboardText, expectedContext) {
   const fromClipboard = typeof clipboardText === 'string';
-  if (fromClipboard && (!window.jarvisWorkspace?.chat || window.jarvisAttachments?.has()))
-    return false;
+  if (fromClipboard && (!window.jarvisWorkspace || window.jarvisAttachments?.has())) return false;
   if (window.jarvisStorageUsage?.blocked) return;
   const text =
     (fromClipboard ? clipboardText : input.value).trim() ||
@@ -259,6 +258,13 @@ async function submit(clipboardText) {
   try {
     const project = window.jarvisWorkspace?.project;
     if (project) await window.jarvisScope.check(project.id);
+    if (
+      fromClipboard &&
+      expectedContext &&
+      (window.jarvisWorkspace.chat?.id ||
+        'draft:' + (window.jarvisWorkspace.project?.id || 'general')) !== expectedContext
+    )
+      return false;
     if (window.jarvisWorkspace && !window.jarvisWorkspace.chat)
       await window.jarvisWorkspace.newChat(true);
   } catch (error) {
@@ -338,7 +344,7 @@ async function submit(clipboardText) {
   }
 }
 send.onclick = submit;
-window.jarvisClipboardSend = (text) => submit(text);
+window.jarvisClipboardSend = (text, context) => submit(text, context);
 document.getElementById('computer-run').onclick = async () => {
   document.getElementById('computer-dialog')?.close();
   const button = document.getElementById('computer-run');

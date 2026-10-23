@@ -179,7 +179,7 @@ test('envio confirmado do clipboard respeita 5 MB, tamanho da mensagem e não cr
   assert.equal(calls.length, count);
 });
 
-test('clipboard não cria conversa em visão sem chat e não inclui anexos pendentes sem revisão', async () => {
+test('clipboard não cria conversa em projeto bloqueado e não inclui anexos pendentes sem revisão', async () => {
   const { window, calls } = await setup({ partial: true });
   await window.jarvisWorkspace.view('project-a', 'first');
   assert.equal(await window.jarvisClipboardSend('Explique o texto copiado.'), false);
@@ -188,4 +188,17 @@ test('clipboard não cria conversa em visão sem chat e não inclui anexos pende
   window.jarvisAttachments = { has: () => true };
   assert.equal(await window.jarvisClipboardSend('Explique o texto copiado.'), false);
   assert.ok(!calls.some((call) => call.route === '/chat'));
+});
+
+test('Nova conversa cria chat somente no envio confirmado da prévia do clipboard', async () => {
+  const { window, elements, calls } = await setup();
+  await window.jarvisWorkspace.view('project-a', null);
+  assert.equal(window.jarvisWorkspace.chat, null);
+  assert.ok(!calls.some((c) => c.route === '/chats/create'));
+  elements.input.value = 'Rascunho normal';
+  const result = await window.jarvisClipboardSend('Resuma este texto copiado.', 'draft:project-a');
+  assert.equal(result, true);
+  assert.equal(calls.filter((c) => c.route === '/chats/create').length, 1);
+  assert.equal(JSON.parse(calls.find((c) => c.route === '/chat').options.body).chat_id, 'new');
+  assert.equal(elements.input.value, 'Rascunho normal');
 });

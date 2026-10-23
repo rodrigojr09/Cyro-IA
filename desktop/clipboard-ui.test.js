@@ -15,8 +15,9 @@ async function setup(panel, manager) {
   let listener,
     sends = [],
     opened = [],
-    success = true;
-  w.document.hasFocus = () => true;
+    success = true,
+    focused = false;
+  w.document.hasFocus = () => focused;
   Object.defineProperty(w.document, 'visibilityState', { value: 'visible' });
   w.jarvisWorkspace = { chat: { id: 'existing-chat' } };
   w.jarvisClipboard = {
@@ -26,7 +27,11 @@ async function setup(panel, manager) {
       listener(manager.state());
       return result;
     },
-    dismiss: async (id) => manager.dismiss(owner, id),
+    dismiss: async (id) => {
+      const result = manager.dismiss(owner, id);
+      listener(manager.state());
+      return result;
+    },
     configure: async (value) => {
       const result = manager.configure(value);
       listener(result);
@@ -54,6 +59,7 @@ async function setup(panel, manager) {
     get: (id) => w.document.getElementById(id),
     update: () => listener(manager.state()),
     focus: async () => {
+      focused = true;
       w.dispatchEvent(new w.Event('focus'));
       await Promise.resolve();
       await Promise.resolve();
@@ -251,5 +257,58 @@ test('Imagem copiada expande prévia local, sem ações de IA falsas, e limpa o 
   await quick.get('clipboard-ignore').onclick();
   assert.equal(quick.get('clipboard-image').hasAttribute('src'), false);
   quick.dom.window.close();
+  manager.destroy();
+});
+
+test('janela principal em Nova conversa recebe cópia detectada depois do foco, sem criar chat', async () => {
+  let text = 'Inicial';
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => text },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const main = await setup(null, manager);
+  main.dom.window.jarvisWorkspace.chat = null;
+  await main.focus();
+  text = 'Uma cópia detectada após voltar à janela';
+  manager.tick();
+  main.update();
+  await new Promise(setImmediate);
+  assert.equal(main.get('clipboard-card').hidden, false);
+  assert.equal(manager.state().pending, false);
+  assert.equal(main.dom.window.jarvisWorkspace.chat, null);
+  assert.equal(main.sends.length, 0);
+  main.get('clipboard-title').click();
+  assert.equal(main.get('clipboard-original').textContent, text);
+  main.dom.window.close();
+  manager.destroy();
+});
+
+test('ignorar edição antiga não apaga a nova cópia reivindicada durante o descarte', async () => {
+  let text = 'Inicial';
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => text },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const main = await setup(null, manager);
+  text = 'Primeira cópia';
+  manager.tick();
+  main.update();
+  await main.focus();
+  text = 'Segunda cópia independente';
+  manager.tick();
+  main.update();
+  assert.equal(manager.state().pending, true);
+  await main.get('clipboard-ignore').onclick();
+  await new Promise(setImmediate);
+  assert.equal(main.get('clipboard-card').hidden, false);
+  assert.equal(main.get('clipboard-original').textContent, text);
+  assert.ok(manager.state().owned.main);
+  main.dom.window.close();
   manager.destroy();
 });
