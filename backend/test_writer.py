@@ -18,6 +18,8 @@ from writer_intelligence import (
     WriterEditorialService,
     editorial_response,
     EDITORIAL_FUNCTION,
+    WriterContextService,
+    context_packet,
 )
 from writer_export import WriterExportService
 
@@ -58,6 +60,75 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    def test_no_selection_reads_whole_document_and_selection_stays_scoped(self):
+        data = [block(f"Parágrafo {i}.") for i in range(14)]
+        self.save(self.doc, data)
+        req = Assist(
+            request_id=uid(),
+            message="Revise o documento.",
+            document_id=self.doc["id"],
+            base_version=2,
+        )
+        context = WriterContextService.build(self.writer, req)
+        self.assertEqual(context["active"]["nearby_blocks"], data)
+        self.assertEqual(context["active"]["scope"], "document")
+        self.assertFalse(context["active"]["truncated"])
+        req.selected_block_ids = [data[2]["id"]]
+        context = WriterContextService.build(self.writer, req)
+        self.assertEqual(context["active"]["nearby_blocks"], [data[2]])
+        self.assertEqual(context["active"]["scope"], "selection")
+
+    def test_large_document_is_read_from_bottom_without_changing_original(self):
+        data = [block(letter * 3500) for letter in ["A", "B", "C"]]
+        self.save(self.doc, data)
+        req = Assist(
+            request_id=uid(),
+            message="Comente o documento.",
+            document_id=self.doc["id"],
+            base_version=2,
+        )
+        context = WriterContextService.build(self.writer, req)
+        active = context["active"]
+        self.assertTrue(active["truncated"])
+        self.assertEqual(active["read_direction"], "bottom_to_top")
+        self.assertEqual(
+            [b["text"] for b in active["nearby_blocks"]],
+            ["A" * 1000, "B" * 3500, "C" * 3500],
+        )
+        self.assertTrue(active["nearby_blocks"][0]["partial"])
+        self.assertEqual(self.writer.get(self.doc["id"])["blocks"], data)
+
+    def test_multibyte_context_packet_stays_within_existing_byte_limit(self):
+        data = [block("🌎" * 1000) for _ in range(12)]
+        self.save(self.doc, data)
+        self.writer.configure({"style": "🌎" * 2000})
+        req = Assist(
+            request_id=uid(),
+            message="🌎" * 6000,
+            document_id=self.doc["id"],
+            base_version=2,
+        )
+        context = WriterContextService.build(self.writer, req)
+        packet = context_packet(context, req, True)
+        self.assertLessEqual(len(packet.encode("utf-8")), 64000)
+        self.assertEqual(context["active"]["nearby_blocks"][-1]["id"], data[-1]["id"])
+        self.assertTrue(context["active"]["truncated"])
+
+    async def test_partial_block_cannot_replace_unread_prefix(self):
+        self.save(self.doc, [block("PREFIXO PRESERVADO " + "x" * 10000)])
+        doc = self.writer.get(self.doc["id"])
+        packet = response(
+            doc,
+            "",
+            "INSTRUCT",
+            "replace",
+            blockIds=[doc["blocks"][0]["id"]],
+            blocks=[block("Somente o final revisado.")],
+        )
+        with self.assertRaisesRegex(ReadError, "não coube na leitura"):
+            await self.send("Revise o documento inteiro.", packet)
+        self.assertEqual(self.writer.get(doc["id"])["blocks"], doc["blocks"])
+
     async def test_generated_article_uses_structured_data_and_requires_approval(self):
         text = "A inteligência artificial auxilia pessoas na análise de informações."
         packet = response(

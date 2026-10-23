@@ -758,3 +758,10 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 160px;
 }
+
+.writer-context-note {
+  display: block;
+  color: #9cb5c3;
+  font-size: 10px;
+  margin-bottom: 6px;
+}

@@ -12,6 +12,81 @@ from writer_models import Assist, EditorialResult
 from writer_store import WriterStore, dump, uid
 
 EDITORIAL_FUNCTION = "writer_editorial"
+MAX_DOCUMENT_CONTEXT_CHARS = 8000
+MAX_CONTEXT_PACKET_BYTES = 64000
+
+
+def tail_blocks(blocks, byte_limit=MAX_CONTEXT_PACKET_BYTES):
+    """Prioritize the end, but preserve reading order and mark incomplete blocks."""
+    selected = []
+    remaining = MAX_DOCUMENT_CONTEXT_CHARS
+    used_bytes = 2
+    for block in reversed(blocks):
+        if remaining <= 0 and block["text"]:
+            break
+        count = min(len(block["text"]), remaining)
+
+        def piece(length):
+            value = {**block, "text": block["text"][-length:] if length else ""}
+            if length < len(block["text"]):
+                value["partial"] = True
+            return value
+
+        candidate = piece(count)
+        if used_bytes + len(dump(candidate).encode()) + 1 > byte_limit:
+            low, high = 0, count
+            while low < high:
+                middle = (low + high + 1) // 2
+                if used_bytes + len(dump(piece(middle)).encode()) + 1 <= byte_limit:
+                    low = middle
+                else:
+                    high = middle - 1
+            count = low
+            candidate = piece(count)
+            if (not count and block["text"]) or used_bytes + len(
+                dump(candidate).encode()
+            ) + 1 > byte_limit:
+                break
+        selected.append(candidate)
+        used_bytes += len(dump(candidate).encode()) + 1
+        remaining -= count
+        if count < len(block["text"]):
+            break
+    return list(reversed(selected))
+
+
+def context_packet(context, req, linguistic):
+    def serialize():
+        return dump(
+            {
+                "message": req.message,
+                "intent_override": req.intent_override,
+                "linguistic_revision": linguistic,
+                "context": context,
+            }
+        )
+
+    packet = serialize()
+    # The active document takes precedence over excerpts of other documents and old chat.
+    for key in ["confirmed_excerpts", "recent_conversation_not_facts"]:
+        while len(packet.encode()) > MAX_CONTEXT_PACKET_BYTES and context[key]:
+            context[key].pop(0)
+            packet = serialize()
+    active = context["active"]
+    if len(packet.encode()) > MAX_CONTEXT_PACKET_BYTES and active:
+        candidates = active["nearby_blocks"]
+        active["nearby_blocks"] = []
+        available = MAX_CONTEXT_PACKET_BYTES - len(serialize().encode()) - 128
+        active["nearby_blocks"] = tail_blocks(candidates, max(0, available))
+        active["truncated"] = True
+        active["read_direction"] = "bottom_to_top"
+        active["included_block_count"] = len(active["nearby_blocks"])
+        packet = serialize()
+    if len(packet.encode()) > MAX_CONTEXT_PACKET_BYTES:
+        raise ReadError(
+            "Contexto acima do limite. Reduza a mensagem ou as preferências de estilo."
+        )
+    return packet
 
 
 def editorial_response(message):
@@ -93,16 +168,17 @@ class WriterContextService:
         ):
             raise ReadError("Seleção não pertence ao documento ativo.")
         pieces = []
-        used = 0
+        candidates = []
         if active:
-            all_blocks = active["blocks"]
-            indices = [i for i, b in enumerate(all_blocks) if b["id"] in selected]
-            focus = indices[0] if indices else max(0, len(all_blocks) - 4)
-            for block in all_blocks[max(0, focus - 2) : focus + 6]:
-                if used + len(block["text"]) > 8000:
-                    break
-                pieces.append(block)
-                used += len(block["text"])
+            candidates = (
+                [b for b in active["blocks"] if b["id"] in selected]
+                if selected
+                else active["blocks"]
+            )
+            pieces = tail_blocks(candidates)
+        truncated = len(pieces) < len(candidates) or any(
+            b.get("partial") for b in pieces
+        )
         nodes = [n for n in writer.open()["nodes"] if not n["deleted"]]
         summaries = []
         for node in nodes[:20]:
@@ -124,6 +200,11 @@ class WriterContextService:
                     "version": active["version"],
                     "title": active["title"],
                     "nearby_blocks": pieces,
+                    "scope": "selection" if selected else "document",
+                    "truncated": truncated,
+                    "read_direction": "bottom_to_top" if truncated else "in_order",
+                    "total_block_count": len(candidates),
+                    "included_block_count": len(pieces),
                 }
                 if active
                 else None
@@ -182,22 +263,16 @@ async def assist(writer, request, client, model, available, cancel_event=None):
         "Corrija gramática/pontuação sem alterar fatos, nomes, acontecimentos ou voz autoral; mudanças substantivas devem ser marcadas substantive=true. "
         "Pedidos como 'crie um texto sobre IA' são INSTRUCT com operation=append no documento ativo, blocks com o texto solicitado e substantive=true; não são criação de arquivo. "
         "INSTRUCT usa replace para revisar blocos existentes identificados ou append para gerar conteúdo novo solicitado; preserve o restante. ORGANIZE create só cria arquivo/pasta quando isso é explicitamente pedido. "
+        "Sem blocos selecionados, o alvo padrão é o documento ativo inteiro. Com seleção, limite a revisão aos blocos selecionados. "
+        "active.truncated indica leitura parcial: o final foi priorizado de baixo para cima até o limite, mantendo a ordem dos parágrafos. Nunca afirme ter lido o restante. "
+        "Blocos partial=true contêm somente o final do bloco: não proponha replace desses blocos nem de blocos ausentes do contexto. Peça para dividir o bloco ou escolha uma adição que preserve o original. "
         "ORGANIZE pode renomear, mover, dividir ou excluir, sempre proposta. "
         "Para CHAT use operation=append, blocks=[], targetDocumentId=null; reply contém sua resposta, nunca conteúdo aprovado. "
         "Para split blockIds começa no bloco que inicia a segunda parte. Para move_blocks escolha destinationDocumentId. "
         "Cada bloco novo usa type permitido e text com Markdown inline **negrito**/*itálico*, sem HTML; omita id, pois o aplicativo o gera. "
         "Não invente documentos ou ids existentes. Confiança é apenas sinal auxiliar. O contrato está nos parâmetros da função writer_editorial."
     )
-    packet = dump(
-        {
-            "message": req.message,
-            "intent_override": req.intent_override,
-            "linguistic_revision": settings["linguistic"],
-            "context": context,
-        }
-    )
-    if len(packet.encode()) > 64000:
-        raise ReadError("Contexto acima do limite. Selecione um trecho menor.")
+    packet = context_packet(context, req, settings["linguistic"])
     try:
         response = await asyncio.wait_for(
             client.chat.completions.create(
@@ -253,6 +328,21 @@ async def assist(writer, request, client, model, available, cancel_event=None):
             target = (
                 writer.get(result.targetDocumentId) if result.targetDocumentId else None
             )
+            if result.operation == "replace":
+                fully_read = {
+                    b["id"]
+                    for b in (context["active"] or {}).get("nearby_blocks", [])
+                    if not b.get("partial")
+                }
+                if (
+                    not active
+                    or not target
+                    or target["id"] != active["id"]
+                    or not set(result.blockIds).issubset(fully_read)
+                ):
+                    raise ReadError(
+                        "A revisão atingiria conteúdo que não coube na leitura. Divida o bloco em partes menores ou abra o documento correspondente; o original foi preservado."
+                    )
             plan = {
                 k: v
                 for k, v in result.model_dump().items()
@@ -336,6 +426,19 @@ async def assist(writer, request, client, model, available, cancel_event=None):
             "reply": reply,
             "proposal": proposed,
             "cancel_seconds": settings["cancel_seconds"],
+            "context_notice": (
+                (
+                    "Seleção parcial: considerado o final, de baixo para cima, até o limite."
+                    if context["active"]["scope"] == "selection"
+                    else "Documento longo: considerado o final, de baixo para cima, até o limite."
+                )
+                if context["active"] and context["active"]["truncated"]
+                else (
+                    "Blocos selecionados considerados."
+                    if context["active"] and context["active"]["scope"] == "selection"
+                    else "Documento inteiro considerado."
+                )
+            ),
         }
         con.execute(
             "INSERT INTO writer_messages VALUES(?,?,?,?,?,?,?)",

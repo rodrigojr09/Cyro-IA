@@ -29,7 +29,7 @@
   <div class="writer-workspace"><aside class="writer-files"><div class="writer-files-heading"><strong>Arquivos e chats</strong><button id="writer-new" title="Novo chat Writer">＋</button></div><div id="writer-recent"></div><nav id="writer-tree" aria-label="Documentos Writer"></nav><button id="writer-new-folder">Nova pasta</button><button id="writer-trash">Itens removidos</button><div class="writer-file-tools"><button id="writer-rename">Renomear</button><button id="writer-duplicate">Duplicar</button><button id="writer-move">Mover</button><button id="writer-delete">Remover</button></div></aside>
   <section class="writer-conversation"><div class="writer-chat-heading"><div><strong id="writer-chat-title">Escolha um arquivo</strong><p>Converse, escreva ou peça uma revisão.</p></div><button id="writer-toggle-files">Arquivos</button><button id="writer-toggle-preview" aria-expanded="true">Documento</button></div><div id="writer-messages" aria-live="polite"></div>
   <div id="writer-proposal" hidden><div><span id="writer-intent-badge"></span><strong id="writer-proposal-title"></strong></div><p id="writer-proposal-reason"></p><p id="writer-countdown" role="status"></p><div class="writer-proposal-actions"><button id="writer-approve">Aprovar alteração</button><button id="writer-reject">Rejeitar</button><button id="writer-adjust">Ajustar</button><button id="writer-show-target">Ver documento</button></div><label>Interpretar como<select id="writer-correct-intent"><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><div id="writer-adjust-area" hidden><label>Proposta editável<textarea id="writer-adjust-text" maxlength="12000"></textarea></label><button id="writer-apply-adjusted">Aplicar texto ajustado</button></div></div>
-  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><label>Modo<select id="writer-mode"><option value="">Híbrido</option><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><button id="writer-selection" title="Limpar seleção">Sem seleção</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
+  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><label>Modo<select id="writer-mode"><option value="">Híbrido</option><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
   <aside class="writer-preview"><header><div><span>PRÉVIA DO DOCUMENTO</span><strong id="writer-filename">Nenhum arquivo</strong></div><button id="writer-edit" aria-pressed="false">Editar</button><button id="writer-collapse-assistant" aria-pressed="false" title="Ampliar documento">Ampliar</button></header><div class="writer-document-tools"><button id="writer-undo">Desfazer</button><button id="writer-redo">Refazer</button><button id="writer-history">Revisões</button><button id="writer-export">Exportar</button><span id="writer-word-count">0 palavras</span></div><p id="writer-preview-notice"></p><nav id="writer-outline" aria-label="Seções do documento"></nav><div id="writer-paper" tabindex="0"></div><div id="writer-edit-tools" hidden><button id="writer-add-block">＋ Parágrafo</button><button id="writer-bold">Negrito</button><button id="writer-italic">Itálico</button></div></aside></div>`;
   document.body.append(root);
   const promptDialog = document.createElement('dialog');
@@ -337,9 +337,12 @@
         input.onselect = () => {
           selectedBlocks = [block.id];
           selectedText = input.value.slice(input.selectionStart, input.selectionEnd).slice(0, 2000);
+          $('writer-selection').textContent = 'Trecho selecionado';
         };
         input.onfocus = () => {
           selectedBlocks = [block.id];
+          selectedText = '';
+          $('writer-selection').textContent = 'Trecho selecionado';
         };
         const remove = document.createElement('button');
         remove.textContent = 'Remover bloco';
@@ -506,7 +509,7 @@
       sequence = savedSequence = 0;
       saveError = false;
       $('writer-input').value = '';
-      $('writer-selection').textContent = 'Sem seleção';
+      $('writer-selection').textContent = 'Documento inteiro';
       $('writer-chat-title').textContent = doc.title;
       $('writer-edit').setAttribute('aria-pressed', 'false');
       $('writer-edit').textContent = 'Editar';
@@ -628,7 +631,7 @@
         );
       selectedBlocks = [];
       selectedText = '';
-      $('writer-selection').textContent = 'Sem seleção';
+      $('writer-selection').textContent = 'Documento inteiro';
       if (doc.deleted || doc.kind === 'folder')
         throw Error(
           'Alteração anterior aplicada. Escolha um documento ativo para continuar a conversa.',
@@ -654,6 +657,12 @@
       });
       if (epoch !== generation) return;
       const replyRow = bubble('assistant', result.reply, result.intent);
+      if (result.context_notice) {
+        const note = document.createElement('small');
+        note.className = 'writer-context-note';
+        note.textContent = result.context_notice;
+        replyRow.prepend(note);
+      }
       if (!result.proposal) {
         const correction = document.createElement('select');
         correction.setAttribute('aria-label', 'Corrigir intenção desta mensagem');
@@ -1156,7 +1165,7 @@
   $('writer-selection').onclick = () => {
     selectedBlocks = [];
     selectedText = '';
-    $('writer-selection').textContent = 'Sem seleção';
+    $('writer-selection').textContent = 'Documento inteiro';
   };
   $('writer-toggle-files').onclick = () => root.classList.toggle('writer-files-visible');
   $('writer-toggle-preview').onclick = () => {

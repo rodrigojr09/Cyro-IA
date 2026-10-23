@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Writer sem seleção considera o documento inteiro; ao exceder o contexto, prioriza o final de baixo para cima, com aviso de leitura parcial. Limites de 8.000 caracteres de documento e 64 KB do pacote mantidos, incluindo caracteres multibyte; revisões não podem substituir blocos lidos parcialmente ou fora do escopo.
+
 - Continuidade do Writer: enviar uma nova mensagem aprova a proposta pendente antes da consulta seguinte, com aviso no card, preservação de ajustes, bloqueio por conflito e proteção contra envio duplicado. Rejeitar continua disponível para descartar a proposta antes de continuar.
 
 - Corrigido contrato editorial do Writer: resposta estruturada pelo suporte a funções já existente no Cloud, IDs de blocos novos gerados localmente e compatibilidade com JSON em bloco Markdown. Pedidos de geração preparam adições para aprovação, sem criar arquivos indevidos ou inserir o comando no documento quando a revisão linguística estiver desligada.

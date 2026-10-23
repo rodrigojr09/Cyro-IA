@@ -82,7 +82,12 @@ function fixture() {
         };
         return {
           ok: true,
-          data: { intent: 'INSTRUCT', reply: 'Revise a proposta.', proposal: pending },
+          data: {
+            intent: 'INSTRUCT',
+            reply: 'Revise a proposta.',
+            proposal: pending,
+            context_notice: 'Documento inteiro considerado.',
+          },
         };
       }
       if (value.action === 'decide') {
@@ -144,6 +149,26 @@ test('Writer: conversa central, prévia à direita e diff azul sem aplicar antes
     await pause();
     assert.equal(f.document.blocks[0].text, 'Lucas abriu a antiga porta.');
     assert.equal(f.get('writer-proposal').hidden, true);
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: limpar seleção usa documento inteiro e mostra o escopo considerado', async () => {
+  const f = fixture();
+  try {
+    await f.w.jarvisWriterUI.open();
+    assert.equal(f.get('writer-selection').textContent, 'Documento inteiro');
+    f.get('writer-paper').querySelector('.writer-block').click();
+    assert.equal(f.get('writer-selection').textContent, 'Trecho selecionado');
+    f.get('writer-selection').click();
+    f.get('writer-input').value = 'Revise o documento.';
+    f.get('writer-send').click();
+    await pause();
+    assert.deepEqual(f.calls.find((c) => c.action === 'assist').payload.selected_block_ids, []);
+    assert.equal(
+      f.get('writer-messages').querySelector('.writer-context-note').textContent,
+      'Documento inteiro considerado.',
+    );
   } finally {
     f.dom.window.close();
   }
