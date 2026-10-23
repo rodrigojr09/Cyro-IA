@@ -75,3 +75,42 @@ test('Writer IPC limita origem, tamanho e ações; só exporta para destino esco
     await fs.rm(folder, { recursive: true, force: true });
   }
 });
+
+test('Writer abre somente o caminho escolhido nativamente e não aceita caminhos pelo renderer', async () => {
+  const handlers = {},
+    calls = [],
+    event = {},
+    project_id = randomUUID(),
+    id = randomUUID();
+  install({
+    ipcMain: { handle: (name, fn) => (handlers[name] = fn) },
+    trusted: (e) => e === event,
+    mainWindow: () => null,
+    dialog: {
+      showOpenDialog: async () => ({ canceled: false, filePaths: ['C:\\Documents\\Original.txt'] }),
+    },
+    backend: async (...args) => {
+      calls.push(args);
+      return { ok: true, data: { id, writer_document_id: id } };
+    },
+  });
+  await assert.rejects(
+    handlers['writer:choose-file'](event, { project_id, create: false, path: 'C:\\bad.txt' }),
+    /inválida/,
+  );
+  await assert.rejects(
+    handlers['writer:choose-file']({}, { project_id, create: false }),
+    /autorizada/,
+  );
+  assert.equal(
+    (await handlers['writer:choose-file'](event, { project_id, create: false })).chat.id,
+    id,
+  );
+  assert.equal(JSON.parse(calls.at(-1)[2]).path, 'C:\\Documents\\Original.txt');
+  assert.throws(
+    () => handlers['writer:file'](event, { project_id, id, action: 'attach', path: 'C:\\bad.txt' }),
+    /inválida/,
+  );
+  await handlers['writer:file'](event, { project_id, id, action: 'sync' });
+  assert.equal(JSON.parse(calls.at(-1)[2]).id, id);
+});

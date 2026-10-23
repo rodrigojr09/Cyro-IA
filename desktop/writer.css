@@ -14,6 +14,120 @@
     13px/1.5 'Segoe UI',
     sans-serif;
 }
+.navigation-heading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.navigation-heading .nav-item {
+  flex: 1;
+}
+.navigation-add {
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  font-size: 20px;
+  background: transparent;
+  color: #a8bebd;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.navigation-add:hover {
+  background: #23383c;
+  color: #a2edda;
+}
+.project-row .navigation-add {
+  width: 28px;
+  padding: 0;
+}
+.chat-document-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.writer-standard-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+.chat-document-layout > .writer-preview {
+  flex: 0 0 43%;
+  width: 43%;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-document-layout > .writer-preview[hidden] {
+  display: none;
+}
+.chat-document-layout.document-expanded > .writer-preview {
+  flex-basis: 65%;
+  width: 65%;
+}
+.chat-document-layout #writer-paper {
+  flex: 1;
+  overflow: auto;
+  min-height: 100px;
+}
+.chat-document-layout .writer-document-tools {
+  flex-wrap: wrap;
+}
+.chat-document-layout .writer-preview button {
+  border: 1px solid #30444e;
+  background: #172831;
+  color: #d2e1e6;
+  padding: 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+#writer-context-strip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+  color: #9eb7c3;
+}
+#writer-context-strip[hidden] {
+  display: none;
+}
+#writer-context-strip small {
+  font-size: 10px;
+}
+.chat-document-layout #writer-proposal {
+  margin: 0 0 10px;
+  max-height: 190px;
+}
+.chat-document-layout #writer-save-state {
+  font-size: 10px;
+  padding-top: 7px;
+}
+@media (max-width: 850px) {
+  .has-writer-document {
+    flex-direction: column;
+    overflow: auto;
+  }
+  .chat-document-layout.has-writer-document > .writer-preview {
+    width: 100%;
+    flex: 0 0 40vh;
+    box-sizing: border-box;
+    border-left: 0;
+    border-top: 1px solid #30444e;
+  }
+  .has-writer-document .writer-standard-chat {
+    min-height: 50vh;
+    flex: 1 0 50vh;
+  }
+}
 #writer-dialog::backdrop {
   background: #050a10c9;
 }

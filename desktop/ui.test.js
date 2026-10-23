@@ -221,6 +221,61 @@ test('diálogos possuem nome acessível e navegação identifica a conversa ativ
   dom.window.close();
 });
 
+test('os botões + criam conversa geral ou oferecem chat e Writer no projeto escolhido', async () => {
+  const { w, dom } = await setup();
+  const project = {
+    id: 'project-plus',
+    name: 'Meu projeto',
+    path: 'C:/Project',
+    ready: 1,
+    scope_confirmed: 1,
+    state: 'ready',
+  };
+  let chats = [],
+    selectedWriter = null,
+    createdIn = 'unset';
+  const base = w.jarvisWindow.api;
+  w.jarvisWriterUI = {
+    async unmount() {},
+    async createChat() {
+      selectedWriter = w.jarvisWorkspace.project.id;
+    },
+  };
+  w.jarvisWindow.api = async (route, options) => {
+    let data;
+    if (route === '/workspace') data = { projects: [project], chats };
+    else if (route === '/workspace/view') {
+      const id = JSON.parse(options.body).project_id;
+      data = {
+        project: id ? project : null,
+        chats: chats.filter((c) => (c.project_id || null) === (id || null)),
+        archived_chats: [],
+      };
+    } else if (route === '/chats/create') {
+      createdIn = JSON.parse(options.body).project_id;
+      data = { id: 'created', project_id: createdIn, title: 'Nova conversa' };
+      chats.push(data);
+    } else if (route.startsWith('/chats/history?')) data = { chat: chats.at(-1), messages: [] };
+    else return base(route, options);
+    return { ok: true, data };
+  };
+  await w.jarvisWorkspace.catalog(project.id);
+  assert.equal(w.document.getElementById('new-chat'), null);
+  w.document.querySelector('#project-list .navigation-add').click();
+  assert.deepEqual(
+    [...w.document.querySelectorAll('[role="menuitem"]')].map((x) => x.textContent),
+    ['Chat do projeto', 'JARVIS Writer'],
+  );
+  [...w.document.querySelectorAll('[role="menuitem"]')]
+    .find((x) => x.textContent === 'JARVIS Writer')
+    .click();
+  await new Promise(setImmediate);
+  assert.equal(selectedWriter, project.id);
+  await w.document.getElementById('new-general-chat').onclick();
+  assert.equal(createdIn, null);
+  dom.window.close();
+});
+
 test('configurações mostram só preferências e armazenamento sem opções técnicas antigas', async () => {
   const { w, dom } = await setup();
   w.document.getElementById('settings-open').click();

@@ -69,6 +69,8 @@ contextBridge.exposeInMainWorld('jarvisClipboard', {
 });
 
 contextBridge.exposeInMainWorld('jarvisWriter', {
+  chooseFile: (value) => ipcRenderer.invoke('writer:choose-file', value),
+  file: (value) => ipcRenderer.invoke('writer:file', value),
   command: (value) => ipcRenderer.invoke('writer:command', value),
   cancel: (project) => ipcRenderer.invoke('writer:cancel', project),
   export: (value) => ipcRenderer.invoke('writer:export', value),

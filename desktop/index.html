@@ -19,9 +19,6 @@
           <span class="brand-mark">J</span><strong>JARVIS</strong
           ><span class="brand-caption">WORKSPACE</span>
         </div>
-        <button id="new-chat" class="primary">
-          <i data-lucide="square-pen"></i>Novo chat<span class="shortcut">＋</span>
-        </button>
         <button id="add-project" class="quiet">
           <i data-lucide="folder-plus"></i>Adicionar projeto
         </button>
@@ -34,9 +31,18 @@
             aria-label="Buscar projetos e conversas"
         /></label>
         <nav id="navigation" aria-label="Navegação">
-          <button id="general-nav" class="nav-item">
-            <i data-lucide="messages-square"></i>Conversas gerais
-          </button>
+          <div class="navigation-heading">
+            <button id="general-nav" class="nav-item">
+              <i data-lucide="messages-square"></i>Conversas</button
+            ><button
+              id="new-general-chat"
+              class="navigation-add"
+              title="Criar conversa"
+              aria-label="Criar conversa"
+            >
+              +
+            </button>
+          </div>
           <div id="general-chats" class="chat-list"></div>
           <div class="section-label">PROJETOS</div>
           <div id="project-list"></div>
@@ -72,7 +78,6 @@
           </div>
         </header>
         <div id="project-banner" hidden>
-          <button id="writer-open" type="button">JARVIS Writer</button>
           <span id="memory-state" role="status"></span
           ><button id="project-settings-open">Configurações do projeto</button
           ><button id="select-sources"><i data-lucide="files"></i>Arquivos do projeto</button

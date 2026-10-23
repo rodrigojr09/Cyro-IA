@@ -3,6 +3,7 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const actions = new Set([
   'open',
+  'bind_chat',
   'get',
   'proposal',
   'revision',
@@ -44,6 +45,50 @@ function install({ ipcMain, dialog, trusted, mainWindow, backend }) {
   ipcMain.handle('writer:cancel', (event, project_id) => {
     validate(event, { project_id });
     return backend('/writer/cancel', 'POST', JSON.stringify({ project_id }));
+  });
+  ipcMain.handle('writer:choose-file', async (event, value) => {
+    validate(event, value);
+    if (
+      Object.keys(value).some((key) => !['project_id', 'create'].includes(key)) ||
+      typeof value.create !== 'boolean'
+    )
+      throw Error('Seleção inválida.');
+    const filters = [{ name: 'Documento Writer', extensions: ['docx', 'md', 'txt'] }];
+    const choice = value.create
+      ? await dialog.showSaveDialog(mainWindow(), {
+          title: 'Criar arquivo do Writer',
+          defaultPath: 'Documento.docx',
+          filters,
+        })
+      : await dialog.showOpenDialog(mainWindow(), {
+          title: 'Escolher arquivo do Writer',
+          properties: ['openFile'],
+          filters,
+        });
+    const selected = value.create ? choice.filePath : choice.filePaths?.[0];
+    if (choice.canceled || !selected) return { cancelled: true };
+    const response = await backend(
+      '/writer/file',
+      'POST',
+      JSON.stringify({
+        project_id: value.project_id,
+        action: 'attach',
+        path: selected,
+        create: value.create,
+      }),
+    );
+    if (!response.ok) throw Error(response.data?.detail || 'Não foi possível abrir o arquivo.');
+    return { chat: response.data };
+  });
+  ipcMain.handle('writer:file', (event, value) => {
+    validate(event, value);
+    if (
+      !['info', 'sync'].includes(value.action) ||
+      !/^[0-9a-f-]{36}$/i.test(value.id || '') ||
+      Object.keys(value).some((key) => !['project_id', 'action', 'id'].includes(key))
+    )
+      throw Error('Operação de arquivo inválida.');
+    return backend('/writer/file', 'POST', JSON.stringify(value));
   });
   ipcMain.handle('writer:dirty', (event, value) => {
     if (!trusted(event) || typeof value !== 'boolean') throw Error('Solicitação não autorizada.');

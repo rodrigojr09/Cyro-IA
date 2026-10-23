@@ -66,6 +66,10 @@ async def create(**kwargs):
             }
         ],
     }
+    if packet["message"] == "Quem abriu a porta?":
+        result.update(
+            intent="CHAT", reply="Lucas abriu a porta.", blocks=[], blockIds=[]
+        )
     return NS(
         choices=[
             NS(

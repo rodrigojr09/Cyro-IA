@@ -217,6 +217,8 @@ class WriterContextService:
             b.get("partial") for b in pieces
         )
         nodes = [n for n in writer.open()["nodes"] if not n["deleted"]]
+        if req.chat_id:
+            nodes = [n for n in nodes if active and n["id"] == active["id"]]
         summaries = []
         for node in nodes[:20]:
             if node["kind"] != "folder" and (not active or node["id"] != active["id"]):
@@ -265,6 +267,13 @@ class WriterContextService:
 
 async def assist(writer, request, client, model, available, cancel_event=None):
     req = Assist.model_validate(request)
+    if req.chat_id:
+        chat = writer.store.chat(req.chat_id)
+        if (
+            chat.get("project_id") != writer.project_id
+            or chat.get("writer_document_id") != req.document_id
+        ):
+            raise ReadError("Esta conversa está vinculada a outro arquivo.")
     request_id = identifier(req.request_id)
     settings = writer.settings()
     if not settings["enabled"] or not settings["cloud_consent"]:
@@ -284,6 +293,11 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                 result["proposal"] = writer.proposal(result["proposal"]["id"])
             return result
     context = WriterContextService.build(writer, req)
+    if req.chat_id:
+        context["chat_instructions"] = chat.get("instructions", "")[:2000]
+        context["file_focus"] = (
+            "Esta conversa trata somente do arquivo ativo. Perguntas sobre o conteúdo são CHAT e não alteram o documento. Edições usam append ou replace no arquivo ativo."
+        )
     with database(writer.path) as con:
         initial_tree = writer.tree_hash(con)
         initial_versions = {n["id"]: n["version"] for n in writer.tree(con)}
@@ -363,6 +377,17 @@ async def assist(writer, request, client, model, available, cancel_event=None):
     if req.intent_override:
         result.intent = req.intent_override
     proposed = None
+    if (
+        req.chat_id
+        and result.intent != "CHAT"
+        and (
+            result.targetDocumentId != req.document_id
+            or result.operation not in {"append", "replace"}
+        )
+    ):
+        raise ReadError(
+            "Esta conversa edita somente o arquivo vinculado. Peça uma alteração no documento atual."
+        )
     if result.intent != "CHAT":
         if (not result.targetDocumentId and result.operation != "create") or (
             result.intent == "WRITE" and result.operation != "append"
@@ -511,5 +536,10 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                     getattr(usage, "completion_tokens", 0) or 0,
                     getattr(usage, "total_tokens", 0) or 0,
                 ),
+            )
+    if req.chat_id:
+        with database(writer.store.registry) as con:
+            con.execute(
+                "UPDATE chats SET last_message_at=? WHERE id=?", (now(), req.chat_id)
             )
     return output

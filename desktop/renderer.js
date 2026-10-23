@@ -20,7 +20,10 @@ window.jarvisWindow.onDelta?.((delta) => {
 });
 const cancelChat = document.getElementById('cancel-response');
 cancelChat.hidden = true;
-cancelChat.onclick = () => window.jarvisWindow.cancelChat?.().catch(() => {});
+cancelChat.onclick = () =>
+  window.jarvisWriterUI?.embeddedActive
+    ? window.jarvisWriterUI.cancel()
+    : window.jarvisWindow.cancelChat?.().catch(() => {});
 window.jarvisAuth?.onState?.((value) => {
   if (!send.disabled && value.status !== 'active') status.textContent = value.message;
 });
@@ -240,6 +243,18 @@ async function speak(text) {
 }
 let preflighting = false;
 async function submit(clipboardText, expectedContext) {
+  if (window.jarvisWriterUI?.embeddedActive) {
+    if (send.disabled || window.jarvisStorageUsage?.blocked || window.jarvisAttachments?.has())
+      return false;
+    if (
+      typeof clipboardText === 'string' &&
+      expectedContext &&
+      window.jarvisWorkspace?.chat?.id !== expectedContext
+    )
+      return false;
+    if (typeof clipboardText === 'string') input.value = clipboardText;
+    return window.jarvisWriterUI.submit();
+  }
   const fromClipboard = typeof clipboardText === 'string';
   if (fromClipboard && (!window.jarvisWorkspace || window.jarvisAttachments?.has())) return false;
   if (window.jarvisStorageUsage?.blocked) return;

@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import zipfile
 from fastapi import HTTPException, Request
 from pydantic import ValidationError
 from programming.security import ReadError
@@ -19,6 +20,7 @@ from writer_models import (
 from writer_store import WriterStore, WriterConflict
 from writer_export import WriterExportService
 from writer_intelligence import assist
+from writer_files import WriterFiles
 
 
 def install(app, environment):
@@ -32,6 +34,33 @@ def install(app, environment):
             raise ReadError("Serviço local ainda não está pronto.")
         return WriterStore(getattr(store, "local", store), project_id)
 
+    @app.post("/writer/file")
+    async def source_file(request: Request):
+        if len(await request.body()) > 12000:
+            raise HTTPException(413, "Solicitação acima do limite.")
+        try:
+            data = await request.json()
+            service = WriterFiles(writer(data["project_id"]))
+            if data["action"] == "attach":
+                return await asyncio.to_thread(
+                    service.attach, data["path"], data.get("create") is True
+                )
+            if data["action"] == "info":
+                service.writer.get(data["id"])
+                return service.public_info(data["id"])
+            if data["action"] == "sync":
+                return await asyncio.to_thread(service.sync, data["id"])
+            raise ReadError("Operação de arquivo inválida.")
+        except WriterConflict as error:
+            raise HTTPException(409, str(error))
+        except ReadError as error:
+            raise HTTPException(400, str(error))
+        except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile):
+            raise HTTPException(
+                400,
+                "Não foi possível abrir ou salvar o arquivo. Verifique o formato e se ele está aberto em outro programa.",
+            )
+
     @app.post("/writer")
     async def command(request: Request):
         raw = await request.body()
@@ -41,6 +70,8 @@ def install(app, environment):
             req = Command.model_validate_json(raw)
             w = writer(req.project_id)
             p = req.payload
+            if req.action == "bind_chat":
+                return w.bind_chat(p["id"])
             if req.action == "open":
                 return w.open()
             if req.action == "get":

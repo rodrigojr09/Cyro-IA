@@ -451,7 +451,7 @@ def workspace():
     active_projects = {project["id"] for project in projects}
     with database(store.registry) as con:
         rows = con.execute(
-            "SELECT id,project_id,title,archived,last_message_at,created_at FROM chats "
+            "SELECT id,project_id,title,archived,last_message_at,created_at,writer_document_id FROM chats "
             "ORDER BY COALESCE(last_message_at,created_at) DESC"
         )
         chats = [
@@ -832,6 +832,11 @@ async def process_chat(req: ChatRequest):
             raise StorageFullError()
     chat_id = req.chat_id or await asyncio.to_thread(store.general_chat)
     chat_info = await asyncio.to_thread(store.chat, chat_id)
+    if chat_info.get("writer_document_id"):
+        raise HTTPException(
+            400,
+            "Use o fluxo Writer desta conversa para analisar ou editar o arquivo vinculado.",
+        )
     owner = (
         attachment_account()
         if req.attachments

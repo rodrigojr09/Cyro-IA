@@ -23,6 +23,7 @@ from writer_intelligence import (
     strict_editorial_schema,
 )
 from writer_export import WriterExportService
+from writer_files import WriterFiles
 
 
 def block(text, kind="paragraph"):
@@ -61,6 +62,161 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_linked_file_question_preserves_original_and_approval_updates_it(
+        self,
+    ):
+        path = Path(self.temp.name) / "Original.txt"
+        path.write_text("Lucas abriu a porta.", encoding="utf-8")
+        files = WriterFiles(self.writer)
+        chat = files.attach(path)
+        doc = self.writer.get(chat["writer_document_id"])
+        self.assertEqual(files.attach(path)["id"], chat["id"])
+        payload = dict(
+            chat_id=chat["id"],
+            document_id=doc["id"],
+            base_version=doc["version"],
+            request_id=uid(),
+            message="Quem abriu a porta?",
+        )
+        reply = await assist(
+            self.writer,
+            payload,
+            client(response(doc, "", intent="CHAT", reply="Lucas.")),
+            "fixture",
+            True,
+        )
+        self.assertIsNone(reply["proposal"])
+        self.assertEqual(path.read_text(encoding="utf-8"), "Lucas abriu a porta.")
+        payload.update(message="Deixe o trecho mais misterioso.", request_id=uid())
+        edit = await assist(
+            self.writer,
+            payload,
+            client(
+                response(
+                    doc,
+                    "",
+                    intent="INSTRUCT",
+                    operation="replace",
+                    blockIds=[doc["blocks"][0]["id"]],
+                    blocks=[block("Lucas abriu lentamente a antiga porta.")],
+                )
+            ),
+            "fixture",
+            True,
+        )
+        self.assertEqual(path.read_text(encoding="utf-8"), "Lucas abriu a porta.")
+        self.writer.decide(Decision(id=edit["proposal"]["id"], approve=True))
+        files.sync(doc["id"])
+        self.assertEqual(
+            path.read_text(encoding="utf-8"), "Lucas abriu lentamente a antiga porta."
+        )
+        self.assertEqual(self.writer.bind_chat(doc["id"])["id"], chat["id"])
+
+    def test_original_external_changes_and_backup_are_protected(self):
+        path = Path(self.temp.name) / "original.md"
+        path.write_text("Original", encoding="utf-8")
+        files = WriterFiles(self.writer)
+        chat = files.attach(path)
+        node = self.writer.get(chat["writer_document_id"])
+        self.save(node, [block("Edição aprovada")])
+        path.write_text("Editado no Word", encoding="utf-8")
+        with self.assertRaises(WriterConflict):
+            files.sync(node["id"])
+        self.assertEqual(path.read_text(encoding="utf-8"), "Editado no Word")
+        self.assertEqual(
+            self.writer.get(node["id"])["blocks"][0]["text"], "Edição aprovada"
+        )
+        backup = Path(self.temp.name) / "Backup"
+        backup.mkdir()
+        with self.assertRaises(ReadError):
+            files.attach(backup / "nunca.txt", create=True)
+        self.assertFalse((backup / "nunca.txt").exists())
+        with self.assertRaises(ReadError):
+            files.attach(path, create=True)
+
+    def test_create_and_reopen_word_original_without_title_injection(self):
+        from docx import Document
+
+        files = WriterFiles(self.writer)
+        path = Path(self.temp.name) / "Novo.docx"
+        chat = files.attach(path, create=True)
+        doc = self.writer.get(chat["writer_document_id"])
+        self.save(doc, [block("Primeiro parágrafo")])
+        files.sync(doc["id"])
+        self.assertEqual(
+            [p.text for p in Document(path).paragraphs], ["Primeiro parágrafo"]
+        )
+        self.assertEqual(
+            WriterFiles(self.writer).info(doc["id"])["version"],
+            self.writer.get(doc["id"])["version"],
+        )
+        self.assertFalse(
+            any(x.name.startswith(".jarvis-writer-") for x in path.parent.iterdir())
+        )
+
+    def test_word_advanced_features_and_document_limit_rejected_without_touching_source(
+        self,
+    ):
+        from docx import Document
+
+        path = Path(self.temp.name) / "tabela.docx"
+        original = Document()
+        original.add_table(rows=1, cols=1)
+        original.save(path)
+        raw = path.read_bytes()
+        with self.assertRaises(ReadError):
+            WriterFiles(self.writer).attach(path)
+        self.assertEqual(path.read_bytes(), raw)
+        large = Path(self.temp.name) / "grande.txt"
+        large.write_text("a" * 12001, encoding="utf-8")
+        with self.assertRaises(ValueError):
+            WriterFiles(self.writer).attach(large)
+        self.assertEqual(large.stat().st_size, 12001)
+
+    async def test_bound_writer_cannot_edit_another_file_or_archived_chat(self):
+        chat = self.writer.bind_chat(self.doc["id"])
+        other = self.writer.create("Outro.docx")
+        req = dict(
+            chat_id=chat["id"],
+            document_id=self.doc["id"],
+            base_version=1,
+            request_id=uid(),
+            message="Altere outro arquivo",
+        )
+        with self.assertRaises(ReadError):
+            await assist(
+                self.writer, req, client(response(other, "Texto")), "fixture", True
+            )
+        self.store.change_chat(chat["id"], archived=True)
+        with self.assertRaises(ReadError):
+            await assist(
+                self.writer, req, client(response(self.doc, "Texto")), "fixture", True
+            )
+
+    def test_migration_keeps_writer_conversation_and_revisions(self):
+        self.save(self.doc, [block("Texto que precisa permanecer")])
+        reopened = ProjectStore(self.store.root)
+        chats = reopened.chats(self.project["id"])
+        bound = [c for c in chats if c.get("writer_document_id") == self.doc["id"]]
+        self.assertEqual(len(bound), 1)
+        self.assertEqual(
+            WriterStore(reopened, self.project["id"]).get(self.doc["id"])["blocks"][0][
+                "text"
+            ],
+            "Texto que precisa permanecer",
+        )
+        again = ProjectStore(self.store.root)
+        self.assertEqual(
+            len(
+                [
+                    c
+                    for c in again.chats(self.project["id"])
+                    if c.get("writer_document_id") == self.doc["id"]
+                ]
+            ),
+            1,
+        )
+
     def test_native_contract_requires_all_fields_without_removing_local_limits(self):
         schema = strict_editorial_schema()
 
@@ -911,7 +1067,7 @@ class WriterAuthenticationTests(unittest.TestCase):
         JarvisTests.tearDown(self)
 
     def test_all_writer_routes_use_existing_local_token(self):
-        for route in ["/writer", "/writer/export", "/writer/cancel"]:
+        for route in ["/writer", "/writer/export", "/writer/cancel", "/writer/file"]:
             response = self.client.post(
                 route, json={"project_id": uid()}, headers={"X-Jarvis-Token": ""}
             )

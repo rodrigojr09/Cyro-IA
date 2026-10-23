@@ -1,8 +1,20 @@
 /* Structured blocks are data. No document HTML or model text is executed. */
 (() => {
   if (!window.jarvisWriter) return;
+  const embedded = !!document.getElementById('messages');
+  let embeddedActive = false,
+    fileInfo = null;
+  const originalContext = document.getElementById('composer-context')?.innerHTML;
+  const aliases = {
+    'writer-input': 'input',
+    'writer-send': 'send',
+    'writer-messages': 'messages',
+    'writer-status': 'status',
+    'writer-cancel': 'cancel-response',
+    'writer-chat-title': 'conversation-name',
+  };
   const bridge = window.jarvisWriter,
-    $ = (id) => document.getElementById(id),
+    $ = (id) => document.getElementById(embedded ? aliases[id] || id : id),
     uid = () => crypto.randomUUID();
   let project = null,
     catalog = null,
@@ -32,6 +44,48 @@
   <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><label>Modo<select id="writer-mode"><option value="">Híbrido</option><option value="WRITE">Escrita</option><option value="INSTRUCT">Orientação</option><option value="ORGANIZE">Organização</option><option value="CHAT">Conversa</option></select></label><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
   <aside class="writer-preview"><header><div><span>PRÉVIA DO DOCUMENTO</span><strong id="writer-filename">Nenhum arquivo</strong></div><button id="writer-edit" aria-pressed="false">Editar</button><button id="writer-collapse-assistant" aria-pressed="false" title="Ampliar documento">Ampliar</button></header><div class="writer-document-tools"><button id="writer-undo">Desfazer</button><button id="writer-redo">Refazer</button><button id="writer-history">Revisões</button><button id="writer-export">Exportar</button><span id="writer-word-count">0 palavras</span></div><p id="writer-preview-notice"></p><nav id="writer-outline" aria-label="Seções do documento"></nav><div id="writer-paper" tabindex="0"></div><div id="writer-edit-tools" hidden><button id="writer-add-block">＋ Parágrafo</button><button id="writer-bold">Negrito</button><button id="writer-italic">Itálico</button></div></aside></div>`;
   document.body.append(root);
+  let layout, chatColumn, preview, writerStrip;
+  if (embedded) {
+    layout = document.createElement('div');
+    layout.className = 'chat-document-layout';
+    chatColumn = document.createElement('div');
+    chatColumn.className = 'writer-standard-chat';
+    const scroll = document.getElementById('conversation-scroll');
+    scroll.before(layout);
+    layout.append(chatColumn);
+    chatColumn.append(
+      scroll,
+      document.getElementById('jump-bottom'),
+      document.querySelector('.composer-wrap'),
+    );
+    preview = root.querySelector('.writer-preview');
+    preview.hidden = true;
+    preview.id = 'writer-preview-pane';
+    layout.append(preview);
+    const tools = preview.querySelector('.writer-document-tools');
+    tools.append($('writer-settings'), $('writer-retry'), $('writer-compare-save'));
+    const saveFile = document.createElement('button');
+    saveFile.id = 'writer-save-file';
+    saveFile.textContent = 'Salvar no arquivo';
+    saveFile.onclick = () =>
+      run(async () => {
+        await flush();
+        await syncFile();
+      });
+    tools.append(saveFile);
+    preview.append($('writer-save-state'));
+    const composer = document.querySelector('.composer-wrap');
+    composer.prepend($('writer-proposal'));
+    writerStrip = document.createElement('div');
+    writerStrip.id = 'writer-context-strip';
+    writerStrip.hidden = true;
+    writerStrip.append($('writer-selection'));
+    const notice = document.createElement('small');
+    notice.textContent =
+      'Pergunte sobre o arquivo ou peça uma alteração. Revise as mudanças em azul.';
+    writerStrip.append(notice);
+    composer.prepend(writerStrip);
+  }
   const promptDialog = document.createElement('dialog');
   promptDialog.id = 'writer-prompt';
   promptDialog.innerHTML = `<form method="dialog"><h3 id="writer-prompt-title"></h3><label id="writer-prompt-label">Nome do arquivo<input id="writer-prompt-value" maxlength="120" required autocomplete="off"></label><label id="writer-kind-label">Tipo<select id="writer-prompt-kind"><option value="document">Documento</option><option value="chapter">Capítulo</option><option value="section">Seção</option><option value="folder">Pasta</option></select></label><p id="writer-prompt-hint"></p><footer><button value="cancel" formnovalidate>Cancelar</button><button value="ok">Continuar</button></footer></form>`;
@@ -126,7 +180,9 @@
       ? saveError
         ? 'Edição pendente — não feche'
         : 'Salvando…'
-      : 'Salvo neste computador';
+      : embeddedActive && fileInfo?.linked && fileInfo.saved_version !== doc?.version
+        ? 'Salvo no JARVIS · alterações pendentes no arquivo'
+        : 'Salvo neste computador';
     $('writer-retry').hidden = !saveError;
     $('writer-compare-save').hidden = !saveError;
     bridge.dirty(dirty).catch(() => {});
@@ -425,7 +481,10 @@
   function renderProposal() {
     const visible = proposal?.state === 'PENDING';
     $('writer-proposal').hidden = !visible;
-    $('writer-send').textContent = visible ? 'Aprovar e enviar' : 'Enviar ao Writer';
+    if (embedded) {
+      $('writer-send').title = visible ? 'Aprovar alteração anterior e enviar' : 'Enviar mensagem';
+      $('writer-send').setAttribute('aria-label', $('writer-send').title);
+    } else $('writer-send').textContent = visible ? 'Aprovar e enviar' : 'Enviar ao Writer';
     if (!visible) return;
     $('writer-intent-badge').textContent = labels[proposal.intent] || 'Proposta';
     $('writer-proposal-title').textContent = describe(proposal.plan);
@@ -436,6 +495,8 @@
     $('writer-correct-intent').value = proposal.intent === 'MANUAL' ? 'ORGANIZE' : proposal.intent;
     $('writer-correct-intent').disabled = proposal.intent === 'MANUAL';
     $('writer-approve').disabled = !!(proposal.node === doc?.id && proposal.base !== doc?.version);
+    if (embeddedActive && window.jarvisWorkspace?.chat?.archived)
+      $('writer-approve').disabled = true;
     $('writer-show-target').hidden = !proposal.node || proposal.node === doc?.id;
     $('writer-adjust-area').hidden = true;
   }
@@ -523,6 +584,12 @@
     }
   }
   function bubble(role, content, intent) {
+    if (embedded && typeof addMessage === 'function') {
+      addMessage(role, content);
+      window.jarvisUI?.welcome(false);
+      window.jarvisUI?.scroll(true);
+      return $('writer-messages').lastElementChild;
+    }
     const row = document.createElement('div');
     row.className = 'writer-message ' + role;
     if (intent) {
@@ -580,6 +647,7 @@
     if (approve && result.state === 'APPLIED') {
       status('Alteração salva. Use Desfazer para recuperar a versão anterior.');
       if (doc) doc = await command('get', { id: doc.id, include_removed: true });
+      if (embeddedActive) await syncFile();
       if (proposal.plan.operation === 'delete') {
         doc = await command('get', { id: doc.id, include_removed: true });
         editing = false;
@@ -600,12 +668,14 @@
   async function send(override = null, textOverride = null) {
     if (assistantBusy || sending) return;
     sending = true;
+    if (embeddedActive) window.jarvisWorkspace?.begin();
     $('writer-send').disabled = true;
     try {
-      await prepareSend(override, textOverride);
+      return await prepareSend(override, textOverride);
     } finally {
       sending = false;
       $('writer-send').disabled = assistantBusy;
+      if (embeddedActive) window.jarvisWorkspace?.end();
     }
   }
   async function prepareSend(override = null, textOverride = null) {
@@ -647,6 +717,7 @@
     status('Consultando IA Cloud…');
     try {
       const result = await command('assist', {
+        ...(embeddedActive ? { chat_id: window.jarvisWorkspace.chat.id } : {}),
         request_id: uid(),
         message: text,
         document_id: documentId,
@@ -712,11 +783,17 @@
           ? 'Revise a proposta no documento.'
           : 'Resposta recebida. O documento não foi alterado.',
       );
+      if (embeddedActive) {
+        window.jarvisUI?.resize();
+        window.jarvisUI?.scroll(true);
+      }
+      return true;
     } catch (error) {
       if (epoch !== generation) return;
       pendingBubble.remove();
       status(error.message + ' Sua mensagem continua disponível para nova tentativa.', true);
       $('writer-input').value = text;
+      return false;
     } finally {
       assistantBusy = false;
       $('writer-send').disabled = false;
@@ -769,6 +846,7 @@
     $('writer-settings-status').textContent = '';
   }
   async function open(options = {}) {
+    if (embedded) return createChat();
     const active = window.jarvisWorkspace?.project;
     if (!active) throw Error('Writer é exclusivo dos projetos. Abra um projeto primeiro.');
     await flush();
@@ -794,12 +872,17 @@
     if (recent) await load(recent.id);
     else if (!options.preferencesOnly) await create();
   }
-  $('writer-open').onclick = () => run(open);
+  if ($('writer-open')) $('writer-open').onclick = () => run(open);
   if ($('project-writer-settings'))
     $('project-writer-settings').onclick = () =>
       run(async () => {
         $('project-settings-dialog').close();
-        await open({ preferencesOnly: true });
+        if (embedded) {
+          const active = window.jarvisWorkspace?.project;
+          if (!active) return;
+          project = active;
+          catalog = await command('open');
+        } else await open({ preferencesOnly: true });
         stopAuto();
         fillSettings();
         settingsDialog.showModal();
@@ -844,19 +927,21 @@
       conflictDialog.close();
       status('Edição recuperada como nova revisão; versão anterior preservada.');
     });
-  $('writer-send').onclick = () => run(() => send());
-  $('writer-input').onkeydown = (event) => {
-    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) {
-      event.preventDefault();
-      $('writer-send').click();
-    }
-  };
-  $('writer-cancel').onclick = () =>
-    run(async () => {
-      stopAuto();
-      await bridge.cancel(project.id);
-      status('Cancelamento solicitado.');
-    });
+  if (!embedded) $('writer-send').onclick = () => run(() => send());
+  if (!embedded)
+    $('writer-input').onkeydown = (event) => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+        event.preventDefault();
+        $('writer-send').click();
+      }
+    };
+  if (!embedded)
+    $('writer-cancel').onclick = () =>
+      run(async () => {
+        stopAuto();
+        await bridge.cancel(project.id);
+        status('Cancelamento solicitado.');
+      });
   $('writer-approve').onclick = () => run(() => decide(true));
   $('writer-reject').onclick = () => run(() => decide(false));
   $('writer-correct-intent').onchange = () =>
@@ -962,6 +1047,7 @@
         doc = await command('get', { id: doc.id, include_removed: true });
         await refreshTree();
         renderPreview();
+        if (embeddedActive) await syncFile();
         status(
           action === 'undo'
             ? 'Alteração desfeita e registrada.'
@@ -1113,6 +1199,7 @@
       });
       historyDialog.close();
       await load(doc.id);
+      if (embeddedActive) await syncFile();
     });
   $('writer-export').onclick = () =>
     run(async () => {
@@ -1178,6 +1265,11 @@
     $('writer-toggle-preview').setAttribute('aria-expanded', String(!hidden));
   };
   $('writer-collapse-assistant').onclick = () => {
+    if (embedded) {
+      const expanded = layout.classList.toggle('document-expanded');
+      $('writer-collapse-assistant').setAttribute('aria-pressed', String(expanded));
+      return;
+    }
     if (window.innerWidth <= 620) {
       root.classList.remove('writer-mobile-preview');
       root.classList.remove('writer-reading');
@@ -1186,9 +1278,140 @@
     const expanded = root.classList.toggle('writer-reading');
     $('writer-collapse-assistant').setAttribute('aria-pressed', String(expanded));
   };
-  // Testable entry uses exactly the same project and authenticated IPC as the visible button.
+  async function syncFile() {
+    if (!bridge.file || !doc || doc.deleted) return;
+    const result = await bridge.file({ project_id: project.id, action: 'sync', id: doc.id });
+    if (!result.ok) {
+      renderProposal();
+      renderPreview();
+      throw Error(
+        result.data?.detail ||
+          'Edição salva no JARVIS, mas o arquivo original não foi atualizado. Exporte uma cópia para recuperar.',
+      );
+    }
+    fileInfo = result.data;
+    updateSaveState();
+    status(
+      result.data.linked
+        ? 'Arquivo original atualizado. A versão anterior permanece nas revisões.'
+        : 'Salvo no projeto. Use Exportar para criar um arquivo.',
+    );
+  }
+  async function mount(activeProject, activeChat) {
+    if (!embedded || !activeChat.writer_document_id) return;
+    project = activeProject;
+    catalog = await command('open');
+    doc = null;
+    fileInfo = null;
+    embeddedActive = true;
+    preview.hidden = false;
+    writerStrip.hidden = false;
+    layout.classList.add('has-writer-document');
+    document.getElementById('attach-files').hidden = true;
+    document.getElementById('composer-context').textContent = 'Arquivo vinculado · JARVIS Writer';
+    document.querySelector('.attachment-caption').hidden = true;
+    await load(activeChat.writer_document_id);
+    if (bridge.file) {
+      const response = await bridge.file({ project_id: project.id, action: 'info', id: doc.id });
+      if (!response.ok)
+        throw Error(response.data?.detail || 'Não foi possível verificar o arquivo.');
+      fileInfo = response.data;
+      $('writer-save-file').hidden = !fileInfo.linked;
+      updateSaveState();
+    }
+    window.jarvisUI?.welcome(false);
+    const archived = !!activeChat.archived;
+    for (const id of [
+      'writer-edit',
+      'writer-undo',
+      'writer-redo',
+      'writer-save-file',
+      'writer-approve',
+      'writer-reject',
+      'writer-adjust',
+      'writer-apply-adjusted',
+      'writer-correct-intent',
+      'writer-restore',
+    ]) {
+      $(id).disabled = archived;
+    }
+    if (!archived) renderProposal();
+  }
+  async function unmount() {
+    if (!embeddedActive) return;
+    await flush();
+    stopAuto();
+    if (assistantBusy) await bridge.cancel(project.id);
+    generation++;
+    embeddedActive = false;
+    doc = null;
+    proposal = null;
+    preview.hidden = true;
+    writerStrip.hidden = true;
+    $('writer-proposal').hidden = true;
+    layout.classList.remove('has-writer-document', 'document-expanded');
+    document.getElementById('attach-files').hidden = false;
+    document.getElementById('composer-context').innerHTML = originalContext;
+    document.querySelector('.attachment-caption').hidden = false;
+    $('writer-send').title = 'Enviar mensagem';
+    $('writer-send').setAttribute('aria-label', 'Enviar mensagem');
+    bridge.dirty(false);
+  }
+  const fileChoice = document.createElement('dialog');
+  fileChoice.setAttribute('aria-labelledby', 'writer-file-choice-title');
+  fileChoice.innerHTML =
+    '<h3 id="writer-file-choice-title">Arquivo desta conversa</h3><p>Crie um arquivo ou escolha um documento do computador. Alterações aprovadas atualizam o original; perguntas não alteram o conteúdo.</p><button data-choice="new">Criar arquivo</button><button data-choice="existing">Escolher arquivo</button><div id="writer-existing-files"></div><button data-choice="cancel">Cancelar</button><p id="writer-file-choice-error" role="status"></p>';
+  document.body.append(fileChoice);
+  async function createChat() {
+    project = window.jarvisWorkspace?.project;
+    if (!project) throw Error('Abra um projeto primeiro.');
+    catalog = await command('open');
+    const previous = document.getElementById('writer-existing-files');
+    previous.replaceChildren();
+    const enter = async (chat) => {
+      fileChoice.close();
+      await window.jarvisWorkspace.catalog(project.id, chat.id);
+    };
+    for (const node of catalog.nodes.filter((n) => !n.deleted && n.kind !== 'folder')) {
+      const entry = document.createElement('button');
+      entry.textContent = 'Continuar: ' + node.title;
+      entry.onclick = () => run(async () => enter(await command('bind_chat', { id: node.id })));
+      previous.append(entry);
+    }
+    fileChoice.querySelectorAll('[data-choice]').forEach(
+      (button) =>
+        (button.onclick = async () => {
+          if (button.dataset.choice === 'cancel') {
+            fileChoice.close();
+            return;
+          }
+          button.disabled = true;
+          try {
+            const result = await bridge.chooseFile({
+              project_id: project.id,
+              create: button.dataset.choice === 'new',
+            });
+            if (!result.cancelled) await enter(result.chat);
+          } catch (error) {
+            document.getElementById('writer-file-choice-error').textContent = error.message;
+          } finally {
+            button.disabled = false;
+          }
+        }),
+    );
+    document.getElementById('writer-file-choice-error').textContent = '';
+    fileChoice.showModal();
+  }
   window.jarvisWriterUI = {
     open,
+    mount,
+    unmount,
+    createChat,
+    submit: () => run(() => send()),
+    cancel: () => run(() => bridge.cancel(project.id)),
+    get embeddedActive() {
+      return embeddedActive;
+    },
     flush,
     get active() {
       return doc;

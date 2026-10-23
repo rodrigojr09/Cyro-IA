@@ -197,7 +197,17 @@ app.whenReady().then(async () => {
       /Assunto independente/,
     );
     assert.equal(await js(`document.querySelectorAll('#messages pre').length`), 0);
-    await js(`document.getElementById('new-chat').onclick()`);
+    await js(`document.querySelector('#project-list .navigation-add').click()`);
+    assert.deepEqual(
+      await js(`Array.from(document.querySelectorAll('[role="menuitem"]'), b=>b.textContent)`),
+      ['Chat do projeto', 'JARVIS Writer'],
+    );
+    await js(
+      `Array.from(document.querySelectorAll('[role="menuitem"]')).find(b=>b.textContent==='Chat do projeto').click()`,
+    );
+    await js(
+      `new Promise(resolve=>{const poll=()=>window.jarvisWorkspace.chat?.id==='55555555-5555-4555-8555-555555555555'?resolve():setTimeout(poll,20);poll();})`,
+    );
     assert.equal(
       await js(`window.jarvisWorkspace.chat.id`),
       '55555555-5555-4555-8555-555555555555',

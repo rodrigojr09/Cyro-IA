@@ -113,7 +113,7 @@ test('projetos e chats trocam histórico sem contaminar o contexto e novo chat r
   await window.jarvisWorkspace.view('project-a', 'second');
   assert.equal(window.jarvisWorkspace.chat.id, 'second');
   assert.equal(elements.messages.children[0].textContent, 'Contexto second');
-  await elements['new-chat'].onclick();
+  await window.jarvisWorkspace.newChat();
   assert.equal(window.jarvisWorkspace.chat.id, 'new');
   assert.equal(
     calls.some((item) => item.route === '/projects/refresh'),

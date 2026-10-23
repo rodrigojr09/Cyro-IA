@@ -90,6 +90,7 @@ class Command(Strict):
     project_id: str
     action: Literal[
         "open",
+        "bind_chat",
         "get",
         "proposal",
         "revision",
@@ -142,6 +143,7 @@ class Structure(Strict):
 
 
 class Assist(Strict):
+    chat_id: str | None = None
     request_id: str
     message: str = Field(min_length=1, max_length=6000)
     document_id: str | None = None

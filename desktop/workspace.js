@@ -19,12 +19,9 @@ window.jarvisWorkspace = (() => {
       busy ||
       loading ||
       !!chat?.archived ||
-      !!(project && (!project.ready || project.scope_confirmed === 0));
-    el('new-chat').disabled =
-      !!window.jarvisStorageUsage?.blocked ||
-      busy ||
-      loading ||
-      !!(project && (!project.ready || project.scope_confirmed === 0));
+      !!(project && !chat?.writer_document_id && (!project.ready || project.scope_confirmed === 0));
+    (el('new-general-chat') || el('new-chat')).disabled =
+      !!window.jarvisStorageUsage?.blocked || busy || loading;
     el('add-project').disabled = busy || loading;
     el('accept-partial').hidden = !(
       project &&
@@ -64,6 +61,7 @@ window.jarvisWorkspace = (() => {
     el('save-note').disabled = busy || loading || !project || !project.ready;
     for (const id of ['rename-chat', 'archive-chat', 'delete-chat', 'older-messages'])
       el(id).disabled = !chat || loading || busy;
+    if (chat?.writer_document_id) el('older-messages').disabled = true;
     if (chat?.slot) {
       el('archive-chat').disabled = true;
       el('delete-chat').disabled = true;
@@ -128,6 +126,16 @@ window.jarvisWorkspace = (() => {
       );
       row.appendChild(toggle);
       row.appendChild(name);
+      const create = button(
+        '+',
+        'navigation-add',
+        () => projectCreate(item, create),
+        'Criar no projeto ' + item.name,
+      );
+      create.setAttribute?.('aria-label', 'Criar no projeto ' + item.name);
+      create.setAttribute?.('aria-haspopup', 'menu');
+      create.disabled = busy || loading;
+      row.appendChild(create);
       el('project-list').appendChild(row);
       if (expanded.has(item.id) || query) {
         const list = document.createElement('div');
@@ -159,6 +167,38 @@ window.jarvisWorkspace = (() => {
     return row;
   }
   let menu = null;
+  function projectCreate(item, anchor) {
+    closeMenu();
+    menu = document.createElement('div');
+    menu.className = 'chat-context-menu';
+    menu.setAttribute('role', 'menu');
+    const rect = anchor.getBoundingClientRect();
+    menu.style.left = Math.min(rect.left, window.innerWidth - 230) + 'px';
+    menu.style.top = rect.bottom + 'px';
+    for (const [label, writer] of [
+      ['Chat do projeto', false],
+      ['JARVIS Writer', true],
+    ]) {
+      const entry = button(label, '', () => {
+        closeMenu();
+        void run(async () => {
+          await view(item.id);
+          if (writer) await window.jarvisWriterUI.createChat();
+          else await newChat();
+        });
+      });
+      entry.setAttribute('role', 'menuitem');
+      menu.appendChild(entry);
+    }
+    document.body.appendChild(menu);
+    menu.querySelector('button').focus();
+    menu.onkeydown = (event) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+        anchor.focus();
+      }
+    };
+  }
   function closeMenu() {
     menu?.remove();
     menu = null;
@@ -218,7 +258,9 @@ window.jarvisWorkspace = (() => {
       }
     };
   }
-  document.addEventListener?.('click', closeMenu);
+  document.addEventListener?.('click', (event) => {
+    if (!event.target.closest?.('.navigation-add')) closeMenu();
+  });
   document.addEventListener?.('contextmenu', (event) => {
     if (!event.target.closest?.('.chat-item')) closeMenu();
   });
@@ -308,6 +350,7 @@ window.jarvisWorkspace = (() => {
           item.attachments_unavailable,
         );
       }
+      if (chat.writer_document_id) await window.jarvisWriterUI.mount(project, chat);
       ui()?.scroll(true);
       el('chat-title').value = chat.title;
       el('archive-chat').textContent = chat.archived ? 'Restaurar' : 'Arquivar';
@@ -324,6 +367,7 @@ window.jarvisWorkspace = (() => {
   }
   async function view(id, preferred, preserveAttachments = false) {
     if (busy || loading) return;
+    await window.jarvisWriterUI?.unmount?.();
     if (
       !preserveAttachments &&
       ((chat?.id || null) !== (preferred || null) || (project?.id || '') !== id)
@@ -465,7 +509,12 @@ window.jarvisWorkspace = (() => {
         el('project-settings-dialog').close();
         await window.jarvisScope.open(project, async () => catalog(project.id, chat?.id));
       });
-    handler('new-chat', newChat);
+    if (el('new-general-chat'))
+      handler('new-general-chat', async () => {
+        await view('');
+        await newChat();
+      });
+    else handler('new-chat', newChat);
     handler('add-project', async () => {
       const result = await window.jarvisWindow.authorizeFolder();
       if (result.canceled) return;

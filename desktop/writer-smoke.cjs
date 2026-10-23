@@ -101,6 +101,10 @@ app.whenReady().then(async () => {
       mainWindow: () => window,
       backend,
       dialog: {
+        showOpenDialog: async () => ({
+          canceled: false,
+          filePaths: [path.join(directory, 'Original.txt')],
+        }),
         showSaveDialog: async () => ({
           canceled: false,
           filePath: path.join(directory, 'Livro.docx'),
@@ -109,131 +113,125 @@ app.whenReady().then(async () => {
     });
     await window.loadFile(path.join(__dirname, 'index.html'));
     const execute = (code) => window.webContents.executeJavaScript(code, true);
-    await execute(
-      `window.jarvisWorkspace={project:${JSON.stringify({ id: boot.project.id, name: boot.project.name })}};window.jarvisWriterUI.open()`,
+    const waitFor = async (condition) => {
+      for (let i = 0; i < 100; i++) {
+        if (await execute(condition)) return;
+        await pause(80);
+      }
+      throw Error(
+        'Condição não alcançada: ' +
+          condition +
+          ' Status: ' +
+          (await execute('document.getElementById("status").textContent')),
+      );
+    };
+    const bound = await backend(
+      '/writer',
+      'POST',
+      JSON.stringify({
+        project_id: boot.project.id,
+        action: 'bind_chat',
+        payload: { id: boot.document },
+      }),
     );
-    assert.equal(await execute('document.getElementById("writer-dialog").open'), true);
-    await execute(`document.getElementById('writer-edit').click()`);
-    await pause(100);
+    assert(bound.ok);
     await execute(
-      `(()=>{const field=document.querySelector('#writer-paper textarea');field.value='Lucas abriu a porta. Sua mão tremia.';field.dispatchEvent(new Event('input',{bubbles:true}));return window.jarvisWriterUI.flush();})()`,
+      'window.jarvisWorkspace={project:' +
+        JSON.stringify(boot.project) +
+        ',chat:' +
+        JSON.stringify(bound.data) +
+        ',begin(){},end(){},async catalog(project,id){const r=await window.jarvisWriter.command({project_id:project,action:"open",payload:{}});const node=r.data.nodes.find(n=>n.id===window.testImportedDocument);this.chat={id,writer_document_id:node.id};await window.jarvisWriterUI.mount(this.project,this.chat);}};window.jarvisWriterUI.mount(window.jarvisWorkspace.project,window.jarvisWorkspace.chat)',
     );
-    await execute(`document.getElementById('writer-edit').click()`);
-    await pause(100);
+    assert.equal(await execute('document.getElementById("writer-dialog").open'), false);
+    assert.equal(await execute('document.getElementById("writer-preview-pane").hidden'), false);
+    assert.equal(await execute('!!document.getElementById("new-chat")'), false);
+    await execute('document.getElementById("writer-edit").click()');
+    await waitFor('!!document.querySelector("#writer-paper textarea")');
     await execute(
-      `document.getElementById('writer-input').value='Deixe o trecho mais misterioso.';document.getElementById('writer-send').click()`,
+      '(()=>{const field=document.querySelector("#writer-paper textarea");field.value="Lucas abriu a porta. Sua mão tremia.";field.dispatchEvent(new Event("input",{bubbles:true}));return window.jarvisWriterUI.flush();})()',
     );
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`!document.getElementById('writer-proposal').hidden`)) break;
-      await pause(100);
-    }
-    assert.equal(await execute(`!!document.querySelector('#writer-paper mark')`), true);
-    assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /Sua mão tremia/);
-    window.show();
-    await pause(500);
-    const screenshot = path.join(directory, 'writer-preview.png');
+    await execute('document.getElementById("writer-edit").click()');
+    await waitFor('!document.querySelector("#writer-paper textarea")');
+    await execute(
+      'document.getElementById("input").value="Deixe o trecho mais misterioso.";window.jarvisWriterUI.submit()',
+    );
+    await waitFor('!document.getElementById("writer-proposal").hidden');
+    assert.equal(await execute('!!document.querySelector("#writer-paper mark")'), true);
+    assert.equal(await execute('!!document.querySelector("#messages .message.user")'), true);
+    assert.equal(await execute('!!document.querySelector("#send svg, #send i")'), true);
+    window.showInactive();
+    await pause(400);
+    assert.equal(
+      await execute(
+        'document.getElementById("writer-preview-pane").getBoundingClientRect().width > 200',
+      ),
+      true,
+    );
+    const screenshot = path.join(directory, 'writer-integrated.png');
     fs.writeFileSync(screenshot, (await window.webContents.capturePage()).toPNG());
-    await execute(`document.getElementById('writer-approve').click()`);
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('lentamente')`))
-        break;
-      await pause(100);
-    }
-    assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /lentamente/);
-    await execute(`document.getElementById('writer-undo').click()`);
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('Sua mão tremia')`))
-        break;
-      await pause(100);
-    }
-    assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /Sua mão tremia/);
-    await execute(`document.getElementById('writer-export').click()`);
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`document.getElementById('writer-export-dialog').open`)) break;
-      await pause(100);
-    }
-    await execute(`document.getElementById('writer-export-save').click()`);
+    await execute('document.getElementById("writer-approve").click()');
+    await waitFor('window.jarvisWriterUI.active.blocks[0].text.includes("lentamente")');
+    await execute('document.getElementById("writer-undo").click()');
+    await waitFor('window.jarvisWriterUI.active.blocks[0].text.includes("Sua mão tremia")');
+    await execute('window.jarvisWriterUI.unmount()');
+    assert.equal(await execute('document.getElementById("writer-preview-pane").hidden'), true);
+    await execute(
+      'window.jarvisWriterUI.mount(window.jarvisWorkspace.project,window.jarvisWorkspace.chat)',
+    );
+    assert.match(await execute('window.jarvisWriterUI.active.blocks[0].text'), /Sua mão tremia/);
+    const sourcePath = path.join(directory, 'Original.txt');
+    fs.writeFileSync(sourcePath, 'Lucas abriu a porta.');
+    const imported = await execute(
+      'window.jarvisWriter.chooseFile({project_id:window.jarvisWorkspace.project.id,create:false})',
+    );
+    assert.equal(imported.chat.title, 'Original.txt');
+    await execute('window.jarvisWriterUI.unmount();');
+    await execute(
+      'window.jarvisWorkspace.chat=' +
+        JSON.stringify(imported.chat) +
+        ';window.jarvisWriterUI.mount(window.jarvisWorkspace.project,window.jarvisWorkspace.chat)',
+    );
+    await execute(
+      'document.getElementById("input").value="Quem abriu a porta?";window.jarvisWriterUI.submit()',
+    );
+    assert.equal(fs.readFileSync(sourcePath, 'utf8'), 'Lucas abriu a porta.');
+    assert.equal(await execute('document.getElementById("writer-proposal").hidden'), true);
+    assert.match(await execute('document.getElementById("messages").textContent'), /Lucas/);
+    await execute(
+      'document.getElementById("input").value="Deixe o trecho mais misterioso.";window.jarvisWriterUI.submit()',
+    );
+    assert.equal(fs.readFileSync(sourcePath, 'utf8'), 'Lucas abriu a porta.');
+    await execute('document.getElementById("writer-approve").click()');
+    await waitFor('document.getElementById("status").textContent.includes("original atualizado")');
+    assert.match(fs.readFileSync(sourcePath, 'utf8'), /lentamente/);
+    await execute(
+      'document.getElementById("input").value="muito resumido";window.jarvisWriterUI.submit()',
+    );
+    assert.equal(await execute('document.getElementById("writer-proposal").hidden'), false);
+    await execute(
+      'document.getElementById("input").value="Quem abriu a porta?";window.jarvisWriterUI.submit()',
+    );
+    assert.match(fs.readFileSync(sourcePath, 'utf8'), /supervisão/);
+    assert.equal(await execute('document.getElementById("writer-proposal").hidden'), true);
+    await execute(
+      'document.getElementById("input").value="Deixe o trecho mais misterioso.";window.jarvisWriterUI.submit()',
+    );
+    fs.writeFileSync(sourcePath, 'Alterado em outro programa.');
+    await execute('document.getElementById("writer-approve").click()');
+    await waitFor('document.getElementById("status").textContent.includes("outro programa")');
+    assert.equal(fs.readFileSync(sourcePath, 'utf8'), 'Alterado em outro programa.');
+    await execute('document.getElementById("writer-export").click()');
+    await waitFor('document.getElementById("writer-export-dialog").open');
+    await execute('document.getElementById("writer-export-save").click()');
     for (let i = 0; i < 80 && !fs.existsSync(path.join(directory, 'Livro.docx')); i++)
-      await pause(100);
+      await pause(80);
     assert.equal(
       fs.readFileSync(path.join(directory, 'Livro.docx')).subarray(0, 2).toString(),
       'PK',
     );
-    await execute(`document.getElementById('writer-close').click()`);
-    await pause(100);
-    await execute('window.jarvisWriterUI.open()');
-    assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /Sua mão tremia/);
-    await execute(`document.getElementById('writer-new').click()`);
-    await pause(100);
-    await execute(
-      `document.getElementById('writer-prompt-value').value='Capítulo escolhido';document.querySelector('#writer-prompt form').requestSubmit(document.querySelector('#writer-prompt button[value="ok"]'))`,
-    );
-    await pause(200);
-    assert.equal(await execute('window.jarvisWriterUI.active.title'), 'Capítulo escolhido.docx');
-    await execute(
-      `document.getElementById('writer-input').value='crie um texto sobre IA';document.getElementById('writer-send').click()`,
-    );
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`!document.getElementById('writer-proposal').hidden`)) break;
-      await pause(100);
-    }
-    assert.match(
-      await execute(`document.querySelector('#writer-paper .writer-added').textContent`),
-      /inteligência artificial/,
-    );
-    assert.equal(await execute('window.jarvisWriterUI.active.blocks.length'), 0);
-    await execute(
-      `document.getElementById('writer-input').value='Agora deixe o texto mais claro.';document.getElementById('writer-send').click()`,
-    );
-    for (let i = 0; i < 80; i++) {
-      if (
-        await execute(
-          `window.jarvisWriterUI.active.blocks.length===1 && !!document.querySelector('#writer-paper .writer-change')`,
-        )
-      )
-        break;
-      await pause(100);
-    }
-    assert.match(
-      await execute('window.jarvisWriterUI.active.blocks[0].text'),
-      /inteligência artificial/,
-    );
-    await execute(`document.getElementById('writer-reject').click()`);
-    await pause(200);
-    assert.equal(await execute('window.jarvisWriterUI.active.blocks.length'), 1);
-    await execute(
-      `document.getElementById('writer-input').value='muito resumido';document.getElementById('writer-send').click()`,
-    );
-    for (let i = 0; i < 80; i++) {
-      if (
-        await execute(
-          `!document.getElementById('writer-proposal').hidden && document.getElementById('writer-paper').textContent.includes('supervisão')`,
-        )
-      )
-        break;
-      await pause(100);
-    }
-    assert.match(
-      await execute(`document.getElementById('writer-paper').textContent`),
-      /supervisão/,
-    );
-    assert.equal(
-      await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`),
-      false,
-    );
-    await execute(`document.getElementById('writer-approve').click()`);
-    for (let i = 0; i < 80; i++) {
-      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`))
-        break;
-      await pause(100);
-    }
-    assert.equal(
-      await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`),
-      true,
-    );
     finish(
       0,
-      'Writer: Electron real + IPC + API + SQLite + edição/reabertura + diff/aprovação/desfazer + DOCX OK. IA sintética. QA: ' +
+      'Writer integrado: Electron real + IPC + API + SQLite + chat padrão/prévia/diff + pergunta sem edição + aprovação/salvamento original + conflito externo + reabertura/desfazer/exportação DOCX OK. IA sintética. QA: ' +
         directory,
     );
   } catch (error) {

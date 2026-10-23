@@ -108,6 +108,30 @@ class WriterStore:
             }:
                 con.execute("ALTER TABLE writer_proposals ADD COLUMN result_node TEXT")
 
+    def bind_chat(self, document_id):
+        node = self.get(document_id)
+        if node["kind"] == "folder" or node["deleted"]:
+            raise ReadError("Escolha um documento ativo.")
+        with database(self.store.registry) as con:
+            con.execute("BEGIN IMMEDIATE")
+            row = con.execute(
+                "SELECT * FROM chats WHERE project_id=? AND writer_document_id=?",
+                (self.project_id, node["id"]),
+            ).fetchone()
+            if row:
+                result = dict(row)
+            else:
+                chat_id = uid()
+                con.execute(
+                    "INSERT INTO chats(id,project_id,title,created_at,writer_document_id) VALUES(?,?,?,?,?)",
+                    (chat_id, self.project_id, node["title"], now(), node["id"]),
+                )
+                result = dict(
+                    con.execute("SELECT * FROM chats WHERE id=?", (chat_id,)).fetchone()
+                )
+        self.store.mirror_chat(result)
+        return result
+
     @contextmanager
     def transaction(self):
         with database(self.path) as con:

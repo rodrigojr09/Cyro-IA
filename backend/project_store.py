@@ -128,10 +128,62 @@ class ProjectStore:
                     con.execute(
                         f"ALTER TABLE {table} ADD COLUMN instructions TEXT NOT NULL DEFAULT ''"
                     )
+        with database(self.registry) as con:
+            if "writer_document_id" not in {
+                r["name"] for r in con.execute("PRAGMA table_info(chats)")
+            }:
+                con.execute("ALTER TABLE chats ADD COLUMN writer_document_id TEXT")
+            con.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS chat_writer_document ON chats(project_id,writer_document_id) WHERE writer_document_id IS NOT NULL"
+            )
         self.initialize_db(self.root / "general" / "project.db")
         for project in self.projects(include_removed=True):
             if self.db_path(project["id"]).is_file():
                 self.initialize_db(self.db_path(project["id"]))
+                with database(self.registry) as con:
+                    migration_key = "writer_chat_migration:" + project["id"]
+                    migrated = con.execute(
+                        "SELECT 1 FROM settings WHERE key=?", (migration_key,)
+                    ).fetchone()
+                if not migrated:
+                    with database(self.db_path(project["id"])) as con:
+                        exists = con.execute(
+                            "SELECT 1 FROM sqlite_master WHERE name='writer_nodes'"
+                        ).fetchone()
+                        documents = (
+                            [
+                                dict(r)
+                                for r in con.execute(
+                                    "SELECT id,title,updated FROM writer_nodes WHERE deleted=0 AND kind!='folder'"
+                                )
+                            ]
+                            if exists
+                            else []
+                        )
+                    for document in documents:
+                        with database(self.registry) as con:
+                            con.execute(
+                                "INSERT OR IGNORE INTO chats(id,project_id,title,created_at,writer_document_id) VALUES(?,?,?,?,?)",
+                                (
+                                    str(uuid.uuid4()),
+                                    project["id"],
+                                    document["title"],
+                                    document["updated"],
+                                    document["id"],
+                                ),
+                            )
+                            migrated_chat = dict(
+                                con.execute(
+                                    "SELECT * FROM chats WHERE project_id=? AND writer_document_id=?",
+                                    (project["id"], document["id"]),
+                                ).fetchone()
+                            )
+                        self.mirror_chat(migrated_chat)
+                    with database(self.registry) as con:
+                        con.execute(
+                            "INSERT INTO settings(key,value) VALUES(?,?)",
+                            (migration_key, "1"),
+                        )
         with database(self.registry) as con:
             row = con.execute(
                 "SELECT value FROM settings WHERE key='general_chat'"
@@ -516,6 +568,15 @@ class ProjectStore:
                 )
             with database(self.db_path(chat["project_id"])) as con:
                 con.execute("DELETE FROM messages WHERE chat_id=?", (chat_id,))
+                if chat.get("writer_document_id"):
+                    con.execute(
+                        "DELETE FROM writer_messages WHERE node=?",
+                        (chat["writer_document_id"],),
+                    )
+                    con.execute(
+                        "UPDATE writer_proposals SET state='REJECTED' WHERE node=? AND state='PENDING'",
+                        (chat["writer_document_id"],),
+                    )
                 con.execute("DELETE FROM contexts WHERE chat_id=?", (chat_id,))
                 if delete:
                     con.execute("DELETE FROM conversations WHERE id=?", (chat_id,))

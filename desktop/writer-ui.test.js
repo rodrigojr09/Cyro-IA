@@ -5,11 +5,16 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { JSDOM } = require('jsdom');
 const pause = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
-function fixture() {
-  const dom = new JSDOM('<button id="writer-open"></button>', {
-    runScripts: 'outside-only',
-    url: 'https://local.invalid',
-  });
+function fixture(embedded = false) {
+  const dom = new JSDOM(
+    embedded
+      ? fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')
+      : '<button id="writer-open"></button>',
+    {
+      runScripts: 'outside-only',
+      url: 'https://local.invalid',
+    },
+  );
   const w = dom.window,
     calls = [],
     exported = [],
@@ -47,7 +52,19 @@ function fixture() {
     conflict = false,
     cloudFailure = false,
     pending = null;
-  w.jarvisWorkspace = { project };
+  w.jarvisWorkspace = {
+    project,
+    chat: { id: randomUUID(), writer_document_id: document.id },
+    begin() {},
+    end() {},
+  };
+  if (embedded)
+    w.addMessage = (role, content) => {
+      const row = w.document.createElement('div');
+      row.className = 'message ' + role;
+      row.textContent = content;
+      w.document.getElementById('messages').append(row);
+    };
   w.jarvisWriter = {
     command: async (value) => {
       calls.push(structuredClone(value));
@@ -114,6 +131,7 @@ function fixture() {
     },
     cancel: async () => {},
     dirty: async (value) => dirties.push(value),
+    file: async () => ({ ok: true, data: { linked: true, saved_version: document.version } }),
     export: async (value) => {
       exported.push(value);
       return { saved: true, name: document.title };
@@ -124,6 +142,7 @@ function fixture() {
     dom,
     w,
     document,
+    project,
     calls,
     exported,
     dirties,
@@ -134,6 +153,35 @@ function fixture() {
     recover: () => (failure = false),
   };
 }
+test('Writer integrado usa o chat padrão, preserva o botão de envio e desmonta a prévia ao navegar', async () => {
+  const f = fixture(true);
+  try {
+    await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+    assert.equal(f.get('new-chat'), null);
+    assert(f.get('new-general-chat'));
+    assert.equal(f.get('writer-dialog').open, false);
+    assert.equal(f.get('writer-preview-pane').hidden, false);
+    assert(f.get('send').querySelector('i'));
+    f.get('input').value = 'Deixe a porta mais antiga.';
+    await f.w.jarvisWriterUI.submit();
+    assert(f.get('messages').querySelector('.message.user'));
+    assert.equal(f.get('writer-proposal').hidden, false);
+    assert.equal(
+      f.calls.find((c) => c.action === 'assist').payload.chat_id,
+      f.w.jarvisWorkspace.chat.id,
+    );
+    assert(f.get('send').querySelector('i'));
+    f.get('writer-approve').click();
+    await pause();
+    assert.equal(f.document.blocks[0].text, 'Lucas abriu a antiga porta.');
+    await f.w.jarvisWriterUI.unmount();
+    assert.equal(f.get('writer-preview-pane').hidden, true);
+    assert.equal(f.get('writer-proposal').hidden, true);
+    assert.equal(f.get('attach-files').hidden, false);
+  } finally {
+    f.dom.window.close();
+  }
+});
 test('Writer: conversa central, prévia à direita e diff azul sem aplicar antes da aprovação', async () => {
   const f = fixture();
   try {
