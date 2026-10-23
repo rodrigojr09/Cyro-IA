@@ -134,10 +134,18 @@ app.whenReady().then(async () => {
     const screenshot = path.join(directory, 'writer-preview.png');
     fs.writeFileSync(screenshot, (await window.webContents.capturePage()).toPNG());
     await execute(`document.getElementById('writer-approve').click()`);
-    await pause(300);
+    for (let i = 0; i < 80; i++) {
+      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('lentamente')`))
+        break;
+      await pause(100);
+    }
     assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /lentamente/);
     await execute(`document.getElementById('writer-undo').click()`);
-    await pause(300);
+    for (let i = 0; i < 80; i++) {
+      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('Sua mão tremia')`))
+        break;
+      await pause(100);
+    }
     assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /Sua mão tremia/);
     await execute(`document.getElementById('writer-export').click()`);
     await pause(100);
@@ -158,6 +166,37 @@ app.whenReady().then(async () => {
     );
     await pause(200);
     assert.equal(await execute('window.jarvisWriterUI.active.title'), 'Capítulo escolhido.docx');
+    await execute(
+      `document.getElementById('writer-input').value='crie um texto sobre IA';document.getElementById('writer-send').click()`,
+    );
+    for (let i = 0; i < 80; i++) {
+      if (await execute(`!document.getElementById('writer-proposal').hidden`)) break;
+      await pause(100);
+    }
+    assert.match(
+      await execute(`document.querySelector('#writer-paper .writer-added').textContent`),
+      /inteligência artificial/,
+    );
+    assert.equal(await execute('window.jarvisWriterUI.active.blocks.length'), 0);
+    await execute(
+      `document.getElementById('writer-input').value='Agora deixe o texto mais claro.';document.getElementById('writer-send').click()`,
+    );
+    for (let i = 0; i < 80; i++) {
+      if (
+        await execute(
+          `window.jarvisWriterUI.active.blocks.length===1 && !!document.querySelector('#writer-paper .writer-change')`,
+        )
+      )
+        break;
+      await pause(100);
+    }
+    assert.match(
+      await execute('window.jarvisWriterUI.active.blocks[0].text'),
+      /inteligência artificial/,
+    );
+    await execute(`document.getElementById('writer-reject').click()`);
+    await pause(200);
+    assert.equal(await execute('window.jarvisWriterUI.active.blocks.length'), 1);
     finish(
       0,
       'Writer: Electron real + IPC + API + SQLite + edição/reabertura + diff/aprovação/desfazer + DOCX OK. IA sintética. QA: ' +

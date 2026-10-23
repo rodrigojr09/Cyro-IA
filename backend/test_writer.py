@@ -8,11 +8,17 @@ import zipfile
 from pathlib import Path
 from types import SimpleNamespace as NS
 from unittest.mock import AsyncMock
-from project_store import ProjectStore, database
+from project_store import ProjectStore, database, identifier
 from programming.security import ReadError
 from writer_models import Save, Decision, Block, Assist
 from writer_store import WriterStore, WriterConflict, uid
-from writer_intelligence import assist, WriterIntentClassifier, WriterEditorialService
+from writer_intelligence import (
+    assist,
+    WriterIntentClassifier,
+    WriterEditorialService,
+    editorial_response,
+    EDITORIAL_FUNCTION,
+)
 from writer_export import WriterExportService
 
 
@@ -52,6 +58,117 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    async def test_generated_article_uses_structured_data_and_requires_approval(self):
+        text = "A inteligência artificial auxilia pessoas na análise de informações."
+        packet = response(
+            self.doc,
+            "",
+            "INSTRUCT",
+            "append",
+            blocks=[{"type": "paragraph", "text": text}],
+            substantive=True,
+        )
+
+        async def provider(**kwargs):
+            self.assertEqual(kwargs["tools"][0]["function"]["name"], EDITORIAL_FUNCTION)
+            self.assertIn("crie um texto sobre IA", kwargs["messages"][1]["content"])
+            return NS(
+                choices=[
+                    NS(
+                        finish_reason="tool_calls",
+                        message=NS(
+                            content=None,
+                            tool_calls=[
+                                NS(
+                                    type="function",
+                                    function=NS(
+                                        name=EDITORIAL_FUNCTION,
+                                        arguments=json.dumps(packet),
+                                    ),
+                                )
+                            ],
+                        ),
+                    )
+                ],
+                usage=None,
+            )
+
+        result = await assist(
+            self.writer,
+            {
+                "request_id": uid(),
+                "message": "crie um texto sobre IA",
+                "document_id": self.doc["id"],
+                "base_version": 1,
+            },
+            NS(chat=NS(completions=NS(create=provider))),
+            "test",
+            True,
+        )
+        self.assertFalse(result["proposal"]["auto"])
+        identifier(result["proposal"]["plan"]["blocks"][0]["id"])
+        self.assertEqual(self.writer.get(self.doc["id"])["blocks"], [])
+        self.writer.decide(Decision(id=result["proposal"]["id"], approve=True))
+        self.assertEqual(self.writer.get(self.doc["id"])["blocks"][0]["text"], text)
+
+    def test_editorial_presentation_and_new_ids_do_not_relax_reference_validation(self):
+        packet = response(
+            self.doc,
+            "Texto preparado.",
+            blocks=[
+                {"id": "paragraph-1", "type": "paragraph", "text": "Texto preparado."}
+            ],
+        )
+        for content in [json.dumps(packet), "```json\n" + json.dumps(packet) + "\n```"]:
+            result = editorial_response(NS(content=content))
+            identifier(result.blocks[0].id)
+            self.assertNotEqual(result.blocks[0].id, "paragraph-1")
+        for content in [
+            "Proposta: " + json.dumps(packet),
+            json.dumps({**packet, "path": "../Backup"}),
+            "```json\n{}\n```",
+        ]:
+            with self.assertRaises(ValueError):
+                editorial_response(NS(content=content))
+        for calls in [
+            [
+                NS(
+                    type="function",
+                    function=NS(name="execute", arguments=json.dumps(packet)),
+                )
+            ],
+            [
+                NS(
+                    type="function",
+                    function=NS(name=EDITORIAL_FUNCTION, arguments=json.dumps(packet)),
+                )
+            ]
+            * 2,
+        ]:
+            with self.assertRaises(ValueError):
+                editorial_response(NS(content=None, tool_calls=calls))
+        packet["operation"] = "replace"
+        packet["blockIds"] = ["invented-reference"]
+        result = editorial_response(NS(content=json.dumps(packet)))
+        with self.assertRaises(ReadError):
+            self.writer.propose(
+                result.model_dump(
+                    exclude={"intent", "confidence", "substantive", "reason", "reply"}
+                ),
+                "Teste",
+                "INSTRUCT",
+                1,
+            )
+
+    async def test_generation_with_linguistic_disabled_does_not_insert_request(self):
+        self.writer.configure({"linguistic": False})
+        generated = "A inteligência artificial é uma área da computação."
+        result = await self.send(
+            "crie um texto sobre IA", response(self.doc, generated)
+        )
+        self.assertFalse(result["proposal"]["auto"])
+        self.assertEqual(result["proposal"]["plan"]["blocks"][0]["text"], generated)
+
     def test_restore_cannot_create_cycle_and_undo_cannot_orphan_new_children(self):
         a = self.writer.create("A", "folder")
         b = self.writer.create("B", "folder")

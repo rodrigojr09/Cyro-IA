@@ -44,6 +44,8 @@ function fixture() {
     style: '',
   };
   let failure = false,
+    conflict = false,
+    cloudFailure = false,
     pending = null;
   w.jarvisWorkspace = { project };
   w.jarvisWriter = {
@@ -61,6 +63,7 @@ function fixture() {
         return { ok: true, data: { id: document.id, version: document.version } };
       }
       if (value.action === 'assist') {
+        if (cloudFailure) return { ok: false, data: { detail: 'Cloud indisponível' } };
         pending = {
           id: randomUUID(),
           node: document.id,
@@ -83,8 +86,9 @@ function fixture() {
         };
       }
       if (value.action === 'decide') {
+        if (conflict) return { ok: true, data: { state: 'CONFLICTED', message: 'Versão mudou' } };
         if (p.approve) {
-          document.blocks = structuredClone(pending.plan.blocks);
+          document.blocks = structuredClone(p.edited_blocks || pending.plan.blocks);
           document.version++;
         }
         return {
@@ -120,6 +124,8 @@ function fixture() {
     dirties,
     get: (id) => w.document.getElementById(id),
     fail: () => (failure = true),
+    conflict: () => (conflict = true),
+    failCloud: () => (cloudFailure = true),
     recover: () => (failure = false),
   };
 }
@@ -138,6 +144,71 @@ test('Writer: conversa central, prévia à direita e diff azul sem aplicar antes
     await pause();
     assert.equal(f.document.blocks[0].text, 'Lucas abriu a antiga porta.');
     assert.equal(f.get('writer-proposal').hidden, true);
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: próxima mensagem aprova a anterior uma vez antes de consultar a IA', async () => {
+  const f = fixture();
+  try {
+    await f.w.jarvisWriterUI.open();
+    f.get('writer-input').value = 'Revise a porta.';
+    f.get('writer-send').click();
+    await pause();
+    assert.match(f.get('writer-proposal-reason').textContent, /próxima mensagem aprova/);
+    f.get('writer-input').value = 'Agora continue o texto.';
+    f.get('writer-send').click();
+    f.get('writer-send').click();
+    await pause();
+    const decisions = f.calls.filter((c) => c.action === 'decide');
+    assert.equal(decisions.length, 1);
+    assert.equal(decisions[0].payload.approve, true);
+    assert.equal(decisions[0].payload.automatic, false);
+    const assists = f.calls.filter((c) => c.action === 'assist');
+    assert.equal(assists.length, 2);
+    assert.equal(assists[1].payload.base_version, 2);
+    assert.equal(f.document.blocks[0].text, 'Lucas abriu a antiga porta.');
+    assert(f.calls.indexOf(decisions[0]) < f.calls.indexOf(assists[1]));
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: conflito impede aprovar e enviar a próxima mensagem', async () => {
+  const f = fixture();
+  try {
+    await f.w.jarvisWriterUI.open();
+    f.get('writer-input').value = 'Revise a porta.';
+    f.get('writer-send').click();
+    await pause();
+    f.conflict();
+    f.get('writer-input').value = 'Continue.';
+    f.get('writer-send').click();
+    await pause();
+    assert.equal(f.calls.filter((c) => c.action === 'assist').length, 1);
+    assert.equal(f.document.blocks[0].text, 'Lucas abriu a porta.');
+    assert.equal(f.get('writer-input').value, 'Continue.');
+    assert.match(f.get('writer-status').textContent, /não foi aplicada/);
+  } finally {
+    f.dom.window.close();
+  }
+});
+test('Writer: continuar aprova o ajuste editado e preserva aprovação se o Cloud falhar', async () => {
+  const f = fixture();
+  try {
+    await f.w.jarvisWriterUI.open();
+    f.get('writer-input').value = 'Revise a porta.';
+    f.get('writer-send').click();
+    await pause();
+    f.get('writer-adjust').click();
+    f.get('writer-adjust-text').value = 'Minha versão ajustada.';
+    f.get('writer-adjust-text').dispatchEvent(new f.w.Event('input'));
+    f.failCloud();
+    f.get('writer-input').value = 'Continue a partir disso.';
+    f.get('writer-send').click();
+    await pause();
+    assert.equal(f.document.blocks[0].text, 'Minha versão ajustada.');
+    assert.equal(f.get('writer-input').value, 'Continue a partir disso.');
+    assert.match(f.get('writer-status').textContent, /Cloud indisponível/);
   } finally {
     f.dom.window.close();
   }

@@ -61,7 +61,17 @@ class Operation(Strict):
     position: int = Field(default=0, ge=0, le=10000)
 
 
+class EditorialBlock(Strict):
+    # Output blocks are new data: identifiers are allocated locally, never by the model.
+    id: str | None = Field(default=None, max_length=80)
+    type: Literal[
+        "paragraph", "heading1", "heading2", "bullet", "number", "pagebreak"
+    ] = "paragraph"
+    text: str = Field(max_length=12000)
+
+
 class EditorialResult(Operation):
+    blocks: list[EditorialBlock] = Field(default_factory=list, max_length=100)
     intent: Literal["WRITE", "INSTRUCT", "ORGANIZE", "CHAT"]
     confidence: float = Field(ge=0, le=1)
     substantive: bool

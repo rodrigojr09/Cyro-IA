@@ -422,13 +422,14 @@
   function renderProposal() {
     const visible = proposal?.state === 'PENDING';
     $('writer-proposal').hidden = !visible;
+    $('writer-send').textContent = visible ? 'Aprovar e enviar' : 'Enviar ao Writer';
     if (!visible) return;
     $('writer-intent-badge').textContent = labels[proposal.intent] || 'Proposta';
     $('writer-proposal-title').textContent = describe(proposal.plan);
     $('writer-proposal-reason').textContent =
       proposal.base !== doc?.version && proposal.node === doc?.id
         ? 'A versão-base mudou. Solicite uma nova versão ou compare o histórico.'
-        : 'Revise o azul na prévia à direita. O original permanece salvo até a aplicação.';
+        : 'Revise o azul à direita. Enviar a próxima mensagem aprova esta alteração. Para descartá-la, clique em Rejeitar antes de continuar.';
     $('writer-correct-intent').value = proposal.intent === 'MANUAL' ? 'ORGANIZE' : proposal.intent;
     $('writer-correct-intent').disabled = proposal.intent === 'MANUAL';
     $('writer-approve').disabled = !!(proposal.node === doc?.id && proposal.base !== doc?.version);
@@ -571,7 +572,7 @@
       status(result.message, true);
       renderProposal();
       renderPreview();
-      return;
+      return result;
     }
     if (approve && result.state === 'APPLIED') {
       status('Alteração salva. Use Desfazer para recuperar a versão anterior.');
@@ -590,9 +591,21 @@
     await refreshTree();
     renderProposal();
     renderPreview();
+    return result;
   }
+  let sending = false;
   async function send(override = null, textOverride = null) {
-    if (assistantBusy) return;
+    if (assistantBusy || sending) return;
+    sending = true;
+    $('writer-send').disabled = true;
+    try {
+      await prepareSend(override, textOverride);
+    } finally {
+      sending = false;
+      $('writer-send').disabled = assistantBusy;
+    }
+  }
+  async function prepareSend(override = null, textOverride = null) {
     await flush();
     if (!doc || doc.deleted || doc.kind === 'folder')
       throw Error('Escolha ou crie um arquivo para o chat Writer.');
@@ -605,7 +618,22 @@
     }
     const text = (textOverride ?? $('writer-input').value).trim();
     if (!text || text.length > 6000) return;
-    if (proposal?.state === 'PENDING') await decide(false);
+    stopAuto();
+    if (proposal?.state === 'PENDING') {
+      const edited = $('writer-adjust-area').hidden ? null : proposal.plan.blocks;
+      const previous = await decide(true, false, edited);
+      if (previous?.state !== 'APPLIED')
+        throw Error(
+          'A alteração anterior não foi aplicada. Revise o conflito ou a proposta antes de continuar.',
+        );
+      selectedBlocks = [];
+      selectedText = '';
+      $('writer-selection').textContent = 'Sem seleção';
+      if (doc.deleted || doc.kind === 'folder')
+        throw Error(
+          'Alteração anterior aplicada. Escolha um documento ativo para continuar a conversa.',
+        );
+    }
     const epoch = generation,
       documentId = doc.id;
     currentMessage = text;

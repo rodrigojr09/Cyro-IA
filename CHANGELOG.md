@@ -1,5 +1,9 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Continuidade do Writer: enviar uma nova mensagem aprova a proposta pendente antes da consulta seguinte, com aviso no card, preservação de ajustes, bloqueio por conflito e proteção contra envio duplicado. Rejeitar continua disponível para descartar a proposta antes de continuar.
+
+- Corrigido contrato editorial do Writer: resposta estruturada pelo suporte a funções já existente no Cloud, IDs de blocos novos gerados localmente e compatibilidade com JSON em bloco Markdown. Pedidos de geração preparam adições para aprovação, sem criar arquivos indevidos ou inserir o comando no documento quando a revisão linguística estiver desligada.
+
 - Corrigido alinhamento das preferências do Writer: caixas de seleção compactas à esquerda dos textos, com quebra de linha e espaçamento consistentes. Conferência visual e fluxo Writer validados no Electron real.
 
 - JARVIS Writer integrado aos projetos existentes: múltiplos arquivos e chats próprios, nome escolhido na criação, árvore à esquerda, conversa central e prévia à direita com diferenças em azul.

@@ -33,26 +33,47 @@ writer.save(
 
 
 async def create(**kwargs):
-    active = json.loads(kwargs["messages"][1]["content"])["context"]["active"]
+    packet = json.loads(kwargs["messages"][1]["content"])
+    active = packet["context"]["active"]
+    assert kwargs["tools"][0]["function"]["name"] == "writer_editorial"
+    generate = packet["message"] == "crie um texto sobre IA"
     result = {
         "intent": "INSTRUCT",
         "confidence": 0.98,
         "substantive": True,
         "reason": "Provedor sintético do teste",
         "reply": "Destaquei a revisão em azul. Revise antes de aprovar.",
-        "operation": "replace",
+        "operation": "append" if generate else "replace",
         "targetDocumentId": active["id"],
-        "blockIds": [active["nearby_blocks"][0]["id"]],
+        "blockIds": [] if generate else [active["nearby_blocks"][0]["id"]],
         "blocks": [
             {
-                "id": uid(),
                 "type": "paragraph",
-                "text": "Lucas abriu lentamente a antiga porta.",
+                "text": (
+                    "A inteligência artificial auxilia a análise de informações."
+                    if generate
+                    else "Lucas abriu lentamente a antiga porta."
+                ),
             }
         ],
     }
     return NS(
-        choices=[NS(finish_reason="stop", message=NS(content=json.dumps(result)))],
+        choices=[
+            NS(
+                finish_reason="tool_calls",
+                message=NS(
+                    content=None,
+                    tool_calls=[
+                        NS(
+                            type="function",
+                            function=NS(
+                                name="writer_editorial", arguments=json.dumps(result)
+                            ),
+                        )
+                    ],
+                ),
+            )
+        ],
         usage=None,
     )
 
