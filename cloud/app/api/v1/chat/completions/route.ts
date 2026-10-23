@@ -61,6 +61,10 @@ export const POST = endpoint(async (request) => {
       | OpenAI.Chat.Completions.ChatCompletionTool[]
       | undefined,
     max_completion_tokens: input.max_completion_tokens,
+    ...(input.tool_choice ? { tool_choice: input.tool_choice } : {}),
+    ...(input.parallel_tool_calls === false
+      ? { parallel_tool_calls: false }
+      : {}),
     store: false,
   };
   return proxyCompletion(

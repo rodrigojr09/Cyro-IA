@@ -67,13 +67,20 @@ class EditorialBlock(Strict):
     type: Literal[
         "paragraph", "heading1", "heading2", "bullet", "number", "pagebreak"
     ] = "paragraph"
-    text: str = Field(max_length=12000)
+    text: str = Field(
+        max_length=12000,
+        description="Texto do bloco, até 12000 caracteres. Divida textos longos em vários parágrafos/blocos.",
+    )
 
 
 class EditorialResult(Operation):
     blocks: list[EditorialBlock] = Field(default_factory=list, max_length=100)
     intent: Literal["WRITE", "INSTRUCT", "ORGANIZE", "CHAT"]
-    confidence: float = Field(ge=0, le=1)
+    confidence: float = Field(
+        ge=0,
+        le=1,
+        description="Confiança numérica de 0 a 1, nunca porcentagem de 0 a 100.",
+    )
     substantive: bool
     reason: str = Field(max_length=1000)
     reply: str = Field(max_length=6000)

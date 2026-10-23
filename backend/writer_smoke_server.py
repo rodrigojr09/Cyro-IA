@@ -36,7 +36,11 @@ async def create(**kwargs):
     packet = json.loads(kwargs["messages"][1]["content"])
     active = packet["context"]["active"]
     assert kwargs["tools"][0]["function"]["name"] == "writer_editorial"
+    assert kwargs["tools"][0]["function"]["strict"] is True
+    assert kwargs["tool_choice"]["function"]["name"] == "writer_editorial"
+    assert kwargs["parallel_tool_calls"] is False
     generate = packet["message"] == "crie um texto sobre IA"
+    feedback = packet["message"] == "muito resumido"
     result = {
         "intent": "INSTRUCT",
         "confidence": 0.98,
@@ -52,7 +56,12 @@ async def create(**kwargs):
                 "text": (
                     "A inteligência artificial auxilia a análise de informações."
                     if generate
-                    else "Lucas abriu lentamente a antiga porta."
+                    else (
+                        active["nearby_blocks"][0]["text"]
+                        + " Sistemas de IA podem reconhecer padrões e apoiar tarefas humanas. Seu uso exige supervisão, avaliação dos resultados e cuidado com informações pessoais."
+                        if feedback
+                        else "Lucas abriu lentamente a antiga porta."
+                    )
                 ),
             }
         ],

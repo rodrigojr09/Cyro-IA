@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Writer passa a exigir chamada editorial única com schema estrito, escolha nominal da função e chamadas paralelas desativadas no proxy Cloud existente. Comentários como “muito resumido” orientam uma ampliação do texto atual; limites e aprovação permanecem. Falhas deixam a mensagem editável sem duplicar tentativas no chat. Melhorado contraste do texto confirmado na prévia.
+
 - Writer sem seleção considera o documento inteiro; ao exceder o contexto, prioriza o final de baixo para cima, com aviso de leitura parcial. Limites de 8.000 caracteres de documento e 64 KB do pacote mantidos, incluindo caracteres multibyte; revisões não podem substituir blocos lidos parcialmente ou fora do escopo.
 
 - Continuidade do Writer: enviar uma nova mensagem aprova a proposta pendente antes da consulta seguinte, com aviso no card, preservação de ajustes, bloqueio por conflito e proteção contra envio duplicado. Rejeitar continua disponível para descartar a proposta antes de continuar.

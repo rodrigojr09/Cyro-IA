@@ -234,6 +234,7 @@ test('Writer: continuar aprova o ajuste editado e preserva aprovação se o Clou
     assert.equal(f.document.blocks[0].text, 'Minha versão ajustada.');
     assert.equal(f.get('writer-input').value, 'Continue a partir disso.');
     assert.match(f.get('writer-status').textContent, /Cloud indisponível/);
+    assert.equal(f.get('writer-messages').querySelectorAll('.writer-message.user').length, 1);
   } finally {
     f.dom.window.close();
   }

@@ -643,7 +643,7 @@
     assistantBusy = true;
     $('writer-send').disabled = true;
     $('writer-cancel').hidden = false;
-    bubble('user', text);
+    const pendingBubble = bubble('user', text);
     status('Consultando IA Cloud…');
     try {
       const result = await command('assist', {
@@ -714,6 +714,7 @@
       );
     } catch (error) {
       if (epoch !== generation) return;
+      pendingBubble.remove();
       status(error.message + ' Sua mensagem continua disponível para nova tentativa.', true);
       $('writer-input').value = text;
     } finally {

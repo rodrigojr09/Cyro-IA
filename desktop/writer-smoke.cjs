@@ -148,9 +148,13 @@ app.whenReady().then(async () => {
     }
     assert.match(await execute(`window.jarvisWriterUI.active.blocks[0].text`), /Sua mão tremia/);
     await execute(`document.getElementById('writer-export').click()`);
-    await pause(100);
+    for (let i = 0; i < 80; i++) {
+      if (await execute(`document.getElementById('writer-export-dialog').open`)) break;
+      await pause(100);
+    }
     await execute(`document.getElementById('writer-export-save').click()`);
-    await pause(500);
+    for (let i = 0; i < 80 && !fs.existsSync(path.join(directory, 'Livro.docx')); i++)
+      await pause(100);
     assert.equal(
       fs.readFileSync(path.join(directory, 'Livro.docx')).subarray(0, 2).toString(),
       'PK',
@@ -197,6 +201,36 @@ app.whenReady().then(async () => {
     await execute(`document.getElementById('writer-reject').click()`);
     await pause(200);
     assert.equal(await execute('window.jarvisWriterUI.active.blocks.length'), 1);
+    await execute(
+      `document.getElementById('writer-input').value='muito resumido';document.getElementById('writer-send').click()`,
+    );
+    for (let i = 0; i < 80; i++) {
+      if (
+        await execute(
+          `!document.getElementById('writer-proposal').hidden && document.getElementById('writer-paper').textContent.includes('supervisão')`,
+        )
+      )
+        break;
+      await pause(100);
+    }
+    assert.match(
+      await execute(`document.getElementById('writer-paper').textContent`),
+      /supervisão/,
+    );
+    assert.equal(
+      await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`),
+      false,
+    );
+    await execute(`document.getElementById('writer-approve').click()`);
+    for (let i = 0; i < 80; i++) {
+      if (await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`))
+        break;
+      await pause(100);
+    }
+    assert.equal(
+      await execute(`window.jarvisWriterUI.active.blocks[0].text.includes('supervisão')`),
+      true,
+    );
     finish(
       0,
       'Writer: Electron real + IPC + API + SQLite + edição/reabertura + diff/aprovação/desfazer + DOCX OK. IA sintética. QA: ' +

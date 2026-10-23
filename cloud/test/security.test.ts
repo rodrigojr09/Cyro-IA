@@ -5,6 +5,54 @@ import { hash, token, passwordHash, passwordMatches } from "../lib/crypto";
 import { body, HttpError, requireOrigin } from "../lib/http";
 import { loginSchema, chatSchema } from "@jarvis/shared/schemas";
 process.env.AUTH_SECRET = "test-only-secret-never-use-in-production-123456";
+test("Writer aceita contrato estrito e escolha nominal sem ampliar limites", () => {
+  const input = {
+    model: "test",
+    messages: [{ role: "user", content: "muito resumido" }],
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "writer_editorial",
+          strict: true,
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            required: ["reply"],
+            properties: { reply: { type: "string" } },
+          },
+        },
+      },
+    ],
+    tool_choice: { type: "function", function: { name: "writer_editorial" } },
+    parallel_tool_calls: false,
+    max_completion_tokens: 3500,
+  };
+  assert.ok(chatSchema.safeParse(input).success);
+  assert.ok(
+    !chatSchema.safeParse({
+      ...input,
+      tool_choice: { type: "function", function: { name: "execute" } },
+    }).success,
+  );
+  assert.ok(
+    !chatSchema.safeParse({ ...input, parallel_tool_calls: true }).success,
+  );
+  assert.ok(
+    !chatSchema.safeParse({ ...input, max_completion_tokens: 3501 }).success,
+  );
+  assert.ok(
+    !chatSchema.safeParse({
+      ...input,
+      tools: [
+        {
+          type: "function",
+          function: { ...input.tools[0].function, strict: "true" },
+        },
+      ],
+    }).success,
+  );
+});
 test("rodada de ferramentas aceita mensagem assistant sem conteúdo textual", () => {
   assert.ok(
     chatSchema.safeParse({
@@ -68,8 +116,7 @@ test("schemas recusam consumo do cliente, ferramentas inválidas e campos extras
     }).success,
   );
   assert.ok(
-    !loginSchema.safeParse({ email: "invalid", password: "short" })
-      .success,
+    !loginSchema.safeParse({ email: "invalid", password: "short" }).success,
   );
 });
 test("mutações web exigem origem e corpo limitado", async () => {

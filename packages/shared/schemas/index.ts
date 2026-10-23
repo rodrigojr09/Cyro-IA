@@ -104,6 +104,7 @@ export const chatSchema = z
                 name: z.string().regex(/^[a-z_]{1,64}$/),
                 description: z.string().max(2000).optional(),
                 parameters: z.record(z.string(), z.unknown()),
+                strict: z.boolean().optional(),
               })
               .strict(),
           })
@@ -111,7 +112,29 @@ export const chatSchema = z
       )
       .max(30)
       .optional(),
+    tool_choice: z
+      .object({
+        type: z.literal("function"),
+        function: z
+          .object({ name: z.string().regex(/^[a-z_]{1,64}$/) })
+          .strict(),
+      })
+      .strict()
+      .optional(),
+    parallel_tool_calls: z.literal(false).optional(),
     max_completion_tokens: z.number().int().min(1).max(3500).default(3500),
     stream: z.boolean().default(false),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => {
+    if (
+      input.tool_choice &&
+      !input.tools?.some(
+        (tool) => tool.function.name === input.tool_choice!.function.name,
+      )
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "A função escolhida deve estar nas ferramentas fornecidas.",
+      });
+  });

@@ -20,6 +20,7 @@ from writer_intelligence import (
     EDITORIAL_FUNCTION,
     WriterContextService,
     context_packet,
+    strict_editorial_schema,
 )
 from writer_export import WriterExportService
 
@@ -60,6 +61,92 @@ def client(packet):
 
 
 class WriterTests(unittest.IsolatedAsyncioTestCase):
+    def test_native_contract_requires_all_fields_without_removing_local_limits(self):
+        schema = strict_editorial_schema()
+
+        def check(value):
+            if isinstance(value, dict):
+                if value.get("type") == "object":
+                    self.assertFalse(value["additionalProperties"])
+                    self.assertEqual(set(value["required"]), set(value["properties"]))
+                self.assertNotIn("default", value)
+                for item in value.values():
+                    check(item)
+            elif isinstance(value, list):
+                for item in value:
+                    check(item)
+
+        check(schema)
+        self.assertNotIn("id", schema["$defs"]["EditorialBlock"]["properties"])
+        with self.assertRaises(ValueError):
+            editorial_response(NS(content=json.dumps(response(self.doc, "x" * 12001))))
+
+    async def test_short_feedback_expands_existing_document_as_pending_revision(self):
+        original = "A IA ajuda na análise de dados."
+        self.save(self.doc, [block(original)])
+        expanded = (
+            original
+            + " Ela pode reconhecer padrões, apoiar decisões e automatizar tarefas, com supervisão humana e avaliação dos resultados."
+        )
+        doc = self.writer.get(self.doc["id"])
+
+        async def provider(**kwargs):
+            self.assertTrue(kwargs["tools"][0]["function"]["strict"])
+            self.assertEqual(
+                kwargs["tool_choice"]["function"]["name"], EDITORIAL_FUNCTION
+            )
+            self.assertFalse(kwargs["parallel_tool_calls"])
+            packet = response(
+                doc,
+                "",
+                "INSTRUCT",
+                "replace",
+                blockIds=[doc["blocks"][0]["id"]],
+                blocks=[{"type": "paragraph", "text": expanded}],
+                substantive=True,
+            )
+            return NS(
+                choices=[
+                    NS(
+                        finish_reason="tool_calls",
+                        message=NS(
+                            content=None,
+                            tool_calls=[
+                                NS(
+                                    type="function",
+                                    function=NS(
+                                        name=EDITORIAL_FUNCTION,
+                                        arguments=json.dumps(packet),
+                                    ),
+                                )
+                            ],
+                        ),
+                    )
+                ],
+                usage=None,
+            )
+
+        result = await assist(
+            self.writer,
+            {
+                "request_id": uid(),
+                "message": "muito resumido",
+                "document_id": doc["id"],
+                "base_version": doc["version"],
+            },
+            NS(chat=NS(completions=NS(create=provider))),
+            "test",
+            True,
+        )
+        self.assertFalse(result["proposal"]["auto"])
+        self.assertEqual(result["proposal"]["intent"], "INSTRUCT")
+        self.assertEqual(self.writer.get(doc["id"])["blocks"][0]["text"], original)
+        self.writer.decide(Decision(id=result["proposal"]["id"], approve=True))
+        self.assertEqual(self.writer.get(doc["id"])["blocks"][0]["text"], expanded)
+        self.assertFalse(
+            WriterIntentClassifier.unequivocal_write("O texto está muito resumido.")
+        )
+
     def test_no_selection_reads_whole_document_and_selection_stays_scoped(self):
         data = [block(f"Parágrafo {i}.") for i in range(14)]
         self.save(self.doc, data)
