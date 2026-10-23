@@ -232,6 +232,7 @@ test('configurações mostram só preferências e armazenamento sem opções té
     'Chats arquivados',
     'Quick Chat',
     'Conta',
+    'Sobre',
   ]);
   [...w.document.getElementById('settings-tabs').children]
     .find((b) => b.textContent === 'Armazenamento')

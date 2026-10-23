@@ -535,7 +535,18 @@ export default function Dashboard({ section }: { section: string }) {
           </>
         )}
         <footer>
-          JARVIS · Arquitetura Cloud + Desktop <span>v4.2.0</span>
+          <span>JARVIS · v4.2.0 · © 2026 Rodrigo Junior</span>
+          <span>
+            <a href="mailto:rodrigo.macia019@gmail.com">Contato</a>
+            {" · "}
+            <a
+              href="https://github.com/rodrigojr09"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+          </span>
         </footer>
       </main>
     </div>

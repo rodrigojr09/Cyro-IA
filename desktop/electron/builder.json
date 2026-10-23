@@ -27,9 +27,7 @@
     {
       "from": "../build/v4/backend/jarvis-backend",
       "to": "backend",
-      "filter": [
-        "**/*"
-      ]
+      "filter": ["**/*"]
     },
     {
       "from": "../build/icons/jarvis.png",
@@ -40,9 +38,7 @@
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
       }
     ],
     "icon": "../build/icons/jarvis.ico"
@@ -55,5 +51,6 @@
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false
-  }
+  },
+  "copyright": "Copyright © 2026 Rodrigo Junior"
 }

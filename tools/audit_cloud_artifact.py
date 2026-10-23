@@ -60,8 +60,14 @@ def audit():
             packaged = stream.read(item["size"])
             source = (ROOT / "desktop" / name).read_bytes()
             if name == "package.json":
-                if json.loads(packaged)["version"] != json.loads(source)["version"]:
-                    raise RuntimeError("Payload contém versão desatualizada.")
+                installed, current = json.loads(packaged), json.loads(source)
+                if any(
+                    installed.get(key) != current.get(key)
+                    for key in ("version", "author", "homepage")
+                ):
+                    raise RuntimeError(
+                        "Payload contém versão ou autoria desatualizada."
+                    )
             elif packaged != source:
                 raise RuntimeError("Payload contém código desatualizado.")
     for file in payload.rglob("*"):

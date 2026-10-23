@@ -39,5 +39,11 @@
     "prisma": "7.10.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
-  }
+  },
+  "author": {
+    "name": "Rodrigo Junior",
+    "email": "rodrigo.macia019@gmail.com",
+    "url": "https://github.com/rodrigojr09"
+  },
+  "homepage": "https://github.com/rodrigojr09"
 }

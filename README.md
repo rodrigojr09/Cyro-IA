@@ -54,3 +54,12 @@ python -m unittest -q test_start test_cloud_build test_build test_setup
 ```
 
 O pipeline Windows `tools/build_cloud_desktop.py` exige uma origem HTTPS real e gera `release/v4/JARVIS-Setup-4.0.0.exe`, sem publicar. Consulte [validação da v4](docs/V4.md) e [implantação](docs/DEPLOYMENT.md). O build local não comprova implantação, áudio pago ou funcionamento em Windows limpo.
+
+## Autoria
+
+Desenvolvido por **Rodrigo Junior**.
+
+- E-mail: [rodrigo.macia019@gmail.com](mailto:rodrigo.macia019@gmail.com)
+- GitHub: [rodrigojr09](https://github.com/rodrigojr09)
+
+© 2026 Rodrigo Junior.

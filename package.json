@@ -18,5 +18,11 @@
     "typecheck": "npm run typecheck -w @jarvis/cloud",
     "db:generate": "npm run db:generate -w @jarvis/cloud",
     "db:migrate": "npm run db:migrate -w @jarvis/cloud"
-  }
+  },
+  "author": {
+    "name": "Rodrigo Junior",
+    "email": "rodrigo.macia019@gmail.com",
+    "url": "https://github.com/rodrigojr09"
+  },
+  "homepage": "https://github.com/rodrigojr09"
 }

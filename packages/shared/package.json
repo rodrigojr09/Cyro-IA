@@ -10,5 +10,11 @@
   },
   "dependencies": {
     "zod": "4.6.7"
-  }
+  },
+  "author": {
+    "name": "Rodrigo Junior",
+    "email": "rodrigo.macia019@gmail.com",
+    "url": "https://github.com/rodrigojr09"
+  },
+  "homepage": "https://github.com/rodrigojr09"
 }
