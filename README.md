@@ -1,6 +1,6 @@
 # JARVIS 4 — Cloud administrativo + Desktop
 
-Versão 4.1.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 22/10/2026. Evidências e limites de validação estão em [docs/V4_1.md](docs/V4_1.md) e [docs/CHATS.md](docs/CHATS.md); histórico da v4 inicial em [docs/V4.md](docs/V4.md). Não foi criada tag de release.
+Versão 4.2.0. Publicação na nuvem e compilação autorizadas pelo proprietário em 23/10/2026. Requisitos, testes e limitações estão em [docs/V4_2.md](docs/V4_2.md), [docs/ATTACHMENTS.md](docs/ATTACHMENTS.md) e [docs/STORAGE-SETTINGS.md](docs/STORAGE-SETTINGS.md). Histórico em [docs/V4_1.md](docs/V4_1.md).
 
 O Cloud possui somente o administrativo e as APIs do aplicativo. A raiz e o painel exigem autenticação; a única página de entrada é `/login`. Não há site público, cadastro público, códigos de ativação, deep links ou gestão de licenças.
 

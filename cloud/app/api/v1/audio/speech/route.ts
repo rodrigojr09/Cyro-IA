@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { reserve, settle } from "@/lib/budget";
 import { db } from "@/lib/db";
 import { speechError } from "@/lib/speech-error";
+import { requireStorage } from "@/lib/storage";
 const schema = z
   .object({
     model: z.literal("tts-1"),
@@ -18,6 +19,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 export const POST = endpoint(async (request) => {
   const device = await deviceAuth(request);
+  await requireStorage(device.userId);
   const settings = await db.systemSettings.findUnique({
     where: { id: "global" },
   });

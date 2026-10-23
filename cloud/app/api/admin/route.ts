@@ -22,6 +22,12 @@ const command = z.discriminatedUnion("action", [
       name: z.string().trim().min(1).max(100),
       status: z.enum(["ACTIVE", "DISABLED"]),
       monthlyTokenLimit: z.number().int().min(0).max(100000000),
+      cloudStorageLimitBytes: z
+        .number()
+        .int()
+        .min(1048576)
+        .max(1073741824)
+        .optional(),
       password: z.string().min(12).max(256).optional(),
     })
     .strict(),
@@ -61,6 +67,7 @@ export const GET = endpoint(async (request) => {
       role: true,
       status: true,
       monthlyTokenLimit: true,
+      cloudStorageLimitBytes: true,
       managerId: true,
     },
     orderBy: { createdAt: "desc" },
@@ -196,6 +203,7 @@ export const POST = endpoint(async (request) => {
           name: input.name,
           status: input.status,
           monthlyTokenLimit: input.monthlyTokenLimit,
+          cloudStorageLimitBytes: input.cloudStorageLimitBytes,
           ...(input.password
             ? { passwordHash: await passwordHash(input.password) }
             : {}),

@@ -21,11 +21,25 @@ if __name__ == "__main__":
         import cloud_client
         import project_store
         import programming.security
+        import io
+        from PIL import Image
+        from pypdf import PdfReader, PdfWriter
+        from attachments import image_bytes, document_text
+
+        source = io.BytesIO()
+        Image.new("RGB", (4, 4), "green").save(source, "PNG")
+        assert image_bytes(source.getvalue()).startswith(b"\xff\xd8")
+        assert "Anexo" in document_text(b"Anexo de teste", ".txt")[0]
+        pdf = io.BytesIO()
+        writer = PdfWriter()
+        writer.add_blank_page(width=100, height=100)
+        writer.write(pdf)
+        assert len(PdfReader(io.BytesIO(pdf.getvalue())).pages) == 1
 
         with sqlite3.connect(":memory:") as connection:
             assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         print(
-            "JARVIS Cloud local runtime: FastAPI, SQLite, OpenAI adapter and read policy OK."
+            "JARVIS Cloud local runtime: FastAPI, SQLite, OpenAI adapter, local images/PDF and read policy OK."
         )
         raise SystemExit(0)
     if args.parent is None:

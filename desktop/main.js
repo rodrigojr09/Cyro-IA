@@ -55,6 +55,9 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ['/programming/status', 'GET'],
     ['/programming/revoke', 'POST'],
     ['/workspace', 'GET'],
+    ['/storage', 'GET'],
+    ['/projects/settings', 'POST'],
+    ['/chats/settings', 'POST'],
     ['/workspace/view', 'POST'],
     ['/chats/history', 'GET'],
     ['/chats/create', 'POST'],
@@ -104,6 +107,11 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       throw new Error('Backend indisponível. Inicie ou reinicie o Python.');
     }
   }
+  const attachments = require('./attachments-main').createAttachments({
+    dialog,
+    window: () => win,
+    backend,
+  });
   const windowState = require('./window-state');
   const activeStreams = new Map();
   ipcMain.handle('jarvis:cancel-chat', (event) => {
@@ -329,6 +337,22 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       if (confirmation.response !== 1) return { canceled: true };
       return backend('/projects/register', 'POST', JSON.stringify({ path: selectedPath }));
     });
+    ipcMain.handle('jarvis:attachments-choose', async (event, remaining) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.choose(remaining);
+    });
+    ipcMain.handle('jarvis:attachments-info', async (event, id) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.info(id);
+    });
+    ipcMain.handle('jarvis:attachments-save', async (event, id) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.save(id);
+    });
+    ipcMain.handle('jarvis:attachments-discard', async (event, id) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.discard(id);
+    });
     ipcMain.handle('jarvis:remove-project', async (event, projectId) => {
       if (!trusted(event) || !/^[a-f0-9-]{36}$/i.test(projectId))
         throw new Error('Projeto inválido.');
@@ -358,7 +382,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       if (
         !trusted(event) ||
         !/^[a-f0-9-]{36}$/i.test(chatId) ||
-        !['rename', 'archive', 'restore', 'delete'].includes(action)
+        !['rename', 'archive', 'restore', 'delete', 'clear'].includes(action)
       )
         throw new Error('Conversa inválida.');
       const body = { chat_id: chatId };
@@ -372,9 +396,11 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
           type: 'warning',
           title: 'Gerenciar conversa',
           message:
-            action === 'delete'
-              ? 'Excluir permanentemente esta conversa e seu histórico interno?'
-              : 'Arquivar esta conversa?',
+            action === 'clear'
+              ? 'Apagar todas as mensagens desta conversa? O nome e as instruções serão preservados.'
+              : action === 'delete'
+                ? 'Excluir permanentemente esta conversa e seu histórico interno?'
+                : 'Arquivar esta conversa?',
           buttons: ['Cancelar', 'Confirmar'],
           defaultId: 0,
           cancelId: 0,
@@ -383,9 +409,32 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         if (result.response !== 1) return { canceled: true };
         body.confirmed = true;
         if (action === 'delete') body.delete = true;
+        else if (action === 'clear') body.clear = true;
         else body.archived = true;
       }
       return backend('/chats/change', 'POST', JSON.stringify(body));
+    });
+    ipcMain.handle('jarvis:clear-storage', async (event, scope) => {
+      if (!trusted(event) || !['local', 'cloud'].includes(scope))
+        throw Error('Solicitação não autorizada.');
+      const result = await dialog.showMessageBox(win, {
+        type: 'warning',
+        title: scope === 'cloud' ? 'Apagar chats na nuvem' : 'Limpar dados locais',
+        message:
+          scope === 'cloud'
+            ? 'Apagar todos os seus chats e mensagens na nuvem, inclusive o Quick Chat?'
+            : 'Apagar os dados internos de projetos e chats deste computador e os anexos locais desta conta?',
+        detail:
+          scope === 'cloud'
+            ? 'Esta ação afeta todos os seus computadores e não pode ser desfeita. Sua conta, acesso e consumo registrado serão preservados.'
+            : 'As pastas e arquivos originais, o login e suas preferências serão preservados. Outros usuários deste computador também perderão a memória dos projetos locais.',
+        buttons: ['Cancelar', 'Apagar dados'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      });
+      if (result.response !== 1) return { canceled: true };
+      return backend('/desktop/storage/clear', 'POST', JSON.stringify({ scope, confirmed: true }));
     });
     ipcMain.handle('jarvis:open-link', async (event, value) => {
       if (!trusted(event) || typeof value !== 'string' || value.length > 2048)

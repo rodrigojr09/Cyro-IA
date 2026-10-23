@@ -90,14 +90,28 @@ class CloudConversations:
             }
         )
 
-    def change_chat(self, chat_id, title=None, archived=None, delete=False):
+    def change_chat(
+        self,
+        chat_id,
+        title=None,
+        archived=None,
+        delete=False,
+        instructions=None,
+        clear=False,
+    ):
         if self.local_chat(chat_id):
-            return self.local.change_chat(chat_id, title, archived, delete)
+            return self.local.change_chat(
+                chat_id, title, archived, delete, instructions, clear
+            )
         command = {"action": "change", "id": identifier(chat_id), "delete": delete}
         if title is not None:
             command["title"] = redact(title.strip())[:120]
         if archived is not None:
             command["archived"] = bool(archived)
+        if instructions is not None:
+            command["instructions"] = redact(instructions)[:4000]
+        if clear:
+            command["clear"] = True
         return self.request(command)
 
     def history(
@@ -116,10 +130,10 @@ class CloudConversations:
             command["scope"] = context_scope
         return self.request(command)
 
-    def append(self, chat_id, role, content, context_scope=None):
+    def append(self, chat_id, role, content, context_scope=None, attachment_count=0):
         if self.local_chat(chat_id):
             return self.local.append(chat_id, role, content, context_scope)
-        self.request(
+        return self.request(
             {
                 "action": "append",
                 "id": identifier(chat_id),
@@ -127,8 +141,9 @@ class CloudConversations:
                 "role": role,
                 "content": redact(content),
                 "scope": context_scope or "",
+                "attachmentCount": attachment_count,
             }
-        )
+        ).get("id")
 
     def context(self, chat_id):
         # Device references/permissions must never travel in general chat memory.

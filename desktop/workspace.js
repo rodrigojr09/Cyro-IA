@@ -15,12 +15,16 @@ window.jarvisWorkspace = (() => {
   const ui = () => window.jarvisUI;
   function controls() {
     el('send').disabled =
+      !!window.jarvisStorageUsage?.blocked ||
       busy ||
       loading ||
       !!chat?.archived ||
       !!(project && (!project.ready || project.scope_confirmed === 0));
     el('new-chat').disabled =
-      busy || loading || !!(project && (!project.ready || project.scope_confirmed === 0));
+      !!window.jarvisStorageUsage?.blocked ||
+      busy ||
+      loading ||
+      !!(project && (!project.ready || project.scope_confirmed === 0));
     el('add-project').disabled = busy || loading;
     el('accept-partial').hidden = !(
       project &&
@@ -60,6 +64,10 @@ window.jarvisWorkspace = (() => {
     el('save-note').disabled = busy || loading || !project || !project.ready;
     for (const id of ['rename-chat', 'archive-chat', 'delete-chat', 'older-messages'])
       el(id).disabled = !chat || loading || busy;
+    if (chat?.slot) {
+      el('archive-chat').disabled = true;
+      el('delete-chat').disabled = true;
+    }
     el('programming-mode').disabled = !!project || busy;
     el('programming-mode').checked = !!project;
     el('programming-mode').onchange?.();
@@ -87,12 +95,14 @@ window.jarvisWorkspace = (() => {
     let count = 0;
     el('general-nav').className = 'nav-item' + (!project ? ' active' : '');
     el('general-nav').disabled = busy || loading;
-    for (const item of allChats.filter((item) => !item.project_id && matches(item.title))) {
+    for (const item of allChats.filter(
+      (item) => !item.archived && !item.project_id && matches(item.title),
+    )) {
       el('general-chats').appendChild(chatButton(item));
       count++;
     }
     for (const item of projects) {
-      const children = allChats.filter((c) => c.project_id === item.id),
+      const children = allChats.filter((c) => !c.archived && c.project_id === item.id),
         matching = children.filter((c) => matches(c.title));
       if (!matches(item.name + ' ' + item.path) && !matching.length) continue;
       count++;
@@ -129,11 +139,151 @@ window.jarvisWorkspace = (() => {
     el('nav-empty').hidden = count > 0 || !query;
   }
   function chatButton(item) {
-    return button(
+    const row = button(
       (item.archived ? '◌ ' : '') + item.title,
       'chat-item' + (item.id === chat?.id ? ' active' : '') + (item.archived ? ' archived' : ''),
       () => view(item.project_id || '', item.id),
     );
+    row.oncontextmenu = (event) => {
+      event.preventDefault();
+      if (!busy && !loading) contextMenu(event, item);
+    };
+    row.onkeydown = (event) => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+        event.preventDefault();
+        contextMenu(event, item);
+      }
+    };
+    row.setAttribute?.('aria-haspopup', 'menu');
+    return row;
+  }
+  let menu = null;
+  function closeMenu() {
+    menu?.remove();
+    menu = null;
+  }
+  function contextMenu(event, item) {
+    closeMenu();
+    const anchor = event.currentTarget;
+    menu = document.createElement('div');
+    menu.className = 'chat-context-menu';
+    menu.setAttribute('role', 'menu');
+    const rect = event.currentTarget?.getBoundingClientRect?.();
+    menu.style.left =
+      Math.max(8, Math.min(event.clientX || rect?.left || 8, window.innerWidth - 230)) + 'px';
+    menu.style.top =
+      Math.max(8, Math.min(event.clientY || rect?.bottom || 8, window.innerHeight - 210)) + 'px';
+    const actions = [
+      ['Abrir', async () => view(item.project_id || '', item.id)],
+      [
+        'Nome e instruções',
+        async () => {
+          await view(item.project_id || '', item.id);
+          openSettings();
+        },
+      ],
+      ['Limpar mensagens', () => manageItem(item, 'clear')],
+    ];
+    if (!item.slot)
+      actions.push(
+        [
+          item.archived ? 'Restaurar' : 'Arquivar',
+          () => manageItem(item, item.archived ? 'restore' : 'archive'),
+        ],
+        ['Excluir chat', () => manageItem(item, 'delete')],
+      );
+    for (const [label, fn] of actions) {
+      const action = document.createElement('button');
+      action.textContent = label;
+      action.setAttribute('role', 'menuitem');
+      action.onclick = () => {
+        closeMenu();
+        void run(fn);
+      };
+      menu.appendChild(action);
+    }
+    document.body.appendChild(menu);
+    menu.querySelector('button').focus();
+    menu.onkeydown = (e) => {
+      if (e.key === 'Escape') {
+        closeMenu();
+        anchor?.focus();
+      }
+      if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        const items = [...menu.children],
+          index = items.indexOf(document.activeElement);
+        items[(index + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+      }
+    };
+  }
+  document.addEventListener?.('click', closeMenu);
+  document.addEventListener?.('contextmenu', (event) => {
+    if (!event.target.closest?.('.chat-item')) closeMenu();
+  });
+  function openSettings() {
+    if (!chat) return openProjectSettings();
+    el('chat-title').value = chat.title;
+    el('chat-instructions').value = chat.instructions || '';
+    el('chat-project-inheritance').hidden = !project;
+    el('manage-dialog').showModal();
+  }
+  function openProjectSettings() {
+    if (!project) return;
+    el('project-settings-name').value = project.name;
+    el('project-instructions').value = project.instructions || '';
+    el('project-settings-dialog').showModal();
+  }
+  async function manageItem(item, action) {
+    const result = await window.jarvisWindow.manageChat(item.id, action);
+    if (result.canceled) return;
+    if (!result.ok) throw Error(result.data.detail || 'Não foi possível alterar o chat.');
+    for (const id of ['manage-dialog', 'settings-dialog']) if (el(id)?.open) el(id).close();
+    await catalog(
+      project?.id || '',
+      ['delete', 'archive'].includes(action) && chat?.id === item.id ? null : chat?.id,
+    );
+    await window.jarvisStorageUsage?.refresh();
+  }
+  async function showArchived() {
+    const list = el('archived-chat-list');
+    if (!list) return;
+    list.textContent = 'Carregando…';
+    try {
+      const result = await api('/workspace');
+      if (!list.isConnected) return;
+      const archived = (result.chats || []).filter((item) => item.archived);
+      list.replaceChildren();
+      if (!archived.length) {
+        list.textContent = 'Nenhum chat arquivado.';
+        return;
+      }
+      for (const item of archived) {
+        const row = document.createElement('div');
+        row.className = 'archived-chat-row';
+        const title = document.createElement('span');
+        const parent = (result.projects || []).find((project) => project.id === item.project_id);
+        title.textContent = item.title + (parent ? ' · ' + parent.name : ' · Chat geral');
+        const restore = document.createElement('button');
+        restore.textContent = 'Restaurar';
+        restore.disabled = busy || loading;
+        restore.onclick = async () => {
+          restore.disabled = true;
+          try {
+            await manageItem(item, 'restore');
+          } catch (error) {
+            if (el('archived-status')) el('archived-status').textContent = error.message;
+          } finally {
+            if (restore.isConnected) restore.disabled = false;
+          }
+        };
+        row.appendChild(title);
+        row.appendChild(restore);
+        list.appendChild(row);
+      }
+    } catch (error) {
+      if (list.isConnected) list.textContent = error.message;
+    }
   }
   async function openChat(id) {
     loading = true;
@@ -144,10 +294,19 @@ window.jarvisWorkspace = (() => {
       if ((result.chat.project_id || null) !== (project?.id || null))
         throw new Error('Esta conversa pertence a outro projeto.');
       chat = result.chat;
+      if (el('chat-instructions')) el('chat-instructions').value = chat.instructions || '';
+      if (el('chat-project-inheritance')) el('chat-project-inheritance').hidden = !project;
       olderThan = result.messages[0]?.id || null;
       messages.replaceChildren();
       ui()?.welcome(!result.messages.length);
-      for (const item of result.messages) addMessage(item.role, item.content);
+      for (const item of result.messages) {
+        addMessage(item.role, item.content);
+        window.jarvisAttachments?.renderHistory(
+          messages.lastElementChild,
+          item.attachments,
+          item.attachments_unavailable,
+        );
+      }
       ui()?.scroll(true);
       el('chat-title').value = chat.title;
       el('archive-chat').textContent = chat.archived ? 'Restaurar' : 'Arquivar';
@@ -162,8 +321,13 @@ window.jarvisWorkspace = (() => {
       controls();
     }
   }
-  async function view(id, preferred) {
+  async function view(id, preferred, preserveAttachments = false) {
     if (busy || loading) return;
+    if (
+      !preserveAttachments &&
+      ((chat?.id || null) !== (preferred || null) || (project?.id || '') !== id)
+    )
+      window.jarvisAttachments?.clear();
     loading = true;
     chat = null;
     controls();
@@ -200,13 +364,17 @@ window.jarvisWorkspace = (() => {
       controls();
     }
   }
-  async function catalog(selected = project?.id || '', preferred = chat?.id) {
+  async function catalog(
+    selected = project?.id || '',
+    preferred = chat?.id,
+    preserveAttachments = false,
+  ) {
     const result = await api('/workspace');
     projects = result.projects;
     allChats = result.chats || allChats;
-    await view(selected, preferred);
+    await view(selected, preferred, preserveAttachments);
   }
-  async function newChat() {
+  async function newChat(preserveAttachments = false) {
     if (busy || loading) return;
     loading = true;
     controls();
@@ -216,7 +384,7 @@ window.jarvisWorkspace = (() => {
         title: 'Nova conversa',
       });
       loading = false;
-      await catalog(project?.id || '', item.id);
+      await catalog(project?.id || '', item.id, preserveAttachments);
       el('input').focus();
     } finally {
       loading = false;
@@ -268,6 +436,34 @@ window.jarvisWorkspace = (() => {
     el('legacy-roots').hidden = true;
     el('general-nav').onclick = () => run(() => view(''));
     el('nav-search').addEventListener('input', renderNavigation);
+    el('manage-open').onclick = () => run(openSettings);
+    el('project-name').onclick = () => run(openProjectSettings);
+    el('project-name').title = 'Configurações do projeto';
+    el('project-name').setAttribute?.('role', 'button');
+    el('project-name').tabIndex = 0;
+    el('project-name').onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        void run(openProjectSettings);
+      }
+    };
+    if (el('project-settings-open'))
+      el('project-settings-open').onclick = () => run(openProjectSettings);
+    if (el('save-project-settings'))
+      handler('save-project-settings', async () => {
+        await post('/projects/settings', {
+          project_id: project.id,
+          name: el('project-settings-name').value,
+          instructions: el('project-instructions').value,
+        });
+        el('project-settings-dialog').close();
+        await catalog(project.id, chat?.id);
+      });
+    if (el('project-select-sources'))
+      handler('project-select-sources', async () => {
+        el('project-settings-dialog').close();
+        await window.jarvisScope.open(project, async () => catalog(project.id, chat?.id));
+      });
     handler('new-chat', newChat);
     handler('add-project', async () => {
       const result = await window.jarvisWindow.authorizeFolder();
@@ -277,12 +473,12 @@ window.jarvisWorkspace = (() => {
       await window.jarvisScope.open(project, async () => catalog(project.id, chat?.id));
     });
     handler('rename-chat', async () => {
-      const result = await window.jarvisWindow.manageChat(
-        chat.id,
-        'rename',
-        el('chat-title').value,
-      );
-      if (!result.ok) throw new Error(result.data.detail);
+      await post('/chats/settings', {
+        chat_id: chat.id,
+        title: el('chat-title').value,
+        instructions: el('chat-instructions')?.value || '',
+      });
+      el('manage-dialog').close();
       await catalog(project?.id || '', chat.id);
     });
     handler('archive-chat', async () => {
@@ -292,18 +488,26 @@ window.jarvisWorkspace = (() => {
       );
       if (result.canceled) return;
       if (!result.ok) throw new Error(result.data.detail);
-      await catalog(project?.id || '', chat.id);
+      el('manage-dialog').close();
+      await catalog(project?.id || '', null);
     });
+    if (el('clear-chat'))
+      handler('clear-chat', async () => {
+        await manageItem(chat, 'clear');
+      });
     handler('delete-chat', async () => {
       const result = await window.jarvisWindow.manageChat(chat.id, 'delete');
       if (result.canceled) return;
       if (!result.ok) throw new Error(result.data.detail);
+      el('manage-dialog').close();
       await catalog(project?.id || '', null);
+      await window.jarvisStorageUsage?.refresh();
     });
     handler('remove-project', async () => {
       const result = await window.jarvisWindow.removeProject(project.id);
       if (result.canceled) return;
       if (!result.ok) throw new Error(result.data.detail);
+      el('project-settings-dialog').close();
       await catalog('', null);
     });
     handler('select-sources', () =>
@@ -312,6 +516,7 @@ window.jarvisWorkspace = (() => {
     handler('refresh-memory', async () => {
       project = await post('/projects/refresh', { project_id: project.id });
       controls();
+      el('project-settings-dialog').close();
     });
     handler('accept-partial', async () => {
       await post('/projects/accept-partial', { project_id: project.id });
@@ -319,6 +524,7 @@ window.jarvisWorkspace = (() => {
     });
     handler('show-knowledge', async () => {
       const result = await api('/projects/knowledge?project_id=' + encodeURIComponent(project.id));
+      el('project-settings-dialog').close();
       ui()?.knowledge(result.content);
     });
     handler('save-note', async () => {
@@ -329,6 +535,7 @@ window.jarvisWorkspace = (() => {
       });
       el('project-note').value = '';
       el('status').textContent = 'Anotação salva';
+      el('project-settings-dialog').close();
     });
     handler('older-messages', async () => {
       if (!olderThan) return;
@@ -337,14 +544,23 @@ window.jarvisWorkspace = (() => {
       const result = await api('/chats/history?chat_id=' + chat.id + '&before=' + olderThan);
       if (!result.messages.length) {
         el('older-messages').textContent = 'Início do histórico';
+        el('manage-dialog').close();
         return;
       }
       olderThan = result.messages[0].id;
       const existing = [...messages.children];
       messages.replaceChildren();
-      for (const item of result.messages) addMessage(item.role, item.content);
+      for (const item of result.messages) {
+        addMessage(item.role, item.content);
+        window.jarvisAttachments?.renderHistory(
+          messages.lastElementChild,
+          item.attachments,
+          item.attachments_unavailable,
+        );
+      }
       for (const row of existing) messages.appendChild(row);
       if (area) area.scrollTop = area.scrollHeight - height;
+      el('manage-dialog').close();
     });
     let saved;
     try {
@@ -365,6 +581,9 @@ window.jarvisWorkspace = (() => {
     openChat,
     newChat,
     catalog,
+    openSettings,
+    openProjectSettings,
+    showArchived,
     get canNavigate() {
       return !busy && !loading;
     },

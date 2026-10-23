@@ -25,7 +25,14 @@ const general = {
 const server = http.createServer((request, response) => {
   response.setHeader('Content-Type', 'application/json');
   if (request.url === '/api/device/login' || request.url === '/api/device/session') {
-    response.end(JSON.stringify({ active: true, credential: 'b'.repeat(43), expiresAt }));
+    response.end(
+      JSON.stringify({
+        active: true,
+        user: { id: '22222222-2222-4222-8222-222222222222' },
+        credential: 'b'.repeat(43),
+        expiresAt,
+      }),
+    );
   } else if (request.url === '/api/device/chats') {
     let raw = '';
     request.on('data', (chunk) => (raw += chunk));
@@ -33,7 +40,13 @@ const server = http.createServer((request, response) => {
       const command = JSON.parse(raw);
       response.end(
         JSON.stringify(
-          command.action === 'list' ? [general] : command.action === 'history' ? [] : general,
+          command.action === 'storage'
+            ? { usedBytes: 0, limitBytes: 52428800, blocked: false }
+            : command.action === 'list'
+              ? [general]
+              : command.action === 'history'
+                ? []
+                : general,
         ),
       );
     });
@@ -112,7 +125,7 @@ app.whenReady().then(async () => {
     );
     finish(0);
   } catch (error) {
-    console.error('Falha na integração Electron/FastAPI:', error.code || error.name);
+    console.error('Falha na integração Electron/FastAPI:', error.stack || error.name);
     finish(1);
   }
 });

@@ -1,17 +1,24 @@
 import OpenAI from "openai";
-import { chatSchema } from "@jarvis/shared/schemas";
+import { chatSchema, inputReservation } from "@jarvis/shared/schemas";
 import { deviceAuth } from "@/lib/auth";
 import { body, endpoint, HttpError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { reserve, settle } from "@/lib/budget";
 import { proxyCompletion } from "@/lib/proxy";
 import { db } from "@/lib/db";
+import { requireStorage } from "@/lib/storage";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 export const POST = endpoint(async (request) => {
   const device = await deviceAuth(request);
+  await requireStorage(device.userId);
   await rateLimit(`chat:${device.userId}`, 20, 60);
-  const input = await body(request, chatSchema);
+  const input = await body(request, chatSchema, 4 * 1024 * 1024);
+  if (
+    !input.messages.some((message) => Array.isArray(message.content)) &&
+    Buffer.byteLength(JSON.stringify(input)) > 131072
+  )
+    throw new HttpError(413, "Corpo muito grande.");
   const settings = await db.systemSettings.findUnique({
     where: { id: "global" },
   });
@@ -35,10 +42,9 @@ export const POST = endpoint(async (request) => {
     throw new HttpError(503, "Provedor não configurado.");
   const reservation = await reserve(
     device.userId,
-    Buffer.byteLength(JSON.stringify(input.messages)) +
+    inputReservation(input.messages, input.model) +
       Buffer.byteLength(JSON.stringify(input.tools ?? [])) +
       input.max_completion_tokens +
-      input.messages.length * 16 +
       1024,
   );
   const client = new OpenAI({

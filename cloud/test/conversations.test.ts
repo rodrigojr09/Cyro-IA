@@ -13,6 +13,16 @@ const matches = (row: any, where: any) =>
   Object.entries(where).every(([key, value]) => row[key] === value);
 const fake: any = {
   conversation: {
+    deleteMany: async ({ where }: any) => {
+      const ids = new Set(
+        rows.filter((row) => matches(row, where)).map((row) => row.id),
+      );
+      for (let index = messages.length - 1; index >= 0; index--)
+        if (ids.has(messages[index].conversationId)) messages.splice(index, 1);
+      for (let index = rows.length - 1; index >= 0; index--)
+        if (ids.has(rows[index].id)) rows.splice(index, 1);
+      return { count: ids.size };
+    },
     upsert: async ({ where, create, update }: any) => {
       let row = rows.find((row) => matches(row, where.userId_slot));
       if (!row) {
@@ -60,6 +70,13 @@ const fake: any = {
     },
   },
   chatMessage: {
+    deleteMany: async ({ where }: any) => {
+      for (let index = messages.length - 1; index >= 0; index--)
+        if (matches(messages[index], where)) messages.splice(index, 1);
+      return { count: 1 };
+    },
+    findUniqueOrThrow: async ({ where }: any) =>
+      messages.find((row) => matches(row, where.conversationId_requestId)),
     createMany: async ({ data }: any) => {
       if (
         messages.some(
@@ -102,7 +119,42 @@ const fake: any = {
   },
   device: { update: async () => ({}) },
   rateLimit: { upsert: async () => ({ count: 1 }) },
-  $queryRaw: async () => [],
+  $queryRaw: async (sql: any, accountId: string) =>
+    String(sql).includes("cloudStorageLimitBytes")
+      ? [
+          {
+            limitBytes: 52428800,
+            usedBytes:
+              rows
+                .filter((row) => row.userId === accountId)
+                .reduce(
+                  (sum, row) =>
+                    sum +
+                    Buffer.byteLength(row.title || "") +
+                    Buffer.byteLength(row.summary || "") +
+                    Buffer.byteLength(row.instructions || "") +
+                    128,
+                  0,
+                ) +
+              messages
+                .filter((message) =>
+                  rows.some(
+                    (row) =>
+                      row.id === message.conversationId &&
+                      row.userId === accountId,
+                  ),
+                )
+                .reduce(
+                  (sum, row) =>
+                    sum +
+                    Buffer.byteLength(row.content || "") +
+                    Buffer.byteLength(row.scope || "") +
+                    64,
+                  0,
+                ),
+          },
+        ]
+      : [],
   $transaction: async (callback: any) => callback(fake),
 };
 process.env.AUTH_SECRET = "test-conversation-secret-only-1234567890123456";
@@ -135,6 +187,7 @@ test("API: fixed Quick Chat, account isolation including admins, retry idempoten
     role: "user",
     content: "Private A",
     scope: "quick:general",
+    attachmentCount: 2,
   };
   assert.equal((await call(command)).status, 200);
   await call(command);
@@ -142,6 +195,17 @@ test("API: fixed Quick Chat, account isolation including admins, retry idempoten
     await call({ action: "history", id: quick.id, limit: 100 })
   ).json();
   assert.equal(history.length, 1);
+  assert.equal(history[0].attachment_count, 2);
+  assert.equal(
+    (await call({ ...command, requestId: randomUUID(), attachmentCount: 6 }))
+      .status,
+    400,
+  );
+  assert.equal(
+    (await call({ ...command, requestId: randomUUID(), role: "assistant" }))
+      .status,
+    400,
+  );
   assert.equal(
     (
       await (
@@ -209,6 +273,53 @@ test("API: fixed Quick Chat, account isolation including admins, retry idempoten
   );
 });
 
+test("API: instructions, archive/restore, clear fixed history and cloud cleanup stay within authenticated account", async () => {
+  owner = userA;
+  const first = await (
+    await call({ action: "create", title: "Normal", requestId: randomUUID() })
+  ).json();
+  await call({
+    action: "change",
+    id: first.id,
+    instructions: "Preferência de A",
+    archived: true,
+  });
+  let row = await (await call({ action: "get", id: first.id })).json();
+  assert.equal(row.instructions, "Preferência de A");
+  assert.equal(row.archived, 1);
+  await call({ action: "change", id: first.id, archived: false });
+  const fixed = await (await call({ action: "fixed", slot: "quick" })).json();
+  await call({
+    action: "append",
+    id: fixed.id,
+    requestId: randomUUID(),
+    role: "user",
+    content: "Apagar depois",
+  });
+  await call({ action: "change", id: fixed.id, clear: true });
+  assert.equal(
+    (await (await call({ action: "history", id: fixed.id, limit: 100 })).json())
+      .length,
+    0,
+  );
+  owner = userB;
+  const other = await (
+    await call({
+      action: "create",
+      title: "Preservar B",
+      requestId: randomUUID(),
+    })
+  ).json();
+  owner = userA;
+  assert.equal((await call({ action: "clear", confirmed: false })).status, 400);
+  assert.equal((await call({ action: "clear", confirmed: true })).status, 200);
+  assert.equal((await (await call({ action: "storage" })).json()).usedBytes, 0);
+  owner = userB;
+  row = await (await call({ action: "get", id: other.id })).json();
+  assert.equal(row.title, "Preservar B");
+  owner = userA;
+});
+
 test("PostgreSQL migration: unique fixed slots, message retries and cascading deletion", async () => {
   const pg = new PGlite();
   try {
@@ -222,7 +333,25 @@ test("PostgreSQL migration: unique fixed slots, message retries and cascading de
         "utf8",
       ),
     );
+    await pg.exec(
+      await readFile(
+        new URL(
+          "../prisma/migrations/20261023100000_storage_settings/migration.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
     await pg.query('INSERT INTO "User" VALUES ($1)', [userA]);
+    await pg.exec(
+      await readFile(
+        new URL(
+          "../prisma/migrations/20261022150000_local_attachment_notice/migration.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    );
     const chat = randomUUID(),
       request = randomUUID();
     await pg.query(
@@ -243,6 +372,22 @@ test("PostgreSQL migration: unique fixed slots, message retries and cascading de
       pg.query(
         'INSERT INTO "ChatMessage" ("conversationId","requestId",role,content) VALUES ($1,$2,\'user\',\'Again\')',
         [chat, request],
+      ),
+    );
+    await pg.query(
+      'UPDATE "ChatMessage" SET "localAttachmentCount"=5 WHERE "conversationId"=$1',
+      [chat],
+    );
+    await assert.rejects(
+      pg.query(
+        'UPDATE "ChatMessage" SET "localAttachmentCount"=6 WHERE "conversationId"=$1',
+        [chat],
+      ),
+    );
+    await assert.rejects(
+      pg.query(
+        'UPDATE "ChatMessage" SET role=\'assistant\' WHERE "conversationId"=$1',
+        [chat],
       ),
     );
     await pg.query('DELETE FROM "User" WHERE id=$1', [userA]);

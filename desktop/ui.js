@@ -162,20 +162,20 @@ window.jarvisUI = (() => {
     Aparência: () =>
       '<h3>Aparência</h3><p>JARVIS Dark · um espaço focado no seu trabalho.</p><label><input type="checkbox" id="setting-large">Texto ampliado nas respostas</label><button id="setting-sidebar">Alternar barra lateral</button>',
     Voz: () =>
-      '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button><p>Microfone preparado para integração futura.</p>',
-    'Inteligência artificial': () =>
-      '<h3>Inteligência artificial</h3><p>O administrador gerencia modelos, acesso, limites e a chave OpenAI no JARVIS Cloud. Este computador usa uma credencial individual protegida pelo Windows.</p><button id="setting-ai-config">Login e acesso</button><p id="ai-config-status" role="status"></p><p>Entre com o e-mail e a senha cadastrados pelo administrador. A seleção local de fontes não consome tokens; análise, respostas e voz utilizam o Cloud.</p>',
-    Projetos: () =>
-      '<h3>Projetos</h3><p>Cadastre pastas e escolha somente os arquivos relevantes. Builds, dependências e segredos permanecem bloqueados.</p><button id="setting-project">Adicionar projeto</button><button id="setting-sources">Selecionar arquivos do projeto ativo</button>',
-    Memória: () =>
-      '<h3>Memória</h3><p>Cada projeto tem uma base interna separada. Chats e documentos de conhecimento são preservados entre sessões.</p><button id="setting-memory">Gerenciar memória e conversas</button><button id="setting-backups">Backups e restauração</button><p>Backups no mesmo dispositivo não protegem contra perda física. Exporte uma cópia para outro local.</p><p id="backup-status" role="status"></p>',
+      '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button>',
+    Armazenamento: () =>
+      '<h3>Armazenamento</h3><p>Chats gerais ficam na nuvem. Projetos, seus chats e anexos ficam neste computador. O espaço exibido mede dados salvos, não a memória RAM.</p><div id="storage-usage"></div><p id="storage-status" role="status"></p><p>A cota na nuvem considera textos e informações dos chats. Uma pequena reserva permite concluir a última resposta. Apagar dados é permanente e sempre exige confirmação.</p>',
+    'Chats arquivados': () =>
+      '<h3>Chats arquivados</h3><p>Restaure uma conversa para que ela apareça novamente na barra lateral.</p><div id="archived-chat-list"></div><p id="archived-status" role="status"></p>',
     'Quick Chat': () =>
       '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o JARVIS será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
-    Aplicativo: () =>
-      '<h3>Aplicativo</h3><p>JARVIS · 4.1.0 (Cloud + Desktop)</p><p>F11 alterna a tela cheia. O tamanho e o estado da janela são salvos ao fechar.</p><button id="setting-computer">Controle do computador</button><button id="setting-migration">Migrar memória anterior</button><button id="setting-startup">Inicialização autorizada neste computador</button><p id="maintenance-status" role="status"></p><p>Projetos originais: acesso somente leitura.</p>',
+    Conta: () =>
+      '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o JARVIS é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
+    if (name === 'Armazenamento') void window.jarvisStorageUsage?.show();
+    if (name === 'Chats arquivados') void window.jarvisWorkspace?.showArchived();
     for (const button of $('settings-tabs').children)
       button.classList.toggle('active', button.textContent === name);
     if (name === 'Quick Chat' && window.jarvisWindow.quickSettings) {
@@ -205,6 +205,7 @@ window.jarvisUI = (() => {
             closeToTray: false,
           });
           $('quick-config-status').textContent = 'Preferências salvas.';
+          $('settings-dialog').close();
         } catch {
           if ($('quick-config-status'))
             $('quick-config-status').textContent = 'Confira os valores e tente novamente.';
@@ -214,37 +215,6 @@ window.jarvisUI = (() => {
     const bind = (id, fn) => {
       if ($(id)) $(id).onclick = fn;
     };
-    bind('setting-ai-config', async () => {
-      try {
-        await window.jarvisWindow.openAIConfig();
-        $('ai-config-status').textContent =
-          'Configuração aberta. Salve e reinicie o JARVIS pela bandeja para aplicar.';
-      } catch {
-        if ($('ai-config-status'))
-          $('ai-config-status').textContent =
-            'Não foi possível abrir a configuração. Confira as permissões da pasta de dados.';
-      }
-    });
-    for (const [id, method] of [
-      ['setting-migration', 'openMigration'],
-      ['setting-startup', 'openStartup'],
-    ])
-      bind(id, async () => {
-        try {
-          await window.jarvisWindow[method]();
-        } catch {
-          $('maintenance-status').textContent =
-            'Este recurso da edição anterior não está disponível no JARVIS Cloud. Consulte o guia de migração.';
-        }
-      });
-    bind('setting-backups', async () => {
-      try {
-        await window.jarvisWindow.openBackups();
-      } catch {
-        $('backup-status').textContent =
-          'O gerenciador está disponível na edição empacotada. Encerre o aplicativo antes de copiar os dados.';
-      }
-    });
     if ($('setting-large')) {
       $('setting-large').checked = preferences.largeText;
       bind('setting-large', () => {
@@ -261,27 +231,6 @@ window.jarvisUI = (() => {
       apply();
     });
     bind('setting-stop', stopVoice);
-    bind('setting-project', () => {
-      $('settings-dialog').close();
-      $('add-project').click();
-    });
-    bind('setting-sources', () => {
-      $('settings-dialog').close();
-      $('select-sources').click();
-    });
-    bind('setting-memory', () => {
-      $('settings-dialog').close();
-      $('manage-dialog').showModal();
-    });
-    bind('setting-computer', () => {
-      $('settings-dialog').close();
-      $('computer-dialog').showModal();
-    });
-    if ($('setting-sources')) $('setting-sources').disabled = !window.jarvisWorkspace?.project;
-    if ($('setting-computer')) {
-      $('setting-computer').disabled = !!window.jarvisWorkspace?.project;
-      $('setting-computer').title = 'Disponível nas conversas gerais';
-    }
   }
   function toggleVoice() {
     preferences.voice = !preferences.voice;
@@ -295,7 +244,7 @@ window.jarvisUI = (() => {
   };
   $('voice-toggle').onclick = toggleVoice;
   $('voice-stop').onclick = stopVoice;
-  $('manage-open').onclick = () => $('manage-dialog').showModal();
+  $('manage-open').onclick = () => window.jarvisWorkspace?.openSettings();
   $('settings-open').onclick = () => {
     category('Aparência');
     $('settings-dialog').showModal();

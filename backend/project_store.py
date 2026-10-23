@@ -121,6 +121,13 @@ class ProjectStore:
                     "UPDATE projects SET state='selecting',progress='Confirme os arquivos do projeto antes de usar a API'"
                 )
             con.execute("PRAGMA user_version=3")
+            for table in ("projects", "chats"):
+                if "instructions" not in {
+                    row["name"] for row in con.execute(f"PRAGMA table_info({table})")
+                }:
+                    con.execute(
+                        f"ALTER TABLE {table} ADD COLUMN instructions TEXT NOT NULL DEFAULT ''"
+                    )
         self.initialize_db(self.root / "general" / "project.db")
         for project in self.projects(include_removed=True):
             if self.db_path(project["id"]).is_file():
@@ -416,6 +423,8 @@ class ProjectStore:
             "error",
             "tokens",
             "coverage_complete",
+            "name",
+            "instructions",
         }
         if not values or not set(values) <= allowed:
             raise ReadError("Metadados inválidos.")
@@ -490,21 +499,42 @@ class ProjectStore:
                 ),
             )
 
-    def change_chat(self, chat_id, title=None, archived=None, delete=False):
+    def change_chat(
+        self,
+        chat_id,
+        title=None,
+        archived=None,
+        delete=False,
+        instructions=None,
+        clear=False,
+    ):
         chat = self.chat(chat_id, allow_archived=True)
-        if delete:
-            if chat_id == self.general_chat():
+        if delete or clear:
+            if delete and chat_id == self.general_chat():
                 raise ReadError(
                     "A conversa geral migrada é preservada; arquive-a se desejar."
                 )
             with database(self.db_path(chat["project_id"])) as con:
                 con.execute("DELETE FROM messages WHERE chat_id=?", (chat_id,))
                 con.execute("DELETE FROM contexts WHERE chat_id=?", (chat_id,))
-                con.execute("DELETE FROM conversations WHERE id=?", (chat_id,))
+                if delete:
+                    con.execute("DELETE FROM conversations WHERE id=?", (chat_id,))
             with database(self.registry) as con:
-                con.execute("DELETE FROM chats WHERE id=?", (chat_id,))
-            return {"deleted": True}
+                if delete:
+                    con.execute("DELETE FROM chats WHERE id=?", (chat_id,))
+                else:
+                    con.execute(
+                        "UPDATE chats SET summary='',last_message_at=NULL WHERE id=?",
+                        (chat_id,),
+                    )
+            if delete:
+                return {"deleted": True}
         with database(self.registry) as con:
+            if instructions is not None:
+                con.execute(
+                    "UPDATE chats SET instructions=? WHERE id=?",
+                    (redact(instructions)[:4000], chat_id),
+                )
             if title is not None:
                 con.execute(
                     "UPDATE chats SET title=? WHERE id=?",
@@ -545,7 +575,7 @@ class ProjectStore:
             ).fetchall()
         return [dict(row) for row in reversed(rows)]
 
-    def append(self, chat_id, role, content, context_scope=None):
+    def append(self, chat_id, role, content, context_scope=None, attachment_count=0):
         chat = self.chat(chat_id)
         with database(self.db_path(chat["project_id"])) as con:
             revision = (
@@ -557,7 +587,7 @@ class ProjectStore:
                     else ""
                 )
             )
-            con.execute(
+            inserted = con.execute(
                 "INSERT INTO messages(chat_id,role,content,created_at,scope_revision) VALUES(?,?,?,?,?)",
                 (chat_id, role, redact(content), now(), revision),
             )
@@ -570,6 +600,7 @@ class ProjectStore:
                 (now(), summary, chat_id),
             )
         self.mirror_chat(self.chat(chat_id))
+        return inserted.lastrowid
 
     def context(self, chat_id):
         chat = self.chat(chat_id)

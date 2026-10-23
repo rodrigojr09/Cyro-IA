@@ -28,6 +28,7 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
   }
   const elements = {};
   const document = {
+    addEventListener() {},
     getElementById: (id) => (elements[id] ??= new Element()),
     createElement: () => new Element(),
   };

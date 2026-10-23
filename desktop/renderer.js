@@ -148,7 +148,11 @@ programmingMode.onchange();
 async function api(route, options) {
   const response = await window.jarvisWindow.api(route, options);
   const data = response.data;
-  if (!response.ok) throw new Error(data.detail || 'Erro de conexão');
+  if (!response.ok) {
+    if (response.status === 507 || /Limite de memória na nuvem/.test(data.detail || ''))
+      window.jarvisStorageUsage?.block();
+    throw new Error(data.detail || 'Erro de conexão');
+  }
   return data;
 }
 function showConfirmation(action) {
@@ -236,14 +240,15 @@ async function speak(text) {
 }
 let preflighting = false;
 async function submit() {
-  const text = input.value.trim();
-  if (!text || send.disabled || preflighting) return;
+  if (window.jarvisStorageUsage?.blocked) return;
+  const text = input.value.trim() || (window.jarvisAttachments?.has() ? 'Analise os anexos.' : '');
+  if (!text || send.disabled || preflighting || window.jarvisAttachments?.loading()) return;
   preflighting = true;
   try {
     const project = window.jarvisWorkspace?.project;
     if (project) await window.jarvisScope.check(project.id);
     if (window.jarvisWorkspace && !window.jarvisWorkspace.chat)
-      await window.jarvisWorkspace.newChat();
+      await window.jarvisWorkspace.newChat(true);
   } catch (error) {
     addMessage('assistant', 'Erro: ' + error.message);
     return;
@@ -252,11 +257,17 @@ async function submit() {
   }
   const currentChat = window.jarvisWorkspace?.chat;
   if (window.jarvisWorkspace && !currentChat) return;
+  const attachmentIds = window.jarvisAttachments?.ids() || [];
+  window.jarvisAttachments?.busy(true);
   input.value = '';
   window.jarvisUI?.resize();
   window.jarvisUI?.stopVoice();
   window.jarvisUI?.busy(true);
   addMessage('user', text);
+  window.jarvisAttachments?.renderHistory(
+    messages.lastElementChild,
+    window.jarvisAttachments.selected(),
+  );
   window.jarvisUI?.scroll(true);
   send.disabled = true;
   cancelChat.hidden = false;
@@ -278,6 +289,7 @@ async function submit() {
         message: text,
         mode: programmingMode.checked ? 'programming' : 'chat',
         ...(currentChat ? { chat_id: currentChat.id } : {}),
+        ...(attachmentIds.length ? { attachments: attachmentIds } : {}),
       }),
     });
     analyzing = false;
@@ -285,6 +297,7 @@ async function submit() {
     showProject(data.programming);
     window.jarvisUI?.busy(false);
     addMessage('assistant', data.reply);
+    window.jarvisAttachments?.clear();
     streamingMessage?.remove();
     streamingMessage = null;
     for (const action of data.pending_actions || []) showConfirmation(action);
@@ -294,6 +307,7 @@ async function submit() {
   } catch (err) {
     addMessage('assistant', 'Erro: ' + err.message);
     status.textContent = 'Falha';
+    if (attachmentIds.length && !input.value) input.value = text;
   } finally {
     cancelChat.hidden = true;
     streamingMessage?.remove();
@@ -301,6 +315,7 @@ async function submit() {
     analyzing = false;
     clearTimeout(pollTimer);
     send.disabled = false;
+    window.jarvisAttachments?.busy(false);
     programmingMode.disabled = false;
     document.getElementById('authorize-project').disabled = false;
     await refreshProject();

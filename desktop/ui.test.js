@@ -50,7 +50,7 @@ async function setup({ saved } = {}) {
     async play() {}
     pause() {}
   };
-  for (const file of ['vendor.js', 'ui.js', 'workspace.js', 'renderer.js'])
+  for (const file of ['vendor.js', 'ui.js', 'storage-ui.js', 'workspace.js', 'renderer.js'])
     w.eval(fs.readFileSync(path.join(__dirname, file), 'utf8'));
   await new Promise((resolve) => setImmediate(resolve));
   return { w, dom, copies, links, calls, timers };
@@ -221,20 +221,182 @@ test('diálogos possuem nome acessível e navegação identifica a conversa ativ
   dom.window.close();
 });
 
-test('configuração de IA abre somente o fluxo privado e orienta reinicialização', async () => {
+test('configurações mostram só preferências e armazenamento sem opções técnicas antigas', async () => {
   const { w, dom } = await setup();
-  let opened = 0;
-  w.jarvisWindow.openAIConfig = async () => {
-    opened++;
-    return { ok: true };
+  w.document.getElementById('settings-open').click();
+  const labels = [...w.document.getElementById('settings-tabs').children].map((b) => b.textContent);
+  assert.deepEqual(labels, [
+    'Aparência',
+    'Voz',
+    'Armazenamento',
+    'Chats arquivados',
+    'Quick Chat',
+    'Conta',
+  ]);
+  [...w.document.getElementById('settings-tabs').children]
+    .find((b) => b.textContent === 'Armazenamento')
+    .click();
+  assert.ok(w.document.getElementById('storage-usage'));
+  assert.equal(w.document.getElementById('setting-ai-config'), null);
+  assert.equal(w.document.getElementById('setting-migration'), null);
+  dom.window.close();
+});
+
+test('menu contextual edita só o chat e arquivados saem da sidebar até restauração; diálogos fecham ao concluir', async () => {
+  const { w, dom } = await setup();
+  const project = {
+    id: 'project-ui',
+    name: 'Estudos',
+    path: 'C:/Study',
+    ready: 1,
+    scope_confirmed: 1,
+    state: 'ready',
+    instructions: 'Orientação do projeto',
   };
+  const general = {
+    id: 'normal-ui',
+    project_id: null,
+    title: 'Conversa normal',
+    archived: 0,
+    instructions: 'Resposta breve',
+  };
+  const projectChat = {
+    id: 'project-chat-ui',
+    project_id: project.id,
+    title: 'Revisão',
+    archived: 0,
+    instructions: 'Exemplos adicionais',
+  };
+  let chats = [general, projectChat],
+    canceled = false;
+  const base = w.jarvisWindow.api;
+  w.jarvisWindow.api = async (route, options) => {
+    let data;
+    if (route === '/workspace') data = { projects: [project], chats };
+    else if (route === '/workspace/view') {
+      const id = JSON.parse(options.body).project_id;
+      data = {
+        project: id ? project : null,
+        chats: chats.filter((c) => (c.project_id || null) === (id || null) && !c.archived),
+        archived_chats: chats.filter((c) => (c.project_id || null) === (id || null) && c.archived),
+      };
+    } else if (route.startsWith('/chats/history?'))
+      data = {
+        chat: chats.find((c) => c.id === new URLSearchParams(route.split('?')[1]).get('chat_id')),
+        messages: [],
+      };
+    else if (route === '/chats/settings') {
+      const input = JSON.parse(options.body);
+      data = chats.find((c) => c.id === input.chat_id);
+      Object.assign(data, { title: input.title, instructions: input.instructions });
+    } else if (route === '/projects/settings') {
+      const input = JSON.parse(options.body);
+      Object.assign(project, { name: input.name, instructions: input.instructions });
+      data = project;
+    } else return base(route, options);
+    return { ok: true, data };
+  };
+  w.jarvisWindow.manageChat = async (id, action) => {
+    if (canceled) return { canceled: true };
+    const item = chats.find((c) => c.id === id);
+    if (action === 'archive') item.archived = 1;
+    if (action === 'restore') item.archived = 0;
+    if (action === 'delete') chats = chats.filter((c) => c.id !== id);
+    return { ok: true, data: {} };
+  };
+  await w.jarvisWorkspace.catalog('', general.id);
+  const row = w.document.querySelector('#general-chats .chat-item');
+  row.dispatchEvent(
+    new w.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 50, clientY: 70 }),
+  );
+  assert.equal(w.document.querySelectorAll('[role="menuitem"]').length, 5);
+  [...w.document.querySelectorAll('[role="menuitem"]')]
+    .find((b) => b.textContent === 'Nome e instruções')
+    .click();
+  await new Promise(setImmediate);
+  assert.equal(w.document.getElementById('manage-dialog').open, true);
+  assert.equal(w.document.getElementById('chat-instructions').value, 'Resposta breve');
+  assert.equal(w.document.querySelector('#manage-dialog #refresh-memory'), null);
+  w.document.getElementById('chat-instructions').value = 'Nova preferência';
+  await w.document.getElementById('rename-chat').onclick();
+  assert.equal(general.instructions, 'Nova preferência');
+  assert.equal(w.document.getElementById('manage-dialog').open, false);
+  await w.jarvisWorkspace.catalog(project.id, projectChat.id);
+  w.jarvisWorkspace.openSettings();
+  assert.equal(w.document.getElementById('chat-project-inheritance').hidden, false);
+  w.document.getElementById('manage-dialog').close();
+  w.jarvisWorkspace.openProjectSettings();
+  assert.equal(w.document.getElementById('project-instructions').value, 'Orientação do projeto');
+  w.document.getElementById('project-instructions').value = 'Novo contexto do projeto';
+  await w.document.getElementById('save-project-settings').onclick();
+  assert.equal(w.document.getElementById('project-settings-dialog').open, false);
+  assert.equal(project.instructions, 'Novo contexto do projeto');
+  assert.equal(projectChat.instructions, 'Exemplos adicionais');
+  await w.jarvisWorkspace.catalog('', general.id);
+  w.jarvisWorkspace.openSettings();
+  canceled = true;
+  await w.document.getElementById('archive-chat').onclick();
+  assert.equal(w.document.getElementById('manage-dialog').open, true);
+  canceled = false;
+  await w.document.getElementById('archive-chat').onclick();
+  assert.equal(w.document.getElementById('manage-dialog').open, false);
+  assert.equal(w.document.getElementById('general-chats').children.length, 0);
   w.document.getElementById('settings-open').click();
   [...w.document.getElementById('settings-tabs').children]
-    .find((b) => b.textContent === 'Inteligência artificial')
+    .find((b) => b.textContent === 'Chats arquivados')
     .click();
-  await w.document.getElementById('setting-ai-config').onclick();
-  assert.equal(opened, 1);
-  assert.match(w.document.getElementById('ai-config-status').textContent, /reinicie/);
-  assert.equal(w.document.querySelectorAll('#settings-content input').length, 0);
+  await new Promise(setImmediate);
+  assert.match(w.document.getElementById('archived-chat-list').textContent, /Conversa normal/);
+  await w.document.querySelector('#archived-chat-list button').onclick();
+  assert.equal(w.document.getElementById('settings-dialog').open, false);
+  assert.equal(w.document.getElementById('general-chats').children.length, 1);
+  await w.jarvisWorkspace.catalog('', general.id);
+  w.jarvisWorkspace.openSettings();
+  await w.document.getElementById('clear-chat').onclick();
+  assert.equal(w.document.getElementById('manage-dialog').open, false);
+  w.jarvisWorkspace.openSettings();
+  await w.document.getElementById('delete-chat').onclick();
+  assert.equal(w.document.getElementById('manage-dialog').open, false);
+  dom.window.close();
+});
+
+test('armazenamento bloqueia envio com cota cheia, mantém limpeza acessível e recupera após confirmação', async () => {
+  const { w, dom } = await setup();
+  let full = true,
+    clears = 0;
+  const base = w.jarvisWindow.api;
+  w.jarvisWindow.api = async (route, options) =>
+    route === '/storage'
+      ? {
+          ok: true,
+          data: {
+            local: { usedBytes: 1048576 },
+            cloud: { usedBytes: full ? 52428800 : 0, limitBytes: 52428800, blocked: full },
+          },
+        }
+      : base(route, options);
+  w.jarvisWindow.clearStorage = async (scope) => {
+    assert.equal(scope, 'cloud');
+    clears++;
+    full = false;
+    return { ok: true, data: { cleared: true } };
+  };
+  await w.jarvisStorageUsage.refresh();
+  assert.equal(w.document.getElementById('send').disabled, true);
+  assert.match(w.document.getElementById('storage-blocked').textContent, /Apague alguns chats/);
+  w.document.getElementById('settings-open').click();
+  [...w.document.getElementById('settings-tabs').children]
+    .find((b) => b.textContent === 'Armazenamento')
+    .click();
+  await w.jarvisStorageUsage.refresh();
+  const clear = [...w.document.querySelectorAll('#storage-usage button')].find(
+    (b) => b.textContent === 'Apagar chats na nuvem',
+  );
+  assert.equal(clear.disabled, false);
+  await clear.onclick();
+  assert.equal(clears, 1);
+  assert.equal(w.jarvisStorageUsage.blocked, false);
+  assert.equal(w.document.getElementById('settings-dialog').open, false);
+  assert.equal(w.document.getElementById('storage-blocked').hidden, true);
   dom.window.close();
 });

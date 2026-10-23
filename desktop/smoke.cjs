@@ -10,6 +10,7 @@ app.setPath(
   require('node:fs').mkdtempSync(path.join(app.getPath('temp'), 'jarvis-smoke-')),
 );
 let win, copied, speech, submittedChat, savedScope;
+let quotaFull = false;
 const projectId = '11111111-1111-4111-8111-111111111111',
   generalId = '22222222-2222-4222-8222-222222222222',
   firstId = '33333333-3333-4333-8333-333333333333',
@@ -51,10 +52,33 @@ ipcMain.handle('jarvis:copy-code', (_, text) => {
   return true;
 });
 ipcMain.handle('jarvis:open-link', () => true);
+ipcMain.handle('jarvis:manage-chat', (_, id, action) => {
+  const item = chats.find((c) => c.id === id);
+  if (action === 'archive') item.archived = 1;
+  if (action === 'restore') item.archived = 0;
+  return { ok: true, data: {} };
+});
+ipcMain.handle('jarvis:clear-storage', () => {
+  quotaFull = false;
+  return { ok: true, data: { cleared: true } };
+});
 ipcMain.handle('jarvis:api', (_, route, options) => {
   let data;
   if (route === '/health') data = { ok: true };
-  else if (route === '/workspace')
+  else if (route === '/storage')
+    data = {
+      local: { usedBytes: 2097152 },
+      cloud: {
+        usedBytes: quotaFull ? 52428800 : 1048576,
+        limitBytes: 52428800,
+        blocked: quotaFull,
+      },
+    };
+  else if (route === '/chats/settings') {
+    const input = JSON.parse(options.body);
+    data = chats.find((c) => c.id === input.chat_id);
+    Object.assign(data, { title: input.title, instructions: input.instructions });
+  } else if (route === '/workspace')
     data = { projects: [project], chats, general_chat_id: generalId };
   else if (route === '/workspace/view')
     data = JSON.parse(options.body).project_id
@@ -180,6 +204,49 @@ app.whenReady().then(async () => {
     await js(`document.getElementById('settings-open').click()`);
     await shot('jarvis-v1-settings.png');
     await js(`document.getElementById('settings-dialog').close()`);
+    await js(`window.jarvisWorkspace.catalog('', '${generalId}')`);
+    await js(
+      `document.querySelector('#general-chats .chat-item').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:130,clientY:210}))`,
+    );
+    assert.equal(await js(`document.querySelectorAll('[role="menuitem"]').length`), 5);
+    await shot('jarvis-v4-chat-menu.png');
+    await js(`document.querySelectorAll('[role="menuitem"]')[1].click()`);
+    await js(
+      `new Promise(resolve=>{const poll=()=>document.getElementById('manage-dialog').open?resolve():setTimeout(poll,20);poll();})`,
+    );
+    assert.equal(await js(`document.querySelector('#manage-dialog #refresh-memory')===null`), true);
+    await shot('jarvis-v4-chat-settings.png');
+    await js(
+      `document.getElementById('chat-instructions').value='Responda com exemplos'; document.getElementById('rename-chat').onclick()`,
+    );
+    assert.equal(chats.find((c) => c.id === generalId).instructions, 'Responda com exemplos');
+    assert.equal(await js(`document.getElementById('manage-dialog').open`), false);
+    await js(
+      `window.jarvisWorkspace.openSettings();document.getElementById('archive-chat').onclick()`,
+    );
+    assert.equal(await js(`document.querySelectorAll('#general-chats .chat-item').length`), 0);
+    await js(
+      `document.getElementById('settings-open').click();[...document.getElementById('settings-tabs').children].find(b=>b.textContent==='Chats arquivados').click()`,
+    );
+    await js(
+      `new Promise(resolve=>{const poll=()=>document.querySelector('#archived-chat-list button')?resolve():setTimeout(poll,20);poll();})`,
+    );
+    await shot('jarvis-v4-archived.png');
+    await js(`document.querySelector('#archived-chat-list button').onclick()`);
+    assert.equal(await js(`document.getElementById('settings-dialog').open`), false);
+    assert.equal(await js(`document.querySelectorAll('#general-chats .chat-item').length`), 1);
+    quotaFull = true;
+    await js(`window.jarvisStorageUsage.refresh()`);
+    assert.equal(await js(`document.getElementById('send').disabled`), true);
+    await js(
+      `document.getElementById('settings-open').click();[...document.getElementById('settings-tabs').children].find(b=>b.textContent==='Armazenamento').click();window.jarvisStorageUsage.refresh()`,
+    );
+    await shot('jarvis-v4-storage.png');
+    await js(
+      `[...document.querySelectorAll('#storage-usage button')].find(b=>b.textContent==='Apagar chats na nuvem').onclick()`,
+    );
+    assert.equal(await js(`window.jarvisStorageUsage.blocked`), false);
+    assert.equal(await js(`document.getElementById('settings-dialog').open`), false);
     win.setSize(800, 560);
     await frame();
     assert.equal(
@@ -192,7 +259,7 @@ app.whenReady().then(async () => {
     await js(`document.getElementById('sidebar-toggle').click()`);
     assert.equal(await js(`document.body.classList.contains('sidebar-collapsed')`), true);
     console.log(
-      'Electron real: sidebar, chats isolados, envio, Markdown, código/cópia, áudio resumido, seleção, configurações e redimensionamento aprovados. Capturas: jarvis-v1-home.png, jarvis-v1-chat.png, jarvis-v1-settings.png e jarvis-v1-compact.png no diretório temporário.',
+      'Electron real: interface, menu contextual, configurações separadas, arquivamento/restauração, fechamento de diálogos e bloqueio/recuperação da cota aprovados (dados Cloud simulados). Capturas jarvis-v4-*.png no diretório temporário.',
     );
     clearTimeout(timer);
     win.destroy();

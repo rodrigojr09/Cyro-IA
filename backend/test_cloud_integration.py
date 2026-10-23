@@ -64,6 +64,8 @@ class CloudIntegrationTests(unittest.TestCase):
         )
         with patch.object(main, "CLOUD", True), patch.object(
             main, "client", cloud_client.client
+        ), patch.object(
+            main.store, "request", return_value={"blocked": False}, create=True
         ):
             response = self.client.post(
                 "/chat/stream", json={"message": "Escreva uma saudação de teste."}
@@ -108,7 +110,11 @@ class CloudIntegrationTests(unittest.TestCase):
                 "Limite mensal de tokens atingido.",
                 "Limite mensal de tokens atingido.",
             ),
-            (403, "Sessão inválida ou acesso bloqueado. Entre novamente.", "Sessão inválida ou acesso bloqueado. Entre novamente."),
+            (
+                403,
+                "Sessão inválida ou acesso bloqueado. Entre novamente.",
+                "Sessão inválida ou acesso bloqueado. Entre novamente.",
+            ),
             (
                 503,
                 "private-provider-data",

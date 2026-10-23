@@ -4,3 +4,5 @@ openai>=1.70,<3
 python-dotenv>=1,<2
 psutil>=6,<8
 cryptography>=46,<49
+Pillow>=12,<13
+pypdf>=6,<7

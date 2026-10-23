@@ -23,9 +23,14 @@ ipcRenderer.on('jarvis:open-chat', (_, id) => {
 });
 contextBridge.exposeInMainWorld('jarvisWindow', {
   permitMicrophone: () => ipcRenderer.invoke('jarvis:voice-input-permission'),
+  chooseAttachments: (remaining) => ipcRenderer.invoke('jarvis:attachments-choose', remaining),
+  attachmentInfo: (id) => ipcRenderer.invoke('jarvis:attachments-info', id),
+  saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
+  discardAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-discard', id),
   onDelta: (callback) => ipcRenderer.on('jarvis:stream-delta', (_event, value) => callback(value)),
   cancelChat: () => ipcRenderer.invoke('jarvis:cancel-chat'),
   initialSettings: () => ipcRenderer.invoke('jarvis:initial-settings'),
+  clearStorage: (scope) => ipcRenderer.invoke('jarvis:clear-storage', scope),
   openBackups: () => ipcRenderer.invoke('jarvis:open-backups'),
   openMigration: () => ipcRenderer.invoke('jarvis:open-migration'),
   openStartup: () => ipcRenderer.invoke('jarvis:open-startup'),

@@ -7,7 +7,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS 4.1.0 — Cloud + Desktop</title>
+    <title>JARVIS 4.2.0 — Cloud + Desktop</title>
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
@@ -71,6 +71,7 @@
         </header>
         <div id="project-banner" hidden>
           <span id="memory-state" role="status"></span
+          ><button id="project-settings-open">Configurações do projeto</button
           ><button id="select-sources"><i data-lucide="files"></i>Arquivos do projeto</button
           ><button id="accept-partial" hidden>Continuar com análise parcial</button>
         </div>
@@ -118,6 +119,8 @@
         </div>
         <button id="jump-bottom" hidden>Ir para a última mensagem ↓</button>
         <footer class="composer-wrap">
+          <div id="attachment-list" class="attachment-list" aria-label="Anexos selecionados"></div>
+          <div id="attachment-error" role="status"></div>
           <div id="voice-state" role="status" hidden></div>
           <button id="voice-stop" hidden>Interromper áudio</button>
           <div class="composer">
@@ -131,6 +134,14 @@
             <div class="composer-tools">
               <span id="composer-context"><i data-lucide="shield-check"></i>Somente leitura</span>
               <div>
+                <button
+                  id="attach-files"
+                  type="button"
+                  title="Anexar até 5 arquivos de 5 MB cada"
+                  aria-label="Anexar imagens e arquivos"
+                >
+                  <i data-lucide="paperclip"></i>
+                </button>
                 <button
                   id="microphone"
                   disabled
@@ -154,21 +165,51 @@
             <span id="status" role="status">Conectando ao núcleo...</span
             ><span>Enter para enviar · Shift+Enter para nova linha</span>
           </div>
+          <p class="attachment-caption">
+            Até 5 anexos de 5 MB cada. Originais ficam neste computador; a análise envia conteúdo à
+            IA.
+          </p>
         </footer>
       </section>
     </div>
     <dialog id="manage-dialog">
       <div class="dialog-header">
-        <h2>Conversa e memória</h2>
+        <h2>Configurações do chat</h2>
         <button data-close="manage-dialog" aria-label="Fechar">×</button>
       </div>
-      <label>Título da conversa<input id="chat-title" maxlength="120" /></label>
+      <label>Nome<input id="chat-title" maxlength="120" /></label>
+      <label
+        >Instruções deste chat<textarea
+          id="chat-instructions"
+          maxlength="4000"
+          placeholder="Como o JARVIS deve ajudar nesta conversa"
+        ></textarea>
+      </label>
+      <p id="chat-project-inheritance" hidden>
+        Este chat também utiliza as instruções do projeto. As instruções acima são adicionais.
+      </p>
       <div class="actions">
-        <button id="rename-chat">Renomear</button><button id="archive-chat">Arquivar</button
+        <button id="rename-chat">Salvar</button><button id="archive-chat">Arquivar</button
+        ><button id="clear-chat" class="danger">Limpar mensagens</button
         ><button id="delete-chat" class="danger">Excluir chat</button
         ><button id="older-messages">Histórico anterior</button>
       </div>
-      <hr />
+    </dialog>
+    <dialog id="project-settings-dialog">
+      <div class="dialog-header">
+        <h2>Configurações do projeto</h2>
+        <button data-close="project-settings-dialog" aria-label="Fechar">×</button>
+      </div>
+      <label>Nome do projeto<input id="project-settings-name" maxlength="120" /></label>
+      <label
+        >Instruções do projeto<textarea
+          id="project-instructions"
+          maxlength="4000"
+          placeholder="Objetivos, contexto e orientações para todos os chats deste projeto"
+        ></textarea>
+      </label>
+      <button id="save-project-settings">Salvar projeto</button>
+      <button id="project-select-sources">Selecionar arquivos do projeto</button>
       <h3>Conhecimento do projeto</h3>
       <div class="actions">
         <button id="refresh-memory">Atualizar memória</button
@@ -245,9 +286,10 @@
       <p>
         A lista usa apenas nomes, tipos e tamanhos: <strong>zero tokens</strong>. Só os itens
         selecionados poderão ser lidos pela análise e pelo chat. Marcar uma pasta inclui fontes
-        atuais e futuras; builds, dependências, locks e segredos continuam bloqueados.
-        O total selecionado deve ser de no máximo <strong>5 MB</strong> (5.242.880 bytes).
-        Use textos, notas, CSV e outros formatos de texto compatíveis. PDF, imagens e documentos binários não são lidos nesta versão.
+        atuais e futuras; builds, dependências, locks e segredos continuam bloqueados. O total
+        selecionado deve ser de no máximo <strong>5 MB</strong> (5.242.880 bytes). Use textos,
+        notas, CSV e outros formatos de texto compatíveis. PDF, imagens e documentos binários não
+        são lidos nesta versão.
       </p>
       <div id="scope-location"></div>
       <div class="scope-actions">
@@ -266,6 +308,8 @@
     <script src="vendor.js"></script>
     <script src="ui.js"></script>
     <script src="scope.js"></script>
+    <script src="attachments-ui.js"></script>
+    <script src="storage-ui.js"></script>
     <script src="workspace.js"></script>
     <script src="renderer.js"></script>
     <script src="voice-input.js"></script>

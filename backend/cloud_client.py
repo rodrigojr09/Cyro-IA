@@ -52,7 +52,8 @@ def conversation_request(command):
 
     if not _storage_origin or not _storage_credential:
         raise ReadError("Entre no JARVIS com sua conta.")
-    for attempt in range(2):
+    attempts = 1 if command.get("action") == "clear" else 2
+    for attempt in range(attempts):
         try:
             response = httpx.post(
                 _storage_origin + "/api/device/chats",
@@ -63,6 +64,10 @@ def conversation_request(command):
             )
             if response.status_code in (401, 403):
                 raise ReadError("Sessão encerrada. Entre novamente no JARVIS.")
+            if response.status_code == 507:
+                from local_storage import StorageFullError
+
+                raise StorageFullError()
             if response.status_code == 404:
                 raise ReadError(
                     "Conversa indisponível. Atualize o Cloud e confira sua conta."
@@ -72,7 +77,7 @@ def conversation_request(command):
             response.raise_for_status()
             return response.json()
         except (httpx.HTTPError, ValueError):
-            if attempt:
+            if attempt == attempts - 1:
                 raise ReadError(
                     "Não foi possível acessar os chats na nuvem. Verifique a conexão e tente novamente."
                 ) from None
@@ -80,6 +85,32 @@ def conversation_request(command):
 
 def ready():
     return _client is not None
+
+
+async def attachment_identity():
+    import httpx
+    import uuid
+    import hashlib
+    from programming.security import ReadError
+
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=False) as transport:
+            response = await transport.get(
+                _storage_origin + "/api/device/session",
+                headers={"Authorization": "Bearer " + _storage_credential},
+            )
+            response.raise_for_status()
+            payload = response.json()
+            user_id = str(uuid.UUID(payload["user"]["id"]))
+            if payload.get("active") is not True:
+                raise ValueError
+            return hashlib.sha256(
+                (_storage_origin + ":" + user_id).encode()
+            ).hexdigest()
+    except Exception:
+        raise ReadError(
+            "Não foi possível validar a conta para os anexos locais. Entre novamente."
+        ) from None
 
 
 class Completions:
@@ -156,6 +187,7 @@ class CloudSpeechError(RuntimeError):
 
 # Only messages authored by our Cloud may be displayed; never expose raw SDK errors.
 SPEECH_MESSAGES = {
+    "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o JARVIS.",
     "Voz não habilitada pelo administrador.",
     "Chave OpenAI não configurada no Cloud.",
     "Inteligência artificial suspensa.",
@@ -184,7 +216,7 @@ class Speech:
                 message = "Serviço de voz indisponível no Cloud. Tente novamente."
             status = (
                 exc.status_code
-                if exc.status_code in {400, 401, 403, 429, 502, 503, 504}
+                if exc.status_code in {400, 401, 403, 429, 502, 503, 504, 507}
                 else 502
             )
             raise CloudSpeechError(status, message) from exc

@@ -2,6 +2,8 @@ import { deviceAuth } from "@/lib/auth";
 import { body, endpoint } from "@/lib/http";
 import { conversationCommand, conversations } from "@/lib/conversations";
 import { rateLimit } from "@/lib/rate-limit";
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export const POST = endpoint(async (request) => {
   const session = await deviceAuth(request);

@@ -168,6 +168,28 @@ test('IPC permite somente a janela principal e rotas registradas', async () => {
   assert.equal(requests.length, 0);
 });
 
+test('anexos exigem janela principal autenticada e rotas privadas não entram na API genérica', async () => {
+  const f = setup();
+  for (const name of [
+    'jarvis:attachments-choose',
+    'jarvis:attachments-info',
+    'jarvis:attachments-save',
+    'jarvis:attachments-discard',
+  ]) {
+    await assert.rejects(
+      f.handlers.get(name)({ ...f.event, senderFrame: { url: 'https://untrusted.test' } }),
+      /não autorizada/,
+    );
+  }
+  await assert.rejects(
+    f.invoke(f.event, '/desktop/attachments/import', {
+      body: JSON.stringify({ paths: ['C:/private.txt'] }),
+    }),
+    /não autorizada/,
+  );
+  assert.equal(f.requests.length, 0);
+});
+
 test('IPC fixa método, destino e token sem devolvê-lo ao renderizador', async () => {
   const { invoke, event, requests } = setup();
   await assert.rejects(invoke(event, '/history', { method: 'POST' }));
@@ -508,4 +530,30 @@ test('Cloud bloqueia IPC e Quick Chat antes do login e destrói Quick Chat ao pe
   await active.invoke(active.event, '/history');
   active.appEvents.get('jarvis:session-changed')(false);
   assert.equal(active.destroyCalls, 1);
+});
+
+test('limpeza local/nuvem exige confirmação nativa e janela autenticada; API genérica não apaga dados', async () => {
+  const canceled = setup();
+  assert.equal(
+    (await canceled.handlers.get('jarvis:clear-storage')(canceled.event, 'cloud')).canceled,
+    true,
+  );
+  assert.equal(canceled.requests.length, 0);
+  const approved = setup({ authorized: true, cloud: true, authenticated: true });
+  await approved.handlers.get('jarvis:clear-storage')(approved.event, 'local');
+  assert.equal(JSON.parse(approved.requests[0].options.body).confirmed, true);
+  assert.equal(JSON.parse(approved.requests[0].options.body).scope, 'local');
+  await assert.rejects(
+    approved.invoke(approved.event, '/desktop/storage/clear', { method: 'POST', body: '{}' }),
+    /autorizada/,
+  );
+  await assert.rejects(
+    approved.handlers.get('jarvis:clear-storage')({ ...approved.event, sender: {} }, 'local'),
+    /autorizada/,
+  );
+  const locked = setup({ cloud: true });
+  await assert.rejects(
+    locked.handlers.get('jarvis:clear-storage')(locked.event, 'cloud'),
+    /autorizada/,
+  );
 });

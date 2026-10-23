@@ -15,6 +15,7 @@ export function requireOrigin(request: Request) {
 export async function body<T>(
   request: Request,
   schema: ZodType<T>,
+  maxBytes = 131072,
 ): Promise<T> {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new HttpError(415, "Use JSON.");
@@ -27,7 +28,7 @@ export async function body<T>(
       const { value, done } = await reader.read();
       if (done) break;
       length += value.length;
-      if (length > 131072) {
+      if (length > maxBytes) {
         await reader.cancel();
         throw new HttpError(413, "Corpo muito grande.");
       }

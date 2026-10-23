@@ -65,6 +65,8 @@ def main():
             "test_cloud_integration",
             "test_cloud_conversations",
             "test_project_limits",
+            "test_attachments",
+            "test_storage_settings",
             "test_jarvis",
             "test_programming",
             "test_projects",

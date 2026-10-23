@@ -29,6 +29,7 @@ model User {
   manager User? @relation("ManagedUsers", fields: [managerId], references: [id], onDelete: Restrict)
   employees User[] @relation("ManagedUsers")
   monthlyTokenLimit Int @default(100000)
+  cloudStorageLimitBytes Int @default(52428800)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   createdCodes ActivationCode[] @relation("CodeCreator")
@@ -163,6 +164,7 @@ model Conversation {
   title String @db.VarChar(120)
   archived Boolean @default(false)
   summary String @default("")
+  instructions String @default("") @db.VarChar(4000)
   createdAt DateTime @default(now())
   lastMessageAt DateTime?
   messages ChatMessage[]
@@ -178,6 +180,7 @@ model ChatMessage {
   role String @db.VarChar(16)
   content String
   scope String @default("") @db.VarChar(32)
+  localAttachmentCount Int @default(0)
   createdAt DateTime @default(now())
   @@unique([conversationId, requestId])
   @@index([conversationId, id])

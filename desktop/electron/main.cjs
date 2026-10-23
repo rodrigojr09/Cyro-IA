@@ -126,6 +126,7 @@ async function publish(session) {
   if (!session) return;
   // The local token is never exposed to a renderer or passed as a process argument.
   for (let i = 0; i < 100; i++) {
+    let rejected = false;
     try {
       const local = (await fs.readFile(path.join(dataDir, '.local-token'), 'utf8')).trim();
       const response = await fetch('http://127.0.0.1:8765/desktop/cloud-session', {
@@ -133,10 +134,12 @@ async function publish(session) {
         redirect: 'error',
         headers: { 'Content-Type': 'application/json', 'X-Jarvis-Token': local },
         body: JSON.stringify({ origin: session.origin, credential: session.credential }),
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(15000),
       });
       if (response.ok) return;
+      rejected = [400,401,403].includes(response.status);
     } catch {}
+    if (rejected) throw Error('Não foi possível validar a sessão no serviço local. Entre novamente.');
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   throw Error('Serviço local indisponível. Reinicie o JARVIS.');

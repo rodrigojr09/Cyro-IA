@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { imagePart, textPart } from "./vision";
+export { inputReservation } from "./vision";
 export const loginSchema = z
   .object({
     email: z
@@ -27,7 +29,16 @@ export const chatSchema = z
         z
           .object({
             role: z.enum(["system", "user", "assistant", "tool"]),
-            content: z.string().max(48000).nullable().optional(),
+            content: z
+              .union([
+                z.string().max(48000),
+                z
+                  .array(z.discriminatedUnion("type", [textPart, imagePart]))
+                  .min(1)
+                  .max(16),
+              ])
+              .nullable()
+              .optional(),
             tool_call_id: z.string().max(200).optional(),
             tool_calls: z
               .array(
@@ -47,10 +58,42 @@ export const chatSchema = z
               .max(12)
               .optional(),
           })
-          .strict(),
+          .strict()
+          .superRefine((message, ctx) => {
+            if (Array.isArray(message.content)) {
+              if (message.role !== "user")
+                ctx.addIssue({
+                  code: "custom",
+                  message: "Anexos somente em mensagens do usuário.",
+                });
+              if (
+                message.content.reduce(
+                  (sum, part) =>
+                    sum + (part.type === "text" ? part.text.length : 0),
+                  0,
+                ) > 48000
+              )
+                ctx.addIssue({
+                  code: "custom",
+                  message: "Texto dos anexos excede o limite.",
+                });
+            }
+          }),
       )
       .min(1)
-      .max(60),
+      .max(60)
+      .superRefine((messages, ctx) => {
+        const images = messages.flatMap((message) =>
+          Array.isArray(message.content)
+            ? message.content.filter((part) => part.type === "image_url")
+            : [],
+        );
+        if (images.length > 5)
+          ctx.addIssue({
+            code: "custom",
+            message: "No máximo 5 imagens por consulta.",
+          });
+      }),
     tools: z
       .array(
         z

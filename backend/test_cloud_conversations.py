@@ -30,6 +30,8 @@ class ProjectChatBindingTests(unittest.TestCase):
         cloud_id = str(uuid.uuid4())
 
         def request(command):
+            if command["action"] == "storage":
+                return {"blocked": False}
             if command["action"] == "get":
                 return {"id": cloud_id, "project_id": None, "archived": 0}
             if command["action"] == "fixed":
@@ -74,6 +76,7 @@ class CloudConversationTests(unittest.TestCase):
                 self.rows.setdefault((self.owner, command["id"]), []).append(
                     {"role": command["role"], "content": command["content"]}
                 )
+                return {"id": len(self.rows[(self.owner, command["id"])])}
             return []
 
         self.request = request

@@ -9,6 +9,7 @@ type Employee = {
   role: string;
   status: string;
   monthlyTokenLimit: number;
+  cloudStorageLimitBytes: number;
 };
 type Device = {
   id: string;
@@ -351,6 +352,8 @@ export default function Dashboard({ section }: { section: string }) {
                           name: values.get("name"),
                           status: values.get("status"),
                           monthlyTokenLimit: Number(values.get("limit")),
+                          cloudStorageLimitBytes:
+                            Number(values.get("storageLimit")) * 1048576,
                           ...(values.get("password")
                             ? { password: values.get("password") }
                             : {}),
@@ -373,6 +376,19 @@ export default function Dashboard({ section }: { section: string }) {
                           min={0}
                           max={100000000}
                           defaultValue={e.monthlyTokenLimit}
+                        />
+                      </label>
+                      <label>
+                        Armazenamento na nuvem (MB)
+                        <input
+                          name="storageLimit"
+                          type="number"
+                          min={1}
+                          max={1024}
+                          defaultValue={
+                            (e.cloudStorageLimitBytes || 52428800) / 1048576
+                          }
+                          required
                         />
                       </label>
                       <label>
@@ -519,8 +535,7 @@ export default function Dashboard({ section }: { section: string }) {
           </>
         )}
         <footer>
-          JARVIS · Arquitetura Cloud + Desktop{" "}
-          <span>v4.1.0</span>
+          JARVIS · Arquitetura Cloud + Desktop <span>v4.2.0</span>
         </footer>
       </main>
     </div>

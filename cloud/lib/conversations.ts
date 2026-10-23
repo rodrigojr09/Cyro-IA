@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { db } from "./db";
 import { HttpError } from "./http";
+import { storageMutation, storageStatus } from "./storage";
 
 export const conversationCommand = z.discriminatedUnion("action", [
   z.object({ action: z.literal("list") }).strict(),
+  z.object({ action: z.literal("storage") }).strict(),
+  z.object({ action: z.literal("clear"), confirmed: z.literal(true) }).strict(),
   z
     .object({ action: z.literal("fixed"), slot: z.enum(["general", "quick"]) })
     .strict(),
@@ -29,8 +32,10 @@ export const conversationCommand = z.discriminatedUnion("action", [
       action: z.literal("change"),
       id: z.uuid(),
       title: z.string().max(120).optional(),
+      instructions: z.string().max(4000).optional(),
       archived: z.boolean().optional(),
       delete: z.boolean().optional(),
+      clear: z.boolean().optional(),
     })
     .strict(),
   z
@@ -41,8 +46,13 @@ export const conversationCommand = z.discriminatedUnion("action", [
       role: z.enum(["user", "assistant"]),
       content: z.string().max(32000),
       scope: z.enum(["", "quick:general"]).default(""),
+      attachmentCount: z.number().int().min(0).max(5).default(0),
     })
-    .strict(),
+    .strict()
+    .refine(
+      (command) => command.role === "user" || command.attachmentCount === 0,
+      "Somente mensagens do usuário têm anexos.",
+    ),
 ]);
 
 function view(row: {
@@ -52,6 +62,8 @@ function view(row: {
   summary: string;
   createdAt: Date;
   lastMessageAt: Date | null;
+  instructions?: string;
+  slot?: string | null;
 }) {
   return {
     id: row.id,
@@ -59,6 +71,8 @@ function view(row: {
     title: row.title,
     archived: Number(row.archived),
     summary: row.summary,
+    instructions: row.instructions || "",
+    slot: row.slot || null,
     created_at: row.createdAt,
     last_message_at: row.lastMessageAt,
   };
@@ -68,18 +82,26 @@ export async function conversations(
   userId: string,
   command: z.infer<typeof conversationCommand>,
 ) {
+  if (command.action === "storage") return storageStatus(userId);
+  if (command.action === "clear")
+    return storageMutation(userId, async (tx) => {
+      await tx.conversation.deleteMany({ where: { userId } });
+      return { cleared: true };
+    });
   if (command.action === "fixed") {
     return view(
-      await db.conversation.upsert({
-        where: { userId_slot: { userId, slot: command.slot } },
-        create: {
-          userId,
-          slot: command.slot,
-          title:
-            command.slot === "quick" ? "JARVIS Quick Chat" : "Conversa geral",
-        },
-        update: { archived: false },
-      }),
+      await storageMutation(userId, (tx) =>
+        tx.conversation.upsert({
+          where: { userId_slot: { userId, slot: command.slot } },
+          create: {
+            userId,
+            slot: command.slot,
+            title:
+              command.slot === "quick" ? "JARVIS Quick Chat" : "Conversa geral",
+          },
+          update: { archived: false },
+        }),
+      ),
     );
   }
   if (command.action === "list")
@@ -90,22 +112,24 @@ export async function conversations(
       })
     ).map(view);
   if (command.action === "create") {
-    // Caller-generated ID makes retries safe without granting access to another owner.
-    await db.conversation.createMany({
-      data: {
-        id: command.requestId,
-        userId,
-        title: command.title.trim() || "Nova conversa",
-      },
-      skipDuplicates: true,
+    return storageMutation(userId, async (tx) => {
+      // Caller-generated ID makes retries safe without granting access to another owner.
+      await tx.conversation.createMany({
+        data: {
+          id: command.requestId,
+          userId,
+          title: command.title.trim() || "Nova conversa",
+        },
+        skipDuplicates: true,
+      });
+      const row = await tx.conversation.findFirst({
+        where: { id: command.requestId, userId },
+      });
+      if (!row) throw new HttpError(404, "Conversa inexistente.");
+      return view(row);
     });
-    const row = await db.conversation.findFirst({
-      where: { id: command.requestId, userId },
-    });
-    if (!row) throw new HttpError(404, "Conversa inexistente.");
-    return view(row);
   }
-  return db.$transaction(async (tx) => {
+  return storageMutation(userId, async (tx) => {
     // Serialize mutations, including delete and message insertion, across devices.
     await tx.$queryRaw`SELECT id FROM "Conversation" WHERE id=${command.id}::uuid AND "userId"=${userId}::uuid FOR UPDATE`;
     const row = await tx.conversation.findFirst({
@@ -123,14 +147,13 @@ export async function conversations(
         orderBy: { id: "desc" },
         take: command.limit,
       });
-      return rows
-        .reverse()
-        .map((message) => ({
-          id: message.id,
-          role: message.role,
-          content: message.content,
-          created_at: message.createdAt,
-        }));
+      return rows.reverse().map((message) => ({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        created_at: message.createdAt,
+        attachment_count: message.localAttachmentCount,
+      }));
     }
     if (command.action === "change") {
       if (row.slot && (command.delete || command.archived))
@@ -139,12 +162,22 @@ export async function conversations(
         await tx.conversation.delete({ where: { id: row.id } });
         return { deleted: true };
       }
+      if (command.clear) {
+        await tx.chatMessage.deleteMany({ where: { conversationId: row.id } });
+        return view(
+          await tx.conversation.update({
+            where: { id: row.id },
+            data: { summary: "", lastMessageAt: null },
+          }),
+        );
+      }
       return view(
         await tx.conversation.update({
           where: { id: row.id },
           data: {
             title: command.title?.trim() || undefined,
             archived: command.archived,
+            instructions: command.instructions,
           },
         }),
       );
@@ -157,6 +190,7 @@ export async function conversations(
         role: command.role,
         content: command.content,
         scope: command.scope,
+        localAttachmentCount: command.attachmentCount,
       },
       skipDuplicates: true,
     });
@@ -174,6 +208,15 @@ export async function conversations(
           ).slice(-3000),
         },
       });
-    return { ok: true };
+    const message = await tx.chatMessage.findUniqueOrThrow({
+      where: {
+        conversationId_requestId: {
+          conversationId: row.id,
+          requestId: command.requestId,
+        },
+      },
+      select: { id: true },
+    });
+    return { ok: true, id: message.id };
   });
 }

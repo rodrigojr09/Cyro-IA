@@ -2,5 +2,70 @@
 @import url('./styles/tokens.css');
 @import url('./styles/layout.css');
 @import url('./styles/chat.css');
+@import url('./styles/attachments.css');
 @import url('./styles/dialogs.css');
 @import url('./styles/responsive.css');
+
+.chat-context-menu {
+  position: fixed;
+  z-index: 10000;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid var(--border, #343844);
+  border-radius: 10px;
+  background: var(--panel, #191c24);
+  box-shadow: 0 8px 32px #0006;
+  display: grid;
+  gap: 3px;
+}
+.chat-context-menu button {
+  text-align: left;
+  padding: 9px;
+  border: 0;
+  background: transparent;
+}
+.chat-context-menu button:hover,
+.chat-context-menu button:focus {
+  background: #ffffff16;
+  outline: 1px solid #818cf8;
+}
+.storage-blocked {
+  margin: 12px;
+  padding: 14px;
+  border: 1px solid #efad85;
+  border-radius: 10px;
+  background: #49331f;
+  color: #ffe3bd;
+}
+.storage-blocked[hidden] {
+  display: none;
+}
+#storage-usage section {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #343844);
+}
+#storage-usage progress {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+}
+#chat-instructions,
+#project-instructions {
+  min-height: 130px;
+}
+
+.archived-chat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #343844);
+}
+.archived-chat-row span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.archived-chat-row button {
+  flex-shrink: 0;
+}
