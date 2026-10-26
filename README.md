@@ -20,6 +20,10 @@ O conteúdo fica somente em memória, por até 10 minutos, sem histórico ou env
 
 Consulte [implementação e validação v5](docs/V5.md) para cobertura, verificações reais e limitações.
 
+## Integrações nas configurações
+
+Em **Configurações → Integrações**, explore o catálogo de Spotify, Discord, Google Calendar, GitHub, Notion e Google Drive. Todos aparecem como **Em breve**. Pesquisa, filtros e detalhes funcionam localmente, sem credenciais, conexões externas ou autenticação simulada. A página reutiliza a janela atual e mantém as demais configurações. Consulte [a arquitetura e o escopo das integrações](docs/INTEGRATIONS.md).
+
 ## JARVIS Writer — exclusivo dos projetos
 
 O campo de mensagem é limpo ao enviar. Você pode preparar o próximo rascunho enquanto aguarda; ele é preservado ao receber a resposta. Em caso de falha, a mensagem pode ser recuperada sem apagar o novo rascunho.

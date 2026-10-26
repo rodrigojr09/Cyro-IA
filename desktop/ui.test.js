@@ -287,6 +287,7 @@ test('configurações mostram só preferências e armazenamento sem opções té
     'Chats arquivados',
     'Quick Chat',
     'Área de transferência',
+    'Integrações',
     'Conta',
     'Sobre',
   ]);
@@ -297,6 +298,136 @@ test('configurações mostram só preferências e armazenamento sem opções té
   assert.equal(w.document.getElementById('setting-ai-config'), null);
   assert.equal(w.document.getElementById('setting-migration'), null);
   dom.window.close();
+});
+
+test('Integrações navega dentro das configurações e exibe catálogo local sem conexões nem chamadas externas', async () => {
+  const { w, dom, calls, links } = await setup();
+  try {
+    w.fetch = () => {
+      throw Error('Integrações não deve usar rede');
+    };
+    const before = calls.length;
+    w.document.getElementById('settings-open').click();
+    const tab = [...w.document.querySelectorAll('#settings-tabs button')].find(
+      (b) => b.textContent === 'Integrações',
+    );
+    assert(tab.querySelector('svg'));
+    tab.click();
+    assert.equal(tab.getAttribute('aria-current'), 'page');
+    assert.equal(w.document.getElementById('settings-dialog').open, true);
+    assert(
+      w.document.getElementById('settings-dialog').classList.contains('settings-integrations'),
+    );
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 6);
+    assert.equal(
+      w.document.querySelectorAll('.integration-card .integration-service-icon svg').length,
+      6,
+    );
+    assert.deepEqual(
+      [...w.document.querySelectorAll('.integration-status')].map((x) => x.textContent),
+      Array(6).fill('Em breve'),
+    );
+    assert.equal(w.document.querySelectorAll('#settings-content input').length, 1);
+    assert.equal(w.document.querySelector('#settings-content input').type, 'search');
+    assert.equal(w.document.querySelector('#settings-content button[disabled]'), null);
+    assert.equal(calls.length, before);
+    assert.equal(links.length, 0);
+    [...w.document.querySelectorAll('#settings-tabs button')]
+      .find((b) => b.textContent === 'Voz')
+      .click();
+    assert(w.document.getElementById('setting-voice'));
+    assert.equal(
+      w.document.getElementById('settings-dialog').classList.contains('settings-integrations'),
+      false,
+    );
+  } finally {
+    dom.window.close();
+  }
+});
+
+test('Integrações pesquisa por nome, categoria e descrição, combina filtros e mostra vazios reais', async () => {
+  const { w, dom } = await setup();
+  try {
+    w.document.getElementById('settings-open').click();
+    [...w.document.querySelectorAll('#settings-tabs button')]
+      .find((b) => b.textContent === 'Integrações')
+      .click();
+    const search = w.document.getElementById('integrations-search');
+    const query = (value) => {
+      search.value = value;
+      search.dispatchEvent(new w.Event('input'));
+    };
+    for (const [term, name] of [
+      ['sPoTiFy', 'Spotify'],
+      ['COMUNICACAO', 'Discord'],
+      ['repositórios', 'GitHub'],
+    ]) {
+      query(term);
+      assert.equal(w.document.querySelectorAll('.integration-card').length, 1);
+      assert.equal(w.document.querySelector('.integration-card strong').textContent, name);
+    }
+    query('ausente');
+    assert.equal(w.document.getElementById('integrations-empty').hidden, false);
+    assert.match(
+      w.document.getElementById('integrations-empty').textContent,
+      /Nenhuma integração encontrada/,
+    );
+    query('');
+    w.document.querySelector('[data-filter="connected"]').click();
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 0);
+    assert.equal(
+      w.document.getElementById('integrations-empty').textContent,
+      'Você ainda não possui integrações conectadas.',
+    );
+    w.document.querySelector('[data-filter="available"]').click();
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 0);
+    assert.equal(
+      w.document.getElementById('integrations-empty').textContent,
+      'Nenhuma integração disponível no momento.',
+    );
+    w.document.querySelector('[data-filter="coming_soon"]').click();
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 6);
+    assert.equal(
+      w.document.querySelector('[data-filter="coming_soon"]').getAttribute('aria-pressed'),
+      'true',
+    );
+    assert.equal(w.document.getElementById('integrations-empty').hidden, true);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test('Integrações abre detalhes locais, mantém busca/filtro ao voltar e restaura foco no card', async () => {
+  const { w, dom, calls } = await setup();
+  try {
+    w.document.getElementById('settings-open').click();
+    [...w.document.querySelectorAll('#settings-tabs button')]
+      .find((b) => b.textContent === 'Integrações')
+      .click();
+    const before = calls.length;
+    const search = w.document.getElementById('integrations-search');
+    search.value = 'Notion';
+    search.dispatchEvent(new w.Event('input'));
+    const card = w.document.querySelector('.integration-card');
+    card.click();
+    assert.equal(w.document.getElementById('integration-details').hidden, false);
+    assert.equal(w.document.getElementById('integrations-catalog-view').hidden, true);
+    assert.equal(w.document.activeElement.id, 'integration-details-name');
+    assert.equal(w.document.getElementById('integration-details-name').textContent, 'Notion');
+    assert(w.document.querySelectorAll('#integration-details li').length > 0);
+    assert.match(
+      w.document.getElementById('integration-details-content').textContent,
+      /Esta integração ainda não está disponível/,
+    );
+    assert.equal(w.document.querySelector('#integration-details form'), null);
+    w.document.getElementById('integration-details-back').click();
+    assert.equal(w.document.activeElement, card);
+    assert.equal(search.value, 'Notion');
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 1);
+    assert.equal(calls.length, before);
+  } finally {
+    dom.window.close();
+  }
 });
 
 test('menu contextual edita só o chat e arquivados saem da sidebar até restauração; diálogos fecham ao concluir', async () => {

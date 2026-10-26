@@ -5,6 +5,7 @@
 @import url('./styles/attachments.css');
 @import url('./styles/dialogs.css');
 @import url('./styles/responsive.css');
+@import url('./styles/integrations.css');
 
 .chat-context-menu {
   position: fixed;

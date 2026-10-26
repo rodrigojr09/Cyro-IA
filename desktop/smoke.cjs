@@ -148,6 +148,7 @@ async function frame() {
 }
 async function shot(name) {
   await frame();
+  await new Promise((resolve) => setTimeout(resolve, 150));
   await fs.writeFile(
     path.join(app.getPath('temp'), name),
     (await win.webContents.capturePage()).toPNG(),
@@ -220,6 +221,101 @@ app.whenReady().then(async () => {
     assert.deepEqual(savedScope.include, []);
     await js(`document.getElementById('settings-open').click()`);
     await shot('jarvis-v1-settings.png');
+    await js(
+      `Array.from(document.querySelectorAll('#settings-tabs button')).find(b=>b.textContent==='Integrações').click()`,
+    );
+    assert.equal(await js(`document.querySelectorAll('.integration-card').length`), 6);
+    assert.equal(
+      await js(
+        `document.querySelectorAll('.integration-card .integration-service-icon svg').length`,
+      ),
+      6,
+    );
+    assert.equal(
+      await js(
+        `Array.from(document.querySelectorAll('.integration-status')).every(x=>x.textContent==='Em breve')`,
+      ),
+      true,
+    );
+    assert.equal(
+      await js(
+        `document.getElementById('settings-dialog').scrollWidth<=document.getElementById('settings-dialog').clientWidth`,
+      ),
+      true,
+    );
+    await shot('jarvis-v5-integrations.png');
+    await js(`document.documentElement.dataset.theme='light'`);
+    assert.equal(
+      await js(`getComputedStyle(document.querySelector('.integration-service-icon')).color`),
+      'rgb(23, 99, 77)',
+    );
+    await shot('jarvis-v5-integrations-light.png');
+    await js(`document.documentElement.dataset.theme='dark'`);
+    win.webContents.debugger.attach('1.3');
+    await win.webContents.debugger.sendCommand('Emulation.setFocusEmulationEnabled', {
+      enabled: true,
+    });
+    await js(`document.querySelector('.integration-card').focus()`);
+    win.webContents.focus();
+    assert.equal(await js(`document.activeElement.dataset.integrationId`), 'spotify');
+    await win.webContents.debugger.sendCommand('Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      key: 'Enter',
+      code: 'Enter',
+      windowsVirtualKeyCode: 13,
+      nativeVirtualKeyCode: 13,
+      text: '\r',
+      unmodifiedText: '\r',
+    });
+    await win.webContents.debugger.sendCommand('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      key: 'Enter',
+      code: 'Enter',
+      windowsVirtualKeyCode: 13,
+      nativeVirtualKeyCode: 13,
+    });
+    await js(
+      `new Promise((resolve,reject)=>{const end=performance.now()+2500;const check=()=>{if(!document.getElementById('integration-details').hidden)resolve();else if(performance.now()>end)reject(new Error('Card não abriu por teclado'));else setTimeout(check,20)};check();})`,
+    );
+    win.webContents.debugger.detach();
+    assert.equal(await js(`document.getElementById('integration-details').hidden`), false);
+    assert.equal(await js(`document.activeElement.id`), 'integration-details-name');
+    await shot('jarvis-v5-integration-details.png');
+    await js(`document.getElementById('integration-details-back').click()`);
+    assert.equal(await js(`document.activeElement.dataset.integrationId`), 'spotify');
+    await js(`document.querySelector('[data-filter="connected"]').click()`);
+    assert.equal(
+      await js(`document.getElementById('integrations-empty').textContent`),
+      'Você ainda não possui integrações conectadas.',
+    );
+    await js(`document.querySelector('[data-filter="all"]').click()`);
+    await js(
+      `document.getElementById('integrations-search').value='COMUNICACAO';document.getElementById('integrations-search').dispatchEvent(new Event('input'))`,
+    );
+    assert.equal(await js(`document.querySelectorAll('.integration-card').length`), 1);
+    assert.equal(
+      await js(`document.querySelector('.integration-card strong').textContent`),
+      'Discord',
+    );
+    await js(
+      `document.getElementById('integrations-search').value='';document.getElementById('integrations-search').dispatchEvent(new Event('input'))`,
+    );
+    win.setSize(800, 560);
+    await frame();
+    assert.equal(
+      await js(
+        `document.getElementById('settings-dialog').scrollWidth<=document.getElementById('settings-dialog').clientWidth`,
+      ),
+      true,
+    );
+    assert.equal(
+      await js(
+        `document.querySelector('.integrations-page').scrollWidth<=document.querySelector('.integrations-page').clientWidth`,
+      ),
+      true,
+    );
+    await shot('jarvis-v5-integrations-compact.png');
+    win.setSize(1280, 850);
     await js(`document.getElementById('settings-dialog').close()`);
     await js(`window.jarvisWorkspace.catalog('', '${generalId}')`);
     await js(
@@ -276,7 +372,7 @@ app.whenReady().then(async () => {
     await js(`document.getElementById('sidebar-toggle').click()`);
     assert.equal(await js(`document.body.classList.contains('sidebar-collapsed')`), true);
     console.log(
-      'Electron real: interface, menu contextual, configurações separadas, arquivamento/restauração, fechamento de diálogos e bloqueio/recuperação da cota aprovados (dados Cloud simulados). Capturas jarvis-v4-*.png no diretório temporário.',
+      'Electron real: interface, integrações locais (teclado, pesquisa, filtros, detalhes, temas e tamanho compacto), menu contextual, configurações, arquivamento/restauração e cota aprovados (dados Cloud simulados). Capturas jarvis-v5-integrations*.png no diretório temporário.',
     );
     clearTimeout(timer);
     win.destroy();

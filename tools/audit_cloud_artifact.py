@@ -37,6 +37,7 @@ def audit():
             "renderer.js",
             "index.html",
             "ui.js",
+            "vendor.js",
             "workspace.js",
             "scope.js",
             "attachments-main.js",
@@ -59,6 +60,7 @@ def audit():
             "writer-ui.js",
             "writer-ipc.js",
             "writer.css",
+            "styles/integrations.css",
         ]:
             item = header
             for part in name.split("/"):

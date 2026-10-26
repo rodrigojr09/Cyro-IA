@@ -1,0 +1,232 @@
+#settings-dialog.settings-integrations {
+  width: min(1100px, 94vw);
+}
+#settings-dialog.settings-integrations #settings-tabs button.active {
+  color: #8de0c2;
+}
+:root[data-theme='light'] #settings-dialog.settings-integrations #settings-tabs button.active {
+  color: #17634d;
+}
+#settings-content:has(.integrations-page) {
+  min-width: 0;
+}
+.integrations-page {
+  --integration-accent: #8de0c2;
+  --integration-tint: #8de0c212;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:root[data-theme='light'] .integrations-page {
+  --integration-accent: #17634d;
+  --integration-tint: #17634d0d;
+}
+.integrations-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--integration-accent);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+}
+#settings-content .integrations-heading h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.integrations-heading p {
+  margin: 0 0 20px;
+  font-size: 12px;
+}
+#settings-content .integrations-search-label {
+  margin: 0 0 7px;
+  font-size: 11px;
+}
+.integrations-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--muted);
+}
+.integrations-search input {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 11px 0;
+  font-size: 12px;
+}
+.integrations-search:focus-within {
+  outline: 2px solid var(--integration-accent);
+  outline-offset: 2px;
+}
+.integrations-search input:focus-visible {
+  outline: none;
+}
+.integrations-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+#settings-dialog .integrations-filters button {
+  padding: 7px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+#settings-dialog .integrations-filters button[aria-pressed='true'] {
+  color: var(--integration-accent);
+  border-color: var(--integration-accent);
+  background: var(--integration-tint);
+}
+.integrations-page :is(button, input):focus-visible {
+  outline-color: var(--integration-accent);
+}
+.integrations-connection-note,
+.integrations-count {
+  margin: 6px 0 12px;
+  font-size: 11px;
+}
+.integrations-count {
+  color: var(--muted);
+}
+.integrations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  gap: 12px;
+}
+#settings-dialog .integration-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  text-align: left;
+  transition:
+    border-color 150ms,
+    background 150ms;
+}
+#settings-dialog .integration-card:hover {
+  border-color: var(--integration-accent);
+  background: var(--integration-tint);
+}
+.integration-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.integration-service-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--integration-accent);
+  background: var(--integration-tint);
+}
+.integration-service-icon svg {
+  width: 19px;
+  height: 19px;
+}
+.integration-status {
+  align-self: flex-start;
+  display: inline-block;
+  border: 1px solid var(--border);
+  padding: 4px 7px;
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.integration-card strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.integration-description {
+  flex: 1;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.integration-category {
+  color: var(--muted);
+  font-size: 10px;
+}
+.integration-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  color: var(--integration-accent);
+  font-size: 11px;
+}
+.integration-card-action svg {
+  width: 14px;
+  height: 14px;
+}
+.integrations-empty {
+  padding: 26px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 12px;
+}
+.integration-details > button {
+  margin: 0 0 20px;
+  font-size: 12px;
+}
+.integration-details h4 {
+  font-size: 23px;
+  margin: 14px 0 5px;
+}
+.integration-details h4:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-decoration-color: var(--integration-accent);
+  text-underline-offset: 6px;
+}
+.integration-details h5 {
+  font-size: 13px;
+  margin: 24px 0 10px;
+}
+.integration-details ul {
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 2;
+}
+.integration-details p {
+  font-size: 12px;
+}
+.integration-unavailable {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--integration-accent);
+  border-radius: 8px;
+  background: var(--integration-tint);
+}
+@media (max-width: 600px) {
+  #settings-dialog.settings-integrations .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  #settings-dialog.settings-integrations #settings-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  #settings-dialog.settings-integrations {
+    padding: 18px;
+  }
+}

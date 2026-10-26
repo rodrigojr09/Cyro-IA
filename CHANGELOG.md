@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- 26/10/2026: nova seção Integrações nas configurações do Desktop, com catálogo TypeScript centralizado de seis serviços em breve, pesquisa por nome/categoria/descrição, filtros por status, detalhes locais e retorno com foco. Grid adaptável e destaque verde-menta integrado aos temas. Não adiciona APIs, OAuth, credenciais, conexões, endpoints ou alterações Cloud.
+
 - Writer limpa o campo ao enviar, sem aguardar a IA, e preserva o próximo rascunho quando a resposta chega. Falhas restauram a mensagem no campo vazio; se já houver outro rascunho, a mensagem original fica marcada como não enviada na tela.
 
 - Simplificada a interface Writer: removidos os seletores Escrita/Orientação/Conversa/Organização das respostas, propostas e compositor. Pedidos e correções são feitos pelo chat, com interpretação automática e aprovação das alterações preservada.

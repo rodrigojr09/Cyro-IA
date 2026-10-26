@@ -170,6 +170,7 @@ window.jarvisUI = (() => {
     'Quick Chat': () =>
       '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o JARVIS será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
     'Área de transferência': () => '<p>Carregando preferências...</p>',
+    Integrações: () => '',
     Conta: () =>
       '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o JARVIS é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
     Sobre: () =>
@@ -177,11 +178,15 @@ window.jarvisUI = (() => {
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();
+    $('settings-dialog').classList.toggle('settings-integrations', name === 'Integrações');
+    if (name === 'Integrações') window.jarvisVendor.mountIntegrations($('settings-content'), icons);
     if (name === 'Área de transferência') void window.jarvisClipboardSettings?.();
     if (name === 'Armazenamento') void window.jarvisStorageUsage?.show();
     if (name === 'Chats arquivados') void window.jarvisWorkspace?.showArchived();
-    for (const button of $('settings-tabs').children)
+    for (const button of $('settings-tabs').children) {
       button.classList.toggle('active', button.textContent === name);
+      button.setAttribute('aria-current', button.textContent === name ? 'page' : 'false');
+    }
     if (name === 'Quick Chat' && window.jarvisWindow.quickSettings) {
       const container = $('settings-content');
       window.jarvisWindow
@@ -263,6 +268,12 @@ window.jarvisUI = (() => {
   for (const name of Object.keys(settings)) {
     const button = document.createElement('button');
     button.textContent = name;
+    if (name === 'Integrações') {
+      const icon = document.createElement('i');
+      icon.dataset.lucide = 'plug';
+      icon.setAttribute('aria-hidden', 'true');
+      button.prepend(icon);
+    }
     button.onclick = () => category(name);
     $('settings-tabs').appendChild(button);
   }
