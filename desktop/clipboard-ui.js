@@ -114,9 +114,11 @@
   function resizeComposer() {
     if (!composer || !area) return;
     const spacing = area.hidden ? 0 : 20;
+    const playerHeight =
+      document.querySelector('.spotify-player')?.getBoundingClientRect().height || 0;
     const height = Math.max(
       150,
-      Math.min(480, Math.ceil(150 + area.getBoundingClientRect().height + spacing)),
+      Math.min(480, Math.ceil(150 + playerHeight + area.getBoundingClientRect().height + spacing)),
     );
     if (height !== inputHeight) {
       inputHeight = height;
@@ -292,6 +294,7 @@
     };
     attempt(run());
   }
+  window.addEventListener('jarvis:spotify-layout', resizeComposer);
   window.addEventListener('focus', focusClaim);
   window.addEventListener('focusin', () => attempt(claim()));
   document.addEventListener('visibilitychange', () => attempt(claim()));

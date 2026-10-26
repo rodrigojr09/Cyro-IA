@@ -524,6 +524,9 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
           activeStreams.delete(event.sender.id);
         }
       } else result = await backend(route, method, options.body);
+      if (result.ok && result.data?.spotify)
+        for (const window of BrowserWindow.getAllWindows?.() || [])
+          if (!window.isDestroyed()) window.webContents.send('spotify:changed');
       if (baseRoute === '/workspace/view' && result.ok)
         quickController?.setProject(result.data.project);
       return result;

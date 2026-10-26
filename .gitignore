@@ -46,3 +46,5 @@ cloud-credential.bin*
 /.migration-history/
 
 cloud-session-v4.bin*
+
+desktop/quick-spotify.js

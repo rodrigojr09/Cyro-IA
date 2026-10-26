@@ -52,6 +52,7 @@ app.whenReady().then(async () => {
     // Existing native content may now be offered silently, depending on local filters.
     assert.equal(nativeManager.state().active, true);
     nativeManager.destroy();
+    ipcMain.handle('spotify:request', () => ({ configured: false, status: 'disconnected' }));
     // Existing page scripts may request unrelated services. Keep those local and synthetic.
     for (const name of [
       'jarvis:initial-settings',
@@ -211,7 +212,7 @@ app.whenReady().then(async () => {
     await composer.webContents.executeJavaScript(
       "document.getElementById('clipboard-title').click();void 0;",
     );
-    assert.ok(composer.getBounds().height < 300, 'As opções devem manter o Quick Chat compacto.');
+    assert.ok(composer.getBounds().height < 340, 'As opções devem manter o Quick Chat compacto.');
     fs.writeFileSync(
       path.join(directory, 'clipboard-options.png'),
       (await composer.webContents.capturePage()).toPNG(),

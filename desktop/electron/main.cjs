@@ -2,7 +2,7 @@
 process.env.JARVIS_CLOUD = '1';
 delete process.env.JARVIS_AUTHENTICATED;
 delete process.env.JARVIS_PORTABLE;
-for (const key of Object.keys(process.env)) if (key.startsWith('OPENAI_')) delete process.env[key];
+for (const key of Object.keys(process.env)) if (key.startsWith('OPENAI_') || key.startsWith('SPOTIFY_')) delete process.env[key];
 const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
@@ -19,6 +19,7 @@ const dataDir =
 process.env.JARVIS_DATA_DIR = dataDir;
 require('../portable-paths').configureElectron(app, dataDir);
 let service;
+require('../spotify-ipc').installSpotifyIPC({electron: require('electron'), service: () => service});
 const microphoneGrants = new Map();
 const mainPage = require('node:url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 app.on('web-contents-created', (_event, contents) => {

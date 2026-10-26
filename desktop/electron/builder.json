@@ -10,6 +10,7 @@
     "*.html",
     "*.css",
     "styles/**",
+    "assets/spotify-*.svg",
     "package.json",
     "vendor.js.LEGAL.txt",
     "electron/main.cjs",
@@ -19,6 +20,7 @@
     "!*.test.js",
     "!services/*.test.js",
     "!vendor-entry.js",
+    "!quick-spotify-entry.js",
     "!build.cjs",
     "!package-output.js",
     "!portable-paths.test.js"

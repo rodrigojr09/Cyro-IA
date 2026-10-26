@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["integration-catalog.ts", "integrations-ui.ts"]
+  "include": ["integration-catalog.ts", "integrations-ui.ts", "spotify-ui.ts"]
 }

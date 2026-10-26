@@ -1,3 +1,5 @@
+> Spotify: a implementação de OAuth/controles está no código, mas ainda depende de configuração privada, migration e teste real autorizado. Consulte [a configuração completa](docs/SPOTIFY.md). Não há conexão fictícia nem aprovação de distribuição pública.
+
 # JARVIS 5 — Cloud administrativo + Desktop
 
 Versão alvo 5.0.0, em desenvolvimento e validação. A v5 foi autorizada pelo proprietário; não representa nova implantação ou release. O histórico da base 4.2.0 permanece documentado. Requisitos, testes e limitações estão em [docs/V4_2.md](docs/V4_2.md), [docs/ATTACHMENTS.md](docs/ATTACHMENTS.md) e [docs/STORAGE-SETTINGS.md](docs/STORAGE-SETTINGS.md). Histórico em [docs/V4_1.md](docs/V4_1.md).
@@ -22,7 +24,7 @@ Consulte [implementação e validação v5](docs/V5.md) para cobertura, verifica
 
 ## Integrações nas configurações
 
-Em **Configurações → Integrações**, explore o catálogo de Spotify, Discord, Google Calendar, GitHub, Notion e Google Drive. Todos aparecem como **Em breve**. Pesquisa, filtros e detalhes funcionam localmente, sem credenciais, conexões externas ou autenticação simulada. A página reutiliza a janela atual e mantém as demais configurações. Consulte [a arquitetura e o escopo das integrações](docs/INTEGRATIONS.md).
+Em **Configurações → Integrações**, explore o catálogo de Spotify, Discord, Google Calendar, GitHub, Notion e Google Drive. Spotify possui conexão por OAuth e controles Cloud, sujeitos à configuração privada e à validação real descritas em [SPOTIFY.md](docs/SPOTIFY.md). Os outros cinco serviços continuam **Em breve**. Pesquisa, filtros e detalhes mostram estados reais, sem conexões simuladas. A página reutiliza a janela atual e mantém as demais configurações. Consulte [a arquitetura e o escopo das integrações](docs/INTEGRATIONS.md).
 
 ## JARVIS Writer — exclusivo dos projetos
 

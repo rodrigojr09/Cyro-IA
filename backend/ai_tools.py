@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import re
 
 from computer import TOOLS as COMPUTER_TOOLS, dispatch as computer_dispatch
@@ -58,6 +59,13 @@ async def converse(
         if mode == "programming"
         else COMPUTER_TOOLS
     )
+    # Only the original human message can authorize a music action. Provider content
+    # terminates this tool turn and is never appended to model context.
+    from spotify_commands import TOOL as SPOTIFY_TOOL, candidate, try_command
+
+    music_message = next((item.get("content") for item in reversed(messages) if item.get("role") == "user"), "")
+    if os.getenv("JARVIS_CLOUD") == "1" and candidate(music_message):
+        tools = [*tools, SPOTIFY_TOOL]
     names = {tool["function"]["name"] for tool in tools}
     pending, used, calls = [], 0, 0
     for round_number in range(MAX_TOOL_ROUNDS + 1):
@@ -108,6 +116,12 @@ async def converse(
                         or len(call.function.arguments) > 4000
                     ):
                         raise ValueError
+                    if call.function.name == "spotify_control":
+                        if json.loads(call.function.arguments) != {}:
+                            raise ValueError
+                        result = await try_command(music_message)
+                        service.spotify_result = result or {"reply": "Informe um comando Spotify claro: pausar, continuar, próxima, anterior, volume ou dispositivos.", "speech_text": "Informe um comando musical claro.", "pending_actions": []}
+                        return service.spotify_result["reply"], []
                     if mode == "programming":
                         output = await asyncio.to_thread(
                             service.dispatch,

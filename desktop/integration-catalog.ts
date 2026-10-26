@@ -28,11 +28,11 @@ const definitions: IntegrationDefinition[] = [
     category: 'Música e entretenimento',
     icon: 'music-2',
     description: 'Controle suas músicas e reprodução diretamente pelo JARVIS.',
-    status: 'coming_soon',
+    status: 'disconnected',
     capabilities: [
       'Controlar a reprodução de músicas.',
       'Consultar a faixa em reprodução.',
-      'Explorar playlists.',
+      'Selecionar dispositivos e ajustar volume compatível.',
     ],
   },
   {

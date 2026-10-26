@@ -460,3 +460,28 @@ test(
     }
   }),
 );
+
+test(
+  'Quick Chat usa fala segura sem enviar metadados Spotify ao TTS',
+  temporary(async (f, dir) => {
+    f.controller.destroy();
+    const instance = fixture(dir, async (route) => ({
+      ok: true,
+      data:
+        route === '/speak'
+          ? { audio_base64: 'bXAz' }
+          : { reply: 'Faixa Spotify privada fixture', speech_text: 'Consulte o player.' },
+    }));
+    try {
+      instance.invoke('orb', 'toggle');
+      await instance.invoke('composer', 'send', 'que música é essa?', false);
+      instance.controller.setSettings({ voice: true });
+      await instance.invoke('response', 'speak');
+      const request = instance.requests.find((r) => r[0] === '/speak');
+      assert.equal(JSON.parse(request[2]).message, 'Consulte o player.');
+      assert.equal(JSON.stringify(request).includes('Faixa Spotify privada'), false);
+    } finally {
+      instance.controller.destroy();
+    }
+  }),
+);

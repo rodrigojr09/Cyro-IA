@@ -321,11 +321,11 @@ test('Integrações navega dentro das configurações e exibe catálogo local se
     assert.equal(w.document.querySelectorAll('.integration-card').length, 6);
     assert.equal(
       w.document.querySelectorAll('.integration-card .integration-service-icon svg').length,
-      6,
+      5,
     );
     assert.deepEqual(
       [...w.document.querySelectorAll('.integration-status')].map((x) => x.textContent),
-      Array(6).fill('Em breve'),
+      ['Desconectada', ...Array(5).fill('Em breve')],
     );
     assert.equal(w.document.querySelectorAll('#settings-content input').length, 1);
     assert.equal(w.document.querySelector('#settings-content input').type, 'search');
@@ -380,13 +380,10 @@ test('Integrações pesquisa por nome, categoria e descrição, combina filtros 
       'Você ainda não possui integrações conectadas.',
     );
     w.document.querySelector('[data-filter="available"]').click();
-    assert.equal(w.document.querySelectorAll('.integration-card').length, 0);
-    assert.equal(
-      w.document.getElementById('integrations-empty').textContent,
-      'Nenhuma integração disponível no momento.',
-    );
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 1);
+    assert.equal(w.document.querySelector('.integration-card strong').textContent, 'Spotify');
     w.document.querySelector('[data-filter="coming_soon"]').click();
-    assert.equal(w.document.querySelectorAll('.integration-card').length, 6);
+    assert.equal(w.document.querySelectorAll('.integration-card').length, 5);
     assert.equal(
       w.document.querySelector('[data-filter="coming_soon"]').getAttribute('aria-pressed'),
       'true',

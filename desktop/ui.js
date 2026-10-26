@@ -1,5 +1,6 @@
 window.jarvisUI = (() => {
   const $ = (id) => document.getElementById(id);
+  window.jarvisVendor.mountSpotifyPlayer?.(document.querySelector('.composer-wrap'));
   let preferences = { voice: true, collapsed: false, largeText: false },
     audioGeneration = 0;
   try {

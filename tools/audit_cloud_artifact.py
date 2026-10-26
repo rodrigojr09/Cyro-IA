@@ -61,6 +61,10 @@ def audit():
             "writer-ipc.js",
             "writer.css",
             "styles/integrations.css",
+            "spotify-ipc.js",
+            "quick-spotify.js",
+            "assets/spotify-white.svg",
+            "assets/spotify-black.svg",
         ]:
             item = header
             for part in name.split("/"):

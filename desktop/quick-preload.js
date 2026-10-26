@@ -41,3 +41,8 @@ contextBridge.exposeInMainWorld('jarvisClipboard', {
   onState: (callback) => ipcRenderer.on('clipboard:state', (_event, value) => callback(value)),
   onSound: (callback) => ipcRenderer.on('clipboard:sound', (_event, value) => callback(value)),
 });
+
+contextBridge.exposeInMainWorld('jarvisSpotify', {
+  request: (input) => ipcRenderer.invoke('spotify:request', input),
+  onChanged: (callback) => ipcRenderer.on('spotify:changed', () => callback()),
+});

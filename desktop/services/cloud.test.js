@@ -105,3 +105,30 @@ test('sessão revogada é apagada; falha de conexão bloqueia sem perder login s
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('Spotify 403 não encerra sessão JARVIS nem expõe credencial', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'jarvis-spotify-session-'));
+  const service = createCloud({
+    dataDir: directory,
+    origin: 'https://jarvis.example.test',
+    safeStorage: { isEncryptionAvailable: () => true, encryptString: (v) => Buffer.from(v) },
+    fetcher: async (url, options) =>
+      url.endsWith('/login')
+        ? Response.json({ credential: code, expiresAt: '2030-01-01' })
+        : Response.json({ error: 'Premium necessário' }, { status: 403 }),
+  });
+  try {
+    await service.login({ email: 'test@example.test', password: 'test-fixture' }, 'Teste');
+    await assert.rejects(
+      service.request('/api/integrations/spotify', 'POST', {
+        operation: 'control',
+        command: { action: 'pause' },
+      }),
+      /Premium/,
+    );
+    assert.equal(service.current().credential, code);
+    assert.equal(service.state().status, 'active');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

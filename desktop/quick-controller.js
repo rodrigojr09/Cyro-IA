@@ -28,6 +28,7 @@ function createQuick({
     busy = false,
     pinned = false,
     answer = '',
+    spokenAnswer = '',
     question = '',
     error = '',
     project = null,
@@ -242,7 +243,7 @@ function createQuick({
         '/speak',
         'POST',
         JSON.stringify({
-          message: answer
+          message: (spokenAnswer || answer)
             .replace(/```[\s\S]*?```/g, ' O exemplo está na conversa completa. ')
             .slice(0, 4000),
         }),
@@ -305,7 +306,11 @@ function createQuick({
       );
       if (disposed) return { ok: false };
       if (!result.ok) throw Error(result.data?.detail || 'Não foi possível consultar o backend.');
+      if (result.data.spotify)
+        for (const window of [mainWindow(), ...Object.values(windows)])
+          if (window && !window.isDestroyed()) window.webContents.send('spotify:changed');
       answer = result.data.reply;
+      spokenAnswer = result.data.speech_text || answer;
       lastChatId = result.data.chat_id || null;
       busy = false;
       clock.pause('busy', false);

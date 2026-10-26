@@ -14,7 +14,7 @@ const mod = { exports: {} };
 vm.runInNewContext(output, { module: mod, exports: mod.exports });
 const { integrationCatalog: catalog, filterIntegrations: filter } = mod.exports;
 
-test('catálogo tipado contém seis definições locais imutáveis, todas em breve', () => {
+test('catálogo tipado contém seis definições locais imutáveis, Spotify disponível para conexão e demais em breve', () => {
   assert.deepEqual(
     Array.from(catalog, (x) => x.name),
     ['Spotify', 'Discord', 'Google Calendar', 'GitHub', 'Notion', 'Google Drive'],
@@ -22,7 +22,7 @@ test('catálogo tipado contém seis definições locais imutáveis, todas em bre
   assert.equal(new Set(catalog.map((x) => x.id)).size, 6);
   assert(Object.isFrozen(catalog));
   for (const definition of catalog) {
-    assert.equal(definition.status, 'coming_soon');
+    assert.equal(definition.status, definition.id === 'spotify' ? 'disconnected' : 'coming_soon');
     assert(Object.isFrozen(definition));
     assert(Object.isFrozen(definition.capabilities));
     for (const key of ['id', 'name', 'description', 'category', 'icon'])
@@ -39,10 +39,10 @@ test('pesquisa encontra nome, categoria e descrição sem diferenciar caixa ou a
 });
 test('filtros refletem estados do catálogo, sem inventar conexões', () => {
   assert.equal(filter(catalog, '', 'all').length, 6);
-  assert.equal(filter(catalog, '', 'coming_soon').length, 6);
+  assert.equal(filter(catalog, '', 'coming_soon').length, 5);
   assert.equal(filter(catalog, '', 'connected').length, 0);
-  assert.equal(filter(catalog, '', 'available').length, 0);
-  // Future-state fixtures exist only in tests; production catalog stays coming_soon.
+  assert.equal(filter(catalog, '', 'available').length, 1);
+  // Future-state fixtures exist only in tests; production never invents connections.
   const fixture = ['coming_soon', 'available', 'connected', 'disconnected', 'error'].map(
     (status, index) => ({ ...catalog[0], id: String(index), status }),
   );

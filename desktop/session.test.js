@@ -60,6 +60,8 @@ async function setup({ saved = false, corrupt = false, failUnlock = false } = {}
     LOCALAPPDATA: path.join(require('node:os').tmpdir(), 'jarvis-local-test'),
     JARVIS_CLOUD_ORIGIN: 'https://jarvis.example.test',
     JARVIS_AUTHENTICATED: '1',
+    SPOTIFY_CLIENT_SECRET: 'fixture-server-only',
+    SPOTIFY_TOKEN_ENCRYPTION_KEY: 'fixture-server-key',
   };
   vm.runInNewContext(fs.readFileSync(path.join(directory, 'main.cjs'), 'utf8'), {
     __dirname: directory,
@@ -100,6 +102,7 @@ async function setup({ saved = false, corrupt = false, failUnlock = false } = {}
         };
       if (name === '../portable-paths')
         return { ...require('./portable-paths'), configureElectron() {} };
+      if (name === '../spotify-ipc') return require('./spotify-ipc');
       if (name === '../main.js') return {};
       return require(name);
     },
@@ -125,6 +128,8 @@ test('login restaura sessão apenas após validação; monitor bloqueia e recupe
   assert.equal(state.intervals[0].delay, 300000);
   assert.equal(state.frame.url, mainPage);
   assert.equal(state.environment.JARVIS_AUTHENTICATED, '1');
+  assert.equal(state.environment.SPOTIFY_CLIENT_SECRET, undefined);
+  assert.equal(state.environment.SPOTIFY_TOKEN_ENCRYPTION_KEY, undefined);
   state.setStatus('offline');
   state.intervals[0].callback();
   await settle();

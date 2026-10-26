@@ -6,3 +6,10 @@ esbuild.buildSync({
   outfile: 'vendor.js',
   legalComments: 'linked',
 });
+
+esbuild.buildSync({
+  entryPoints: ['quick-spotify-entry.js'],
+  bundle: true,
+  minify: true,
+  outfile: 'quick-spotify.js',
+});

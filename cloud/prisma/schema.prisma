@@ -42,6 +42,8 @@ model User {
   budgets UsageBudget[]
   client Client?
   conversations Conversation[]
+  spotify SpotifyConnection?
+  spotifyTransactions SpotifyOAuthTransaction[]
   @@index([managerId, status])
 }
 model Client {
@@ -184,4 +186,37 @@ model ChatMessage {
   createdAt DateTime @default(now())
   @@unique([conversationId, requestId])
   @@index([conversationId, id])
+}
+
+
+model SpotifyConnection {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @unique @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider String @default("spotify")
+  spotifyUserId String @unique @db.VarChar(128)
+  displayName String @db.VarChar(200)
+  scopes String[]
+  accessToken String
+  refreshToken String
+  expiresAt DateTime
+  status String @default("connected")
+  refreshLeaseUntil DateTime?
+  retryAt DateTime?
+  connectedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SpotifyOAuthTransaction {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String @db.Uuid
+  ticketHash String @unique
+  stateHash String? @unique
+  browserHash String?
+  status String @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
 }

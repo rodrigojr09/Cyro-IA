@@ -76,3 +76,8 @@ contextBridge.exposeInMainWorld('jarvisWriter', {
   export: (value) => ipcRenderer.invoke('writer:export', value),
   dirty: (value) => ipcRenderer.invoke('writer:dirty', value),
 });
+
+contextBridge.exposeInMainWorld('jarvisSpotify', {
+  request: (input) => ipcRenderer.invoke('spotify:request', input),
+  onChanged: (callback) => ipcRenderer.on('spotify:changed', () => callback()),
+});

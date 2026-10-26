@@ -832,6 +832,13 @@ async def process_chat(req: ChatRequest):
             raise StorageFullError()
     chat_id = req.chat_id or await asyncio.to_thread(store.general_chat)
     chat_info = await asyncio.to_thread(store.chat, chat_id)
+    if CLOUD and not req.attachments:
+        from spotify_commands import try_command
+
+        music = await try_command(req.message)
+        if music is not None:
+            # No Spotify data enters model history, memory, summaries or TTS.
+            return {**music, "chat_id": chat_id}
     if chat_info.get("writer_document_id"):
         raise HTTPException(
             400,
@@ -1084,6 +1091,8 @@ async def process_chat(req: ChatRequest):
 
             raise StorageFullError() from None
         raise HTTPException(502, f"Falha na API de IA: {type(exc).__name__}") from exc
+    if getattr(service, "spotify_result", None):
+        return {**service.spotify_result, "chat_id": chat_id}
     reply = redact(reply)
     if mode == "programming":
         service.context.remember(req.message, reply)

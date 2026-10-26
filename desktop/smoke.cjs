@@ -10,6 +10,7 @@ ipcMain.handle('clipboard:state', () => ({
   owned: {},
   settings: { enabled: false },
 }));
+ipcMain.handle('spotify:request', () => ({ configured: false, status: 'disconnected' }));
 ipcMain.handle('clipboard:claim', () => ({ ok: false, reason: 'DISABLED' }));
 ipcMain.handle('jarvis:initial-settings', () => ({}));
 app.setPath(
@@ -229,11 +230,11 @@ app.whenReady().then(async () => {
       await js(
         `document.querySelectorAll('.integration-card .integration-service-icon svg').length`,
       ),
-      6,
+      5,
     );
     assert.equal(
       await js(
-        `Array.from(document.querySelectorAll('.integration-status')).every(x=>x.textContent==='Em breve')`,
+        `Array.from(document.querySelectorAll('.integration-status')).filter(x=>x.textContent==='Em breve').length===5`,
       ),
       true,
     );

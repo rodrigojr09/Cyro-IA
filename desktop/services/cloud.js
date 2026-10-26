@@ -27,16 +27,21 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
     });
     await fs.rename(file + '.tmp', file);
   }
-  async function request(route, method = 'GET') {
+  async function request(route, method = 'GET', payload) {
+    const integration = route === '/api/integrations/spotify';
     if (!session) throw Error('Entre com sua conta.');
     try {
       const response = await fetcher(base + route, {
         method,
         redirect: 'error',
-        headers: { Authorization: 'Bearer ' + session.credential },
+        headers: {
+          Authorization: 'Bearer ' + session.credential,
+          ...(payload ? { 'Content-Type': 'application/json' } : {}),
+        },
+        ...(payload ? { body: JSON.stringify(payload) } : {}),
         signal: AbortSignal.timeout(20000),
       });
-      if ([401, 403].includes(response.status)) {
+      if (response.status === 401 || (response.status === 403 && !integration)) {
         state = {
           status: 'revoked',
           message: 'Sessão encerrada ou acesso bloqueado. Entre novamente.',
@@ -45,12 +50,24 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         await fs.rm(file, { force: true });
         throw Error(state.message);
       }
-      if (!response.ok) throw Error('Cloud indisponível.');
-      const payload = await response.json();
+      if (!response.ok) {
+        if (integration) {
+          const result = await response.json().catch(() => ({}));
+          const error = Error(
+            typeof result.error === 'string' ? result.error.slice(0, 400) : 'Spotify indisponível.',
+          );
+          error.spotify = true;
+          const retry = Number(response.headers.get('retry-after'));
+          if (retry > 0) error.retryAfter = retry;
+          throw error;
+        }
+        throw Error('Cloud indisponível.');
+      }
+      const responsePayload = await response.json();
       state = { status: 'active', message: 'Conectado ao JARVIS Cloud.' };
-      return payload;
+      return responsePayload;
     } catch (error) {
-      if (state.status !== 'revoked')
+      if (state.status !== 'revoked' && !error.spotify)
         state = {
           status: 'offline',
           message: 'Não foi possível validar a sessão. Verifique a conexão.',

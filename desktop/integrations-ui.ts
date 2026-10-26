@@ -1,3 +1,4 @@
+import { mountSpotifySettings, spotifyRequest, spotifyLogo } from './spotify-ui';
 import {
   integrationCatalog,
   integrationStatusLabels,
@@ -5,7 +6,7 @@ import {
 } from './integration-catalog';
 import type { IntegrationDefinition, IntegrationFilter } from './integration-catalog';
 
-/** No networking, storage, authentication or IPC: this view renders catalog data only. */
+/** Provider details reuse the central catalog; private transport stays in Electron. */
 export function mountIntegrations(
   container: HTMLElement,
   refreshIcons: () => void,
@@ -35,7 +36,8 @@ export function mountIntegrations(
   const filters = get('integrations-filters');
   const catalogView = get('integrations-catalog-view'),
     details = get('integration-details');
-  const hasConnected = catalog.some((integration) => integration.status === 'connected');
+  let currentCatalog = catalog;
+  let hasConnected = catalog.some((integration) => integration.status === 'connected');
   get('integrations-connection-note').textContent = hasConnected
     ? ''
     : 'Você ainda não possui integrações conectadas.';
@@ -60,7 +62,10 @@ export function mountIntegrations(
     const content = get('integration-details-content');
     content.replaceChildren();
     const mark = text('div', '', 'integration-service-icon');
-    mark.append(icon(integration.icon));
+    if (integration.id === 'spotify') {
+      mark.className = 'integration-service-logo';
+      mark.append(spotifyLogo());
+    } else mark.append(icon(integration.icon));
     const heading = text('h4', integration.name);
     heading.id = 'integration-details-name';
     heading.tabIndex = -1;
@@ -72,7 +77,12 @@ export function mountIntegrations(
       text('p', integration.category, 'integration-category'),
       text('span', integrationStatusLabels[integration.status], 'integration-status'),
       text('p', integration.description),
-      text('h5', 'Recursos planejados'),
+      text(
+        'h5',
+        integration.id === 'spotify'
+          ? 'Recursos disponíveis para contas elegíveis'
+          : 'Recursos planejados',
+      ),
       list,
     );
     if (integration.status === 'coming_soon')
@@ -83,6 +93,13 @@ export function mountIntegrations(
           'integration-unavailable',
         ),
       );
+    if (integration.id === 'spotify') {
+      mountSpotifySettings(content, applySpotifyStatus);
+      content.insertBefore(
+        content.querySelector('.spotify-settings')!,
+        content.querySelector('h5'),
+      );
+    }
     catalogView.hidden = true;
     details.hidden = false;
     refreshIcons();
@@ -91,7 +108,7 @@ export function mountIntegrations(
   function render(): void {
     grid.replaceChildren();
     get('integrations-connection-note').hidden = hasConnected || filter === 'connected';
-    const matches = filterIntegrations(catalog, search.value, filter);
+    const matches = filterIntegrations(currentCatalog, search.value, filter);
     for (const integration of matches) {
       const card = document.createElement('button');
       card.type = 'button';
@@ -103,7 +120,10 @@ export function mountIntegrations(
       );
       const top = text('span', '', 'integration-card-top');
       const mark = text('span', '', 'integration-service-icon');
-      mark.append(icon(integration.icon));
+      if (integration.id === 'spotify') {
+        mark.className = 'integration-service-logo';
+        mark.append(spotifyLogo());
+      } else mark.append(icon(integration.icon));
       top.append(
         mark,
         text('span', integrationStatusLabels[integration.status], 'integration-status'),
@@ -154,8 +174,53 @@ export function mountIntegrations(
   get('integration-details-back').onclick = () => {
     details.hidden = true;
     catalogView.hidden = false;
-    if (selectedCard?.isConnected) selectedCard.focus();
+    const restored = selectedCard?.dataset.integrationId
+      ? grid.querySelector<HTMLButtonElement>(
+          '[data-integration-id="' + selectedCard.dataset.integrationId + '"]',
+        )
+      : null;
+    if (restored) restored.focus();
     else search.focus();
   };
+  function applySpotifyStatus(value: any) {
+    if (get('integration-details-name')?.textContent === 'Spotify') {
+      const badge = details.querySelector('.integration-status');
+      if (badge)
+        badge.textContent =
+          value.status === 'connected'
+            ? 'Conectada'
+            : value.status === 'error'
+              ? 'Erro'
+              : 'Desconectada';
+    }
+    const nextStatus =
+      value.status === 'connected'
+        ? 'connected'
+        : value.status === 'error'
+          ? 'error'
+          : 'disconnected';
+    if (currentCatalog.find((item) => item.id === 'spotify')?.status === nextStatus) return;
+    currentCatalog = catalog.map((item) =>
+      item.id === 'spotify'
+        ? {
+            ...item,
+            status:
+              value.status === 'connected'
+                ? 'connected'
+                : value.status === 'error'
+                  ? 'error'
+                  : 'disconnected',
+          }
+        : item,
+    );
+    hasConnected = currentCatalog.some((item) => item.status === 'connected');
+    get('integrations-connection-note').textContent = hasConnected
+      ? ''
+      : 'Você ainda não possui integrações conectadas.';
+    render();
+  }
   render();
+  void spotifyRequest({ operation: 'status' })
+    .then(applySpotifyStatus)
+    .catch(() => {});
 }

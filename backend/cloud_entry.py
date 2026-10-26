@@ -10,7 +10,7 @@ from packaged_entry import watch_parent
 if __name__ == "__main__":
     os.environ["JARVIS_CLOUD"] = "1"
     for key in list(os.environ):
-        if key.startswith("OPENAI_"):
+        if key.startswith(("OPENAI_", "SPOTIFY_")):
             os.environ.pop(key, None)
     parser = argparse.ArgumentParser()
     parser.add_argument("--parent", type=int)
