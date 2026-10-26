@@ -45,6 +45,7 @@ def audit():
             "storage-ui.js",
             "package.json",
             "electron/main.cjs",
+            "electron/cloud-config.json",
             "voice-input.js",
             "services/cloud.js",
             "services/local-stream.js",

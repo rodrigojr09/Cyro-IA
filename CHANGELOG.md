@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- 26/10/2026: setup Windows x64 v5.0.0 compilado para o Cloud HTTPS de produção, auditado e testado com duas inicializações e persistência em perfil temporário sem Python/Node no PATH. Cloud `35908a5` com deploy Vercel concluído, login 200 e origem validada. Auditoria inclui cloud-config; smoke acompanha o diretório atual do builder. Evidências, checksum e limitações em docs/V5.md. Setup sem assinatura; sem OAuth real, API paga, Windows limpo ou tag.
+
 - Spotify: tela de conexão atualiza o estado salvo no Cloud pelo botão Atualizar conexão e ao retornar o foco para a janela visível; Conectar antes desabilitado pode ser liberado sem remontar a tela. Remove listener ao desmontar e evita consultas simultâneas. Cloud retorna motivo seguro de configuração inválida, sem segredos. Validação: 149 testes Desktop, 55 Cloud, 186 Python/backend, TypeScript, builds e smoke Electron com transição desabilitado→habilitado e OAuth simulado; sem OAuth ou API Spotify reais.
 
 - 26/10/2026: migrations `202610260001_spotify` e `202610260002_provider_configuration` aplicadas com sucesso no banco Cloud configurado, por autorização do proprietário. Verificação SQL confirmou ambas concluídas, as três tabelas presentes e os registros iniciais OpenAI/Spotify. Histórico remoto anterior `20261021160000_public_site_settings`, ausente localmente, preservado. Não valida implantação web, OAuth real ou chamadas pagas.

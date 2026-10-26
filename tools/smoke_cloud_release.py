@@ -35,7 +35,9 @@ def request(route, token=None, body=None):
 
 
 def main():
-    exe = ROOT / "release/v4/win-unpacked/JARVIS.exe"
+    builder = json.loads((ROOT / "desktop/electron/builder.json").read_text())
+    output = (ROOT / "desktop" / builder["directories"]["output"]).resolve()
+    exe = output / "win-unpacked/JARVIS.exe"
     if not exe.is_file():
         raise RuntimeError("Gere o payload NSIS antes do smoke.")
     with socket.socket() as sock:
