@@ -2,7 +2,8 @@
 import Link from "next/link";
 import Management from "./management";
 import Credentials from "./credentials";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { DashboardLoading, useDashboardData } from "./dashboard-data";
 type Employee = {
   id: string;
   name: string;
@@ -61,30 +62,28 @@ const links = [
 ];
 const date = (value: string) => new Date(value).toLocaleString("pt-BR");
 const number = (value: number) => value.toLocaleString("pt-BR");
-export default function Dashboard({ section }: { section: string }) {
-  const [data, setData] = useState<Data | null>(null);
+export default function Dashboard({
+  section,
+  query = "",
+}: {
+  section: string;
+  query?: string;
+}) {
+  const {
+    data,
+    error: loadError,
+    reload: load,
+  } = useDashboardData<Data>("/api/admin" + query);
+  const extraKey =
+    section === "credentials" && data?.actor.role === "SUPER_ADMIN"
+      ? "/api/provider-settings"
+      : section === "settings"
+        ? "/api/management"
+        : null;
+  const extra = useDashboardData<unknown>(extraKey);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const load = useCallback(async () => {
-    try {
-      const response = await fetch(
-        "/api/admin" + (section === "usage" ? location.search : ""),
-        { cache: "no-store" },
-      );
-      if (response.status === 401) {
-        location.assign("/login");
-        return;
-      }
-      if (!response.ok) throw Error("Não foi possível consultar o Cloud.");
-      setData(await response.json());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha de conexão.");
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
   async function command(value: unknown) {
     setBusy(true);
     setError("");
@@ -107,6 +106,16 @@ export default function Dashboard({ section }: { section: string }) {
       setBusy(false);
     }
   }
+  if (!data || (extraKey && !extra.data))
+    return (
+      <DashboardLoading
+        error={loadError || extra.error}
+        retry={() => {
+          void load();
+          void extra.reload();
+        }}
+      />
+    );
   const title = links.find((l) => l[0] === section)?.[2];
   return (
     <div className="shell">
@@ -179,14 +188,15 @@ export default function Dashboard({ section }: { section: string }) {
             onClick={() => {
               setError("");
               void load();
+              void extra.reload();
             }}
           >
             ↻ Atualizar
           </button>
         </div>
-        {error && (
+        {(error || loadError) && (
           <div className="alert" role="alert">
-            {error}
+            {error || loadError}
           </div>
         )}
         {notice && (

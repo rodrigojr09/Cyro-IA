@@ -31,3 +31,9 @@ Trocar o Client ID é bloqueado enquanto houver contas vinculadas ou autorizaç�
 Salvar indica persistência, **não comprova conexão real**. Credenciais inválidas, contas sem acesso, Premium/allowlist Spotify e saldo/permissões OpenAI continuam dependentes dos provedores. Não houve teste pago, OAuth real ou implantação nesta entrega.
 
 Orientação oficial OpenAI usada: [boas práticas de produção e proteção das chaves](https://developers.openai.com/api/docs/guides/production-best-practices). Para OAuth, scopes e limitações Spotify, consulte [SPOTIFY.md](SPOTIFY.md).
+
+## Carregamento e diagnóstico
+
+A dashboard mostra um indicador até carregar o perfil e os dados da página escolhida. `useDashboardData` compartilha os resultados no layout administrativo enquanto a sessão de navegação estiver aberta, sem repetir consultas ao trocar de página. O botão Atualizar e os salvamentos renovam os respectivos dados; filtros de consumo têm chaves separadas. Uma nova navegação completa ou saída encerra esse cache em memória.
+
+Falha do servidor não é apresentada como falta de SUPER_ADMIN. Se a tabela de credenciais ainda não existe, a página informa que a atualização do banco Cloud precisa ser aplicada. Conceder o papel SUPER_ADMIN não substitui a implantação e a migration. As APIs continuam conferindo a sessão e as permissões no servidor em cada solicitação.

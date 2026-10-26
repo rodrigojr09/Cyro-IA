@@ -99,3 +99,5 @@ Desenvolvido por **Rodrigo Junior**.
 - GitHub: [rodrigojr09](https://github.com/rodrigojr09)
 
 © 2026 Rodrigo Junior.
+
+A dashboard usa `DashboardDataProvider` e `useDashboardData` para compartilhar dados em memória entre páginas, deduplicar consultas e atualizar após salvamentos ou pelo botão Atualizar. A tela aguarda os dados necessários antes de exibir a navegação e o conteúdo. O cache não guarda segredos nem usa armazenamento persistente.

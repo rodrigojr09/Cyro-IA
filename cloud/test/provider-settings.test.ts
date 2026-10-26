@@ -222,3 +222,16 @@ test("primeiro salvamento adota a chave de tokens existente do ambiente", async 
     else process.env.SPOTIFY_TOKEN_ENCRYPTION_KEY = original;
   }
 });
+
+test("missing credentials migration is reported as service setup, not role denial", async () => {
+  await assert.rejects(
+    readProvider("openai", {
+      providerConfiguration: {
+        findUnique: async () => {
+          throw Object.assign(new Error("missing"), { code: "P2021" });
+        },
+      },
+    }),
+    /atualização do banco Cloud/,
+  );
+});

@@ -111,9 +111,19 @@ export async function readProvider(
   id: "openai" | "spotify",
   database: any = db,
 ) {
-  const row = database.providerConfiguration
-    ? await database.providerConfiguration.findUnique({ where: { id } })
-    : null;
+  let row;
+  try {
+    row = database.providerConfiguration
+      ? await database.providerConfiguration.findUnique({ where: { id } })
+      : null;
+  } catch (error) {
+    if ((error as { code?: string }).code === "P2021")
+      throw new HttpError(
+        503,
+        "Credenciais indisponíveis: a atualização do banco Cloud ainda precisa ser aplicada pelo administrador.",
+      );
+    throw error;
+  }
   return {
     data: row?.ciphertext
       ? unsealProvider(id, row.ciphertext)

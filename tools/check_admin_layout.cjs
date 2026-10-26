@@ -14,6 +14,7 @@ async function prepare() {
       contents: `import React from 'react';
         import {createRoot} from 'react-dom/client';
         import Dashboard from './cloud/components/dashboard';
+import {DashboardDataProvider} from './cloud/components/dashboard-data';
         import Login from './cloud/app/login/page';
         const long='Cliente com nome extenso para verificar a quebra de texto';
         const employee={id:'client-1',name:long,email:'email.muito.longo.para.validar.layout@example.test',role:'EMPLOYEE',status:'ACTIVE',monthlyTokenLimit:100000000};
@@ -23,9 +24,9 @@ async function prepare() {
           audit:[{id:'audit-1',action:'desktop.login',targetType:'Device',createdAt:new Date().toISOString()}]};
         const management={settings:{intelligenceEnabled:true,maxOutputTokens:3500},canConfigure:true};
         const credentials={openai:{revision:0,source:'environment',enabled:true,hasApiKey:false,allowedModels:['gpt-4.1-mini'],voiceEnabled:false},spotify:{revision:0,source:'environment',enabled:true,hasClientSecret:false,clientId:'a075ad4ae29f41c5a3df8d2ff9c84972',redirectUri:'https://cronosjarvis.vercel.app/api/integrations/spotify/callback'}};
-        window.fetch=async (url,options)=>{if(String(url).includes('provider-settings')&&options?.method==='POST')window.providerWrite=JSON.parse(options.body);return {ok:true,status:200,json:async()=>options?.method==='POST'?{ok:true}:String(url).includes('provider-settings')?credentials:String(url).includes('management')?management:fixture};};
+        window.apiReads={};window.fetch=async (url,options)=>{if(!options?.method){window.apiReads[url]=(window.apiReads[url]||0)+1;await new Promise(r=>setTimeout(r,40));}if(String(url).includes('provider-settings')&&options?.method==='POST')window.providerWrite=JSON.parse(options.body);return {ok:true,status:200,json:async()=>options?.method==='POST'?{ok:true}:String(url).includes('provider-settings')?credentials:String(url).includes('management')?management:fixture};};
         const section=new URLSearchParams(location.search).get('section');
-        createRoot(document.getElementById('root')).render(section==='login'?<Login/>:<Dashboard section={section}/>);`,
+        const root=createRoot(document.getElementById('root'));window.navigateFixture=(section)=>root.render(section==='login'?<Login/>:<DashboardDataProvider><Dashboard section={section}/></DashboardDataProvider>);new MutationObserver(()=>{if(document.querySelector('.loading-spinner')&&!document.querySelector('.shell'))window.loadingObserved=true;}).observe(document.getElementById('root'),{childList:true,subtree:true});window.navigateFixture(section);`,
       resolveDir: root,
       loader: "tsx",
     },
@@ -126,6 +127,27 @@ async function render() {
           );
         }
         if (section === "credentials" && width === 1440) {
+          const before = await window.webContents.executeJavaScript(
+            `({reads:JSON.stringify(window.apiReads),loading:window.loadingObserved})`,
+          );
+          if (!before.loading) throw Error("Loading gate was not displayed");
+          await window.webContents.executeJavaScript(
+            `window.navigateFixture('dashboard');void 0;`,
+          );
+          await window.webContents.executeJavaScript(
+            `new Promise(r=>setTimeout(r,80))`,
+          );
+          await window.webContents.executeJavaScript(
+            `window.navigateFixture('credentials');void 0;`,
+          );
+          await window.webContents.executeJavaScript(
+            `new Promise(r=>setTimeout(r,80))`,
+          );
+          const after = await window.webContents.executeJavaScript(
+            `JSON.stringify(window.apiReads)`,
+          );
+          if (before.reads !== after)
+            throw Error("Navigation repeated cached API requests");
           await window.webContents.executeJavaScript(
             `document.querySelector('.credentials-grid input[type=password]').value='sk-ui-fixture-12345678901234567890';document.querySelector('.credentials-grid form').requestSubmit();void 0;`,
           );

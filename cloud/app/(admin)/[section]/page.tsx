@@ -3,8 +3,10 @@ import { admin } from "@/lib/auth";
 import Dashboard from "@/components/dashboard";
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ section: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { section } = await params;
   if (
@@ -21,5 +23,18 @@ export default async function Page({
     notFound();
   if (section === "credentials" && (await admin()).role !== "SUPER_ADMIN")
     notFound();
-  return <Dashboard section={section} />;
+  const query = new URLSearchParams();
+  if (section === "usage") {
+    const filters = await searchParams;
+    for (const key of ["from", "to", "clientId"]) {
+      if (typeof filters[key] === "string" && filters[key])
+        query.set(key, filters[key]);
+    }
+  }
+  return (
+    <Dashboard
+      section={section}
+      query={query.size ? "?" + query.toString() : ""}
+    />
+  );
 }

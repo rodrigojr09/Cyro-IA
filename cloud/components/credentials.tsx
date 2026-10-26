@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useDashboardData } from "./dashboard-data";
+import { useState } from "react";
 type ProviderState = {
   revision: number;
   source: string;
@@ -13,21 +14,14 @@ type ProviderState = {
 };
 type State = { openai: ProviderState; spotify: ProviderState };
 export default function Credentials() {
-  const [data, setData] = useState<State | null>(null),
-    [error, setError] = useState(""),
-    [notice, setNotice] = useState(""),
-    [busy, setBusy] = useState<string | null>(null);
-  async function load() {
-    const response = await fetch("/api/provider-settings", {
-      cache: "no-store",
-    });
-    if (!response.ok)
-      throw Error("Acesso restrito ao SUPER_ADMIN ou serviço indisponível.");
-    setData(await response.json());
-  }
-  useEffect(() => {
-    void load().catch((e) => setError(e.message));
-  }, []);
+  const {
+    data,
+    error: loadError,
+    reload: load,
+  } = useDashboardData<State>("/api/provider-settings");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
   async function save(
     event: React.FormEvent<HTMLFormElement>,
     provider: "openai" | "spotify",
@@ -94,9 +88,9 @@ export default function Credentials() {
           Deixe o campo de segredo vazio para manter o valor atual.
         </p>
       </div>
-      {error && (
+      {(error || loadError) && (
         <p className="alert" role="alert">
-          {error}
+          {error || loadError}
         </p>
       )}
       {notice && (

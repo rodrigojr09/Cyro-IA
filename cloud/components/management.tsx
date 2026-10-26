@@ -1,26 +1,19 @@
 "use client";
+import { useDashboardData } from "./dashboard-data";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 type State = {
   settings: { intelligenceEnabled: boolean; maxOutputTokens: number };
   canConfigure: boolean;
 };
 export default function Management({ section }: { section: string }) {
-  const [data, setData] = useState<State | null>(null);
+  const {
+    data,
+    error: loadError,
+    reload: load,
+  } = useDashboardData<State>("/api/management");
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function load() {
-    try {
-      const result = await fetch("/api/management", { cache: "no-store" });
-      if (!result.ok) throw Error("Consulta não autorizada ou indisponível.");
-      setData(await result.json());
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-  useEffect(() => {
-    void load();
-  }, []);
+  const [busy, setBusy] = useState<boolean>(false);
   async function save(input: unknown) {
     setBusy(true);
     setError("");
@@ -40,7 +33,7 @@ export default function Management({ section }: { section: string }) {
   }
   return (
     <section className="card">
-      {error && <p role="alert">{error}</p>}
+      {(error || loadError) && <p role="alert">{error || loadError}</p>}
       {!data ? (
         <p>Carregando…</p>
       ) : (

@@ -1,3 +1,4 @@
+import { DashboardDataProvider } from "@/components/dashboard-data";
 import { admin } from "@/lib/auth";
 import { HttpError } from "@/lib/http";
 import { redirect } from "next/navigation";
@@ -13,5 +14,5 @@ export default async function AdminLayout({
     if (error instanceof HttpError && error.status === 401) redirect("/login");
     throw error;
   }
-  return children;
+  return <DashboardDataProvider>{children}</DashboardDataProvider>;
 }
