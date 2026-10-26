@@ -24,6 +24,8 @@ def audit():
                     yield relative
 
         entries = list(names(header))
+        if "quick-spotify.js" in entries:
+            raise RuntimeError("Mini player antigo ainda presente no pacote.")
         for name in entries:
             if (
                 name.startswith("Backup/")

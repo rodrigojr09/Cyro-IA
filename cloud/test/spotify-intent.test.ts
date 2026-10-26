@@ -504,3 +504,26 @@ test("aparelho com apóstrofo pode ser escolhido por nome exato", async () => {
   });
   assert.equal(calls[1].action, "transfer");
 });
+
+test("escolha natural reutiliza a lista local sem enviar dados à IA nem consultas duplicadas", async () => {
+  const calls: any[] = [];
+  const seen: any[] = [];
+  await handleSpotifyChat("pode ser o Computador", {
+    selecting: true,
+    resumeAfterSelection: true,
+    classify: async (text, selecting) => {
+      seen.push([text, selecting]);
+      return output("select_device", { deviceName: "Computador" });
+    },
+    execute: async (command) => {
+      calls.push(command);
+      return command.action === "devices" ? { devices: [pc] } : { ok: true };
+    },
+  });
+  assert.deepEqual(seen, [["pode ser o Computador", true]]);
+  assert.deepEqual(calls, [
+    { action: "devices" },
+    { action: "transfer", deviceId: pc.id },
+    { action: "resume", deviceId: pc.id },
+  ]);
+});

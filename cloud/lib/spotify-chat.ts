@@ -98,12 +98,13 @@ export async function handleSpotifyChat(
     );
   }
   try {
+    let knownDevices: Device[] | undefined;
     if (
       deps.selecting &&
       text.trim().length <= 150 &&
       !/[\r\n`<>]/.test(text)
     ) {
-      const available = await devices();
+      const available = (knownDevices = await devices());
       const matches = available.filter(
         (d) => normalizeDeviceName(d.name) === normalizeDeviceName(text),
       );
@@ -115,7 +116,8 @@ export async function handleSpotifyChat(
       deps.selecting,
     );
     if (intent.kind === "none") return { handled: false };
-    if (intent.kind === "select_device") return await select(intent.name);
+    if (intent.kind === "select_device")
+      return await select(intent.name, knownDevices);
     if (intent.kind === "clarify")
       return response(
         "O que você quer fazer no Spotify: pausar, continuar, pular a faixa, consultar a música, escolher dispositivo ou ajustar o volume? Peça uma ação por vez.",
@@ -136,7 +138,7 @@ export async function handleSpotifyChat(
           "volume_delta",
         ].includes(intent.command.action)
       ) {
-        const available = await devices();
+        const available = knownDevices ?? (await devices());
         if (!available.some((device) => device.active))
           return ask(available, intent.command.action === "resume");
       }
