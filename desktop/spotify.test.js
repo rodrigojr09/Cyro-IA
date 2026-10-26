@@ -57,29 +57,14 @@ test('Spotify configurações inicia/cancela OAuth e mostra estado real sem toke
   assert.equal(w.document.querySelector('input[type=password]'), null);
   dom.window.close();
 });
-test('mini player fechado não consulta Spotify; falha não mostra sucesso', async () => {
-  const dom = new JSDOM('<main></main>', { runScripts: 'outside-only', pretendToBeVisual: true });
-  const w = dom.window,
-    calls = [];
-  w.HTMLElement.prototype.getClientRects = () => [{}];
-  w.jarvisSpotify = {
-    request: async (input) => {
-      calls.push(input);
-      if (input.operation === 'status') return { status: 'connected' };
-      return { error: 'Dispositivo indisponível' };
-    },
-  };
-  w.eval(bundle);
-  w.spotifyUI.mountSpotifyPlayer(w.document.querySelector('main'));
-  await tick();
-  assert.equal(calls.length, 0);
-  w.document.querySelector('.spotify-player > button').click();
-  await tick();
-  assert.match(w.document.querySelector('[role=status]').textContent, /Dispositivo indisponível/);
-  w.document.querySelector('.spotify-player > button').click();
-  const count = calls.length;
-  await tick();
-  assert.equal(calls.length, count);
+test('Spotify não oferece mini player nem controles de reprodução na interface', async () => {
+  const fs = require('node:fs');
+  const dom = new JSDOM('<main></main>', { runScripts: 'outside-only' });
+  dom.window.eval(bundle);
+  assert.equal(dom.window.spotifyUI.mountSpotifyPlayer, undefined);
+  for (const file of ['index.html', 'quick.html'])
+    assert(!fs.readFileSync(path.join(__dirname, file), 'utf8').includes('quick-spotify.js'));
+  assert(!fs.readFileSync(path.join(__dirname, 'ui.js'), 'utf8').includes('mountSpotifyPlayer'));
   dom.window.close();
 });
 test('IPC Spotify restringe janela, sessão, operações e navegador padrão', async () => {

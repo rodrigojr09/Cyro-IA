@@ -169,29 +169,15 @@ app.whenReady().then(async () => {
       path.join(directory, 'spotify-connected.png'),
       (await main.webContents.capturePage()).toPNG(),
     );
-    await main.webContents.executeJavaScript(
-      "document.getElementById('settings-dialog').close();document.querySelector('.spotify-player > button').click();void 0;",
-    );
-    await quick.webContents.executeJavaScript(
-      "document.querySelector('.spotify-player > button').click();void 0;",
-    );
     for (const win of [main, quick])
-      await wait(
-        win,
-        "document.querySelector('.spotify-track').textContent.includes('Faixa de teste')",
+      assert.equal(
+        await win.webContents.executeJavaScript("document.querySelector('.spotify-player')===null"),
+        true,
       );
-    await quick.webContents.executeJavaScript(
-      "Array.from(document.querySelectorAll('.spotify-actions button')).find(b=>b.textContent==='Próxima').click();void 0;",
+    await main.webContents.executeJavaScript(
+      "document.getElementById('settings-dialog').close();void 0;",
     );
-    await wait(
-      quick,
-      "document.querySelector('.spotify-track').textContent.includes('Faixa de teste')",
-    );
-    assert(commands.includes('next'));
-    fs.writeFileSync(
-      path.join(directory, 'spotify-quick.png'),
-      (await quick.webContents.capturePage()).toPNG(),
-    );
+    assert.equal(commands.length, 0, 'nenhuma consulta ou reprodução automática pelo painel');
     await main.webContents.executeJavaScript(
       "document.getElementById('settings-open').click();Array.from(document.querySelectorAll('#settings-tabs button')).find(b=>b.textContent==='Integrações').click();document.querySelector('[data-integration-id=spotify]').click();void 0;",
     );
@@ -209,7 +195,7 @@ app.whenReady().then(async () => {
     assert.equal(connected, false);
     finish(
       0,
-      'Electron real Spotify: configurações, browser IPC restrito, conclusão OAuth simulada, player principal/Quick Chat, comando e desconectar: OK. Sem conta/credenciais/API Spotify reais. Capturas: ' +
+      'Electron real Spotify: configurações, browser IPC restrito, conclusão OAuth simulada, ausência de player/controles principal e Quick Chat, nenhuma reprodução automática e desconectar: OK. Sem conta/credenciais/API Spotify reais. Capturas: ' +
         directory,
     );
   } catch (error) {

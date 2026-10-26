@@ -3,9 +3,10 @@ import { deviceAuth } from "@/lib/auth";
 import { body, endpoint, HttpError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { spotify, spotifyAction, SpotifyError } from "@/lib/spotify";
-import { parseSpotifyCommand, spotifyReply } from "@/lib/spotify-command";
+import { handleSpotifyChat } from "@/lib/spotify-chat";
+import { interpretSpotifyCommand } from "@/lib/spotify-interpreter";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 const inputSchema = z.discriminatedUnion("operation", [
   z.object({ operation: z.enum(["status", "start", "disconnect"]) }).strict(),
   z
@@ -15,7 +16,12 @@ const inputSchema = z.discriminatedUnion("operation", [
     .object({ operation: z.literal("control"), command: spotifyAction })
     .strict(),
   z
-    .object({ operation: z.literal("chat"), text: z.string().min(1).max(6000) })
+    .object({
+      operation: z.literal("chat"),
+      text: z.string().min(1).max(6000),
+      selectDevice: z.boolean().optional(),
+      resumeAfterSelection: z.boolean().optional(),
+    })
     .strict(),
 ]);
 export const POST = endpoint(async (request) => {
@@ -45,36 +51,32 @@ export const POST = endpoint(async (request) => {
         value = await spotify.execute(session.userId, input.command);
         break;
       case "chat": {
-        const command = parseSpotifyCommand(input.text);
-        if (!command) {
-          value = { handled: false };
-          break;
-        }
-        if (command === "unavailable") {
-          value = {
-            handled: true,
-            reply:
-              "Busca por nome e playlists não estão disponíveis nesta integração. Use continuar, pausar, próxima, anterior ou selecione um dispositivo.",
-            speech: "Esse comando musical ainda não está disponível.",
-          };
-          break;
-        }
-        // Spotify metadata is displayed directly, never sent to OpenAI or model history.
-        try {
-          const result = await spotify.execute(session.userId, command);
-          value = {
-            handled: true,
-            reply: spotifyReply(command, result),
-            speech: "Consulte o resultado do Spotify no JARVIS.",
-          };
-        } catch (error) {
-          if (!(error instanceof HttpError)) throw error;
-          value = {
-            handled: true,
-            reply: error.message,
-            speech: error.message,
-          };
-        }
+        value = await handleSpotifyChat(input.text, {
+          classify: async (text, selecting) => {
+            const connection = await spotify.status(session.userId);
+            if (!connection.configured)
+              throw new HttpError(
+                503,
+                connection.configurationError ||
+                  "Spotify não configurado no Cloud.",
+              );
+            if (connection.status !== "connected")
+              throw new HttpError(
+                409,
+                "Para controlar suas músicas, conecte sua conta Spotify em Configurações → Integrações.",
+              );
+            return interpretSpotifyCommand(
+              text,
+              { userId: session.userId, id: session.id },
+              request.signal,
+              selecting,
+            );
+          },
+          execute: (command) => spotify.execute(session.userId, command),
+          selecting: input.selectDevice === true,
+          resumeAfterSelection:
+            input.selectDevice === true && input.resumeAfterSelection === true,
+        });
         break;
       }
       default:

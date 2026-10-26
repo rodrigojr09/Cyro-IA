@@ -1,6 +1,6 @@
 # Spotify no JARVIS v5 — configuração e validação
 
-Implementação do Authorization Code Flow e dos controles via Web API. **Ainda não validada com conta real**: o proprietário informou que as variáveis privadas e a conta autorizada ainda não foram configuradas. Os testes automatizados usam respostas Spotify simuladas; não comprovam OAuth, Premium, quota, reprodução real, distribuição pública ou aprovação do Spotify.
+OAuth e controles Web API individuais, com comandos no chat principal e Quick Chat. O proprietário configurou as credenciais e relatou reprodução funcionando; isso não equivale a validação automatizada com conta real. Os testes do desenvolvimento usam Spotify e IA simulados. Premium, allowlist, distribuição e comportamento dos dispositivos continuam sujeitos à plataforma.
 
 ## Configuração do servidor
 
@@ -19,7 +19,7 @@ A configuração preferida agora é **Dashboard → Credenciais**, exclusiva do 
 
 Para gerar **somente a chave de criptografia** no seu terminal privado: `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Guarde a chave no gerenciador de segredos e mantenha uma cópia protegida. Não execute em CI com logs públicos, não compartilhe a saída e não use a chave de exemplo dos testes. Não é um Client Secret: esse só pode ser obtido no Spotify.
 
-3. Aplique a migration no Cloud com `npm run db:deploy -w @jarvis/cloud` no ambiente autorizado e depois publique a nova versão do Cloud. Esta entrega **não aplica migrations remotas nem publica**. Recompile o Desktop e o runtime Python para distribuir o recurso; não basta atualizar apenas a interface.
+3. Aplique a migration no Cloud com `npm run db:deploy -w @jarvis/cloud` no ambiente autorizado e depois publique a nova versão do Cloud. As migrations Spotify/credenciais foram aplicadas no banco Cloud configurado em 26/10/2026; para outro ambiente, aplique-as separadamente. Recompile o Desktop e o runtime Python para distribuir o recurso; não basta atualizar apenas a interface.
 4. Adicione a conta Spotify de teste à allowlist do Dashboard. O proprietário do app precisa de Premium ativo. Os controles de reprodução dependem de conta, dispositivo e conteúdo elegíveis.
 5. Abra Configurações → Integrações → Spotify → Conectar. O navegador padrão deve abrir a página oficial do Spotify. Autorize os três scopes, volte ao JARVIS e confira a conta. A transação expira em cinco minutos e a interface consulta sua conclusão autenticada a cada quatro segundos.
 
@@ -44,13 +44,19 @@ Somente `user-read-currently-playing`, `user-read-playback-state`, `user-modify-
 
 Operações: reprodução atual, dispositivos, pausar, continuar, próxima, anterior, volume absoluto (0–100), volume relativo (+/-10 quando suportado), seleção de dispositivo e teste de conexão. Os destinos HTTP são fixos e os parâmetros são validados. A reprodução permanece no Spotify do usuário.
 
-Os exemplos “pausa a música”, “continua a música”, “próxima”, “volta a música anterior”, “qual música está tocando?”, “mostra meus dispositivos Spotify”, “coloca o volume em 40%” e “aumenta o volume” são interpretados sem IA adicional. A detecção usa comandos completos; frases negativas, instruções citadas e intenção incerta não autorizam ações. Pedidos fora desse vocabulário podem receber pedido de esclarecimento, sem execução presumida.
+Comandos simples, incluindo “pausar Spotify”, continuam usando interpretação rápida sem IA extra. Variações naturais, como “dá uma segurada na música” ou “deixa o Spotify um pouco mais baixo”, usam classificação estruturada no Cloud: somente a mensagem humana original, função estrita e validação local antes da ação. A IA não recebe nomes/IDs de dispositivos vindos da API, faixa/artista, histórico, arquivos ou resultados de ferramentas. Ambiguidade e parâmetros inválidos não executam comandos.
+
+O classificador usa o primeiro modelo permitido em Dashboard → Credenciais, a chave exclusivamente no Cloud e as mesmas reservas/liquidação de tokens por usuário. Respeita suspensão da IA, limite de armazenamento, cota mensal e máximo de saída configurado (até 512 tokens para essa etapa). São no máximo 10 interpretações por minuto por usuário; texto de classificação limitado a 1.200 caracteres dentro do limite normal de mensagem. Uso desconhecido preserva a reserva conservadora. Não há chamada ao modelo nos controles simples ou no reconhecimento exato de uma resposta com nome de aparelho.
+
+A execução confere dispositivos disponíveis e `is_active`, sem tratar `is_playing=false` como desconexão. Um aparelho ativo pausado continua sendo usado, sem transferência automática. Se não há aparelho ativo, o chat pergunta qual usar e lista os disponíveis. A resposta com nome exato é resolvida somente na conta autenticada; também aceita “usar dispositivo Spotify NOME”. Nomes duplicados, ausentes ou restritos não são escolhidos por adivinhação. Se o pedido original era continuar, a seleção confirmada transfere quando necessário e envia um único comando de retomar dirigido ao ID escolhido. O Spotify mantém seu dispositivo ativo; o JARVIS não substitui isso por uma preferência antiga própria.
+
+O backend conserva apenas a pergunta pendente e a intenção de continuar por até cinco minutos, por sessão e chat, em memória (máximo de 64 contextos). Não guarda nomes/IDs nem credenciais nesse estado. Respostas de dispositivo, chat principal, Quick Chat e voz usam a mesma implementação; a escolha não altera outros chats ou contas.
 
 O chat principal, Quick Chat e transcrições do pipeline de voz existente usam o mesmo serviço Cloud. Há também a ferramenta `spotify_control` no ciclo de ferramentas: ela só considera a mensagem humana original, não aceita parâmetros de execução vindos do modelo/arquivos e termina a rodada diretamente na interface. Nenhum resultado Spotify retorna ao modelo.
 
 **Metadados de reprodução são efêmeros:** não entram no histórico persistente de conversas, memória, resumos, prompts ou síntese de voz OpenAI. A resposta visual mostra a faixa; a resposta falada confirma que o resultado está disponível na interface. Isso evita ingestão de conteúdo Spotify em IA. Não se gera histórico de audição.
 
-O mini player reutilizável existe nos dois ambientes, recolhido no botão com a marca Spotify. Ao abrir consulta estado real e disponibiliza controles, faixa/artista, link para abrir a faixa no Spotify, dispositivos e volume compatível. Não inclui capa nesta etapa. Atualiza a cada 30 segundos enquanto estiver aberto/visível; suspende consultas quando recolhido ou com documento oculto. Requer conexão real e não mostra reprodução fictícia. Ativos oficiais de marca são distribuídos localmente a partir do [kit de design Spotify](https://developer.spotify.com/documentation/design), sem modificação da marca.
+Os mini players e painéis de reprodução foram removidos do Desktop e Quick Chat por escolha do proprietário. Não há polling de reprodução em segundo plano. Configurações → Integrações mantém apenas gerenciamento da conexão (conectar, atualizar, testar e desconectar); músicas, volume e aparelhos são controlados pelo chat. A marca Spotify permanece no catálogo, com os assets oficiais branco/preto e contraste por tema.
 
 ## Distribuição e funcionalidades futuras
 
@@ -62,9 +68,9 @@ Fontes oficiais: [OAuth](https://developer.spotify.com/documentation/web-api/tut
 
 ## Roteiro obrigatório de teste real (pendente)
 
-Após configurar servidor/Dashboard e a conta autorizada: validar conectar, negar, expirar, repetir callback, reconectar, reiniciar Desktop mantendo a conta, refresh, teste de conexão e desconectar. Com Spotify elegível aberto, executar todos os controles pelo chat principal, Quick Chat, transcrição por voz e mini player. Confirmar outro usuário JARVIS isolado, conta sem dispositivo, dispositivo restrito e respostas de Premium/permissão. Conferir nome da conta, remoção de tokens, ausência de segredos em respostas/logs e a revogação manual na conta Spotify. Não usar contas de terceiros sem autorização.
+Após configurar servidor/Dashboard e a conta autorizada: validar conectar, negar, expirar, repetir callback, reconectar, reiniciar Desktop mantendo a conta, refresh, teste de conexão e desconectar. Com Spotify elegível aberto, executar todos os controles pelo chat principal, Quick Chat, transcrição por voz e diálogo de escolha de aparelho. Confirmar outro usuário JARVIS isolado, conta sem dispositivo, dispositivo restrito e respostas de Premium/permissão. Conferir nome da conta, remoção de tokens, ausência de segredos em respostas/logs e a revogação manual na conta Spotify. Não usar contas de terceiros sem autorização.
 
-## Validação desta entrega — 26/10/2026
+## Histórico da validação inicial — 26/10/2026
 
 - 40 testes Cloud aprovados, incluindo OAuth/refresh/erros com HTTP simulado e migration/índices em PostgreSQL embarcado real.
 - 148 testes Desktop aprovados, incluindo conexão/cancelamento, restrição IPC, ausência de polling recolhido, preservação da sessão diante de 403 e proteção dos metadados na fala do Quick Chat.
@@ -138,3 +144,7 @@ Em Configurações → Integrações → Spotify, use **Atualizar conexão** dep
 O serviço não tenta interpretar JSON depois de um controle aceito com HTTP 2xx. Isso evita transformar uma ação já enviada em erro de comunicação quando a resposta é vazia ou textual; não há repetição automática por falha de leitura do corpo. Para HTTP 202, a resposta no chat informa apenas que o Spotify recebeu o comando, sem afirmar que a reprodução já mudou. Consultas continuam validando JSON e retornando erro quando o corpo é inválido; erros HTTP e de rede continuam visíveis.
 
 Regressões simulam 200 vazio, 202 vazio/textual e 204, cobrem pausa/continuar/próxima/anterior/volume/transferência e verificam que comandos não são duplicados. Referência oficial para controle sem corpo: [Pause Playback — Spotify](https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback). As variações são testes de compatibilidade; não houve nova ação na conta real do proprietário nesta correção.
+
+## Referências da interpretação e dos dispositivos
+
+[OpenAI — Function calling](https://developers.openai.com/api/docs/guides/function-calling), [Spotify — Get Available Devices](https://developer.spotify.com/documentation/web-api/reference/get-a-users-available-devices) e [Spotify — Start/Resume Playback](https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback). A validação local dos argumentos e da seleção continua obrigatória; a saída do modelo não executa URLs, comandos de sistema ou ações arbitrárias.

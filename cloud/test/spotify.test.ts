@@ -586,3 +586,22 @@ test("volume e transferência aceitam sucesso sem JSON e leitura inválida conti
     /sem informações de reprodução válidas/,
   );
 });
+
+test("retoma dispositivo ativo pausado sem transferir e direciona apenas escolha explícita", async () => {
+  const f = fixture();
+  await f.connect();
+  f.player.is_playing = false;
+  const before = f.calls.length;
+  await f.service.execute(f.user, { action: "resume" });
+  assert.equal(f.calls.length, before + 1);
+  assert(f.calls.at(-1)!.url.endsWith("/me/player/play"));
+  await f.service.execute(f.user, { action: "resume", deviceId: "device_123" });
+  assert(f.calls.at(-1)!.url.endsWith("/me/player/play?device_id=device_123"));
+  assert(!f.calls.slice(before).some((c) => c.url.endsWith("/me/player")));
+  await assert.rejects(
+    f.service.execute(f.user, {
+      action: "resume",
+      deviceId: "https://evil.test",
+    }),
+  );
+});

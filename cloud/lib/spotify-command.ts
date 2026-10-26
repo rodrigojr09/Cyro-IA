@@ -14,11 +14,11 @@ export function parseSpotifyCommand(
     .trim();
   const entries: [RegExp, SpotifyAction][] = [
     [
-      /^(?:spotify[, ]+)?(?:pausa|pause|pausar)(?: a musica| o spotify| a reproducao)?$/,
+      /^(?:spotify[, ]+)?(?:pausa|pause|pausar)(?: (?:a )?musica| (?:o )?spotify| (?:a )?reproducao)?$/,
       { action: "pause" },
     ],
     [
-      /^(?:spotify[, ]+)?(?:continua|continue|continuar|retoma|retome)(?: a musica| o spotify| a reproducao)?$/,
+      /^(?:spotify[, ]+)?(?:continua|continue|continuar|retoma|retome)(?: (?:a )?musica| (?:o )?spotify| (?:a )?reproducao)?$/,
       { action: "resume" },
     ],
     [
@@ -86,7 +86,7 @@ export function spotifyReply(action: SpotifyAction, result: any): string {
                 `${d.name}${d.active ? " (ativo)" : ""}${d.restricted ? " (restrito)" : ""}`,
             )
             .join("\n") +
-          "\nSelecione um dispositivo no player Spotify do JARVIS."
+          "\nPara selecionar, diga: usar dispositivo Spotify NOME."
       : "Nenhum dispositivo disponível. Abra o Spotify em um dispositivo e tente novamente.";
   if (["playback", "currently_playing"].includes(action.action)) {
     const playback = result.playback;

@@ -7,9 +7,4 @@ esbuild.buildSync({
   legalComments: 'linked',
 });
 
-esbuild.buildSync({
-  entryPoints: ['quick-spotify-entry.js'],
-  bundle: true,
-  minify: true,
-  outfile: 'quick-spotify.js',
-});
+require('node:fs').rmSync('quick-spotify.js', { force: true });

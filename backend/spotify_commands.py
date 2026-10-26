@@ -5,31 +5,67 @@ never sent to the language model, memory, conversation storage or paid speech.
 """
 import re
 import unicodedata
+import hashlib
+import time
+
+# Ephemeral choice context only: no account/device names, tokens or history.
+_pending_devices = {}
+DEVICE_PROMPT_SECONDS = 300
+
+def _choice_key(chat_id, credential):
+    now = time.monotonic()
+    for key, value in list(_pending_devices.items()):
+        if value[0] <= now:
+            _pending_devices.pop(key, None)
+    if not chat_id or not credential:
+        return None
+    return (hashlib.sha256(credential.encode()).hexdigest(), str(chat_id))
+
 
 
 def candidate(text):
     if not isinstance(text, str) or len(text) > 6000:
         return False
     value = "".join(c for c in unicodedata.normalize("NFD", text.lower()) if not unicodedata.combining(c))
-    return bool(re.search(r"\b(?:spotify|musica|musicas|playlist|volume|reproducao)\b", value) or re.fullmatch(r"(?:jarvis[,! ]+)?(?:proxima|anterior)[.!? ]*", value.strip()))
+    return bool(re.search(r"\b(?:spotify|musica|musicas|playlist|volume|reproducao|som|faixa|tocando|tocar|reproduzir|dispositivo|dispositivos)\b", value) or re.fullmatch(r"(?:jarvis[,! ]+)?(?:proxima|anterior)[.!? ]*", value.strip()))
 
 
-async def try_command(text):
-    if not candidate(text):
-        return None
+async def try_command(text, chat_id=None):
     import httpx
     import cloud_client
     if not cloud_client.ready():
         return None
+    credential = cloud_client._storage_credential
+    origin = cloud_client._storage_origin
+    key = _choice_key(chat_id, credential)
+    choice = _pending_devices.get(key) if key else None
+    if not candidate(text) and not choice:
+        return None
+    if not isinstance(text, str) or not text.strip() or len(text) > 6000:
+        return None
+    payload = {"operation": "chat", "text": text}
+    if choice:
+        payload.update(selectDevice=True, resumeAfterSelection=choice[1])
     try:
-        async with httpx.AsyncClient(timeout=45, follow_redirects=False) as transport:
+        async with httpx.AsyncClient(timeout=75, follow_redirects=False) as transport:
             response = await transport.post(
-                cloud_client._storage_origin + "/api/integrations/spotify",
-                headers={"Authorization": "Bearer " + cloud_client._storage_credential},
-                json={"operation": "chat", "text": text},
+                origin + "/api/integrations/spotify",
+                headers={"Authorization": "Bearer " + credential},
+                json=payload,
             )
             response.raise_for_status()
             result = response.json()
+            if not isinstance(result, dict):
+                raise ValueError("Resposta Spotify inválida")
+            if cloud_client._storage_credential != credential:
+                return {"reply": "Sua sessão mudou. Envie o comando novamente.", "speech_text": "Sua sessão mudou.", "pending_actions": [], "spotify": True}
+            if key:
+                if result.get("devicePrompt") is True:
+                    if len(_pending_devices) >= 64:
+                        _pending_devices.pop(min(_pending_devices, key=lambda item: _pending_devices[item][0]), None)
+                    _pending_devices[key] = (time.monotonic() + DEVICE_PROMPT_SECONDS, result.get("resumeAfterSelection") is True)
+                else:
+                    _pending_devices.pop(key, None)
             if result.get("handled") is True and isinstance(result.get("reply"), str):
                 return {"reply": result["reply"][:4000], "speech_text": result.get("speech", "Consulte o resultado do Spotify no JARVIS."), "pending_actions": [], "spotify": True}
     except (httpx.HTTPError, ValueError):

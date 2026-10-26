@@ -98,12 +98,20 @@ const tokenData = z.object({
 export const spotifyAction = z.discriminatedUnion("action", [
   z
     .object({
+      action: z.literal("resume"),
+      deviceId: z
+        .string()
+        .regex(/^[a-zA-Z0-9_-]{1,128}$/)
+        .optional(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.enum([
         "playback",
         "currently_playing",
         "devices",
         "pause",
-        "resume",
         "next",
         "previous",
         "test",
@@ -777,7 +785,15 @@ export function createSpotifyService(
       } as const;
       const target = targets[command.action as keyof typeof targets];
       if (!target) throw new HttpError(400, "Comando Spotify inválido.");
-      result = await api(userId, "/me/player/" + target[0], target[1]);
+      result = await api(
+        userId,
+        "/me/player/" +
+          target[0] +
+          (command.action === "resume" && command.deviceId
+            ? "?device_id=" + encodeURIComponent(command.deviceId)
+            : ""),
+        target[1],
+      );
     }
     return { ok: true, ...result };
   }

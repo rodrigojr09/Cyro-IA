@@ -49,4 +49,67 @@ class SpotifyChatIntegrationTests(unittest.TestCase):
                 self.assertEqual(response.json()["speech_text"],"Consulte o player.")
                 self.assertNotIn("Faixa privada fixture",str(main.store.history(response.json()["chat_id"])))
             self.assertEqual(tool.await_count,2)
-if __name__=="__main__":unittest.main()
+
+class SpotifyDeviceDialogueTests(unittest.TestCase):
+    def setUp(self): spotify_commands._pending_devices.clear()
+    def tearDown(self): spotify_commands._pending_devices.clear()
+    def transport(self, values):
+        async def answer(*args, **kwargs):
+            return httpx.Response(200, json=values.pop(0), request=httpx.Request("POST","https://jarvis.example.test"))
+        post=AsyncMock(side_effect=answer)
+        context=AsyncMock();context.__aenter__.return_value=SimpleNamespace(post=post)
+        return context,post
+    def test_name_reply_keeps_original_resume_intent_and_no_device_data_is_cached(self):
+        context,post=self.transport([{"handled":True,"reply":"Computador privado","devicePrompt":True,"resumeAfterSelection":True},{"handled":True,"reply":"Reprodução retomada"}])
+        with patch.object(cloud_client,"ready",return_value=True),patch.object(cloud_client,"_storage_origin","https://jarvis.example.test"),patch.object(cloud_client,"_storage_credential","session-a"),patch("httpx.AsyncClient",return_value=context):
+            asyncio.run(spotify_commands.try_command("continuar Spotify","chat-a"))
+            self.assertNotIn("Computador privado",repr(spotify_commands._pending_devices));self.assertNotIn("session-a",repr(spotify_commands._pending_devices))
+            result=asyncio.run(spotify_commands.try_command("Computador","chat-a"))
+            self.assertEqual(result["reply"],"Reprodução retomada")
+            self.assertEqual(post.call_args.kwargs["json"],{"operation":"chat","text":"Computador","selectDevice":True,"resumeAfterSelection":True})
+            self.assertEqual(spotify_commands._pending_devices,{})
+    def test_dialogue_is_scoped_to_chat_session_and_expiration(self):
+        context,post=self.transport([{"handled":True,"reply":"Escolha","devicePrompt":True}])
+        with patch.object(cloud_client,"ready",return_value=True),patch.object(cloud_client,"_storage_origin","https://jarvis.example.test"),patch.object(cloud_client,"_storage_credential","session-a"),patch("httpx.AsyncClient",return_value=context):
+            asyncio.run(spotify_commands.try_command("dispositivos Spotify","chat-a"))
+            self.assertIsNone(asyncio.run(spotify_commands.try_command("Computador","chat-b")))
+            with patch.object(cloud_client,"_storage_credential","session-b"):
+                self.assertIsNone(asyncio.run(spotify_commands.try_command("Computador","chat-a")))
+            with patch("spotify_commands.time.monotonic",return_value=10**15):
+                self.assertIsNone(asyncio.run(spotify_commands.try_command("Computador","chat-a")))
+            self.assertEqual(post.await_count,1)
+    def test_answer_without_action_clears_pending_question(self):
+        context,post=self.transport([{"handled":True,"reply":"Escolha","devicePrompt":True},{"handled":False}])
+        with patch.object(cloud_client,"ready",return_value=True),patch.object(cloud_client,"_storage_origin","https://jarvis.example.test"),patch.object(cloud_client,"_storage_credential","session-a"),patch("httpx.AsyncClient",return_value=context):
+            asyncio.run(spotify_commands.try_command("dispositivos Spotify","chat-a"))
+            self.assertIsNone(asyncio.run(spotify_commands.try_command("Obrigado","chat-a")))
+            self.assertEqual(spotify_commands._pending_devices,{})
+
+class SpotifyDeviceChatIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        legacy.JarvisTests.setUp(self)
+        spotify_commands._pending_devices.clear()
+    def tearDown(self):
+        spotify_commands._pending_devices.clear()
+        legacy.JarvisTests.tearDown(self)
+    def test_main_and_quick_accept_device_name_after_question_without_history(self):
+        values=[]
+        async def answer(*args,**kwargs):
+            return httpx.Response(200,json=values.pop(0),request=httpx.Request("POST","https://jarvis.example.test"))
+        post=AsyncMock(side_effect=answer)
+        context=AsyncMock();context.__aenter__.return_value=SimpleNamespace(post=post)
+        with patch.object(cloud_client,"ready",return_value=True),patch.object(cloud_client,"_storage_origin","https://jarvis.example.test"),patch.object(cloud_client,"_storage_credential","session-a"),patch("httpx.AsyncClient",return_value=context),patch.object(main,"CLOUD",True),patch.object(main.store,"request",return_value={"blocked":False},create=True):
+            for route in ["/chat","/quick/chat"]:
+                values.extend([{"handled":True,"reply":"Em qual aparelho? Computador privado","devicePrompt":True,"resumeAfterSelection":True},{"handled":True,"reply":"Retomada no aparelho escolhido"}])
+                first=self.client.post(route,json={"message":"continuar Spotify"})
+                self.assertEqual(first.status_code,200,first.text)
+                body={"message":"Computador"}
+                if route=="/chat": body["chat_id"]=first.json()["chat_id"]
+                second=self.client.post(route,json=body)
+                self.assertEqual(second.status_code,200,second.text)
+                self.assertEqual(second.json()["reply"],"Retomada no aparelho escolhido")
+                self.assertTrue(post.call_args.kwargs["json"]["selectDevice"])
+                self.assertNotIn("Computador privado",str(main.store.history(first.json()["chat_id"])))
+
+if __name__ == "__main__":
+    unittest.main()

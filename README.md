@@ -101,3 +101,5 @@ Desenvolvido por **Rodrigo Junior**.
 © 2026 Rodrigo Junior.
 
 A dashboard usa `DashboardDataProvider` e `useDashboardData` para compartilhar dados em memória entre páginas, deduplicar consultas e atualizar após salvamentos ou pelo botão Atualizar. A tela aguarda os dados necessários antes de exibir a navegação e o conteúdo. O cache não guarda segredos nem usa armazenamento persistente.
+
+Spotify pelo chat: o JARVIS interpreta variações naturais com IA no Cloud, usa o aparelho ativo mesmo pausado e pergunta pelo nome do dispositivo quando nenhum está ativo. Os mini players foram removidos; Integrações mantém o gerenciamento da conta. Detalhes, cotas e privacidade em [docs/SPOTIFY.md](docs/SPOTIFY.md).

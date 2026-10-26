@@ -835,7 +835,7 @@ async def process_chat(req: ChatRequest):
     if CLOUD and not req.attachments:
         from spotify_commands import try_command
 
-        music = await try_command(req.message)
+        music = await try_command(req.message, chat_id=chat_id)
         if music is not None:
             # No Spotify data enters model history, memory, summaries or TTS.
             return {**music, "chat_id": chat_id}
