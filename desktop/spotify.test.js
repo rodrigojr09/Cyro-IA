@@ -136,3 +136,47 @@ test('IPC Spotify restringe janela, sessão, operações e navegador padrão', a
     else process.env.JARVIS_AUTHENTICATED = previous;
   }
 });
+
+test('Spotify atualiza configuração salva e habilita Conectar sem remontar a tela', async () => {
+  const dom = new JSDOM('<main></main>', { runScripts: 'outside-only', pretendToBeVisual: true });
+  const w = dom.window;
+  let configured = false,
+    requests = 0;
+  w.HTMLElement.prototype.getClientRects = () => [{}];
+  w.jarvisSpotify = {
+    request: async () => {
+      requests++;
+      return {
+        configured,
+        status: 'disconnected',
+        configurationError: configured ? null : 'Configure o callback HTTPS exato do Spotify.',
+      };
+    },
+  };
+  w.eval(bundle);
+  w.spotifyUI.mountSpotifySettings(w.document.querySelector('main'), () => {});
+  await tick();
+  const button = (label) =>
+    [...w.document.querySelectorAll('button')].find((b) => b.textContent === label);
+  assert.equal(button('Conectar').disabled, true);
+  assert.match(w.document.querySelector('[role=status]').textContent, /callback HTTPS/);
+  configured = true;
+  button('Atualizar conexão').click();
+  await tick();
+  assert.equal(button('Conectar').disabled, false);
+  configured = false;
+  w.dispatchEvent(new w.Event('focus'));
+  await tick();
+  assert.equal(button('Conectar').disabled, true);
+  configured = true;
+  w.dispatchEvent(new w.Event('focus'));
+  await tick();
+  assert.equal(button('Conectar').disabled, false);
+  const before = requests;
+  w.document.querySelector('main').replaceChildren();
+  await tick();
+  w.dispatchEvent(new w.Event('focus'));
+  await tick();
+  assert.equal(requests, before);
+  dom.window.close();
+});

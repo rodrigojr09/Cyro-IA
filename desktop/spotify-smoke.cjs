@@ -10,6 +10,7 @@ app.setPath('userData', path.join(directory, 'profile'));
 let main,
   quick,
   connected = false,
+  configured = false,
   opened = [],
   commands = [];
 const timeout = setTimeout(() => finish(1, 'Spotify smoke excedeu o tempo.'), 30000);
@@ -37,7 +38,7 @@ app.whenReady().then(async () => {
         assert.equal(route, '/api/integrations/spotify');
         if (input.operation === 'status')
           return {
-            configured: true,
+            configured,
             status: connected ? 'connected' : 'disconnected',
             displayName: connected ? 'Conta de teste' : null,
           };
@@ -139,6 +140,20 @@ app.whenReady().then(async () => {
     await wait(
       main,
       "Array.from(document.querySelectorAll('.spotify-settings button')).some(b=>b.textContent==='Conectar')",
+    );
+    assert.equal(
+      await main.webContents.executeJavaScript(
+        "Array.from(document.querySelectorAll('.spotify-settings button')).find(b=>b.textContent==='Conectar').disabled",
+      ),
+      true,
+    );
+    configured = true;
+    await main.webContents.executeJavaScript(
+      "Array.from(document.querySelectorAll('.spotify-settings button')).find(b=>b.textContent==='Atualizar conexão').click();void 0;",
+    );
+    await wait(
+      main,
+      "Array.from(document.querySelectorAll('.spotify-settings button')).some(b=>b.textContent==='Conectar'&&!b.disabled)",
     );
     await main.webContents.executeJavaScript(
       "Array.from(document.querySelectorAll('.spotify-settings button')).find(b=>b.textContent==='Conectar').click();void 0;",

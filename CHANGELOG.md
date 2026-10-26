@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Spotify: tela de conexão atualiza o estado salvo no Cloud pelo botão Atualizar conexão e ao retornar o foco para a janela visível; Conectar antes desabilitado pode ser liberado sem remontar a tela. Remove listener ao desmontar e evita consultas simultâneas. Cloud retorna motivo seguro de configuração inválida, sem segredos. Validação: 149 testes Desktop, 55 Cloud, 186 Python/backend, TypeScript, builds e smoke Electron com transição desabilitado→habilitado e OAuth simulado; sem OAuth ou API Spotify reais.
+
 - 26/10/2026: migrations `202610260001_spotify` e `202610260002_provider_configuration` aplicadas com sucesso no banco Cloud configurado, por autorização do proprietário. Verificação SQL confirmou ambas concluídas, as três tabelas presentes e os registros iniciais OpenAI/Spotify. Histórico remoto anterior `20261021160000_public_site_settings`, ausente localmente, preservado. Não valida implantação web, OAuth real ou chamadas pagas.
 
 - Dashboard: carregamento com indicador antes de exibir a página, hook compartilhado no layout administrativo, cache em memória sem segredos, deduplicação de consultas e atualização explícita. Filtros de consumo preservados entre navegações; credenciais distinguem falta de permissão de banco ainda sem migration. Validação: 55 testes Cloud, 148 Desktop, 186 Python/backend, build/TypeScript, formatação e 40 verificações Electron/Chromium, incluindo carregamento e navegação sem novas consultas. Sem validação da conta ou implantação de produção.

@@ -128,3 +128,7 @@ Após configurar servidor/Dashboard e a conta autorizada: validar conectar, nega
 - `docs/INTEGRATIONS.md`
 - `docs/SPOTIFY.md`
 - `tools/audit_cloud_artifact.py`
+
+### Atualizar após configurar credenciais
+
+Em Configurações → Integrações → Spotify, use **Atualizar conexão** depois de salvar as credenciais na dashboard. A tela também consulta novamente o estado quando a janela visível recebe foco, sem polling permanente. O Cloud informa o motivo quando a configuração não permite iniciar OAuth. Se estiver usando uma versão anterior do Desktop, reinicie com a versão atualizada para carregar esse comportamento. Validação de configuração não comprova Client Secret aceito pelo Spotify nem elegibilidade da conta; o OAuth real continua necessário.

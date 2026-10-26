@@ -42,7 +42,8 @@ export function mountSpotifySettings(container: HTMLElement, changed: (value: an
   container.append(root);
   let transactionId: string | null = null,
     timer: ReturnType<typeof setTimeout> | null = null,
-    busy = false;
+    busy = false,
+    refreshing = false;
   const stop = () => {
     if (timer) clearTimeout(timer);
     timer = null;
@@ -67,41 +68,65 @@ export function mountSpotifySettings(container: HTMLElement, changed: (value: an
     actions.append(node);
   }
   async function refresh() {
-    root.setAttribute('aria-busy', 'false');
-    stop();
-    const state = await spotifyRequest({ operation: 'status' });
-    if (!root.isConnected) return;
-    changed(state);
-    actions.replaceChildren();
-    note.textContent =
-      state.status === 'connected'
-        ? `Conectado · ${state.displayName}`
-        : state.status === 'error'
-          ? 'Reconexão necessária.'
-          : 'Não conectado.';
-    if (state.status === 'connected') {
-      button('Testar conexão', async () => {
-        await spotifyRequest({ operation: 'control', command: { action: 'test' } });
-        note.textContent = 'Conexão confirmada pelo Spotify.';
-      });
-      button('Reconectar', start);
-      button('Desconectar', async () => {
-        const result = await spotifyRequest({ operation: 'disconnect' });
-        if (!result.cancelled) {
+    if (refreshing) return;
+    refreshing = true;
+    try {
+      root.setAttribute('aria-busy', 'true');
+      stop();
+      const state = await spotifyRequest({ operation: 'status' });
+      if (!root.isConnected) return;
+      changed(state);
+      actions.replaceChildren();
+      note.textContent =
+        state.status === 'connected'
+          ? `Conectado · ${state.displayName}`
+          : state.status === 'error'
+            ? 'Reconexão necessária.'
+            : 'Não conectado.';
+      if (state.status === 'connected') {
+        button('Testar conexão', async () => {
+          await spotifyRequest({ operation: 'control', command: { action: 'test' } });
+          note.textContent = 'Conexão confirmada pelo Spotify.';
+        });
+        button('Reconectar', start);
+        button('Desconectar', async () => {
+          const result = await spotifyRequest({ operation: 'disconnect' });
+          if (!result.cancelled) {
+            note.textContent =
+              'Conexão removida. Você também pode revogar o acesso nas configurações da conta Spotify.';
+            await refresh();
+            window.dispatchEvent(new Event('jarvis:spotify-changed'));
+          }
+        });
+      } else {
+        button(state.status === 'error' ? 'Reconectar' : 'Conectar', start);
+        if (!state.configured) {
           note.textContent =
-            'Conexão removida. Você também pode revogar o acesso nas configurações da conta Spotify.';
-          await refresh();
-          window.dispatchEvent(new Event('jarvis:spotify-changed'));
+            state.configurationError || 'Spotify aguarda configuração pelo administrador no Cloud.';
+          actions.querySelector('button')!.disabled = true;
         }
-      });
-    } else {
-      button(state.status === 'error' ? 'Reconectar' : 'Conectar', start);
-      if (!state.configured) {
-        note.textContent = 'Spotify aguarda configuração pelo administrador no Cloud.';
-        actions.querySelector('button')!.disabled = true;
       }
+      button('Atualizar conexão', refresh);
+    } finally {
+      refreshing = false;
+      root.setAttribute('aria-busy', 'false');
     }
   }
+  const onFocus = () => {
+    if (!transactionId && !busy && root.isConnected && root.getClientRects().length)
+      void refresh().catch((error) => {
+        note.textContent = error.message;
+      });
+  };
+  window.addEventListener('focus', onFocus);
+  const cleanup = new MutationObserver(() => {
+    if (!root.isConnected) {
+      stop();
+      window.removeEventListener('focus', onFocus);
+      cleanup.disconnect();
+    }
+  });
+  cleanup.observe(document.body, { childList: true, subtree: true });
   async function poll() {
     if (!root.isConnected || !transactionId) {
       stop();

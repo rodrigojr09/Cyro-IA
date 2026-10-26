@@ -401,13 +401,19 @@ export function createSpotifyService(
       select: { status: true, displayName: true, connectedAt: true },
     });
     let configured = true;
+    let configurationError: string | null = null;
     try {
       spotifyConfig();
-    } catch {
+    } catch (error) {
       configured = false;
+      configurationError =
+        error instanceof HttpError
+          ? error.message
+          : "Configuração Spotify indisponível.";
     }
     return {
       configured,
+      configurationError,
       status: connection?.status || "disconnected",
       displayName: connection?.displayName || null,
       connectedAt: connection?.connectedAt || null,
