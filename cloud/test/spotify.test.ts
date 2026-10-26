@@ -106,6 +106,9 @@ function fixture() {
     omitRefresh = false,
     refreshes = 0,
     failure = 0,
+    writeStatus = 204,
+    writeBody: string | null = null,
+    invalidRead = false,
     profileId = "spotify-test-user",
     grantedScopes = SPOTIFY_SCOPES.join(" ");
   tables.session = {
@@ -171,8 +174,11 @@ function fixture() {
       return Response.json({ id: profileId, display_name: "Conta de teste" });
     if (url.endsWith("/devices"))
       return Response.json({ devices: [player.device] });
-    if (options.method !== "GET") return new Response(null, { status: 204 });
-    return Response.json(player);
+    if (options.method !== "GET")
+      return new Response(writeBody, { status: writeStatus });
+    return invalidRead
+      ? new Response("", { status: 200 })
+      : Response.json(player);
   };
   const service = createSpotifyService(tables, fetcher);
   async function begin(owner = user) {
@@ -205,6 +211,11 @@ function fixture() {
     setScopes: (v: string) => (grantedScopes = v),
     setActive: (v: boolean) => (active = v),
     setFailure: (v: number) => (failure = v),
+    setInvalidRead: () => (invalidRead = true),
+    setWriteResponse: (status: number, body: string | null = null) => {
+      writeStatus = status;
+      writeBody = body;
+    },
     setProfile: (v: string) => (profileId = v),
     revoke: () => (refreshBad = true),
     refreshes: () => refreshes,
@@ -529,5 +540,49 @@ test("refresh conserva token anterior quando não há novo refresh token", async
       "refresh",
     ),
     "refresh-fixture",
+  );
+});
+
+test("comando aplicado não vira erro JSON quando Spotify responde sucesso sem JSON", async () => {
+  const f = fixture();
+  await f.connect();
+  for (const [status, body] of [
+    [200, null],
+    [200, ""],
+    [202, null],
+    [202, "Accepted"],
+    [204, null],
+  ] as const) {
+    f.setWriteResponse(status, body);
+    for (const action of ["pause", "resume", "next", "previous"] as const) {
+      const before = f.calls.length;
+      const result = await f.service.execute(f.user, { action });
+      assert.equal(result.ok, true);
+      assert.equal(f.calls.length, before + 1, "não repetir comando já aceito");
+      if (status === 202)
+        assert.match(spotifyReply({ action }, result), /recebido.*Spotify/);
+    }
+  }
+});
+
+test("volume e transferência aceitam sucesso sem JSON e leitura inválida continua sendo erro", async () => {
+  const f = fixture();
+  await f.connect();
+  for (const status of [200, 202, 204]) {
+    f.setWriteResponse(status);
+    for (const command of [
+      { action: "volume", volume: 40 },
+      { action: "volume_delta", delta: 10 },
+      { action: "transfer", deviceId: "device_123" },
+    ] as const) {
+      const result = await f.service.execute(f.user, command);
+      assert.equal(result.ok, true);
+      assert.equal(result.accepted === true, status === 202);
+    }
+  }
+  f.setInvalidRead();
+  await assert.rejects(
+    f.service.execute(f.user, { action: "playback" }),
+    /sem informações de reprodução válidas/,
   );
 });

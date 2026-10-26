@@ -650,8 +650,19 @@ export function createSpotifyService(
     if (response.status === 401)
       await revoke(userId, access.id, { accessToken: access.sealed });
     if (!response.ok) await failure(response);
+    // Player writes have no required JSON response. Never repeat a successful
+    // action merely because the upstream returned an empty/non-JSON body.
+    if (method !== "GET")
+      return response.status === 202 ? { accepted: true } : null;
     if (response.status === 204) return null;
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      throw new SpotifyError(
+        502,
+        "Spotify respondeu sem informações de reprodução válidas. Tente consultar novamente.",
+      );
+    }
   }
   function device(value: any) {
     return {
@@ -720,11 +731,11 @@ export function createSpotifyService(
         )
       )
         throw new SpotifyError(404, "Dispositivo indisponível ou restrito.");
-      await api(userId, "/me/player", "PUT", {
+      const result = await api(userId, "/me/player", "PUT", {
         device_ids: [command.deviceId],
         play: false,
       });
-      return { ok: true };
+      return { ok: true, ...result };
     }
     if (command.action === "volume_delta") {
       const data = await api(userId, "/me/player");
@@ -744,6 +755,7 @@ export function createSpotifyService(
         ),
       });
     }
+    let result;
     if (command.action === "volume") {
       const data = await api(userId, "/me/player");
       if (!data?.device?.supports_volume)
@@ -751,7 +763,7 @@ export function createSpotifyService(
           409,
           "Abra um dispositivo Spotify compatível com controle de volume.",
         );
-      await api(
+      result = await api(
         userId,
         "/me/player/volume?volume_percent=" + command.volume,
         "PUT",
@@ -765,9 +777,9 @@ export function createSpotifyService(
       } as const;
       const target = targets[command.action as keyof typeof targets];
       if (!target) throw new HttpError(400, "Comando Spotify inválido.");
-      await api(userId, "/me/player/" + target[0], target[1]);
+      result = await api(userId, "/me/player/" + target[0], target[1]);
     }
-    return { ok: true };
+    return { ok: true, ...result };
   }
   function configured<T extends (...args: any[]) => Promise<any>>(fn: T): T {
     return (async (...args: Parameters<T>) =>

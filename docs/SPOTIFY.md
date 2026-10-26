@@ -132,3 +132,9 @@ Após configurar servidor/Dashboard e a conta autorizada: validar conectar, nega
 ### Atualizar após configurar credenciais
 
 Em Configurações → Integrações → Spotify, use **Atualizar conexão** depois de salvar as credenciais na dashboard. A tela também consulta novamente o estado quando a janela visível recebe foco, sem polling permanente. O Cloud informa o motivo quando a configuração não permite iniciar OAuth. Se estiver usando uma versão anterior do Desktop, reinicie com a versão atualizada para carregar esse comportamento. Validação de configuração não comprova Client Secret aceito pelo Spotify nem elegibilidade da conta; o OAuth real continua necessário.
+
+### Respostas vazias dos controles
+
+O serviço não tenta interpretar JSON depois de um controle aceito com HTTP 2xx. Isso evita transformar uma ação já enviada em erro de comunicação quando a resposta é vazia ou textual; não há repetição automática por falha de leitura do corpo. Para HTTP 202, a resposta no chat informa apenas que o Spotify recebeu o comando, sem afirmar que a reprodução já mudou. Consultas continuam validando JSON e retornando erro quando o corpo é inválido; erros HTTP e de rede continuam visíveis.
+
+Regressões simulam 200 vazio, 202 vazio/textual e 204, cobrem pausa/continuar/próxima/anterior/volume/transferência e verificam que comandos não são duplicados. Referência oficial para controle sem corpo: [Pause Playback — Spotify](https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback). As variações são testes de compatibilidade; não houve nova ação na conta real do proprietário nesta correção.

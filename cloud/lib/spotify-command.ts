@@ -75,6 +75,8 @@ export function parseSpotifyCommand(
   return null;
 }
 export function spotifyReply(action: SpotifyAction, result: any): string {
+  if (result?.accepted)
+    return "Comando recebido pelo Spotify. A reprodução pode levar alguns instantes para atualizar.";
   if (action.action === "devices")
     return result.devices.length
       ? "Dispositivos Spotify:\n" +
