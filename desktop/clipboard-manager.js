@@ -264,7 +264,7 @@ function createClipboardManager({
     if (epoch !== generation || disposed || !active || !preferences.enabled || preferences.paused)
       return;
     const hash = capture?.hash ?? null;
-    if (baseline || hash === lastHash) {
+    if (hash === lastHash) {
       lastHash = hash;
       return;
     }
@@ -284,6 +284,7 @@ function createClipboardManager({
       : null;
     publish();
     if (
+      !baseline &&
       pending &&
       preferences.sound &&
       masterSound &&

@@ -12,7 +12,8 @@
     context = null,
     audio = null,
     inputHeight = 150,
-    openingLink = false;
+    openingLink = false,
+    focusRetry = null;
   const $ = (id) => document.getElementById(id);
   const attempt = (promise) => promise.catch(() => {});
   const draftContext = () => 'draft:' + (window.jarvisWorkspace?.project?.id || 'general');
@@ -61,7 +62,7 @@
       resizeComposer();
     };
     $('clipboard-image').onload = resizeComposer;
-    pendingButton.onclick = () => attempt(claim());
+    pendingButton.onclick = () => focusClaim();
     $('clipboard-ignore').onclick = async () => {
       if (sending || requesting || !owned) return;
       const dismissedId = owned.id;
@@ -220,7 +221,7 @@
       resizeComposer();
     }
   }
-  async function claim() {
+  async function claim(explicitFocus = false) {
     if (
       !parent ||
       (owned && (!preview.hidden || (mainContext() !== context && !composer))) ||
@@ -228,7 +229,7 @@
       sending ||
       requesting ||
       document.visibilityState === 'hidden' ||
-      !document.hasFocus()
+      (!explicitFocus && !document.hasFocus())
     )
       return;
     if (
@@ -244,6 +245,7 @@
       // Replace only an untouched card, using its ID for an atomic compare-and-swap.
       const result = await bridge.claim(owned?.id);
       if (result.ok) show(result.notification);
+      return result.reason;
     } finally {
       requesting = false;
       // Polling can discover a copy while an earlier focus request is still in flight.
@@ -269,15 +271,33 @@
       audio.volume = volume;
       attempt(audio.play());
     });
-  window.addEventListener('focus', () => attempt(claim()));
+  // Windows may deliver quick:focus before Chromium/native focus settles.
+  // Retry only after opening/clicking the chat; IPC still validates native focus.
+  function focusClaim() {
+    clearTimeout(focusRetry);
+    let retries = 0;
+    const run = async () => {
+      const reason = await claim(true);
+      if (
+        snapshot?.pending &&
+        !owned &&
+        retries++ < 5 &&
+        (reason === 'NOT_ACTIVE_CHAT' || reason === undefined)
+      )
+        focusRetry = setTimeout(() => attempt(run()), 100);
+    };
+    attempt(run());
+  }
+  window.addEventListener('focus', focusClaim);
   window.addEventListener('focusin', () => attempt(claim()));
   document.addEventListener('visibilitychange', () => attempt(claim()));
-  if (composer) window.quick.onFocus(() => attempt(claim()));
+  if (composer) window.quick.onFocus(focusClaim);
   window.addEventListener('jarvis:chat-selected', () => {
     render();
     attempt(claim());
   });
   window.addEventListener('beforeunload', () => {
+    clearTimeout(focusRetry);
     if (owned) attempt(bridge.dismiss(owned.id));
     clearCard();
     if (audio) audio.pause();

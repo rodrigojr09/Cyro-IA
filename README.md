@@ -12,7 +12,7 @@ As alterações de chats Cloud exigem a migration `20261022120000_cloud_chats` e
 
 ## Assistente de área de transferência — v5
 
-Em Configurações → Área de transferência, marque o consentimento e salve para ativar. Desativado por padrão, com pausa, desativação, descarte, som opcional e volume. A voz global desligada também silencia a notificação.
+Em Configurações → Área de transferência, marque o consentimento e salve para ativar. Desativado por padrão, com pausa, desativação, descarte, som opcional e volume. A voz global desligada também silencia a notificação. Ao iniciar ou retomar o monitoramento autorizado, o conteúdo já copiado fica disponível sem tocar som; não é necessário limpar a área de transferência antes de copiar novamente.
 
 Uma cópia válida de texto, código ou link gera um aviso sonoro discreto e indicadores vermelhos no ícone da barra de tarefas e no Quick Chat, sem abrir janelas nem mudar o foco. O primeiro chat aberto reivindica o conteúdo no Electron e remove ambos os indicadores. As ações aparecem em uma faixa compacta acima do campo de mensagem, com prévia editável somente após a escolha e confirmação antes de enviar. Clique em “Texto copiado”, “Código copiado”, “Link copiado” ou “Imagem copiada” para expandir/recolher o conteúdo original. O link também pode ser aberto no navegador, após confirmação e validação local.
 

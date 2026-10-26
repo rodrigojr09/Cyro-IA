@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Clipboard: conteúdo já existente ao iniciar/retomar o monitoramento autorizado fica disponível silenciosamente. Quick Chat aguarda brevemente o foco nativo ao abrir e permite abrir o card pelo botão mesmo com foco Chromium atrasado; IPC continua exigindo janela autorizada, visível e focada. Limites e confirmação preservados. Validação: 141 testes Desktop, build, TypeScript, formatação e smoke Electron aprovados; foco Chromium atrasado simulado sobre janelas/IPC reais, leitura nativa sem escrita e cópias sintéticas. Som físico e shell visual do Windows não certificados.
+
 - Clipboard: novas cópias atualizam o card ainda sem ação no chat principal e Quick Chat; prévias já preparadas continuam preservadas. Substituição atômica por referência no processo principal, sem envio automático e com limites existentes mantidos. Validação: 138 testes Desktop, TypeScript, build, formatação e smoke com Electron real aprovados; leitura nativa sem escrita e novas cópias sintéticas, sem certificar som físico ou shell visual do Windows.
 
 - 26/10/2026: nova seção Integrações nas configurações do Desktop, com catálogo TypeScript centralizado de seis serviços em breve, pesquisa por nome/categoria/descrição, filtros por status, detalhes locais e retorno com foco. Grid adaptável e destaque verde-menta integrado aos temas. Não adiciona APIs, OAuth, credenciais, conexões, endpoints ou alterações Cloud.

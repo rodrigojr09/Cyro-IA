@@ -67,12 +67,12 @@ function fixture(config = {}) {
     },
   };
 }
-test('opt-in: desativado não lê clipboard nem agenda monitor; pausa/retomada estabelece baseline', () => {
+test('opt-in e pausa: captura conteúdo existente sem som ao ativar ou retomar', () => {
   const f = fixture();
   assert.equal(f.reads, 0);
   assert.equal(f.scheduled, null);
   f.manager.configure({ enabled: true });
-  assert.equal(f.manager.state().pending, false);
+  assert.equal(f.manager.state().pending, true);
   assert.deepEqual(f.sounds, []);
   f.copy('Texto novo válido');
   assert.equal(f.manager.state().pending, true);
@@ -82,7 +82,7 @@ test('opt-in: desativado não lê clipboard nem agenda monitor; pausa/retomada e
   assert.equal(f.reads, reads);
   assert.equal(f.manager.state().pending, false);
   f.manager.configure({ paused: false });
-  assert.equal(f.manager.state().pending, false);
+  assert.equal(f.manager.state().pending, true);
   f.manager.configure({ enabled: false });
   assert.equal(f.scheduled, null);
 });
@@ -306,7 +306,7 @@ test('Electron moderno lê ClipboardItem/Blob assíncronos sem métodos legados'
   });
   f.setActive(true);
   await f.tick();
-  assert.equal(f.state().pending, false);
+  assert.equal(f.state().pending, true);
   for (const [copy, type] of [
     ['Uma nova frase de teste', 'text'],
     ['const valor = 3;', 'code'],
@@ -434,5 +434,16 @@ test('substituição atômica exige claim atual e mantém exclusividade', () => 
   assert.equal(f.manager.claim('main', next.id).ok, false);
   assert.equal(f.manager.state().owned.main, next.id);
   assert.throws(() => f.manager.claim('main', {}));
+  f.manager.destroy();
+});
+
+test('início com clipboard preenchido fica disponível sem som; próxima cópia não exige limpar', () => {
+  const f = fixture({ enabled: true });
+  assert.equal(f.manager.state().pending, true);
+  assert.equal(f.manager.claim('main').notification.text, 'Conteúdo inicial existente');
+  assert.deepEqual(f.sounds, []);
+  f.copy('Novo texto sem limpar a área de transferência');
+  assert.equal(f.manager.state().pending, true);
+  assert.equal(f.sounds.length, 1);
   f.manager.destroy();
 });

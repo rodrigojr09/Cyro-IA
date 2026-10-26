@@ -49,7 +49,8 @@ app.whenReady().then(async () => {
     await nativeManager.tick();
     assert.equal(nativeReads, 1);
     assert.equal(nativeReadSucceeded, true);
-    assert.equal(nativeManager.state().pending, false);
+    // Existing native content may now be offered silently, depending on local filters.
+    assert.equal(nativeManager.state().active, true);
     nativeManager.destroy();
     // Existing page scripts may request unrelated services. Keep those local and synthetic.
     for (const name of [
@@ -135,6 +136,8 @@ app.whenReady().then(async () => {
     manager.setActive(true);
     await manager.tick();
     manager.setMasterSound(true);
+    assert.equal(manager.state().pending, true);
+    assert.equal(await main.webContents.executeJavaScript('window.clipboardChimes'), 0);
     quick.setMasterVoice(false);
     main.show();
     main.minimize();
@@ -159,6 +162,7 @@ app.whenReady().then(async () => {
       await delay(25);
     assert.equal(await main.webContents.executeJavaScript('window.clipboardDecoded'), 1);
     if (process.platform === 'win32') assert.equal(overlays.at(-1), true);
+    await composer.webContents.executeJavaScript('document.hasFocus = () => false; void 0;');
     await orb.webContents.executeJavaScript('window.quick.toggle()');
     await delay(200);
     assert.equal(

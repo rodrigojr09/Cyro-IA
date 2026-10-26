@@ -16,7 +16,8 @@ async function setup(panel, manager) {
     sends = [],
     opened = [],
     success = true,
-    focused = false;
+    focused = false,
+    quickFocus;
   w.document.hasFocus = () => focused;
   Object.defineProperty(w.document, 'visibilityState', { value: 'visible' });
   w.jarvisWorkspace = { chat: { id: 'existing-chat' } };
@@ -45,7 +46,7 @@ async function setup(panel, manager) {
     onState: (fn) => (listener = fn),
     onSound() {},
   };
-  w.quick = { onFocus() {}, resizeInput: async () => {} };
+  w.quick = { onFocus: (fn) => (quickFocus = fn), resizeInput: async () => {} };
   w.jarvisClipboardSend = async (text) => {
     sends.push(text);
     return success;
@@ -64,6 +65,7 @@ async function setup(panel, manager) {
       await Promise.resolve();
       await Promise.resolve();
     },
+    openQuick: () => quickFocus(),
     fail: () => (success = false),
   };
 }
@@ -351,3 +353,46 @@ for (const panel of [null, 'composer']) {
     manager.destroy();
   });
 }
+
+test('Quick Chat aguarda foco nativo e não depende do foco Chromium antecipado', async () => {
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => 'Texto já copiado ao iniciar' },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const ui = await setup('composer', manager);
+  const original = ui.dom.window.jarvisClipboard.claim;
+  let attempts = 0;
+  ui.dom.window.jarvisClipboard.claim = async (id) => {
+    if (++attempts < 3) return { ok: false, reason: 'NOT_ACTIVE_CHAT' };
+    return original(id);
+  };
+  ui.openQuick();
+  await new Promise((resolve) => setTimeout(resolve, 350));
+  assert.equal(attempts, 3);
+  assert.equal(ui.get('clipboard-card').hidden, false);
+  assert.equal(ui.get('clipboard-original').textContent, 'Texto já copiado ao iniciar');
+  assert.equal(manager.state().pending, false);
+  assert.equal(ui.sends.length, 0);
+  ui.dom.window.close();
+  manager.destroy();
+});
+
+test('Ver conteúdo copiado funciona com foco Chromium atrasado, sem envio automático', async () => {
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => 'Outra frase já copiada' },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const ui = await setup('composer', manager);
+  ui.get('clipboard-pending').click();
+  await new Promise(setImmediate);
+  assert.equal(ui.get('clipboard-card').hidden, false);
+  assert.equal(ui.sends.length, 0);
+  ui.dom.window.close();
+  manager.destroy();
+});
