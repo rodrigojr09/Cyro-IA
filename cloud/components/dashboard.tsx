@@ -2,6 +2,8 @@
 import Link from "next/link";
 import Management from "./management";
 import Credentials from "./credentials";
+import UsagePanel from "./usage-panel";
+import type { UsageReport } from "../lib/usage-report";
 import { useState } from "react";
 import { DashboardLoading, useDashboardData } from "./dashboard-data";
 type Employee = {
@@ -42,6 +44,7 @@ type Data = {
   employees: Employee[];
   devices: Device[];
   usage: Usage[];
+  usageReport?: UsageReport;
   audit: Audit[];
   metrics?: {
     employees: number;
@@ -472,64 +475,22 @@ export default function Dashboard({
               </section>
             )}
             {section === "usage" && (
-              <section className="card">
-                <h2>Consumo de OpenAI</h2>
-                <form className="form-grid" method="get">
-                  <label>
-                    De (UTC)
-                    <input name="from" type="date" />
-                  </label>
-                  <label>
-                    Até (UTC)
-                    <input name="to" type="date" />
-                  </label>
-                  <label>
-                    Cliente
-                    <select name="clientId">
-                      <option value="">Todos do meu escopo</option>
-                      {data.employees
-                        .filter((e) => e.role === "EMPLOYEE")
-                        .map((e) => (
-                          <option key={e.id} value={e.id}>
-                            {e.name}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-                  <button>Filtrar</button>
-                </form>
-                <p className="muted">
-                  Até 100 chamadas recentes. Custos em USD são estimativas;
-                  consulte a fatura do provedor. Reservas de chamadas sem uso
-                  confirmado continuam abatendo o limite.
-                </p>
-                <Table
-                  heads={[
-                    "Cliente",
-                    "Data",
-                    "Modelo",
-                    "Entrada",
-                    "Saída",
-                    "Custo estimado",
-                  ]}
-                  rows={data.usage.map((u) => [
-                    u.user.name,
-                    date(u.createdAt),
-                    u.model,
-                    number(u.inputTokens),
-                    number(u.outputTokens),
-                    u.estimatedCost === null
-                      ? "Indisponível"
-                      : `$ ${u.estimatedCost}`,
-                  ])}
+              <section className="usage-section">
+                <UsagePanel
+                  key={query}
+                  report={data.usageReport}
+                  employees={data.employees}
+                  query={query}
                 />
-                <h3>Limites mensais</h3>
-                <Table
-                  heads={["Cliente", "Tokens por mês"]}
-                  rows={data.employees
-                    .filter((e) => e.role === "EMPLOYEE")
-                    .map((e) => [e.name, number(e.monthlyTokenLimit)])}
-                />
+                <section className="card">
+                  <h3>Limites mensais</h3>
+                  <Table
+                    heads={["Cliente", "Tokens por mês"]}
+                    rows={data.employees
+                      .filter((e) => e.role === "EMPLOYEE")
+                      .map((e) => [e.name, number(e.monthlyTokenLimit)])}
+                  />
+                </section>
               </section>
             )}
             {section === "settings" && <Management section={section} />}

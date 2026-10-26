@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Consumo: gráficos de tokens gerais e por usuário acima da lista, agregados sobre todo o período filtrado. Chamadas agrupadas por usuário, limite padrão de 5 (opções 10/20), até 10 usuários por página e filtros preservados na URL. Consultas de detalhes limitadas à página atual, escopo administrativo mantido e custos desconhecidos identificados. Sem alteração de cobrança, migration ou setup. Validação: 84 testes Cloud, 149 Desktop, 190 Python/backend, TypeScript, builds, formatação e 40 verificações Electron/Chromium aprovados. Documentação em docs/CONSUMPTION.md; testes do relatório e interface com dados sintéticos, sem validar números de uma conta real.
+
 - Spotify: voz lê a mesma resposta exibida no chat, inclusive informações da faixa e perguntas de dispositivo, em vez de encaminhar o usuário à interface. Mantém os controles e limites de síntese existentes; metadados continuam fora do contexto do modelo e do histórico. Alteração Cloud, sem necessidade de novo setup. Testes automatizados com respostas simuladas; áudio pago e conta real não validados nesta correção.
 
 - Spotify conversacional: reutiliza a lista da conta durante a escolha natural de dispositivo, evitando consultas redundantes e mantendo metadados fora da IA. Setup 5.0.0 recompilado com painéis removidos e diálogo por nome no backend. Auditoria rejeita bundle antigo; self-check e smoke do payload após finalização aprovados. 77 testes Cloud, 149 Desktop e 190 Python/backend, build e TypeScript aprovados. Checksum e limitações em docs/V5.md.

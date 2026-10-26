@@ -6,6 +6,7 @@ import { canManage, scope } from "@/lib/policy";
 import { body, endpoint, HttpError, requireOrigin } from "@/lib/http";
 import { passwordHash } from "@/lib/crypto";
 import { rateLimit } from "@/lib/rate-limit";
+import { loadUsageReport, usageFilters } from "@/lib/usage-report";
 const command = z.discriminatedUnion("action", [
   z
     .object({
@@ -37,26 +38,8 @@ const command = z.discriminatedUnion("action", [
 ]);
 export const GET = endpoint(async (request) => {
   const query = new URL(request.url).searchParams;
-  const from = query.get("from"),
-    to = query.get("to"),
-    clientId = query.get("clientId");
-  if (
-    (from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) ||
-    (to && !/^\d{4}-\d{2}-\d{2}$/.test(to)) ||
-    (clientId && !z.string().uuid().safeParse(clientId).success)
-  )
-    throw new HttpError(400, "Filtro inválido.");
-  const usageFilter = {
-    ...(clientId ? { userId: clientId } : {}),
-    ...(from || to
-      ? {
-          createdAt: {
-            ...(from ? { gte: new Date(from + "T00:00:00Z") } : {}),
-            ...(to ? { lte: new Date(to + "T23:59:59.999Z") } : {}),
-          },
-        }
-      : {}),
-  };
+  const usageFilter = usageFilters(query).where;
+  const reporting = query.get("usage") === "1";
   const actor = await admin();
   const employees = await db.user.findMany({
     where: { ...scope(actor) },
@@ -89,21 +72,23 @@ export const GET = endpoint(async (request) => {
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
-    db.usageLog.findMany({
-      where: { user: userScope, ...usageFilter },
-      select: {
-        id: true,
-        userId: true,
-        model: true,
-        inputTokens: true,
-        outputTokens: true,
-        estimatedCost: true,
-        createdAt: true,
-        user: { select: { name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
+    reporting
+      ? Promise.resolve([])
+      : db.usageLog.findMany({
+          where: { user: userScope, ...usageFilter },
+          select: {
+            id: true,
+            userId: true,
+            model: true,
+            inputTokens: true,
+            outputTokens: true,
+            estimatedCost: true,
+            createdAt: true,
+            user: { select: { name: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 100,
+        }),
     db.auditLog.findMany({
       where: actor.role === "SUPER_ADMIN" ? {} : { actorId: actor.id },
       select: {
@@ -117,6 +102,9 @@ export const GET = endpoint(async (request) => {
       take: 100,
     }),
   ]);
+  const usageReport = reporting
+    ? await loadUsageReport(actor, query)
+    : undefined;
   const month = new Date(
     new Date().toISOString().slice(0, 7) + "-01T00:00:00.000Z",
   );
@@ -141,6 +129,7 @@ export const GET = endpoint(async (request) => {
     employees,
     devices,
     usage,
+    usageReport,
     audit,
     metrics: {
       employees: total,

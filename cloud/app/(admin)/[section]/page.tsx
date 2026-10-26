@@ -25,8 +25,9 @@ export default async function Page({
     notFound();
   const query = new URLSearchParams();
   if (section === "usage") {
+    query.set("usage", "1");
     const filters = await searchParams;
-    for (const key of ["from", "to", "clientId"]) {
+    for (const key of ["from", "to", "clientId", "perUser", "usagePage"]) {
       if (typeof filters[key] === "string" && filters[key])
         query.set(key, filters[key]);
     }
