@@ -1,9 +1,5 @@
 import { HttpError } from "./http";
-import {
-  resolveSpotifyIntent,
-  normalizeDeviceName,
-  safeSpotifyMessage,
-} from "./spotify-intent";
+import { resolveSpotifyIntent, normalizeDeviceName } from "./spotify-intent";
 import { spotifyReply } from "./spotify-command";
 import type { SpotifyAction } from "./spotify";
 type Device = {
@@ -39,7 +35,7 @@ export async function handleSpotifyChat(
   const response = (reply: string) => ({
     handled: true as const,
     reply,
-    speech: "Consulte o resultado do Spotify no JARVIS.",
+    speech: reply,
   });
   async function devices(): Promise<Device[]> {
     const result = await deps.execute({ action: "devices" });

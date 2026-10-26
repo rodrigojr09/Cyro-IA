@@ -16,6 +16,49 @@ const output = (action: string | null, extra = {}) => ({
   deviceName: null,
   ...extra,
 });
+test("voz Spotify lê a resposta exibida, incluindo dispositivos, avisos e falhas", async () => {
+  for (const scenario of [
+    "pause",
+    "devices",
+    "no_device",
+    "accepted",
+    "error",
+  ]) {
+    const result = await handleSpotifyChat(
+      scenario === "devices"
+        ? "mostra meus dispositivos Spotify"
+        : "pausar spotify",
+      {
+        classify: async () => output("devices"),
+        execute: async (command) => {
+          if (scenario === "error")
+            throw new HttpError(403, "Permissão insuficiente no Spotify.");
+          if (command.action === "devices")
+            return {
+              devices: [
+                {
+                  id: "device_123",
+                  name: "Meu computador",
+                  active: scenario !== "no_device",
+                },
+              ],
+            };
+          return scenario === "accepted" ? { accepted: true } : { ok: true };
+        },
+      },
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.speech, result.reply);
+    assert.ok(result.speech);
+    assert.doesNotMatch(result.speech!, /Consulte o resultado/);
+    if (scenario === "no_device")
+      assert.match(result.speech!, /Em qual dispositivo/);
+    if (scenario === "accepted")
+      assert.match(result.speech!, /Comando recebido/);
+    if (scenario === "error")
+      assert.match(result.speech!, /Permissão insuficiente/);
+  }
+});
 test("Spotify reconhece infinitivo sem artigo e dispensa IA em comandos simples", async () => {
   for (const [text, action] of [
     ["pausar spotify", "pause"],
@@ -80,9 +123,7 @@ test("IA interpreta somente a mensagem humana original e executa uma única aç�
     assert.equal(writes.length, 1);
     assert.equal(writes[0].action, action);
     assert(!sent.join("").includes("Faixa privada"));
-    assert(
-      !String("speech" in result && result.speech).includes("Faixa privada"),
-    );
+    assert.equal(result.speech, result.reply);
   }
 });
 test("ambiguidade, recusa, formato inválido e parâmetros fora dos limites não executam", async () => {

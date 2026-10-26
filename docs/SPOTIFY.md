@@ -54,7 +54,7 @@ O backend conserva apenas a pergunta pendente e a intenção de continuar por at
 
 O chat principal, Quick Chat e transcrições do pipeline de voz existente usam o mesmo serviço Cloud. Há também a ferramenta `spotify_control` no ciclo de ferramentas: ela só considera a mensagem humana original, não aceita parâmetros de execução vindos do modelo/arquivos e termina a rodada diretamente na interface. Nenhum resultado Spotify retorna ao modelo.
 
-**Metadados de reprodução são efêmeros:** não entram no histórico persistente de conversas, memória, resumos, prompts ou síntese de voz OpenAI. A resposta visual mostra a faixa; a resposta falada confirma que o resultado está disponível na interface. Isso evita ingestão de conteúdo Spotify em IA. Não se gera histórico de audição.
+**Metadados de reprodução são efêmeros:** não entram no histórico persistente de conversas, memória, resumos ou prompts de interpretação. A resposta falada lê a mesma resposta exibida no chat, conforme solicitado pelo proprietário, inclusive faixa, artista e opções de dispositivo quando presentes. Com a voz habilitada, esse texto passa pelo serviço de síntese configurado, sujeito aos limites e controles de áudio existentes. Não se gera histórico de audição.
 
 Os mini players e painéis de reprodução foram removidos do Desktop e Quick Chat por escolha do proprietário. Não há polling de reprodução em segundo plano. Configurações → Integrações mantém apenas gerenciamento da conexão (conectar, atualizar, testar e desconectar); músicas, volume e aparelhos são controlados pelo chat. A marca Spotify permanece no catálogo, com os assets oficiais branco/preto e contraste por tema.
 
