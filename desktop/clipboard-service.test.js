@@ -14,7 +14,8 @@ test('IPC autentica conta, frame e ambiente; persiste apenas preferências; indi
   let authenticated = true,
     focused = true,
     minimized = true,
-    permitLink = false;
+    permitLink = false,
+    quickVisible = true;
   function window(kind) {
     const frame = {
       url:
@@ -23,7 +24,7 @@ test('IPC autentica conta, frame e ambiente; persiste apenas preferências; indi
     };
     return {
       isDestroyed: () => false,
-      isVisible: () => true,
+      isVisible: () => kind !== 'composer' || quickVisible,
       isFocused: () => focused,
       isMinimized: () => minimized,
       setOverlayIcon: (...value) => overlays.push(value),
@@ -61,13 +62,19 @@ test('IPC autentica conta, frame e ambiente; persiste apenas preferências; indi
     assert.equal(handlers.get('clipboard:claim')(event(main)).reason, 'NOT_ACTIVE_CHAT');
     minimized = false;
     focused = false;
-    assert.equal(handlers.get('clipboard:claim')(event(composer)).ok, false);
-    focused = true;
+    assert.equal(handlers.get('clipboard:claim')(event(main)).reason, 'QUICK_CHAT_OPEN');
     assert.equal(handlers.get('clipboard:claim')(event(composer)).ok, true);
+    focused = true;
     if (process.platform === 'win32') assert.equal(overlays.at(-1)[0], null);
     assert.equal(handlers.get('clipboard:claim')(event(main)).ok, false);
+    quickVisible = false;
     text = 'https://example.com/docs';
     manager.tick();
+    assert.equal(handlers.get('clipboard:claim')(event(composer)).reason, 'NOT_ACTIVE_CHAT');
+    focused = false;
+    assert.equal(handlers.get('clipboard:claim')(event(main)).reason, 'NOT_ACTIVE_CHAT');
+    assert.equal(manager.state().pending, true);
+    focused = true;
     const link = handlers.get('clipboard:claim')(event(main));
     assert.equal(link.ok, true);
     assert.equal(

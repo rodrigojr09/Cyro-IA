@@ -90,12 +90,14 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
   electron.ipcMain.handle('clipboard:claim', (event, replaceId) => {
     const kind = role(event),
       window = windows()[kind];
-    if (
-      !['main', 'composer'].includes(kind) ||
-      !window.isVisible() ||
-      !window.isFocused() ||
-      window.isMinimized()
-    )
+    if (!['main', 'composer'].includes(kind) || !window.isVisible() || window.isMinimized())
+      return { ok: false, reason: 'NOT_ACTIVE_CHAT' };
+    // An open Quick Chat receives copies even while the user works in another app.
+    // No focus/show call: eligibility is decided exclusively by native window state.
+    const quick = windows().composer;
+    const quickOpen = quick && !quick.isDestroyed() && quick.isVisible() && !quick.isMinimized();
+    if (kind === 'main' && quickOpen) return { ok: false, reason: 'QUICK_CHAT_OPEN' };
+    if (kind === 'main' && !window.isFocused() && !event.sender.isFocused?.())
       return { ok: false, reason: 'NOT_ACTIVE_CHAT' };
     return manager.claim(kind === 'main' ? 'main' : 'quick', replaceId);
   });

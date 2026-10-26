@@ -17,6 +17,7 @@ async function setup(panel, manager) {
     opened = [],
     success = true,
     focused = false,
+    visible = false,
     quickFocus;
   w.document.hasFocus = () => focused;
   Object.defineProperty(w.document, 'visibilityState', { value: 'visible' });
@@ -24,6 +25,7 @@ async function setup(panel, manager) {
   w.jarvisClipboard = {
     state: async () => manager.state(),
     claim: async (replaceId) => {
+      if (!visible || (!panel && !focused)) return { ok: false, reason: 'NOT_ACTIVE_CHAT' };
       const result = manager.claim(owner, replaceId);
       listener(manager.state());
       return result;
@@ -61,11 +63,15 @@ async function setup(panel, manager) {
     update: () => listener(manager.state()),
     focus: async () => {
       focused = true;
+      visible = true;
       w.dispatchEvent(new w.Event('focus'));
-      await Promise.resolve();
-      await Promise.resolve();
+      await new Promise(setImmediate);
     },
-    openQuick: () => quickFocus(),
+    show: () => (visible = true),
+    openQuick: () => {
+      visible = true;
+      quickFocus();
+    },
     fail: () => (success = false),
   };
 }
@@ -389,9 +395,69 @@ test('Ver conteúdo copiado funciona com foco Chromium atrasado, sem envio autom
   });
   manager.setActive(true);
   const ui = await setup('composer', manager);
+  ui.show();
   ui.get('clipboard-pending').click();
   await new Promise(setImmediate);
   assert.equal(ui.get('clipboard-card').hidden, false);
+  assert.equal(ui.sends.length, 0);
+  ui.dom.window.close();
+  manager.destroy();
+});
+
+test('Quick Chat aberto recebe cópias sem foco, atualiza card e preserva prévia preparada', async () => {
+  let text = '';
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => text },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const ui = await setup('composer', manager);
+  ui.show();
+  for (const copy of [
+    'Primeira cópia com outro aplicativo focado',
+    'Segunda cópia com Quick Chat aberto',
+  ]) {
+    text = copy;
+    manager.tick();
+    ui.update();
+    await new Promise(setImmediate);
+    assert.equal(ui.get('clipboard-card').hidden, false);
+    assert.equal(ui.get('clipboard-original').textContent, copy);
+    assert.equal(manager.state().pending, false);
+  }
+  ui.get('clipboard-actions').querySelector('button').click();
+  const draft = ui.get('clipboard-message').value;
+  text = 'Terceira cópia durante edição';
+  manager.tick();
+  ui.update();
+  await new Promise(setImmediate);
+  assert.equal(ui.get('clipboard-message').value, draft);
+  assert.equal(manager.state().pending, true);
+  assert.equal(ui.sends.length, 0);
+  ui.dom.window.close();
+  manager.destroy();
+});
+
+test('janela principal usa autorização nativa mesmo com foco Chromium falso', async () => {
+  let text = '';
+  const manager = createClipboardManager({
+    clipboard: { availableFormats: () => [], readText: () => text },
+    config: { ...defaults, enabled: true },
+    schedule: () => 1,
+    cancel() {},
+  });
+  manager.setActive(true);
+  const ui = await setup(null, manager);
+  await ui.focus();
+  ui.dom.window.document.hasFocus = () => false;
+  text = 'Conteúdo para a janela principal';
+  manager.tick();
+  ui.update();
+  await new Promise(setImmediate);
+  assert.equal(ui.get('clipboard-card').hidden, false);
+  assert.equal(manager.state().pending, false);
   assert.equal(ui.sends.length, 0);
   ui.dom.window.close();
   manager.destroy();

@@ -8,6 +8,7 @@
   let snapshot = null,
     owned = null,
     requesting = false,
+    claimAgain = false,
     sending = false,
     context = null,
     audio = null,
@@ -221,15 +222,16 @@
       resizeComposer();
     }
   }
-  async function claim(explicitFocus = false) {
+  async function claim() {
+    if (requesting) {
+      claimAgain = true;
+      return;
+    }
     if (
       !parent ||
       (owned && (!preview.hidden || (mainContext() !== context && !composer))) ||
       !snapshot?.pending ||
-      sending ||
-      requesting ||
-      document.visibilityState === 'hidden' ||
-      (!explicitFocus && !document.hasFocus())
+      sending
     )
       return;
     if (
@@ -249,7 +251,9 @@
     } finally {
       requesting = false;
       // Polling can discover a copy while an earlier focus request is still in flight.
-      if (snapshot?.pending && snapshot.notification?.id !== requestedId) attempt(claim());
+      const retry = claimAgain || snapshot?.notification?.id !== requestedId;
+      claimAgain = false;
+      if (snapshot?.pending && retry) attempt(claim());
     }
   }
   bridge.onState((value) => {
@@ -271,13 +275,13 @@
       audio.volume = volume;
       attempt(audio.play());
     });
-  // Windows may deliver quick:focus before Chromium/native focus settles.
-  // Retry only after opening/clicking the chat; IPC still validates native focus.
+  // Windows may deliver opening events before native visibility settles.
+  // The main process validates visibility, focus and Quick Chat priority.
   function focusClaim() {
     clearTimeout(focusRetry);
     let retries = 0;
     const run = async () => {
-      const reason = await claim(true);
+      const reason = await claim();
       if (
         snapshot?.pending &&
         !owned &&

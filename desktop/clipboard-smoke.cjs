@@ -164,7 +164,15 @@ app.whenReady().then(async () => {
     if (process.platform === 'win32') assert.equal(overlays.at(-1), true);
     await composer.webContents.executeJavaScript('document.hasFocus = () => false; void 0;');
     await orb.webContents.executeJavaScript('window.quick.toggle()');
-    await delay(200);
+    for (
+      let i = 0;
+      i < 40 &&
+      (await composer.webContents.executeJavaScript(
+        "document.getElementById('clipboard-card').hidden",
+      ));
+      i++
+    )
+      await delay(25);
     assert.equal(
       await composer.webContents.executeJavaScript(
         "document.getElementById('clipboard-card').hidden",
@@ -208,6 +216,27 @@ app.whenReady().then(async () => {
       path.join(directory, 'clipboard-options.png'),
       (await composer.webContents.capturePage()).toPNG(),
     );
+    // A visible composer must receive a fresh copy while a different window has focus.
+    response.show();
+    response.focus();
+    await delay(100);
+    const externalFocus = BrowserWindow.getFocusedWindow();
+    text = 'Nova cópia com Quick Chat aberto e sem foco';
+    await manager.tick();
+    await delay(200);
+    assert.equal(BrowserWindow.getFocusedWindow(), externalFocus);
+    assert.equal(manager.state().pending, false);
+    assert.equal(
+      await composer.webContents.executeJavaScript(
+        "document.getElementById('clipboard-original').textContent",
+      ),
+      text,
+    );
+    assert.equal(
+      await orb.webContents.executeJavaScript("document.getElementById('clipboard-dot').hidden"),
+      true,
+    );
+    response.hide();
     // The orb and response have no right to claim payloads or configure monitoring.
     assert.equal(
       await orb.webContents.executeJavaScript('window.jarvisClipboard.claim().then(x=>x.ok)'),
@@ -225,7 +254,7 @@ app.whenReady().then(async () => {
     const preview = await composer.webContents.executeJavaScript(
       "document.getElementById('clipboard-message').value",
     );
-    assert.match(preview, /Texto copiado/);
+    assert.ok(preview.includes(text));
     assert.equal(sends, 0);
     await delay(100);
     fs.writeFileSync(
