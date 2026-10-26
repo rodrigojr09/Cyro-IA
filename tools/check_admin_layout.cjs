@@ -22,7 +22,8 @@ async function prepare() {
           usage:[{id:'usage-1',userId:employee.id,user:{name:long},model:'gpt-4.1-mini',inputTokens:1000,outputTokens:200,estimatedCost:'0.001',createdAt:new Date().toISOString()}],
           audit:[{id:'audit-1',action:'desktop.login',targetType:'Device',createdAt:new Date().toISOString()}]};
         const management={settings:{intelligenceEnabled:true,maxOutputTokens:3500},canConfigure:true};
-        window.fetch=async (url,options)=>({ok:true,status:200,json:async()=>options?.method==='POST'?{ok:true}:String(url).includes('management')?management:fixture});
+        const credentials={openai:{revision:0,source:'environment',enabled:true,hasApiKey:false,allowedModels:['gpt-4.1-mini'],voiceEnabled:false},spotify:{revision:0,source:'environment',enabled:true,hasClientSecret:false,clientId:'a075ad4ae29f41c5a3df8d2ff9c84972',redirectUri:'https://cronosjarvis.vercel.app/api/integrations/spotify/callback'}};
+        window.fetch=async (url,options)=>{if(String(url).includes('provider-settings')&&options?.method==='POST')window.providerWrite=JSON.parse(options.body);return {ok:true,status:200,json:async()=>options?.method==='POST'?{ok:true}:String(url).includes('provider-settings')?credentials:String(url).includes('management')?management:fixture};};
         const section=new URLSearchParams(location.search).get('section');
         createRoot(document.getElementById('root')).render(section==='login'?<Login/>:<Dashboard section={section}/>);`,
       resolveDir: root,
@@ -93,6 +94,7 @@ async function render() {
         "devices",
         "usage",
         "settings",
+        "credentials",
         "audit",
       ]) {
         await window.loadFile(path.join(output, "index.html"), {
@@ -114,7 +116,7 @@ async function render() {
         if (width <= 420 && geometry.tallestField > 140)
           throw Error(`Excessive field spacing in ${section} at ${width}px`);
         if (
-          ["dashboard", "clients", "login"].includes(section) &&
+          ["dashboard", "clients", "login", "credentials"].includes(section) &&
           [390, 1440].includes(width)
         ) {
           const screenshot = await window.webContents.capturePage();
@@ -122,6 +124,24 @@ async function render() {
             path.join(output, `${section}-${width}.png`),
             screenshot.toPNG(),
           );
+        }
+        if (section === "credentials" && width === 1440) {
+          await window.webContents.executeJavaScript(
+            `document.querySelector('.credentials-grid input[type=password]').value='sk-ui-fixture-12345678901234567890';document.querySelector('.credentials-grid form').requestSubmit();void 0;`,
+          );
+          await window.webContents.executeJavaScript(
+            `new Promise((resolve,reject)=>{let tries=0;const poll=()=>{if(document.querySelector('.credentials-page [role=status]'))resolve();else if(++tries>100)reject(Error('Save timeout'));else setTimeout(poll,20)};poll();})`,
+          );
+          const saved = await window.webContents.executeJavaScript(
+            `({provider:window.providerWrite?.provider,hasSecret:!!window.providerWrite?.apiKey,cleared:document.querySelector('.credentials-grid input[type=password]').value==='',message:document.querySelector('.credentials-page [role=status]').textContent})`,
+          );
+          if (
+            saved.provider !== "openai" ||
+            !saved.hasSecret ||
+            !saved.cleared ||
+            !saved.message.includes("não foi testada")
+          )
+            throw Error("Falha na proteção do formulário de credenciais");
         }
         checks++;
       }

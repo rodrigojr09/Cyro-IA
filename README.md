@@ -1,3 +1,5 @@
+> As credenciais de Spotify e OpenAI podem ser configuradas em **Dashboard → Credenciais**, exclusivamente pelo SUPER_ADMIN. Veja [configuração e proteção das credenciais](docs/CREDENTIALS.md).
+
 > Spotify: a implementação de OAuth/controles está no código, mas ainda depende de configuração privada, migration e teste real autorizado. Consulte [a configuração completa](docs/SPOTIFY.md). Não há conexão fictícia nem aprovação de distribuição pública.
 
 # JARVIS 5 — Cloud administrativo + Desktop

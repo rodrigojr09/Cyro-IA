@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { reserve, settle } from "@/lib/budget";
 import { proxyCompletion } from "@/lib/proxy";
 import { db } from "@/lib/db";
+import { openAISettings } from "@/lib/provider-settings";
 import { requireStorage } from "@/lib/storage";
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -31,15 +32,10 @@ export const POST = endpoint(async (request) => {
     input.max_completion_tokens,
     settings?.maxOutputTokens ?? 3500,
   );
-  if (
-    !(process.env.OPENAI_ALLOWED_MODELS || "")
-      .split(",")
-      .map((s) => s.trim())
-      .includes(input.model)
-  )
+  const provider = await openAISettings();
+  if (!provider.allowedModels.includes(input.model))
     throw new HttpError(403, "Modelo não autorizado.");
-  if (!process.env.OPENAI_API_KEY)
-    throw new HttpError(503, "Provedor não configurado.");
+  if (!provider.apiKey) throw new HttpError(503, "Provedor não configurado.");
   const reservation = await reserve(
     device.userId,
     inputReservation(input.messages, input.model) +
@@ -48,7 +44,7 @@ export const POST = endpoint(async (request) => {
       1024,
   );
   const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: provider.apiKey,
     timeout: 90000,
     maxRetries: 0,
   });
@@ -58,8 +54,7 @@ export const POST = endpoint(async (request) => {
     messages:
       input.messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
     tools: input.tools as
-      | OpenAI.Chat.Completions.ChatCompletionTool[]
-      | undefined,
+      OpenAI.Chat.Completions.ChatCompletionTool[] | undefined,
     max_completion_tokens: input.max_completion_tokens,
     ...(input.tool_choice ? { tool_choice: input.tool_choice } : {}),
     ...(input.parallel_tool_calls === false

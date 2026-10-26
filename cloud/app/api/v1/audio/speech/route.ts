@@ -6,6 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { reserve, settle } from "@/lib/budget";
 import { db } from "@/lib/db";
 import { speechError } from "@/lib/speech-error";
+import { openAISettings } from "@/lib/provider-settings";
 import { requireStorage } from "@/lib/storage";
 const schema = z
   .object({
@@ -26,9 +27,10 @@ export const POST = endpoint(async (request) => {
   if (settings && !settings.intelligenceEnabled)
     throw new HttpError(403, "Inteligência artificial suspensa.");
   await rateLimit(`voice:${device.userId}`, 5, 60);
-  if (process.env.OPENAI_VOICE_ENABLED !== "true")
+  const provider = await openAISettings();
+  if (!provider.voiceEnabled)
     throw new HttpError(503, "Voz não habilitada pelo administrador.");
-  if (!process.env.OPENAI_API_KEY)
+  if (!provider.apiKey)
     throw new HttpError(503, "Chave OpenAI não configurada no Cloud.");
   const input = await body(request, schema);
   // Separate character quota; speech API returns binary, not token usage.
@@ -40,7 +42,7 @@ export const POST = endpoint(async (request) => {
   const reservation = await reserve(device.userId, input.input.length);
   try {
     const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: provider.apiKey,
       timeout: 90000,
       maxRetries: 0,
     });

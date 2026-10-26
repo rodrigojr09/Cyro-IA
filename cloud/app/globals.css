@@ -679,3 +679,36 @@ footer {
     transition: none;
   }
 }
+
+.credentials-page {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.credentials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.credentials-grid .form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+.credential-state {
+  color: var(--accent);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.credentials-grid small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1050px) {
+  .credentials-grid {
+    grid-template-columns: 1fr;
+  }
+}

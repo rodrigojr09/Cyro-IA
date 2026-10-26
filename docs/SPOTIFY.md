@@ -4,6 +4,8 @@ Implementação do Authorization Code Flow e dos controles via Web API. **Ainda 
 
 ## Configuração do servidor
 
+A configuração preferida agora é **Dashboard → Credenciais**, exclusiva do SUPER_ADMIN. Informe Client ID, Client Secret e callback; a chave dos tokens é gerenciada internamente. Leia [CREDENTIALS.md](CREDENTIALS.md) para migration, proteção, adoção das chaves existentes e prioridade sobre variáveis de ambiente. As instruções de variáveis abaixo continuam válidas para ambientes sem configuração salva na dashboard.
+
 1. No Spotify Developer Dashboard, confira o app de Client ID `a075ad4ae29f41c5a3df8d2ff9c84972`, Website `https://cronosjarvis.vercel.app` e cadastre **exatamente** `https://cronosjarvis.vercel.app/api/integrations/spotify/callback`. Não basta preencher apenas Website. A configuração no Dashboard não foi acessada/verificada nesta entrega.
 2. Configure no ambiente Cloud local privado e em Vercel → Project → Settings → Environment Variables:
 

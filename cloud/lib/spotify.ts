@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { HttpError } from "./http";
 import { canUseSession } from "./policy";
+import { spotifyRuntime, spotifyEnvironment } from "./provider-settings";
 
 export const SPOTIFY_SCOPES = [
   "user-read-currently-playing",
@@ -23,7 +24,7 @@ export function spotifyConfig() {
     SPOTIFY_CLIENT_SECRET: secret,
     SPOTIFY_REDIRECT_URI: redirect,
     SPOTIFY_TOKEN_ENCRYPTION_KEY: key,
-  } = process.env;
+  } = spotifyRuntime.getStore() || process.env;
   if (
     !id ||
     !/^[a-f0-9]{32}$/i.test(id) ||
@@ -762,15 +763,21 @@ export function createSpotifyService(
     }
     return { ok: true };
   }
+  function configured<T extends (...args: any[]) => Promise<any>>(fn: T): T {
+    return (async (...args: Parameters<T>) =>
+      spotifyRuntime.run(await spotifyEnvironment(database), () =>
+        fn(...args),
+      )) as T;
+  }
   return {
-    start,
-    authorize,
-    callback,
-    status,
+    start: configured(start),
+    authorize: configured(authorize),
+    callback: configured(callback),
+    status: configured(status),
     transaction,
     cancel,
     disconnect,
-    execute,
+    execute: configured(execute),
   };
 }
 export const spotify = createSpotifyService();

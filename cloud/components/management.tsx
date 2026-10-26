@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 type State = {
   settings: { intelligenceEnabled: boolean; maxOutputTokens: number };
@@ -48,6 +49,11 @@ export default function Management({ section }: { section: string }) {
             <>
               <div className="divider" />
               <h2>Configurações globais</h2>
+              <p>
+                <Link href="/credentials">
+                  Configurar credenciais Spotify e OpenAI →
+                </Link>
+              </p>
               <form
                 className="form-grid"
                 onSubmit={(event) => {

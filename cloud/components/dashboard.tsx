@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Management from "./management";
+import Credentials from "./credentials";
 import { useCallback, useEffect, useState } from "react";
 type Employee = {
   id: string;
@@ -54,6 +55,7 @@ const links = [
   ["clients", "♙", "Usuários"],
   ["devices", "▣", "Dispositivos"],
   ["settings", "⚙", "Configurações"],
+  ["credentials", "⌁", "Credenciais"],
   ["usage", "▥", "Consumo"],
   ["audit", "≡", "Auditoria"],
 ];
@@ -115,16 +117,21 @@ export default function Dashboard({ section }: { section: string }) {
         </Link>
         <p className="nav-label">WORKSPACE</p>
         <nav aria-label="Navegação administrativa">
-          {links.map(([id, icon, label]) => (
-            <Link
-              key={id}
-              href={`/${id}`}
-              aria-current={section === id ? "page" : undefined}
-            >
-              <span>{icon}</span>
-              {label}
-            </Link>
-          ))}
+          {links
+            .filter(
+              ([id]) =>
+                id !== "credentials" || data?.actor.role === "SUPER_ADMIN",
+            )
+            .map(([id, icon, label]) => (
+              <Link
+                key={id}
+                href={`/${id}`}
+                aria-current={section === id ? "page" : undefined}
+              >
+                <span>{icon}</span>
+                {label}
+              </Link>
+            ))}
         </nav>
         <div className="sidebar-bottom">
           <span className="avatar">{data?.actor.name.slice(0, 1) || "J"}</span>
@@ -516,6 +523,9 @@ export default function Dashboard({ section }: { section: string }) {
               </section>
             )}
             {section === "settings" && <Management section={section} />}
+            {section === "credentials" && data.actor.role === "SUPER_ADMIN" && (
+              <Credentials />
+            )}
             {section === "audit" && (
               <section className="card">
                 <h2>Registro de auditoria</h2>
