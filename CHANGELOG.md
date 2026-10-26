@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Clipboard: novas cópias atualizam o card ainda sem ação no chat principal e Quick Chat; prévias já preparadas continuam preservadas. Substituição atômica por referência no processo principal, sem envio automático e com limites existentes mantidos. Validação: 138 testes Desktop, TypeScript, build, formatação e smoke com Electron real aprovados; leitura nativa sem escrita e novas cópias sintéticas, sem certificar som físico ou shell visual do Windows.
+
 - 26/10/2026: nova seção Integrações nas configurações do Desktop, com catálogo TypeScript centralizado de seis serviços em breve, pesquisa por nome/categoria/descrição, filtros por status, detalhes locais e retorno com foco. Grid adaptável e destaque verde-menta integrado aos temas. Não adiciona APIs, OAuth, credenciais, conexões, endpoints ou alterações Cloud.
 
 - Writer limpa o campo ao enviar, sem aguardar a IA, e preserva o próximo rascunho quando a resposta chega. Falhas restauram a mensagem no campo vazio; se já houver outro rascunho, a mensagem original fica marcada como não enviada na tela.

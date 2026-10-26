@@ -22,8 +22,8 @@ async function setup(panel, manager) {
   w.jarvisWorkspace = { chat: { id: 'existing-chat' } };
   w.jarvisClipboard = {
     state: async () => manager.state(),
-    claim: async () => {
-      const result = manager.claim(owner);
+    claim: async (replaceId) => {
+      const result = manager.claim(owner, replaceId);
       listener(manager.state());
       return result;
     },
@@ -300,6 +300,7 @@ test('ignorar edição antiga não apaga a nova cópia reivindicada durante o de
   manager.tick();
   main.update();
   await main.focus();
+  main.get('clipboard-actions').querySelector('button').click();
   text = 'Segunda cópia independente';
   manager.tick();
   main.update();
@@ -312,3 +313,41 @@ test('ignorar edição antiga não apaga a nova cópia reivindicada durante o de
   main.dom.window.close();
   manager.destroy();
 });
+
+for (const panel of [null, 'composer']) {
+  test(`nova cópia atualiza card intocado e preserva ação preparada: ${panel || 'main'}`, async () => {
+    let text = 'Texto inicial';
+    const manager = createClipboardManager({
+      clipboard: { availableFormats: () => [], readText: () => text },
+      config: { ...defaults, enabled: true },
+      schedule: () => 1,
+      cancel() {},
+    });
+    manager.setActive(true);
+    const ui = await setup(panel, manager);
+    text = 'Primeiro conteúdo copiado';
+    manager.tick();
+    ui.update();
+    await ui.focus();
+    const firstId = manager.state().owned[panel ? 'quick' : 'main'];
+    text = 'Segundo conteúdo copiado';
+    manager.tick();
+    ui.update();
+    await ui.focus();
+    assert.equal(ui.get('clipboard-original').textContent, text);
+    assert.notEqual(manager.state().owned[panel ? 'quick' : 'main'], firstId);
+    assert.equal(manager.state().pending, false);
+    ui.get('clipboard-actions').querySelector('button').click();
+    const draft = ui.get('clipboard-message').value;
+    text = 'Terceiro conteúdo copiado';
+    manager.tick();
+    ui.update();
+    await ui.focus();
+    assert.equal(ui.get('clipboard-message').value, draft);
+    assert.equal(ui.get('clipboard-original').textContent, 'Segundo conteúdo copiado');
+    assert.equal(manager.state().pending, true);
+    assert.equal(ui.sends.length, 0);
+    ui.dom.window.close();
+    manager.destroy();
+  });
+}

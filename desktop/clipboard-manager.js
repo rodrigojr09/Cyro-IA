@@ -347,10 +347,15 @@ function createClipboardManager({
     setMasterSound(value) {
       masterSound = value === true;
     },
-    claim(owner) {
+    claim(owner, replaceId) {
       if (!['main', 'quick'].includes(owner)) throw Error('Ambiente inválido.');
       expire();
-      if (claims.has(owner)) return { ok: false, reason: 'BUSY' };
+      if (replaceId !== undefined && (typeof replaceId !== 'string' || replaceId.length > 64))
+        throw Error('Referência inválida.');
+      const previous = claims.get(owner);
+      if (previous && previous.id !== replaceId) return { ok: false, reason: 'BUSY' };
+      if (replaceId !== undefined && previous?.id !== replaceId)
+        return { ok: false, reason: 'STALE_CLAIM' };
       if (!pending) return { ok: false, reason: 'ALREADY_CLAIMED_OR_IDLE' };
       const item = pending;
       pending = null;

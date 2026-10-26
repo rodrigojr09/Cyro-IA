@@ -87,7 +87,7 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
     }
     return manager.configure(next);
   });
-  electron.ipcMain.handle('clipboard:claim', (event) => {
+  electron.ipcMain.handle('clipboard:claim', (event, replaceId) => {
     const kind = role(event),
       window = windows()[kind];
     if (
@@ -97,7 +97,7 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
       window.isMinimized()
     )
       return { ok: false, reason: 'NOT_ACTIVE_CHAT' };
-    return manager.claim(kind === 'main' ? 'main' : 'quick');
+    return manager.claim(kind === 'main' ? 'main' : 'quick', replaceId);
   });
   electron.ipcMain.handle('clipboard:dismiss', (event, id) => {
     const kind = role(event);

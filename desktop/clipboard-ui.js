@@ -63,7 +63,7 @@
     $('clipboard-image').onload = resizeComposer;
     pendingButton.onclick = () => attempt(claim());
     $('clipboard-ignore').onclick = async () => {
-      if (sending || !owned) return;
+      if (sending || requesting || !owned) return;
       const dismissedId = owned.id;
       await bridge.dismiss(dismissedId);
       if (owned?.id === dismissedId) clearCard();
@@ -170,7 +170,7 @@
       button.type = 'button';
       button.textContent = choice;
       button.onclick = () => {
-        if (sending) return;
+        if (sending || requesting) return;
         openingLink = choice === 'Abrir link';
         $('clipboard-confirm').textContent = openingLink
           ? 'Confirmar abertura no navegador'
@@ -223,7 +223,8 @@
   async function claim() {
     if (
       !parent ||
-      owned ||
+      (owned && (!preview.hidden || (mainContext() !== context && !composer))) ||
+      !snapshot?.pending ||
       sending ||
       requesting ||
       document.visibilityState === 'hidden' ||
@@ -240,7 +241,8 @@
     requesting = true;
     const requestedId = snapshot?.notification?.id;
     try {
-      const result = await bridge.claim();
+      // Replace only an untouched card, using its ID for an atomic compare-and-swap.
+      const result = await bridge.claim(owned?.id);
       if (result.ok) show(result.notification);
     } finally {
       requesting = false;

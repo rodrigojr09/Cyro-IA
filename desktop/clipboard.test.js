@@ -417,3 +417,22 @@ test('dimensões do Blob PNG são limitadas antes da decodificação nativa', as
   assert.equal(f.state().pending, false);
   f.destroy();
 });
+
+test('substituição atômica exige claim atual e mantém exclusividade', () => {
+  const f = fixture({ enabled: true });
+  f.copy('Primeiro texto copiado');
+  const first = f.manager.claim('main').notification;
+  f.copy('Segundo texto copiado');
+  assert.equal(f.manager.claim('main', 'antigo').reason, 'BUSY');
+  const next = f.manager.claim('main', first.id).notification;
+  assert.equal(next.text, 'Segundo texto copiado');
+  assert.equal(f.manager.claim('quick').ok, false);
+  assert.equal(f.manager.dismiss('main', first.id), false);
+  assert.equal(f.manager.state().owned.main, next.id);
+  f.copy('Terceiro texto copiado');
+  assert.equal(f.manager.claim('quick').ok, true);
+  assert.equal(f.manager.claim('main', next.id).ok, false);
+  assert.equal(f.manager.state().owned.main, next.id);
+  assert.throws(() => f.manager.claim('main', {}));
+  f.manager.destroy();
+});

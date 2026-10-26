@@ -34,7 +34,7 @@ contextBridge.exposeInMainWorld('quick', {
 contextBridge.exposeInMainWorld('jarvisClipboard', {
   state: () => ipcRenderer.invoke('clipboard:state'),
   configure: (value) => ipcRenderer.invoke('clipboard:configure', value),
-  claim: () => ipcRenderer.invoke('clipboard:claim'),
+  claim: (replaceId) => ipcRenderer.invoke('clipboard:claim', replaceId),
   dismiss: (id) => ipcRenderer.invoke('clipboard:dismiss', id),
   discard: () => ipcRenderer.invoke('clipboard:discard'),
   openLink: (id) => ipcRenderer.invoke('clipboard:open-link', id),
