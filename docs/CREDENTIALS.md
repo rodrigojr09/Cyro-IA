@@ -37,3 +37,7 @@ Orientação oficial OpenAI usada: [boas práticas de produção e proteção da
 A dashboard mostra um indicador até carregar o perfil e os dados da página escolhida. `useDashboardData` compartilha os resultados no layout administrativo enquanto a sessão de navegação estiver aberta, sem repetir consultas ao trocar de página. O botão Atualizar e os salvamentos renovam os respectivos dados; filtros de consumo têm chaves separadas. Uma nova navegação completa ou saída encerra esse cache em memória.
 
 Falha do servidor não é apresentada como falta de SUPER_ADMIN. Se a tabela de credenciais ainda não existe, a página informa que a atualização do banco Cloud precisa ser aplicada. Conceder o papel SUPER_ADMIN não substitui a implantação e a migration. As APIs continuam conferindo a sessão e as permissões no servidor em cada solicitação.
+
+## Registro da migration — 26/10/2026
+
+Após autorização do proprietário, `prisma migrate deploy` aplicou com sucesso `202610260001_spotify` e `202610260002_provider_configuration` no banco Cloud configurado. A consulta posterior confirmou conclusão sem rollback, presença das três tabelas e os registros `openai`/`spotify` com revisão inicial zero. Nenhum segredo foi cadastrado por essa operação. O histórico remoto anterior `20261021160000_public_site_settings`, ausente nesta cópia local, foi preservado; não se executou reset nem alteração de histórico. A disponibilidade da página publicada e o acesso pela conta do proprietário não foram verificados nesta operação.
