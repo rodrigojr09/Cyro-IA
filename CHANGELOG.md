@@ -1,5 +1,7 @@
 # JARVIS 5.0.0 — 23/10/2026, em validação
 
+- Writer limpa o campo ao enviar, sem aguardar a IA, e preserva o próximo rascunho quando a resposta chega. Falhas restauram a mensagem no campo vazio; se já houver outro rascunho, a mensagem original fica marcada como não enviada na tela.
+
 - Simplificada a interface Writer: removidos os seletores Escrita/Orientação/Conversa/Organização das respostas, propostas e compositor. Pedidos e correções são feitos pelo chat, com interpretação automática e aprovação das alterações preservada.
 
 - Writer: feedback curto como “Muito resumido” solicita revisão explícita no arquivo ativo e limita o contrato da IA aos blocos lidos/selecionados. Corrigida revisão replace classificada como WRITE, que indevidamente pedia documento/posição. Correções de intenção no chat integrado passam a valer somente para a mensagem corrigida; pedidos seguintes voltam à interpretação automática. Aprovação e limites preservados.

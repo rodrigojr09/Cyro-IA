@@ -22,6 +22,8 @@ Consulte [implementação e validação v5](docs/V5.md) para cobertura, verifica
 
 ## JARVIS Writer — exclusivo dos projetos
 
+O campo de mensagem é limpo ao enviar. Você pode preparar o próximo rascunho enquanto aguarda; ele é preservado ao receber a resposta. Em caso de falha, a mensagem pode ser recuperada sem apagar o novo rascunho.
+
 Escreva seus pedidos e correções diretamente no chat. O Writer interpreta cada mensagem automaticamente, sem menus de modo; as alterações continuam destacadas para aprovação.
 
 Comentários curtos como “Muito resumido” preparam uma revisão no arquivo ativo, limitada ao trecho selecionado quando houver. Alterações continuam pendentes de aprovação; o arquivo e a posição conhecidos não precisam ser informados novamente.

@@ -158,6 +158,49 @@ function fixture(embedded = false) {
     recover: () => (failure = false),
   };
 }
+test('Writer limpa o campo durante a espera e preserva novo rascunho após sucesso ou falha', async () => {
+  for (const fails of [false, true]) {
+    const f = fixture(true);
+    try {
+      await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+      const original = f.w.jarvisWriter.command;
+      let release;
+      f.w.jarvisWriter.command = async (value) => {
+        if (value.action === 'assist')
+          await new Promise((resolve) => {
+            release = resolve;
+          });
+        return original(value);
+      };
+      if (fails) f.failCloud();
+      f.get('input').value = 'Mensagem enviada';
+      const sending = f.w.jarvisWriterUI.submit();
+      await pause();
+      assert.equal(f.get('input').value, '');
+      assert.match(f.get('messages').textContent, /Mensagem enviada/);
+      f.get('input').value = 'Próximo rascunho';
+      release();
+      await sending;
+      assert.equal(f.get('input').value, 'Próximo rascunho');
+      if (fails) assert.match(f.get('messages').textContent, /Não enviada/);
+    } finally {
+      f.dom.window.close();
+    }
+  }
+});
+test('Writer restaura mensagem no campo vazio quando o envio falha', async () => {
+  const f = fixture(true);
+  try {
+    await f.w.jarvisWriterUI.mount(f.project, f.w.jarvisWorkspace.chat);
+    f.failCloud();
+    f.get('input').value = 'Tente enviar isto';
+    await f.w.jarvisWriterUI.submit();
+    assert.equal(f.get('input').value, 'Tente enviar isto');
+    assert.equal(f.get('messages').querySelector('.user'), null);
+  } finally {
+    f.dom.window.close();
+  }
+});
 test('Writer integrado usa o chat padrão, preserva o botão de envio e desmonta a prévia ao navegar', async () => {
   const f = fixture(true);
   try {

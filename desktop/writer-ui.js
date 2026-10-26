@@ -721,6 +721,8 @@
     $('writer-send').disabled = true;
     $('writer-cancel').hidden = false;
     const pendingBubble = bubble('user', text);
+    $('writer-input').value = '';
+    if (embeddedActive) window.jarvisUI?.resize();
     status('Consultando IA Cloud…');
     try {
       const result = await command('assist', {
@@ -747,7 +749,6 @@
         $('writer-edit').textContent = 'Editar';
         $('writer-edit').setAttribute('aria-pressed', 'false');
       }
-      $('writer-input').value = '';
       renderProposal();
       renderPreview();
       if (proposal?.auto && proposal.state === 'PENDING') {
@@ -782,9 +783,22 @@
       return true;
     } catch (error) {
       if (epoch !== generation) return;
-      pendingBubble.remove();
-      status(error.message + ' Sua mensagem continua disponível para nova tentativa.', true);
-      $('writer-input').value = text;
+      if (!$('writer-input').value) {
+        pendingBubble.remove();
+        $('writer-input').value = text;
+        status(error.message + ' Sua mensagem continua disponível para nova tentativa.', true);
+      } else {
+        const failed = document.createElement('small');
+        failed.className = 'writer-context-note error';
+        failed.textContent = 'Não enviada';
+        pendingBubble.prepend(failed);
+        status(
+          error.message +
+            ' Seu novo rascunho foi preservado; a mensagem não enviada continua visível acima.',
+          true,
+        );
+      }
+      if (embeddedActive) window.jarvisUI?.resize();
       return false;
     } finally {
       assistantBusy = false;

@@ -2,6 +2,8 @@
 
 ## Uso
 
+Ao enviar uma mensagem válida, o campo é limpo antes de aguardar a resposta. Um novo rascunho digitado durante a espera é preservado. Se o envio falhar e o campo continuar vazio, a mensagem original volta para edição; se já existir outro rascunho, a mensagem original permanece na tela marcada **Não enviada**, sem substituir o novo texto. Mensagens barradas por validação, consentimento ou conflito anterior permanecem no campo.
+
 Feedback curto explícito, como **Muito resumido**, **Mais detalhes** ou **Muito longo**, solicita revisão dos blocos lidos no arquivo atual. Com seleção, o pedido fica limitado a ela; sem seleção, usa o documento lido dentro dos limites. Nesses casos, o contrato enviado à IA exige INSTRUCT/replace e o ID do arquivo já aberto. Uma revisão textual classificada como WRITE é tratada como INSTRUCT, sem pedir novamente o destino conhecido. Respostas vazias/inválidas não alteram o documento. A interface interpreta cada mensagem automaticamente, sem seletores de modo; para corrigir uma interpretação, escreva o pedido no chat.
 
 Regressão de interpretação validada em 23/10/2026: 42 testes específicos Writer, 181 Python completos e 127 Desktop aprovados. Electron real reproduziu seleção seguida de “muito resumido”, incluindo resposta sintética incorretamente classificada como WRITE e sem destino/IDs: a revisão foi preparada no trecho ativo, sem aplicação antes da aprovação. Verificados o contrato restrito, respeito ao modo Conversa explícito e correção de intenção válida por uma mensagem. Não houve validação paga da IA nem implantação remota.
