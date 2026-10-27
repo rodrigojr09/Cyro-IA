@@ -1,3 +1,13 @@
+# Novo banco Cloud - migracao e superadministrador em 27/10/2026
+
+Por autorizacao explicita do proprietario, o destino DIRECT_URL configurado privadamente foi consultado antes de qualquer alteracao e estava sem tabelas publicas. Prisma validate e migrate deploy concluidos: oito migrations locais aplicadas, sem rollback ou pendencia. Migrate status confirmou schema atualizado. Nenhum reset, db push, importacao de Backup/ ou exclusao de dados de clientes foi executado. A remocao de colunas legadas da migration desktop_login ocorreu somente nas tabelas vazias recem-criadas.
+
+Bootstrap oficial executado com BOOTSTRAP_* ja configurados privadamente. Verificacao real confirmou exatamente um SUPER_ADMIN ACTIVE, senha correspondente ao hash salvo e um registro de auditoria admin.bootstrap. Duas linhas iniciais de ProviderConfiguration presentes. E-mail, nome, senha, hash e URLs privadas nao sao publicados neste registro. As tres variaveis temporarias de bootstrap foram removidas apos conferir o cadastro. AUTH_SECRET e credenciais do banco foram preservados.
+
+DATABASE_URL usava outro endpoint e falhou na conexao; DIRECT_URL funcionou. O endereco local de runtime foi alinhado ao endereco verificado do mesmo banco, preservando usuario, senha e nome do banco. A alteracao e privada em cloud/.env, fora do Git. Nao confirma que a Vercel usa a mesma configuracao nem valida login publicado: as variaveis remotas e o deploy precisam corresponder ao novo banco. Nao foi feita copia automatica de usuarios, conversas ou credenciais de provedores do banco anterior.
+
+Evidencias locais em build/v6/new-db-validate.log, new-db-migrate.log, new-db-bootstrap.log, new-db-verification.log e new-db-final-status.log; logs nao sao publicados. Testes com PostgreSQL Cloud real, sem OpenAI paga, Spotify ou alteracoes no Desktop instalado.
+
 # Cyro IA 6.0.1 - validacao da marca e compatibilidade
 
 Em 27/10/2026 a suite completa foi repetida apos a renomeacao: 88 testes Cloud, 161 Desktop, 195 backend Python, 35 iniciadores/empacotamento e 2 ferramentas Node (481 sem dupla contagem), TypeScript/build Cloud/Desktop e sete smokes Electron aprovados. O contrato adicional verifica productName Cyro IA e preservacao de appId, executavel e pasta de dados JARVIS. Captura da tela inicial com marca C conferida visualmente.
