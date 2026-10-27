@@ -1,4 +1,8 @@
-# JARVIS v5
+# JARVIS v6.0.0 — em desenvolvimento
+
+Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição.
+
+# Base funcional v5
 
 Assistente Windows com chat principal, Quick Chat, projetos locais, JARVIS Writer e comandos Spotify pelo chat. Versão **5.1.0**.
 

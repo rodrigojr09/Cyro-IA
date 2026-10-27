@@ -12,6 +12,10 @@ Os arquivos abaixo descrevem a implementação vigente. Registros antigos ficam 
 - [Migração e compatibilidade](MIGRATION.md)
 - [Publicação e instalador](PUBLISH.md)
 
+## Migração em desenvolvimento
+
+- [Arquitetura v6](architecture/OVERVIEW.md), [auditoria](architecture/AUDIT.md), [inventário](architecture/MODULES.md) e [plano incremental](architecture/MIGRATION_PLAN.md).
+
 ## Arquitetura e recursos
 
 - [Arquitetura e mapa do código](ARCHITECTURE.md)

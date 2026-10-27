@@ -1,6 +1,6 @@
 {
   "name": "jarvis",
-  "version": "5.1.0",
+  "version": "6.0.0",
   "private": true,
   "workspaces": [
     "cloud",
@@ -23,7 +23,8 @@
     "test:electron": "node tools/run_electron_smoke.cjs --all",
     "typecheck:desktop": "npm run typecheck -w jarvis-desktop",
     "check:v5": "npm run check:repository && npm run test:tools && npm run test:cloud && npm run typecheck && npm run build:cloud && npm run typecheck:desktop && npm test -w jarvis-desktop && python -m unittest discover -s backend -p \"test_*.py\" && python -m unittest -q test_start test_start_local test_cloud_build test_build test_setup && npm run test:electron && npm run test:admin-layout",
-    "pretest:electron": "npm run build -w jarvis-desktop"
+    "pretest:electron": "npm run build -w jarvis-desktop",
+    "check:v6": "npm run check:repository && npm run test:tools && npm run test:cloud && npm run typecheck && npm run build:cloud && npm run typecheck:desktop && npm test -w jarvis-desktop && python -m unittest discover -s backend -p \"test_*.py\" && python -m unittest -q test_start test_start_local test_cloud_build test_build test_setup && npm run test:electron && npm run test:admin-layout"
   },
   "author": {
     "name": "Rodrigo Junior",
