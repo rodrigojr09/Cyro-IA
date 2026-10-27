@@ -48,7 +48,8 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
     calls.push({ route, options });
     let data;
     if (route === '/health') data = { ok: true };
-    else if (route === '/workspace') data = { projects: [project], general_chat_id: 'general' };
+    else if (route === '/workspace')
+      data = { projects: [project], chats, general_chat_id: 'general' };
     else if (route === '/workspace/view')
       data = JSON.parse(options.body).project_id
         ? { project, chats, archived_chats: [] }
@@ -103,7 +104,7 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
   for (const file of ['scope.js', 'workspace.js', 'renderer.js'])
     vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   await new Promise((resolve) => setImmediate(resolve));
-  return { window, elements, calls, timers, resolve: () => resolveChat() };
+  return { window, elements, calls, timers, chats, resolve: () => resolveChat() };
 }
 
 test('projetos e chats trocam histórico sem contaminar o contexto e novo chat reutiliza memória', async () => {
@@ -201,4 +202,67 @@ test('Nova conversa cria chat somente no envio confirmado da prévia do clipboar
   assert.equal(calls.filter((c) => c.route === '/chats/create').length, 1);
   assert.equal(JSON.parse(calls.find((c) => c.route === '/chat').options.body).chat_id, 'new');
   assert.equal(elements.input.value, 'Rascunho normal');
+});
+
+test('cache de sessão reutiliza A ao navegar A → B → A sem nova busca de histórico', async () => {
+  const { window, calls, elements } = await setup();
+  await window.jarvisWorkspace.view('project-a', 'first');
+  await window.jarvisWorkspace.view('project-a', 'second');
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(elements.messages.children[0].textContent, 'Contexto first');
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 1);
+});
+
+test('envio invalida histórico em cache antes de reabrir a conversa', async () => {
+  const { window, calls } = await setup();
+  await window.jarvisWorkspace.view('project-a', 'first');
+  window.jarvisWorkspace.begin();
+  window.jarvisWorkspace.end();
+  await window.jarvisWorkspace.view('project-a', 'second');
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 2);
+});
+
+test('mudança de outra janela invalida e sincroniza somente a conversa ativa', async () => {
+  const { window, calls, timers, chats } = await setup();
+  await window.jarvisWorkspace.view('project-a', 'first');
+  chats[0].last_message_at = '2026-10-27T12:00:00.001Z';
+  await timers.find((fn) => fn.name === 'poll')();
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 2);
+  await window.jarvisWorkspace.view('project-a', 'second');
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 2);
+});
+
+test('abrir Quick na janela principal não consulta histórico duas vezes', async () => {
+  const { window, calls } = await setup();
+  await window.jarvisWorkspace.openById('first');
+  assert.equal(window.jarvisWorkspace.chat.id, 'first');
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 1);
+});
+
+test('falha de histórico não fica em cache e permite tentar novamente', async () => {
+  const { window, calls } = await setup();
+  const transport = window.jarvisWindow.api;
+  let fail = true;
+  window.jarvisWindow.api = async (route, options) => {
+    if (route === '/chats/history?chat_id=first' && fail) {
+      fail = false;
+      throw new Error('Rede indisponível');
+    }
+    return transport(route, options);
+  };
+  await assert.rejects(window.jarvisWorkspace.view('project-a', 'first'), /Rede indisponível/);
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(window.jarvisWorkspace.chat.id, 'first');
+  assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 1);
+});
+
+test('exclusão observada em outra janela remove conteúdo e entrada do cache ativo', async () => {
+  const { window, elements, timers, chats } = await setup();
+  await window.jarvisWorkspace.view('project-a', 'first');
+  chats.splice(0, 1);
+  await timers.find((fn) => fn.name === 'poll')();
+  assert.equal(window.jarvisWorkspace.chat, null);
+  assert.equal(elements.messages.children.length, 0);
 });

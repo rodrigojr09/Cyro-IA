@@ -420,8 +420,7 @@ async function openQueuedQuick() {
     }
     const id = quickToOpen;
     quickToOpen = null;
-    const result = await api('/chats/history?chat_id=' + encodeURIComponent(id));
-    await window.jarvisWorkspace.catalog(result.chat.project_id || '', id);
+    await window.jarvisWorkspace.openById(id);
   } catch {
     quickToOpen = null;
     status.textContent = 'Não foi possível abrir o Quick Chat. Confira o backend.';

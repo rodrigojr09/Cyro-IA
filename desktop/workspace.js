@@ -9,6 +9,9 @@ window.jarvisWorkspace = (() => {
     loading = false,
     busy = false,
     initialising = null;
+  const historyCache = new Map();
+  const revision = (item) =>
+    JSON.stringify([item?.last_message_at, item?.archived, item?.writer_document_id]);
   const expanded = new Set(),
     el = (id) => document.getElementById(id);
   const post = (route, body) => api(route, { method: 'POST', body: JSON.stringify(body) });
@@ -281,6 +284,7 @@ window.jarvisWorkspace = (() => {
     const result = await window.jarvisWindow.manageChat(item.id, action);
     if (result.canceled) return;
     if (!result.ok) throw Error(result.data.detail || 'Não foi possível alterar o chat.');
+    historyCache.delete(item.id);
     for (const id of ['manage-dialog', 'settings-dialog']) if (el(id)?.open) el(id).close();
     await catalog(
       project?.id || '',
@@ -333,10 +337,17 @@ window.jarvisWorkspace = (() => {
     controls();
     ui()?.stopVoice();
     try {
-      const result = await api('/chats/history?chat_id=' + encodeURIComponent(id));
+      const metadata = chats.find((item) => item.id === id);
+      const cached = historyCache.get(id);
+      const result =
+        cached && metadata && cached.revision === revision(metadata)
+          ? cached.result
+          : await api('/chats/history?chat_id=' + encodeURIComponent(id));
       if ((result.chat.project_id || null) !== (project?.id || null))
         throw new Error('Esta conversa pertence a outro projeto.');
-      chat = result.chat;
+      chat = { ...result.chat, ...(metadata || {}) };
+      if (!chat.writer_document_id)
+        historyCache.set(id, { result: { ...result, chat }, revision: revision(chat) });
       if (el('chat-instructions')) el('chat-instructions').value = chat.instructions || '';
       if (el('chat-project-inheritance')) el('chat-project-inheritance').hidden = !project;
       olderThan = result.messages[0]?.id || null;
@@ -373,6 +384,10 @@ window.jarvisWorkspace = (() => {
       ((chat?.id || null) !== (preferred || null) || (project?.id || '') !== id)
     )
       window.jarvisAttachments?.clear();
+    if (preferred && (project?.id || '') === id && chats.some((item) => item.id === preferred)) {
+      await openChat(preferred);
+      return;
+    }
     loading = true;
     chat = null;
     controls();
@@ -417,7 +432,19 @@ window.jarvisWorkspace = (() => {
     const result = await api('/workspace');
     projects = result.projects;
     allChats = result.chats || allChats;
+    if (result.chats) chats = allChats.filter((item) => (item.project_id || '') === selected);
     await view(selected, preferred, preserveAttachments);
+  }
+  async function openById(id) {
+    const result = await api('/workspace');
+    projects = result.projects;
+    allChats = result.chats || allChats;
+    const item = allChats.find((item) => item.id === id);
+    if (!item) throw new Error('Conversa indisponível.');
+    // A janela Quick pode ter alterado a conversa desde a última consulta.
+    historyCache.delete(id);
+    chats = allChats.filter((row) => (row.project_id || '') === (project?.id || ''));
+    await view(item.project_id || '', id);
   }
   async function newChat(preserveAttachments = false) {
     if (busy || loading) return;
@@ -442,6 +469,29 @@ window.jarvisWorkspace = (() => {
         const result = await api('/workspace');
         projects = result.projects;
         allChats = result.chats || allChats;
+        if (result.chats)
+          chats = allChats.filter((item) => (item.project_id || '') === (project?.id || ''));
+        for (const [id, entry] of historyCache) {
+          const metadata = allChats.find((item) => item.id === id);
+          if (result.chats && (!metadata || entry.revision !== revision(metadata))) {
+            historyCache.delete(id);
+            if (chat?.id === id && (!metadata || metadata.archived)) {
+              chat = null;
+              ui()?.stopVoice();
+              messages.replaceChildren();
+              ui()?.empty();
+            }
+            if (chat?.id === id && metadata && !metadata.archived) {
+              chats = chats.map((item) => (item.id === id ? { ...item, ...metadata } : item));
+              try {
+                await openChat(id);
+              } catch (error) {
+                historyCache.set(id, entry);
+                throw error;
+              }
+            }
+          }
+        }
         if (project) {
           const updated = projects.find((p) => p.id === project.id);
           if (updated) {
@@ -598,6 +648,17 @@ window.jarvisWorkspace = (() => {
         return;
       }
       olderThan = result.messages[0].id;
+      const cached = historyCache.get(chat.id);
+      if (cached) {
+        const seen = new Set(cached.result.messages.map((item) => item.id));
+        cached.result = {
+          ...cached.result,
+          messages: [
+            ...result.messages.filter((item) => !seen.has(item.id)),
+            ...cached.result.messages,
+          ],
+        };
+      }
       const existing = [...messages.children];
       messages.replaceChildren();
       for (const item of result.messages) {
@@ -629,6 +690,7 @@ window.jarvisWorkspace = (() => {
     init,
     view,
     openChat,
+    openById,
     newChat,
     catalog,
     openSettings,
@@ -645,6 +707,7 @@ window.jarvisWorkspace = (() => {
     },
     controls,
     begin() {
+      if (chat) historyCache.delete(chat.id);
       busy = true;
       controls();
     },

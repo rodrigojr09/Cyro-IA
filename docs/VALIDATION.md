@@ -1,3 +1,23 @@
+# Validação da migração v6.0.0 — em desenvolvimento
+
+Execução atual em **27/10/2026**, branch `codex/jarvis-v6-architecture`. Resultados v5 abaixo são históricos e não certificam v6.
+
+| Verificação atual | Resultado |
+| --- | --- |
+| npm ci na raiz | Concluído: 485 pacotes instalados, 489 auditados; nenhuma vulnerabilidade reportada. |
+| Repositório / ferramentas Node | Versões e links aprovados; 2 testes aprovados. |
+| Cloud | 84 testes, TypeScript e build de produção aprovados. |
+| Desktop | 155 testes, TypeScript e bundle aprovados; inclui 13 testes de workspace. |
+| Python backend | 193 testes aprovados, incluindo identidade comum; 42 testes Writer também executados separadamente. |
+| Iniciadores/empacotamento | 34 testes aprovados; não equivale a gerar ou instalar um setup v6. |
+| Electron | Principal, Quick, login Cloud, clipboard, Writer e Spotify aprovados com serviços externos simulados. |
+| Electron/FastAPI sessão | Bloqueado: porta 8765 ocupada por jarvis-backend.exe já instalado. Não encerrado nem substituído. A execução agregada parou nesse ponto; os três smokes seguintes foram executados separadamente. |
+
+Total sem dupla contagem: **468 testes automatizados**, mais seis smokes Electron. Logs locais em `build/v6/`. Layout administrativo será registrado após conclusão. A alteração prévia de cloud/next-env.d.ts foi restaurada exatamente após o build e permanece fora dos commits.
+
+Não houve implantação, migration de banco, chamada paga, OAuth real, instalação v6 ou teste em Windows limpo. A migração permanece parcial: memória GLOBAL_USER, React, registro/orquestração central completos, cache Writer/Quick compartilhado, eventos/revisões remotos e rascunhos ao F5 ainda pendentes. Veja o [plano incremental](architecture/MIGRATION_PLAN.md). Não marcar v6 estável ou pronta para distribuição.
+
+
 # Validação — JARVIS 5.1.0
 
 Este documento acompanha a implementação atual. Evidências de versões anteriores estão no [arquivo histórico](history/README.md); o relato cronológico de desenvolvimento v5 está em [V5-DEVELOPMENT.md](history/V5-DEVELOPMENT.md).

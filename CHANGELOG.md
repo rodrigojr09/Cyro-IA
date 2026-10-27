@@ -2,6 +2,8 @@
 
 - Início da migração arquitetural autorizado em 27/10/2026. Base v5 preservada em `631d0c7`; auditoria inicial, inventário e plano incremental em docs/architecture/. Não representa release estável, implantação ou homologação externa.
 
+- Identidade comum em backend/jarvis_identity.py para chat/Quick e modo Writer, preservando contrato editorial e aprovação. Cache inicial de histórico comum na janela principal, invalidação no envio e por mudança observada no catálogo; abertura do Quick sem busca preliminar duplicada. Não inclui memória GLOBAL_USER, renderer React ou sincronização incremental completa.
+
 # JARVIS 5.1.0 — fechamento da v5 em 27/10/2026
 
 - Versão de fechamento definida pelo proprietário em 5.1.0. Manifests/locks, VERSION, FastAPI, título do Desktop, Sobre e guias atuais sincronizados. Os registros e o checksum 5.0.0 permanecem no histórico. 460 testes automatizados, sete smokes Electron e 40 verificações de layout aprovados. Setup 5.1.0 recompilado e auditado, FileVersion/ProductVersion conferidos e reinício com perfil temporário/PATH restrito aprovado; checksum em docs/VALIDATION.md. Sessões, dados, cotas e runtime Electron 44.9.1 preservados; sem migration ou tag de homologação.

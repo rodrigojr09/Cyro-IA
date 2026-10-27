@@ -17,7 +17,7 @@ Base `631d0c7`; branch `codex/jarvis-v6-architecture`. Modificação prévia `cl
 
 ## Estado
 
-Auditoria e inventário iniciais registrados; revisão integral ainda pendente. Identidade extraída para backend/jarvis_identity.py e consumida pelo chat/Quick e modo Writer; contrato editorial e aprovação preservados. Nenhuma migração de banco realizada. Cache e memória global não devem ser declarados concluídos por documentação. Não marcar v6 estável sem fechar critérios do pedido.
+Auditoria e inventário iniciais registrados; revisão integral ainda pendente. Identidade extraída para backend/jarvis_identity.py e consumida pelo chat/Quick e modo Writer; contrato editorial e aprovação preservados. Nenhuma migração de banco realizada. Cache inicial do renderer principal implementado conforme CHAT_CACHE.md, com limitações explícitas. Memória global permanece pendente. Não marcar v6 estável sem fechar critérios do pedido.
 
 ## Validação
 

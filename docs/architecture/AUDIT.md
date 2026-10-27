@@ -17,3 +17,7 @@ Inspeção estática inicial da base `631d0c7`. Não equivale a pentest nem homo
 Segurança existente observada: validação de sessão no Cloud, isolamento por userId nas conversas, tokens Spotify cifrados, IPC com allowlist e confirmação editorial. Não foram identificadas credenciais para publicação; arquivos privados não devem entrar na auditoria.
 
 Pendências da auditoria completa: grafo de imports/ciclos, referências dinâmicas e dependências antes de qualquer remoção; npm audit atual; perfil de renderizações e consultas; revisão integral dos fluxos OAuth, arquivos e multiusuário. Nenhuma duplicação é removida apenas por semelhança de nome.
+
+## Remediações iniciais
+
+Identidade comum extraída e validada na suíte Python (193 testes). Cache inicial e remoção da busca preliminar Quick→principal implementados, com 13 testes de workspace aprovados. Ainda faltam revisão/cursor remotos, memória global, React e auditoria integral. npm ci concluiu com 485 pacotes instalados, 489 auditados e nenhuma vulnerabilidade reportada em 27/10/2026; essa checagem não prova ausência de falhas de aplicação.
