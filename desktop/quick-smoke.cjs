@@ -205,7 +205,7 @@ app.whenReady().then(async () => {
     await composer.webContents.executeJavaScript('window.quick.collapse()');
     controller.destroy();
     controller = create();
-    assert.equal(controller.windows.orb.getBounds().x, area.x + 20);
+    assert.equal(controller.windows.orb.getBounds().x, area.x + 24);
     const fullscreen = new BrowserWindow({
       width: 800,
       height: 600,
