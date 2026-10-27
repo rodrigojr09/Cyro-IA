@@ -27,8 +27,8 @@ function render(state) {
         ? 'Voz ativa'
         : 'Voz desligada';
     $('quick-voice-toggle').setAttribute('aria-pressed', String(state.config.voice));
-    $('send').disabled = state.busy;
-    $('question').disabled = state.busy;
+    $('send').disabled = state.busy || state.ready === false;
+    $('question').disabled = state.busy || state.ready === false;
     $('use-project').disabled = state.busy || !state.project;
     if (!state.project) $('use-project').checked = false;
     $('project-label').textContent = state.project
@@ -140,7 +140,7 @@ if (role === 'composer') {
   };
   async function submit() {
     const text = $('question').value.trim();
-    if (!text || current.busy || submitting) return;
+    if (!text || current.busy || current.ready === false || submitting) return;
     submitting = true;
     $('send').disabled = true;
     $('question').value = '';
@@ -158,7 +158,7 @@ if (role === 'composer') {
       restore();
     } finally {
       submitting = false;
-      $('send').disabled = !!current.busy;
+      $('send').disabled = !!current.busy || current.ready === false;
     }
   }
   $('quick-voice-toggle').onclick = () => call(window.quick.voice(!current.config.voice));

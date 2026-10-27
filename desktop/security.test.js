@@ -596,3 +596,26 @@ test('workspace notification contains no payload and failure does not mask a suc
     true,
   );
 });
+
+test('Cloud blocks chat IPC until startup data is loaded and locks it again on session change', async () => {
+  const state = setup({ cloud: true, authenticated: true });
+  await assert.rejects(
+    state.invoke(state.event, '/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: 'Too soon' }),
+    }),
+    /carregamento/,
+  );
+  assert.equal(state.requests.length, 0);
+  await state.invoke(state.event, '/workspace/bootstrap');
+  assert.equal(state.requests.length, 1);
+  state.appEvents.get('jarvis:session-changed')(false);
+  await assert.rejects(
+    state.invoke(state.event, '/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: 'Old session' }),
+    }),
+    /carregamento|autorizada/,
+  );
+  assert.equal(state.requests.length, 1);
+});

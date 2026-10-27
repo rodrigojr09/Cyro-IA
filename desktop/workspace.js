@@ -8,7 +8,9 @@ window.jarvisWorkspace = (() => {
     olderThan = null,
     loading = false,
     busy = false,
-    initialising = null;
+    initialising = null,
+    ready = false,
+    sendingHistory = null;
   const historyCache = new Map();
   let lastCatalogSync = Date.now(),
     pollInFlight = null,
@@ -23,6 +25,7 @@ window.jarvisWorkspace = (() => {
   const ui = () => window.jarvisUI;
   function controls() {
     el('send').disabled =
+      !ready ||
       !!window.jarvisStorageUsage?.blocked ||
       busy ||
       loading ||
@@ -355,10 +358,11 @@ window.jarvisWorkspace = (() => {
         historyCache.set(id, { result: { ...result, chat }, revision: revision(chat) });
       if (el('chat-instructions')) el('chat-instructions').value = chat.instructions || '';
       if (el('chat-project-inheritance')) el('chat-project-inheritance').hidden = !project;
-      olderThan = result.messages[0]?.id || null;
+      const visibleMessages = result.messages.slice(-100);
+      olderThan = visibleMessages[0]?.id || null;
       messages.replaceChildren();
       ui()?.welcome(!result.messages.length);
-      for (const item of result.messages) {
+      for (const item of visibleMessages) {
         addMessage(item.role, item.content);
         window.jarvisAttachments?.renderHistory(
           messages.lastElementChild,
@@ -381,7 +385,7 @@ window.jarvisWorkspace = (() => {
       controls();
     }
   }
-  async function view(id, preferred, preserveAttachments = false) {
+  async function view(id, preferred, preserveAttachments = false, useCatalog = true) {
     if (busy || loading) return;
     await window.jarvisWriterUI?.unmount?.();
     if (
@@ -400,7 +404,15 @@ window.jarvisWorkspace = (() => {
     messages.replaceChildren();
     ui()?.welcome(false);
     try {
-      const result = await post('/workspace/view', { project_id: id || null });
+      const result = await post('/workspace/view', {
+        project_id: id || null,
+        include_chats: !useCatalog,
+      });
+      if (useCatalog) {
+        const rows = allChats.filter((item) => (item.project_id || '') === id);
+        result.chats = rows.filter((item) => !item.archived);
+        result.archived_chats = rows.filter((item) => item.archived);
+      }
       project = result.project;
       chats = [...result.chats, ...result.archived_chats];
       allChats = [...allChats.filter((c) => (c.project_id || null) !== (id || null)), ...chats];
@@ -439,7 +451,7 @@ window.jarvisWorkspace = (() => {
     projects = result.projects;
     allChats = result.chats || allChats;
     if (result.chats) chats = allChats.filter((item) => (item.project_id || '') === selected);
-    await view(selected, preferred, preserveAttachments);
+    await view(selected, preferred, preserveAttachments, true);
   }
   async function openById(id) {
     const result = await api('/workspace');
@@ -474,7 +486,7 @@ window.jarvisWorkspace = (() => {
     if (pollFailures >= 5 && !force) return;
     try {
       if (!loading && !busy && document.visibilityState !== 'hidden') {
-        const remote = force || Date.now() - lastCatalogSync >= 60000;
+        const remote = force || Date.now() - lastCatalogSync >= 300000;
         const indexing = project && ['queued', 'indexing'].includes(project.state);
         if (!remote && !indexing) return;
         const result = await api(remote ? '/workspace' : '/workspace/progress');
@@ -544,7 +556,7 @@ window.jarvisWorkspace = (() => {
   function init() {
     if (!initialising)
       initialising = initialize().catch((error) => {
-        initialising = null;
+        (initialising = null), (ready = false);
         throw error;
       });
     return initialising;
@@ -663,7 +675,12 @@ window.jarvisWorkspace = (() => {
       if (!olderThan) return;
       const area = document.getElementById('conversation-scroll'),
         height = area?.scrollHeight || 0;
-      const result = await api('/chats/history?chat_id=' + chat.id + '&before=' + olderThan);
+      const localOlder = historyCache
+        .get(chat.id)
+        ?.result.messages.filter((item) => item.id < olderThan);
+      const result = localOlder?.length
+        ? { messages: localOlder.slice(-100) }
+        : await api('/chats/history?chat_id=' + chat.id + '&before=' + olderThan);
       if (!result.messages.length) {
         el('older-messages').textContent = 'Início do histórico';
         el('manage-dialog').close();
@@ -701,11 +718,27 @@ window.jarvisWorkspace = (() => {
         (window.jarvisStorage || localStorage).getItem('jarvis.selection') || 'null',
       );
     } catch {}
-    try {
-      await catalog(saved?.project || '', saved?.chat);
-    } catch {
-      await catalog('', null);
+    el('status').textContent = 'Carregando suas informações e histórico...';
+    controls();
+    const snapshot = await api('/workspace/bootstrap');
+    projects = snapshot.projects;
+    allChats = snapshot.chats;
+    historyCache.clear();
+    for (const item of allChats) {
+      if (!item.writer_document_id && snapshot.histories?.[item.id])
+        historyCache.set(item.id, {
+          result: { chat: item, messages: snapshot.histories[item.id] },
+          revision: revision(item),
+        });
     }
+    await window.jarvisStorageUsage?.refresh();
+    const selected = projects.some((item) => item.id === saved?.project) ? saved.project : '';
+    const preferred = allChats.find(
+      (item) => item.id === saved?.chat && (item.project_id || '') === selected,
+    )?.id;
+    await view(selected, preferred, false, true);
+    ready = true;
+    controls();
     lastCatalogSync = Date.now();
     pollTimer = setTimeout(poll, 2000);
     window.addEventListener?.('focus', () => {
@@ -730,7 +763,10 @@ window.jarvisWorkspace = (() => {
     openProjectSettings,
     showArchived,
     get canNavigate() {
-      return !busy && !loading;
+      return ready && !busy && !loading;
+    },
+    get ready() {
+      return ready;
     },
     get project() {
       return project;
@@ -740,9 +776,28 @@ window.jarvisWorkspace = (() => {
     },
     controls,
     begin() {
+      sendingHistory = chat ? historyCache.get(chat.id) : null;
       if (chat) historyCache.delete(chat.id);
       busy = true;
       controls();
+    },
+    commit(saved) {
+      if (!saved?.chat || saved.chat.id !== chat?.id || !Array.isArray(saved.messages)) return;
+      chat = { ...chat, ...saved.chat };
+      chats = chats.map((item) => (item.id === chat.id ? chat : item));
+      allChats = allChats.map((item) => (item.id === chat.id ? chat : item));
+      if (sendingHistory) {
+        const existing = sendingHistory.result.messages;
+        const ids = new Set(existing.map((item) => item.id));
+        historyCache.set(chat.id, {
+          result: {
+            chat,
+            messages: [...existing, ...saved.messages.filter((item) => !ids.has(item.id))],
+          },
+          revision: revision(chat),
+        });
+      }
+      sendingHistory = null;
     },
     end() {
       busy = false;

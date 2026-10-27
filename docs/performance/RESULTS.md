@@ -41,3 +41,10 @@ Validacao completa: 481 testes, sete smokes Electron, TypeScript/build e 40 veri
 | I: F5 | 4/3 | 7/3 | 12.61/6.32 |
 
 HTTP previstos sao entradas explicitas do cenario; nao uma captura de rede de producao. ORM/repositorio e a soma de metodos instrumentados na fixture, nao o contador de faturamento Prisma. Numero de conexoes de producao: nao mensurado; limite do pool por processo quente: 3. Auth/rate limit necessarios nao entram nestas tabelas.
+
+
+## Medicoes de fluxo da 6.0.2
+
+Testes com relogio controlado: duas sincronizacoes remotas de catalogo em dez minutos visiveis, contra dez na 6.0.1 (80% menos chamadas nesse fluxo, excluindo foco e alteracoes explicitas). A consulta de armazenamento a cada 30 segundos deixou de existir. Testes de cache confirmam zero consultas de historico ao navegar entre conversas pre-carregadas e depois de receber o comprovante de gravacao. O teste de exchange confirma uma transacao por par, contra as duas gravacoes separadas anteriores. Nao se extrapolam esses resultados para Operations faturadas ou latencia da rede.
+
+A API foi exercitada com mais de 500 mensagens, mais de 50 conversas e textos UTF-8 grandes; os cursores percorrem todo o conjunto sem duplicar registros, sem carregar dados de outra conta e com respostas em lotes limitados. Esses testes usam dados sinteticos. Nao foram medidos ainda o painel Operations apos deploy nem o tempo de login com o historico real do proprietario.

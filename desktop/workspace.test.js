@@ -4,10 +4,19 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-async function setup({ partial = false, delayed = false, oversized = false, clock = null } = {}) {
+async function setup({
+  partial = false,
+  delayed = false,
+  oversized = false,
+  clock = null,
+  bootstrapDelayed = false,
+  preload = false,
+  bootstrapFailure = false,
+} = {}) {
   const calls = [];
   const timers = [];
-  let resolveChat;
+  let resolveChat, resolveBootstrap;
+  let failBootstrap = bootstrapFailure;
   class Element {
     constructor() {
       this.children = [];
@@ -47,8 +56,33 @@ async function setup({ partial = false, delayed = false, oversized = false, cloc
   const api = async (route, options) => {
     calls.push({ route, options });
     let data;
+    if (route === '/workspace/bootstrap') {
+      if (failBootstrap) {
+        failBootstrap = false;
+        throw Error('Offline');
+      }
+      if (bootstrapDelayed)
+        await new Promise((resolve) => {
+          resolveBootstrap = resolve;
+        });
+      return {
+        ok: true,
+        data: {
+          projects: [project],
+          chats,
+          histories: preload
+            ? Object.fromEntries(
+                chats.map((item) => [
+                  item.id,
+                  [{ id: 1, role: 'user', content: 'Preloaded ' + item.id }],
+                ]),
+              )
+            : {},
+        },
+      };
+    }
     if (route === '/health') data = { ok: true };
-    else if (route === '/workspace')
+    else if (route === '/workspace' || route === '/workspace/bootstrap')
       data = { projects: [project], chats, general_chat_id: 'general' };
     else if (route === '/workspace/progress') data = { projects: [project] };
     else if (route === '/workspace/view')
@@ -112,7 +146,16 @@ async function setup({ partial = false, delayed = false, oversized = false, cloc
   for (const file of ['scope.js', 'workspace.js', 'renderer.js'])
     vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   await new Promise((resolve) => setImmediate(resolve));
-  return { window, document, elements, calls, timers, chats, resolve: () => resolveChat() };
+  return {
+    window,
+    document,
+    elements,
+    calls,
+    timers,
+    chats,
+    resolveBootstrap: () => resolveBootstrap(),
+    resolve: () => resolveChat(),
+  };
 }
 
 test('projetos e chats trocam histórico sem contaminar o contexto e novo chat reutiliza memória', async () => {
@@ -282,7 +325,7 @@ test('catálogo remoto não é consultado novamente nos ticks de dois segundos',
   assert.equal(calls.filter((item) => item.route === '/workspace').length, before);
 });
 
-test('dez minutos com relógio controlado produzem dez sincronizações, não 300', async () => {
+test('dez minutos com relógio controlado produzem duas sincronizações, não 300', async () => {
   const clock = { now: 0 };
   const { calls, timers } = await setup({ clock });
   const initial = calls.filter((item) => item.route === '/workspace').length;
@@ -290,7 +333,7 @@ test('dez minutos com relógio controlado produzem dez sincronizações, não 30
     clock.now = tick * 2000;
     await timers.find((fn) => fn.name === 'poll')();
   }
-  assert.equal(calls.filter((item) => item.route === '/workspace').length - initial, 10);
+  assert.equal(calls.filter((item) => item.route === '/workspace').length - initial, 2);
 });
 
 test('janela oculta não consulta catálogo e visibilidade permite sincronização explícita', async () => {
@@ -314,4 +357,56 @@ test('indexação atualiza progresso local sem consultar o catálogo Cloud a cad
   await timers.find((fn) => fn.name === 'poll')();
   assert.equal(calls.filter((item) => item.route === '/workspace').length, initial);
   assert.equal(calls.filter((item) => item.route === '/workspace/progress').length, 1);
+});
+
+test('login blocks sending until the complete bootstrap finishes and reuses preloaded histories', async () => {
+  const { window, elements, calls, resolveBootstrap } = await setup({
+    bootstrapDelayed: true,
+    preload: true,
+  });
+  assert.equal(window.jarvisWorkspace.ready, false);
+  assert.equal(elements.send.disabled, true);
+  elements.input.value = 'Wait for history';
+  await elements.send.onclick();
+  assert.equal(calls.filter((item) => item.route === '/chat').length, 0);
+  resolveBootstrap();
+  await window.jarvisWorkspace.init();
+  assert.equal(window.jarvisWorkspace.ready, true);
+  await window.jarvisWorkspace.view('project-a', 'first');
+  await window.jarvisWorkspace.view('project-a', 'second');
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(elements.messages.children[0].textContent, 'Preloaded first');
+  assert.equal(calls.filter((item) => item.route.startsWith('/chats/history')).length, 0);
+  assert.ok(
+    calls
+      .filter((item) => item.route === '/workspace/view')
+      .every((item) => JSON.parse(item.options.body).include_chats === false),
+  );
+});
+
+test('failed bootstrap keeps chat blocked and a retry initializes a clean session', async () => {
+  const { window, elements, calls } = await setup({ bootstrapFailure: true, preload: true });
+  assert.equal(window.jarvisWorkspace.ready, false);
+  assert.equal(elements.send.disabled, true);
+  await window.jarvisWorkspace.init();
+  assert.equal(window.jarvisWorkspace.ready, true);
+  assert.equal(calls.filter((item) => item.route === '/workspace/bootstrap').length, 2);
+});
+
+test('a durable server receipt updates the session cache without refetching history', async () => {
+  const { window, calls, elements } = await setup({ preload: true });
+  await window.jarvisWorkspace.view('project-a', 'first');
+  window.jarvisWorkspace.begin();
+  window.jarvisWorkspace.commit({
+    chat: { ...window.jarvisWorkspace.chat, last_message_at: '2026-10-27T15:00:00Z' },
+    messages: [
+      { id: 2, role: 'user', content: 'Question' },
+      { id: 3, role: 'assistant', content: 'Durable answer' },
+    ],
+  });
+  window.jarvisWorkspace.end();
+  await window.jarvisWorkspace.view('project-a', 'second');
+  await window.jarvisWorkspace.view('project-a', 'first');
+  assert.equal(elements.messages.children.at(-1).textContent, 'Durable answer');
+  assert.equal(calls.filter((item) => item.route.startsWith('/chats/history')).length, 0);
 });

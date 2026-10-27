@@ -1,3 +1,8 @@
+# 6.0.2 — em desenvolvimento
+
+- Carregamento inicial do histórico em lotes, cache de sessão e bloqueio de envio até a preparação concluir.
+- Pergunta e resposta de conversas gerais comuns são persistidas juntas antes da resposta chegar ao aplicativo.
+
 # Cyro IA 6.0.1 — em desenvolvimento
 
 - Padronizado o apelido Cyro nas conversas, mensagens, instruções e textos de apoio; Cyro IA reservado a logos e títulos. Identidade compartilhada orienta o mesmo uso no chat, Quick Chat e Writer. Sem alteração de versão, dados ou identificadores internos.

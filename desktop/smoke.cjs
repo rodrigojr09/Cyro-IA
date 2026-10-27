@@ -86,7 +86,7 @@ ipcMain.handle('jarvis:api', (_, route, options) => {
     const input = JSON.parse(options.body);
     data = chats.find((c) => c.id === input.chat_id);
     Object.assign(data, { title: input.title, instructions: input.instructions });
-  } else if (route === '/workspace')
+  } else if (route === '/workspace' || route === '/workspace/bootstrap')
     data = { projects: [project], chats, general_chat_id: generalId };
   else if (route === '/workspace/view')
     data = JSON.parse(options.body).project_id

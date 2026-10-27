@@ -102,12 +102,8 @@ window.jarvisStorageUsage = (() => {
       if ($('storage-status')) $('storage-status').textContent = error.message;
     }
   }
-  window.addEventListener('DOMContentLoaded', () => {
-    void show();
-    setInterval(() => {
-      void refresh().catch(() => {});
-    }, 30000);
-  });
+  // Startup explicitly awaits refresh; opening settings refreshes it again.
+  // The server still checks quota on every generation and write.
   return {
     refresh,
     show,

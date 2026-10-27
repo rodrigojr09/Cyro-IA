@@ -179,7 +179,7 @@ window.jarvisUI = (() => {
     Conta: () =>
       '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o Cyro é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
     Sobre: () =>
-      '<h3>Sobre o Cyro IA</h3><p>Versão 6.0.1</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
+      '<h3>Sobre o Cyro IA</h3><p>Versão 6.0.2</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();

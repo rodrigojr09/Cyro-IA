@@ -2,7 +2,7 @@ import tempfile
 import unittest
 import uuid
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 import cloud_client
 import main
@@ -51,6 +51,63 @@ class ProjectChatBindingTests(unittest.TestCase):
                     },
                 )
                 self.assertEqual(response.status_code, 400, response.text)
+
+    def test_cloud_reply_is_only_returned_after_exchange_commit_and_storage_failure_hides_it(
+        self,
+    ):
+        chat_id = str(uuid.uuid4())
+        calls = []
+        fail = False
+
+        def request(command):
+            calls.append(command["action"])
+            if command["action"] == "storage":
+                return {"blocked": False}
+            if command["action"] == "get":
+                return {
+                    "id": chat_id,
+                    "project_id": None,
+                    "archived": 0,
+                    "summary": "",
+                    "slot": None,
+                }
+            if command["action"] == "history":
+                return []
+            if command["action"] == "exchange":
+                if fail:
+                    raise ReadError("Falha ao salvar no servidor")
+                return {
+                    "ok": True,
+                    "chat": {"id": chat_id},
+                    "messages": [
+                        {"id": 1, "role": "user", "content": "Question"},
+                        {"id": 2, "role": "assistant", "content": "Durable answer"},
+                    ],
+                }
+            self.fail("Unexpected storage request")
+
+        with patch.object(main, "CLOUD", True), patch.object(
+            main, "store", CloudConversations(main.store, request)
+        ), patch.object(main, "configured_key", return_value="session"), patch.object(
+            main, "converse", AsyncMock(return_value=("Durable answer", []))
+        ), patch(
+            "spotify_commands.try_command", AsyncMock(return_value=None)
+        ):
+            response = self.client.post(
+                "/chat", json={"chat_id": chat_id, "message": "Question"}
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(calls[-1], "exchange")
+            self.assertEqual(response.json()["reply"], "Durable answer")
+            self.assertTrue(response.json()["persisted"]["ok"])
+            self.assertNotIn("append", calls)
+            self.assertNotIn("fixed", calls)
+            fail = True
+            response = self.client.post(
+                "/chat", json={"chat_id": chat_id, "message": "Question"}
+            )
+            self.assertNotEqual(response.status_code, 200)
+            self.assertNotIn("Durable answer", response.text)
 
     def test_indexing_progress_never_requests_cloud_catalog(self):
         def request(command):
@@ -111,6 +168,48 @@ class CloudConversationTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_bootstrap_paginates_once_per_batch_and_never_uploads_local_history(self):
+        chat_id = str(uuid.uuid4())
+        calls = []
+
+        def request(command):
+            calls.append(command)
+            if command["action"] == "fixed":
+                return {"id": chat_id}
+            after = command["after"]
+            return {
+                "chats": [{"id": chat_id, "project_id": None}] if after == 0 else None,
+                "messages": [
+                    {
+                        "id": after + 1,
+                        "chat_id": chat_id,
+                        "role": "user",
+                        "content": "cloud",
+                    }
+                ],
+                "until": 2,
+                "next": 1 if after == 0 else None,
+            }
+
+        general, chats, histories = CloudConversations(self.local, request).bootstrap()
+        self.assertEqual(general, chat_id)
+        self.assertEqual(len(histories[chat_id]), 2)
+        self.assertEqual(
+            [call["action"] for call in calls], ["fixed", "bootstrap", "bootstrap"]
+        )
+        self.assertEqual(calls[-1]["until"], 2)
+        self.assertEqual(len(chats), 1)
+
+    def test_exchange_uses_one_request_with_two_stable_distinct_ids(self):
+        self.store.append_exchange(str(uuid.uuid4()), "question", "answer")
+        self.assertEqual(len(self.calls), 1)
+        command = self.calls[0]
+        self.assertEqual(command["action"], "exchange")
+        self.assertNotEqual(command["requestId"], command["assistantRequestId"])
+        self.assertEqual(
+            (command["user"], command["assistant"]), ("question", "answer")
+        )
 
     def test_fixed_quick_reused_after_reconstruction_and_account_switch(self):
         first = self.store.quick_chat()

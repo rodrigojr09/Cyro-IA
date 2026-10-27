@@ -5,6 +5,24 @@ import { storageMutation, storageStatus } from "./storage";
 
 export const conversationCommand = z.discriminatedUnion("action", [
   z.object({ action: z.literal("list") }).strict(),
+  z
+    .object({
+      action: z.literal("bootstrap"),
+      catalogAfter: z.uuid().nullable().optional(),
+      after: z.number().int().nonnegative().default(0),
+      until: z.number().int().nonnegative().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("exchange"),
+      id: z.uuid(),
+      requestId: z.uuid(),
+      assistantRequestId: z.uuid(),
+      user: z.string().max(32000),
+      assistant: z.string().max(32000),
+    })
+    .strict(),
   z.object({ action: z.literal("storage") }).strict(),
   z.object({ action: z.literal("clear"), confirmed: z.literal(true) }).strict(),
   z
@@ -82,6 +100,80 @@ export async function conversations(
   userId: string,
   command: z.infer<typeof conversationCommand>,
 ) {
+  if (command.action === "bootstrap") {
+    // Keyset pagination loads all history in batches, without one request per chat.
+    // Ownership is checked by the relation on every page; no client-supplied owner.
+    const catalog =
+      command.catalogAfter !== null
+        ? await db.conversation.findMany({
+            where: {
+              userId,
+              ...(command.catalogAfter
+                ? { id: { gt: command.catalogAfter } }
+                : {}),
+            },
+            orderBy: { id: "asc" },
+            take: 50,
+          })
+        : undefined;
+    const until =
+      command.until ??
+      (
+        await db.chatMessage.findFirst({
+          where: { conversation: { userId } },
+          orderBy: { id: "desc" },
+          select: { id: true },
+        })
+      )?.id ??
+      0;
+    const rows =
+      command.after >= until
+        ? []
+        : await db.chatMessage.findMany({
+            where: {
+              conversation: { userId },
+              id: { gt: command.after, lte: until },
+            },
+            orderBy: { id: "asc" },
+            take: 500,
+            select: {
+              id: true,
+              conversationId: true,
+              role: true,
+              content: true,
+              createdAt: true,
+              localAttachmentCount: true,
+            },
+          });
+    // Bound each network response by bytes as well as rows (large pasted texts).
+    const messages: typeof rows = [];
+    let bytes = 0;
+    for (const message of rows) {
+      const size = Buffer.byteLength(JSON.stringify(message));
+      if (messages.length && bytes + size > 2 * 1024 * 1024) break;
+      messages.push(message);
+      bytes += size;
+    }
+    return {
+      catalogNext:
+        catalog?.length === 50 ? catalog[catalog.length - 1].id : null,
+      chats: catalog?.map(view),
+      messages: messages.map((message) => ({
+        id: message.id,
+        chat_id: message.conversationId,
+        role: message.role,
+        content: message.content,
+        created_at: message.createdAt,
+        attachment_count: message.localAttachmentCount,
+      })),
+      until,
+      next:
+        messages.length &&
+        (messages.length < rows.length || rows.length === 500)
+          ? messages[messages.length - 1].id
+          : null,
+    };
+  }
   if (command.action === "storage") return storageStatus(userId);
   if (command.action === "clear")
     return storageMutation(userId, async (tx) => {
@@ -196,6 +288,60 @@ export async function conversations(
       );
     }
     if (row.archived) throw new HttpError(400, "Conversa arquivada.");
+    if (command.action === "exchange") {
+      // Both messages and their summary commit together before the device receives success.
+      const inserted = await tx.chatMessage.createMany({
+        data: [
+          {
+            conversationId: row.id,
+            requestId: command.requestId,
+            role: "user",
+            content: command.user,
+          },
+          {
+            conversationId: row.id,
+            requestId: command.assistantRequestId,
+            role: "assistant",
+            content: command.assistant,
+          },
+        ],
+        skipDuplicates: true,
+      });
+      if (inserted.count !== 0 && inserted.count !== 2)
+        throw new HttpError(409, "Identificador de envio já utilizado.");
+      const saved = inserted.count
+        ? await tx.conversation.update({
+            where: { id: row.id },
+            data: {
+              lastMessageAt: new Date(),
+              summary: (
+                row.summary +
+                "\nuser: " +
+                command.user.slice(0, 500) +
+                "\nassistant: " +
+                command.assistant.slice(0, 500)
+              ).slice(-3000),
+            },
+          })
+        : row;
+      const savedMessages = await tx.chatMessage.findMany({
+        where: {
+          conversationId: row.id,
+          requestId: { in: [command.requestId, command.assistantRequestId] },
+        },
+        orderBy: { id: "asc" },
+      });
+      return {
+        ok: true,
+        chat: view(saved),
+        messages: savedMessages.map((message) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+          created_at: message.createdAt,
+        })),
+      };
+    }
     const inserted = await tx.chatMessage.createMany({
       data: {
         conversationId: row.id,

@@ -36,7 +36,7 @@ async function setup({ saved } = {}) {
       return {
         ok: true,
         data:
-          route === '/workspace'
+          route === '/workspace' || route === '/workspace/bootstrap'
             ? { projects: [], chats: [] }
             : route === '/workspace/view'
               ? { project: null, chats: [], archived_chats: [] }
@@ -185,7 +185,7 @@ test('busca da sidebar encontra chat em projeto recolhido e navegação não usa
   w.jarvisWindow.api = async (route, options) => ({
     ok: true,
     data:
-      route === '/workspace'
+      route === '/workspace' || route === '/workspace/bootstrap'
         ? { projects: [p], chats: [c] }
         : route === '/workspace/view'
           ? {
@@ -243,7 +243,8 @@ test('os botões + criam conversa geral ou oferecem chat e Writer no projeto esc
   };
   w.jarvisWindow.api = async (route, options) => {
     let data;
-    if (route === '/workspace') data = { projects: [project], chats };
+    if (route === '/workspace' || route === '/workspace/bootstrap')
+      data = { projects: [project], chats };
     else if (route === '/workspace/view') {
       const id = JSON.parse(options.body).project_id;
       data = {
@@ -457,7 +458,8 @@ test('menu contextual edita só o chat e arquivados saem da sidebar até restaur
   const base = w.jarvisWindow.api;
   w.jarvisWindow.api = async (route, options) => {
     let data;
-    if (route === '/workspace') data = { projects: [project], chats };
+    if (route === '/workspace' || route === '/workspace/bootstrap')
+      data = { projects: [project], chats };
     else if (route === '/workspace/view') {
       const id = JSON.parse(options.body).project_id;
       data = {

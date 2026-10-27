@@ -265,6 +265,17 @@ class AttachmentApiTests(unittest.TestCase):
                 }
                 history.append(row)
                 return {"ok": True, "id": row["id"]}
+            if command["action"] == "exchange":
+                for role in ("user", "assistant"):
+                    history.append(
+                        {
+                            "id": len(history) + 1,
+                            "role": role,
+                            "content": command[role],
+                            "attachment_count": 0,
+                        }
+                    )
+                return {"ok": True}
             self.fail("Unexpected Cloud storage operation")
 
         create = AsyncMock(return_value=test_jarvis.completion("Analysis completed."))

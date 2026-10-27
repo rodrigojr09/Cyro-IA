@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="6.0.1" if CLOUD else "2.0.1-dev.0",
+    version="6.0.2" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -251,6 +251,10 @@ def export_attachment(req: ExportAttachment):
 class WorkspaceRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     project_id: str | None = None
+
+
+class WorkspaceViewRequest(WorkspaceRequest):
+    include_chats: bool = True
 
 
 class ProjectRequest(WorkspaceRequest):
@@ -468,8 +472,47 @@ def workspace():
     }
 
 
+@app.get("/workspace/bootstrap")
+def workspace_bootstrap():
+    projects = store.projects()
+    if CLOUD:
+        general_id, chats, histories = store.bootstrap()
+    else:
+        general_id = store.general_chat()
+        with database(store.registry) as con:
+            chats = [dict(row) for row in con.execute("SELECT * FROM chats")]
+        histories = {}
+    active_projects = {project["id"] for project in projects}
+    chats = [
+        row
+        for row in chats
+        if row["project_id"] is None or row["project_id"] in active_projects
+    ]
+    for row in chats:
+        if not CLOUD or row["project_id"]:
+            collected, before = [], None
+            while True:
+                page = store.history(row["id"], before=before)
+                collected = page + collected
+                if len(page) < 100:
+                    break
+                before = page[0]["id"]
+            histories[row["id"]] = collected
+        histories[row["id"]] = attachment_store.history(
+            row["id"],
+            histories.get(row["id"], []),
+            attachment_owner if CLOUD else "local",
+        )
+    return {
+        "projects": projects,
+        "chats": chats,
+        "histories": histories,
+        "general_chat_id": general_id,
+    }
+
+
 @app.post("/workspace/view")
-async def workspace_view(req: WorkspaceRequest):
+async def workspace_view(req: WorkspaceViewRequest):
     if chat_lock.locked():
         raise HTTPException(409, "Aguarde a operação em andamento.")
     project = store.project(req.project_id) if req.project_id else None
@@ -488,7 +531,9 @@ async def workspace_view(req: WorkspaceRequest):
         and not (store.project_dir(project["id"]) / "IDEIA.md").is_file()
     ):
         store.export_knowledge(project["id"])
-    if CLOUD and not req.project_id:
+    if not req.include_chats:
+        active, archived = [], []
+    elif CLOUD and not req.project_id:
         rows = await asyncio.to_thread(store.request, {"action": "list"})
         active = [row for row in rows if not row["archived"]]
         archived = [row for row in rows if row["archived"]]
@@ -859,8 +904,11 @@ async def process_chat(req: ChatRequest):
         if attachment_ids
         else []
     )
-    is_quick = not chat_info["project_id"] and chat_id == await asyncio.to_thread(
-        store.quick_chat, create=False
+    is_quick = (
+        chat_info.get("slot") == "quick"
+        if CLOUD and not chat_info["project_id"]
+        else not chat_info["project_id"]
+        and chat_id == await asyncio.to_thread(store.quick_chat, create=False)
     )
     if req.quick_project_id and CLOUD:
         # Project context must never be persisted in a general Cloud conversation,
@@ -1099,24 +1147,37 @@ async def process_chat(req: ChatRequest):
         stored_user, stored_reply = memory_summary(req.message), memory_summary(reply)
     else:
         stored_user, stored_reply = req.message, reply
-    if not is_quick and not req.attachments:
+    persisted = None
+    if (
+        CLOUD
+        and hasattr(store, "append_exchange")
+        and not is_quick
+        and not req.attachments
+        and not store.local_chat(chat_id)
+    ):
+        persisted = await asyncio.to_thread(
+            store.append_exchange, chat_id, req.message, reply
+        )
+    else:
+        if not is_quick and not req.attachments:
+            await asyncio.to_thread(
+                store.append,
+                chat_id,
+                "user",
+                req.message if req.chat_id or CLOUD else stored_user,
+            )
         await asyncio.to_thread(
             store.append,
             chat_id,
-            "user",
-            req.message if req.chat_id or CLOUD else stored_user,
+            "assistant",
+            reply if req.chat_id or CLOUD else stored_reply,
+            context_scope=quick_scope,
         )
-    await asyncio.to_thread(
-        store.append,
-        chat_id,
-        "assistant",
-        reply if req.chat_id or CLOUD else stored_reply,
-        context_scope=quick_scope,
-    )
     for action in pending_actions:
         action_bindings[action["confirmation_id"]] = chat_id
     return {
         "reply": reply,
+        "persisted": persisted,
         "pending_actions": pending_actions,
         "speech_text": speech_text(reply) if mode == "programming" else reply[:4000],
         "programming": service.status(),

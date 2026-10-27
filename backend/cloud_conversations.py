@@ -130,6 +130,47 @@ class CloudConversations:
             command["scope"] = context_scope
         return self.request(command)
 
+    def bootstrap(self):
+        general_id = self.general_chat()
+        chats, messages = [], {}
+        after, until, catalog_after = 0, None, None
+        while True:
+            command = {"action": "bootstrap", "after": after}
+            if until is not None:
+                command["until"] = until
+                command["catalogAfter"] = catalog_after
+            page = self.request(command)
+            chats.extend(page.get("chats") or [])
+            for message in page["messages"]:
+                messages.setdefault(message["chat_id"], []).append(message)
+            until = page["until"]
+            catalog_after = page.get("catalogNext")
+            if page["next"] is None and catalog_after is None:
+                break
+            if page["next"] is not None and page["next"] <= after:
+                raise ReadError("Falha ao carregar o histórico. Entre novamente.")
+            after = page["next"] if page["next"] is not None else until
+        with database(self.local.registry) as con:
+            local_rows = [
+                dict(row)
+                for row in con.execute(
+                    "SELECT * FROM chats WHERE project_id IS NOT NULL"
+                )
+            ]
+        return general_id, chats + local_rows, messages
+
+    def append_exchange(self, chat_id, user, assistant):
+        return self.request(
+            {
+                "action": "exchange",
+                "id": identifier(chat_id),
+                "requestId": str(uuid.uuid4()),
+                "assistantRequestId": str(uuid.uuid4()),
+                "user": redact(user),
+                "assistant": redact(assistant),
+            }
+        )
+
     def append(self, chat_id, role, content, context_scope=None, attachment_count=0):
         if self.local_chat(chat_id):
             return self.local.append(chat_id, role, content, context_scope)

@@ -12,6 +12,7 @@ function createQuick({
   openMain,
   quit,
   enabled = true,
+  isReady = () => true,
   stateStorage = null,
   now = () => performance.now(),
   schedule = setInterval,
@@ -100,6 +101,7 @@ function createQuick({
       expanded,
       answerVisible,
       busy,
+      ready: isReady(),
       pinned,
       answer,
       question,
@@ -263,6 +265,7 @@ function createQuick({
   }
   async function send(message, useProject) {
     if (disposed) throw Error('Quick Chat encerrado.');
+    if (!isReady()) throw Error('Aguarde o carregamento das suas informações e histórico.');
     if (busy) throw Error('Aguarde a resposta atual.');
     if (
       typeof message !== 'string' ||

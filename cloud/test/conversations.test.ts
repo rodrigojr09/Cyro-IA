@@ -10,7 +10,11 @@ const userA = randomUUID(),
   userB = randomUUID();
 let owner = userA;
 const matches = (row: any, where: any) =>
-  Object.entries(where).every(([key, value]) => row[key] === value);
+  Object.entries(where).every(([key, value]: any) =>
+    value && typeof value === "object" && "gt" in value
+      ? row[key] > value.gt
+      : row[key] === value,
+  );
 const fake: any = {
   conversation: {
     deleteMany: async ({ where }: any) => {
@@ -38,8 +42,11 @@ const fake: any = {
       } else Object.assign(row, update);
       return row;
     },
-    findMany: async ({ where }: any) =>
-      rows.filter((row) => matches(row, where)),
+    findMany: async ({ where, take, orderBy }: any) => {
+      const result = rows.filter((row) => matches(row, where));
+      if (orderBy?.id) result.sort((a, b) => a.id.localeCompare(b.id));
+      return take === undefined ? result : result.slice(0, take);
+    },
     findFirst: async ({ where }: any) =>
       rows.find((row) => matches(row, where)),
     createMany: async ({ data }: any) => {
@@ -78,6 +85,12 @@ const fake: any = {
     findUniqueOrThrow: async ({ where }: any) =>
       messages.find((row) => matches(row, where.conversationId_requestId)),
     createMany: async ({ data }: any) => {
+      if (Array.isArray(data)) {
+        let count = 0;
+        for (const row of data)
+          count += (await fake.chatMessage.createMany({ data: row })).count;
+        return { count };
+      }
       if (
         messages.some(
           (row) =>
@@ -93,16 +106,38 @@ const fake: any = {
       });
       return { count: 1 };
     },
-    findMany: async ({ where, take }: any) =>
+    findFirst: async ({ where }: any) =>
       messages
-        .filter(
-          (row) =>
-            row.conversationId === where.conversationId &&
-            (!where.id || row.id < where.id.lt) &&
-            (where.scope === undefined || row.scope === where.scope),
+        .filter((row) =>
+          rows.some(
+            (chat) =>
+              chat.id === row.conversationId &&
+              chat.userId === where.conversation.userId,
+          ),
         )
-        .reverse()
-        .slice(0, take),
+        .at(-1) || null,
+    findMany: async ({ where, take, orderBy }: any) => {
+      let result = messages.filter(
+        (row) =>
+          (!where.conversationId ||
+            row.conversationId === where.conversationId) &&
+          (!where.conversation ||
+            rows.some(
+              (chat) =>
+                chat.id === row.conversationId &&
+                chat.userId === where.conversation.userId,
+            )) &&
+          (!where.id ||
+            ((where.id.lt === undefined || row.id < where.id.lt) &&
+              (where.id.gt === undefined || row.id > where.id.gt) &&
+              (where.id.lte === undefined || row.id <= where.id.lte))) &&
+          (where.scope === undefined || row.scope === where.scope),
+      );
+      result = result.sort((a, b) =>
+        orderBy?.id === "asc" ? a.id - b.id : b.id - a.id,
+      );
+      return take === undefined ? result : result.slice(0, take);
+    },
   },
   session: {
     findUnique: async ({ where }: any) =>
@@ -447,4 +482,176 @@ test("read-only chat access and fixed reuse do not invoke storage mutations or q
     fake.$transaction = transaction;
     fake.$queryRaw = quota;
   }
+});
+
+test("bootstrap batches all histories with a high-water mark and keeps other accounts private", async () => {
+  const { conversations } = await import("../lib/conversations");
+  const chat = (await conversations(userA, {
+    action: "fixed",
+    slot: "general",
+  })) as any;
+  const other = (await conversations(userB, {
+    action: "fixed",
+    slot: "general",
+  })) as any;
+  for (let index = 0; index < 501; index++)
+    await fake.chatMessage.createMany({
+      data: {
+        conversationId: chat.id,
+        requestId: randomUUID(),
+        role: "user",
+        content: "A",
+      },
+    });
+  await fake.chatMessage.createMany({
+    data: {
+      conversationId: other.id,
+      requestId: randomUUID(),
+      role: "user",
+      content: "PRIVATE_B",
+    },
+  });
+  const first = (await conversations(userA, {
+    action: "bootstrap",
+    after: 0,
+  })) as any;
+  assert.equal(first.messages.length, 500);
+  assert.ok(first.chats.every((row: any) => row.id !== other.id));
+  await fake.chatMessage.createMany({
+    data: {
+      conversationId: chat.id,
+      requestId: randomUUID(),
+      role: "user",
+      content: "NEW_AFTER_BOOTSTRAP",
+    },
+  });
+  const second = (await conversations(userA, {
+    action: "bootstrap",
+    after: first.next,
+    until: first.until,
+    catalogAfter: first.catalogNext,
+  })) as any;
+  assert.equal(second.chats, undefined);
+  assert.equal(second.next, null);
+  assert.ok(second.messages.length >= 1);
+  assert.ok(
+    [...first.messages, ...second.messages].every(
+      (row: any) =>
+        row.content !== "PRIVATE_B" && row.content !== "NEW_AFTER_BOOTSTRAP",
+    ),
+  );
+  assert.equal(
+    new Set([...first.messages, ...second.messages].map((row: any) => row.id))
+      .size,
+    first.messages.length + second.messages.length,
+  );
+});
+
+test("exchange persists both roles with one transaction and retries do not duplicate the pair", async () => {
+  const { conversations } = await import("../lib/conversations");
+  const chat = (await conversations(userA, {
+    action: "create",
+    title: "Exchange",
+    requestId: randomUUID(),
+  })) as any;
+  const command = {
+    action: "exchange" as const,
+    id: chat.id,
+    requestId: randomUUID(),
+    assistantRequestId: randomUUID(),
+    user: "Question",
+    assistant: "Saved answer",
+  };
+  const transaction = fake.$transaction;
+  let transactions = 0;
+  fake.$transaction = async (callback: any) => {
+    transactions++;
+    return callback(fake);
+  };
+  try {
+    const before = messages.length;
+    await conversations(userA, command);
+    assert.equal(transactions, 1);
+    assert.deepEqual(
+      messages.slice(before).map((row) => [row.role, row.content]),
+      [
+        ["user", "Question"],
+        ["assistant", "Saved answer"],
+      ],
+    );
+    await conversations(userA, command);
+    assert.equal(messages.length, before + 2);
+    await assert.rejects(conversations(userB, command), /Conversa inexistente/);
+    await conversations(userA, {
+      action: "change",
+      id: chat.id,
+      archived: true,
+    });
+    await assert.rejects(
+      conversations(userA, {
+        ...command,
+        requestId: randomUUID(),
+        assistantRequestId: randomUUID(),
+      }),
+      /arquivada/,
+    );
+    await conversations(userA, {
+      action: "change",
+      id: chat.id,
+      archived: false,
+    });
+  } finally {
+    fake.$transaction = transaction;
+  }
+});
+
+test("bootstrap bounds large UTF-8 histories and paginates the catalog without losing rows", async () => {
+  const { conversations } = await import("../lib/conversations");
+  const account = randomUUID();
+  const ids: string[] = [];
+  for (let index = 0; index < 51; index++) {
+    const id = randomUUID();
+    ids.push(id);
+    await fake.conversation.createMany({
+      data: { id, userId: account, title: "Large history" },
+    });
+  }
+  for (let index = 0; index < 80; index++)
+    await fake.chatMessage.createMany({
+      data: {
+        conversationId: ids[0],
+        requestId: randomUUID(),
+        role: "user",
+        content: "😀".repeat(16000),
+      },
+    });
+  let after = 0,
+    until: number | undefined,
+    catalogAfter: string | null | undefined;
+  const seen = new Set<number>(),
+    catalog = new Set<string>();
+  let batches = 0;
+  while (true) {
+    const page = (await conversations(account, {
+      action: "bootstrap",
+      after,
+      until,
+      catalogAfter,
+    })) as any;
+    assert.ok(Buffer.byteLength(JSON.stringify(page)) < 3500000);
+    for (const row of page.chats || []) catalog.add(row.id);
+    for (const row of page.messages) {
+      assert.ok(!seen.has(row.id));
+      seen.add(row.id);
+    }
+    batches++;
+    until = page.until;
+    catalogAfter = page.catalogNext;
+    if (page.next === null && catalogAfter === null) break;
+    after = page.next ?? until;
+    assert.ok(batches < 10);
+  }
+  assert.equal(seen.size, 80);
+  assert.equal(catalog.size, 51);
+  assert.ok(batches > 1);
 });

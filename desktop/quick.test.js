@@ -7,7 +7,7 @@ const fs = require('node:fs'),
 const { pathToFileURL } = require('node:url');
 const core = require('./quick-core'),
   { createQuick } = require('./quick-controller');
-function fixture(directory, backend) {
+function fixture(directory, backend, isReady = () => true) {
   let now = 0,
     tick,
     opened = [],
@@ -117,6 +117,7 @@ function fixture(directory, backend) {
           };
     },
     dataDir: directory,
+    isReady,
     mainWindow: () => main,
     openMain: (id) => opened.push(id),
     quit: () => quit++,
@@ -493,4 +494,20 @@ test('ícone flutuante mantém margem de 24 DIP, inclusive em monitor com origem
     x: -1896,
     y: 24,
   });
+});
+
+test('Quick Chat refuses sending until the login preload completes', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cyro-ready-'));
+  let ready = false;
+  const state = fixture(directory, null, () => ready);
+  try {
+    await assert.rejects(state.invoke('composer', 'send', 'Question', false), /carregamento/);
+    assert.ok(!state.requests.some((row) => row[0] === '/quick/chat'));
+    ready = true;
+    await state.invoke('composer', 'send', 'Question', false);
+    assert.equal(state.requests.filter((row) => row[0] === '/quick/chat').length, 1);
+  } finally {
+    state.controller.destroy();
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
 });

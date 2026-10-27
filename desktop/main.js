@@ -55,6 +55,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ['/programming/status', 'GET'],
     ['/programming/revoke', 'POST'],
     ['/workspace', 'GET'],
+    ['/workspace/bootstrap', 'GET'],
     ['/workspace/progress', 'GET'],
     ['/storage', 'GET'],
     ['/projects/settings', 'POST'],
@@ -115,7 +116,14 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       ].includes(route)
     );
   }
+  let workspaceLoaded = false;
   async function backend(route, method, body) {
+    if (
+      process.env.JARVIS_CLOUD === '1' &&
+      ['/quick/chat', '/chat'].includes(route) &&
+      !workspaceLoaded
+    )
+      throw Error('Aguarde o carregamento das suas informações e histórico.');
     if (process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1')
       throw Error('Entre com sua conta.');
     try {
@@ -128,6 +136,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         signal: AbortSignal.timeout(180000),
       });
       const result = { ok: response.ok, data: await response.json() };
+      if (route === '/workspace/bootstrap') workspaceLoaded = result.ok;
       if (result.ok && mutatesWorkspace(route, method)) notifyWorkspaceChanged();
       return result;
     } catch {
@@ -530,6 +539,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       }
       let result;
       if (baseRoute === '/chat' && process.env.JARVIS_CLOUD === '1') {
+        if (!workspaceLoaded)
+          throw Error('Aguarde o carregamento das suas informações e histórico.');
         if (activeStreams.has(event.sender.id)) throw Error('Uma resposta já está sendo gerada.');
         const controller = new AbortController();
         activeStreams.set(event.sender.id, controller);
@@ -542,14 +553,18 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
             redirect: 'error',
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(180000)]),
           });
-          result = await require('./services/local-stream').consume(response, (delta) => {
-            if (!event.sender.isDestroyed()) event.sender.send('jarvis:stream-delta', delta);
-          });
+          // Only reveal the final result after server-side persistence succeeds.
+          result = await require('./services/local-stream').consume(response, () => {});
         } finally {
           activeStreams.delete(event.sender.id);
         }
       } else result = await backend(route, method, options.body);
-      if (result.ok && baseRoute === '/chat' && process.env.JARVIS_CLOUD === '1')
+      if (
+        result.ok &&
+        baseRoute === '/chat' &&
+        process.env.JARVIS_CLOUD === '1' &&
+        !result.data?.persisted?.chat
+      )
         notifyWorkspaceChanged();
       if (result.ok && result.data?.spotify)
         for (const window of BrowserWindow.getAllWindows?.() || [])
@@ -612,13 +627,17 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         backend,
         dataDir,
         mainWindow: () => win,
+        isReady: () => process.env.JARVIS_CLOUD !== '1' || workspaceLoaded,
         openMain: showMain,
         quit: quitJarvis,
         enabled: initialSettings.quickChat !== false,
         stateStorage,
       });
     }
-    app.on('jarvis:session-changed', syncQuick);
+    app.on('jarvis:session-changed', (active) => {
+      workspaceLoaded = false;
+      syncQuick(active);
+    });
     syncQuick(process.env.JARVIS_CLOUD !== '1' || process.env.JARVIS_AUTHENTICATED === '1');
   }
   app.whenReady().then(() => {

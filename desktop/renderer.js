@@ -243,6 +243,7 @@ async function speak(text) {
 }
 let preflighting = false;
 async function submit(clipboardText, expectedContext) {
+  if (window.jarvisWorkspace && !window.jarvisWorkspace.ready) return false;
   if (window.jarvisWriterUI?.embeddedActive) {
     if (send.disabled || window.jarvisStorageUsage?.blocked || window.jarvisAttachments?.has())
       return false;
@@ -325,6 +326,7 @@ async function submit(clipboardText, expectedContext) {
         ...(attachmentIds.length ? { attachments: attachmentIds } : {}),
       }),
     });
+    window.jarvisWorkspace?.commit(data.persisted);
     analyzing = false;
     clearTimeout(pollTimer);
     showProject(data.programming);
@@ -430,7 +432,7 @@ window.jarvisWindow.onOpenChat?.((id) => {
   quickToOpen = id;
   void openQueuedQuick();
 });
-(async () => {
+async function initializeApp() {
   try {
     await api('/health');
     if (window.jarvisWorkspace) {
@@ -445,9 +447,17 @@ window.jarvisWindow.onOpenChat?.((id) => {
     status.textContent = 'Conectado';
     await refreshProject();
   } catch {
-    status.textContent = 'Serviço local indisponível — reinicie o Cyro';
+    status.textContent = 'Não foi possível carregar seus dados. ';
+    const retry = document.createElement('button');
+    retry.textContent = 'Tentar novamente';
+    retry.onclick = () => {
+      retry.disabled = true;
+      void initializeApp();
+    };
+    status.appendChild(retry);
   }
-})();
+}
+void initializeApp();
 
 document.getElementById('logout')?.addEventListener('click', async () => {
   await window.jarvisAuth.logout();
