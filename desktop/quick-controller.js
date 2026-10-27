@@ -474,10 +474,10 @@ function createQuick({
     tray.setToolTip('Cyro IA · Quick Chat');
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Abrir Cyro IA', click: () => openMain() },
+        { label: 'Abrir Cyro', click: () => openMain() },
         { label: 'Quick Chat', click: toggle },
         { type: 'separator' },
-        { label: 'Encerrar Cyro IA', click: quit },
+        { label: 'Encerrar Cyro', click: quit },
       ]),
     );
     tray.on('double-click', () => openMain());

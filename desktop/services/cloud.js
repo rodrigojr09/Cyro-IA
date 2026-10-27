@@ -65,7 +65,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         throw Error('Cloud indisponível.');
       }
       const responsePayload = await response.json();
-      state = { status: 'active', message: 'Conectado ao Cyro IA Cloud.' };
+      state = { status: 'active', message: 'Conectado ao Cyro Cloud.' };
       return responsePayload;
     } catch (error) {
       if (state.status !== 'revoked' && !error.spotify)
@@ -138,7 +138,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         email: input.email.trim().toLowerCase(),
         password: input.password,
         deviceId,
-        name: String(name).slice(0, 100) || 'Cyro IA Desktop',
+        name: String(name).slice(0, 100) || 'Cyro Desktop',
       }),
       signal: AbortSignal.timeout(20000),
     });
@@ -149,7 +149,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
       throw Error('Resposta de login inválida.');
     session = { origin: base, credential: value.credential, deviceId, expiresAt: value.expiresAt };
     await persist();
-    state = { status: 'active', message: 'Conectado ao Cyro IA Cloud.' };
+    state = { status: 'active', message: 'Conectado ao Cyro Cloud.' };
     return session;
   }
   async function logout() {

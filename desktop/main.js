@@ -274,12 +274,12 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ipcMain.handle('jarvis:open-backups', async (event) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       if (process.env.JARVIS_CLOUD === '1')
-        throw Error('Backups Cloud: encerre o Cyro IA e copie a pasta local de dados.');
+        throw Error('Backups Cloud: encerre o Cyro e copie a pasta local de dados.');
       if (!app.isPackaged) throw Error('Use o módulo portable_backup no desenvolvimento.');
       const answer = await dialog.showMessageBox(win, {
         type: 'question',
         title: 'Backups do Cyro IA',
-        message: 'Encerrar o Cyro IA e abrir o gerenciador de backups?',
+        message: 'Encerrar o Cyro e abrir o gerenciador de backups?',
         detail:
           'O backend será encerrado antes de copiar ou restaurar bancos. Aguarde o término antes de remover o dispositivo.',
         buttons: ['Cancelar', 'Encerrar e abrir backups'],
@@ -303,7 +303,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         const answer = await dialog.showMessageBox(win, {
           type: 'question',
           title: 'Cyro IA',
-          message: `Encerrar o Cyro IA para ${label}?`,
+          message: `Encerrar o Cyro para ${label}?`,
           buttons: ['Cancelar', 'Continuar'],
           defaultId: 0,
           cancelId: 0,
@@ -369,7 +369,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       const confirmation = await dialog.showMessageBox(win, {
         type: 'question',
         title: 'Autorizar análise somente leitura',
-        message: 'Permitir que o Cyro IA leia código nesta pasta e nas subpastas?',
+        message: 'Permitir que o Cyro leia código nesta pasta e nas subpastas?',
         detail:
           selectedPath +
           '\nPrimeiro você escolherá os arquivos e pastas usados na análise, sem consumo de tokens. A OpenAI será usada somente após confirmar a seleção. A pasta original não será modificada.',
@@ -666,7 +666,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   });
 
   process.on('uncaughtException', (error) => {
-    console.error('ERRO Cyro IA: operação interrompida.');
+    console.error('ERRO Cyro: operação interrompida.');
   });
 
   app.on('before-quit', (event) => {
@@ -713,6 +713,6 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     }
     quitting = true;
     quickController?.destroy();
-    console.log('Cyro IA está encerrando...');
+    console.log('Cyro está encerrando...');
   });
 }

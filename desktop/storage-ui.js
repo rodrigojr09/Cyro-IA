@@ -55,7 +55,7 @@ window.jarvisStorageUsage = (() => {
     }
     banner.hidden = !blocked;
     banner.textContent = blocked
-      ? 'Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro IA.'
+      ? 'Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro.'
       : '';
     if (blocked) window.jarvisUI?.stopVoice();
     window.jarvisWorkspace?.controls();

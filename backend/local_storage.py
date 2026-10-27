@@ -7,7 +7,7 @@ from pathlib import Path
 from programming.security import ReadError
 from project_store import database
 
-STORAGE_MESSAGE = "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro IA."
+STORAGE_MESSAGE = "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro."
 
 
 class StorageFullError(ReadError):

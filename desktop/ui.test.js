@@ -264,10 +264,10 @@ test('os botões + criam conversa geral ou oferecem chat e Writer no projeto esc
   w.document.querySelector('#project-list .navigation-add').click();
   assert.deepEqual(
     [...w.document.querySelectorAll('[role="menuitem"]')].map((x) => x.textContent),
-    ['Chat do projeto', 'Cyro IA Writer'],
+    ['Chat do projeto', 'Cyro Writer'],
   );
   [...w.document.querySelectorAll('[role="menuitem"]')]
-    .find((x) => x.textContent === 'Cyro IA Writer')
+    .find((x) => x.textContent === 'Cyro Writer')
     .click();
   await new Promise(setImmediate);
   assert.equal(selectedWriter, project.id);

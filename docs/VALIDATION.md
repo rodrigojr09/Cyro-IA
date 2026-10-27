@@ -1,3 +1,9 @@
+# Validacao 6.0.1 - apelido Cyro
+
+Em 27/10/2026: mensagens, botoes, textos de apoio e apresentacao do assistente usam Cyro; logos e titulos mantem Cyro IA. A regra foi registrada no AGENTS.md. Passaram 161 testes Desktop, 88 Cloud, 2 de identidade, 6 de Quick Chat e 8 de empacotamento/versionamento. A revisao final passou ainda por 33 testes focados de interface/workspace e pelo smoke Electron real com dados Cloud simulados. Verificador de repositorio e git diff --check aprovados.
+
+Esta revisao altera o codigo-fonte; o instalador anterior nao foi recompilado para incluir estes textos. Sem validacao de audio pago ou Windows limpo.
+
 # Novo banco Cloud - migracao e superadministrador em 27/10/2026
 
 Por autorizacao explicita do proprietario, o destino DIRECT_URL configurado privadamente foi consultado antes de qualquer alteracao e estava sem tabelas publicas. Prisma validate e migrate deploy concluidos: oito migrations locais aplicadas, sem rollback ou pendencia. Migrate status confirmou schema atualizado. Nenhum reset, db push, importacao de Backup/ ou exclusao de dados de clientes foi executado. A remocao de colunas legadas da migration desktop_login ocorreu somente nas tabelas vazias recem-criadas.

@@ -1,5 +1,7 @@
 # Cyro IA 6.0.1 — em desenvolvimento
 
+- Padronizado o apelido Cyro nas conversas, mensagens, instruções e textos de apoio; Cyro IA reservado a logos e títulos. Identidade compartilhada orienta o mesmo uso no chat, Quick Chat e Writer. Sem alteração de versão, dados ou identificadores internos.
+
 - Marca pública alterada para Cyro IA e repositório renomeado para rodrigojr09/Cyro-IA, com autorização explícita. Desktop, Cloud, identidade compartilhada, monograma C e setup atualizados. Identificadores de instalação, arquivos de sessão, dados e IPC mantidos para compatibilidade; histórico JARVIS preservado.
 
 - Versão solicitada pelo proprietário em 27/10/2026 para o setup, após auditoria de Operations Prisma Postgres. Leituras de conversa sem transações/quota de escrita, reutilização de conversa fixa, redução do catálogo remoto, progresso local separado, atualização de presença limitada e métricas amostradas sem conteúdo privado. APIs de autorização continuam revalidadas por requisição. Medições e limitações em docs/performance/.

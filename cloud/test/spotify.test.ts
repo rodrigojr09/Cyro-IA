@@ -290,7 +290,7 @@ test("isolamento por cliente, conta já vinculada e reconexão de conta diferent
     f.service.execute(other, { action: "pause" }),
     /conecte sua conta/,
   );
-  await assert.rejects(f.connect(other), /outra conta Cyro IA/);
+  await assert.rejects(f.connect(other), /outra conta Cyro/);
   f.setProfile("different-user");
   await assert.rejects(f.connect(), /Desconecte/);
   await f.service.disconnect(other);

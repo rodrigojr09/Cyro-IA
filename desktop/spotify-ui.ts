@@ -19,7 +19,7 @@ const bridge = () => (window as unknown as { jarvisSpotify?: Bridge }).jarvisSpo
 bridge()?.onChanged?.(() => window.dispatchEvent(new Event('jarvis:spotify-changed')));
 export async function spotifyRequest(input: Record<string, unknown>) {
   const api = bridge();
-  if (!api) throw Error('Abra o Cyro IA Cloud para usar esta integração.');
+  if (!api) throw Error('Abra o Cyro Cloud para usar esta integração.');
   const result = await api.request(input);
   if (result?.error) {
     const error = Error(result.error) as Error & { retryAfter?: number };
@@ -37,7 +37,7 @@ export function mountSpotifySettings(container: HTMLElement, changed: (value: an
   actions.className = 'spotify-actions';
   const legal = document.createElement('p');
   legal.textContent =
-    'Controle suas músicas pelo chat principal ou Quick Chat. Os comandos exigem uma conta/dispositivo elegível. No modo de desenvolvimento, sua conta precisa estar autorizada no Dashboard Spotify. Busca por nome e playlists não estão disponíveis. Desconectar apaga os tokens no Cyro IA; a revogação adicional pode ser feita na sua conta Spotify.';
+    'Controle suas músicas pelo chat principal ou Quick Chat. Os comandos exigem uma conta/dispositivo elegível. No modo de desenvolvimento, sua conta precisa estar autorizada no Dashboard Spotify. Busca por nome e playlists não estão disponíveis. Desconectar apaga os tokens no Cyro; a revogação adicional pode ser feita na sua conta Spotify.';
   root.append(note, actions, legal);
   container.append(root);
   let transactionId: string | null = null,

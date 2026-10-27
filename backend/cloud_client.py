@@ -51,7 +51,7 @@ def conversation_request(command):
     from programming.security import ReadError
 
     if not _storage_origin or not _storage_credential:
-        raise ReadError("Entre no Cyro IA com sua conta.")
+        raise ReadError("Entre no Cyro com sua conta.")
     attempts = 1 if command.get("action") == "clear" else 2
     for attempt in range(attempts):
         try:
@@ -63,7 +63,7 @@ def conversation_request(command):
                 follow_redirects=False,
             )
             if response.status_code in (401, 403):
-                raise ReadError("Sessão encerrada. Entre novamente no Cyro IA.")
+                raise ReadError("Sessão encerrada. Entre novamente no Cyro.")
             if response.status_code == 507:
                 from local_storage import StorageFullError
 
@@ -116,7 +116,7 @@ async def attachment_identity():
 class Completions:
     async def create(self, **kwargs):
         if _client is None:
-            raise RuntimeError("Entre no Cyro IA com sua conta.")
+            raise RuntimeError("Entre no Cyro com sua conta.")
         # SDK response-only annotations/refusal fields must not break the next tool round.
         allowed = {"role", "content", "tool_call_id", "tool_calls"}
         kwargs["messages"] = [
@@ -187,7 +187,7 @@ class CloudSpeechError(RuntimeError):
 
 # Only messages authored by our Cloud may be displayed; never expose raw SDK errors.
 SPEECH_MESSAGES = {
-    "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro IA.",
+    "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro.",
     "Voz não habilitada pelo administrador.",
     "Chave OpenAI não configurada no Cloud.",
     "Inteligência artificial suspensa.",

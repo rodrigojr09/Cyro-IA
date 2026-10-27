@@ -174,7 +174,7 @@ export default function Dashboard({
           </span>
           <span className="environment">
             <i />
-            Cyro IA Cloud
+            Cyro Cloud
           </span>
         </header>
         <div className="page-heading">
@@ -517,7 +517,7 @@ export default function Dashboard({
           </>
         )}
         <footer>
-          <span>Cyro IA · v{version} · © 2026 Rodrigo Junior</span>
+          <span>Cyro · v{version} · © 2026 Rodrigo Junior</span>
           <span>
             <a href="mailto:rodrigo.macia019@gmail.com">Contato</a>
             {" · "}

@@ -185,7 +185,7 @@ window.jarvisWorkspace = (() => {
     menu.style.top = rect.bottom + 'px';
     for (const [label, writer] of [
       ['Chat do projeto', false],
-      ['Cyro IA Writer', true],
+      ['Cyro Writer', true],
     ]) {
       const entry = button(label, '', () => {
         closeMenu();

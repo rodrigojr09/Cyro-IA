@@ -233,7 +233,7 @@ async function speak(text) {
       playing.pause();
       return;
     }
-    ui?.voiceState('Cyro IA está falando');
+    ui?.voiceState('Cyro está falando');
   } catch (err) {
     if (!ui || generation === ui.audioGeneration) {
       status.textContent = 'Áudio indisponível: ' + err.message;
@@ -313,7 +313,7 @@ async function submit(clipboardText, expectedContext) {
     status.textContent = 'Localizando projeto...';
     pollTimer = setTimeout(refreshProject, 300);
   }
-  status.textContent = analyzing ? 'Localizando projeto...' : 'Cyro IA está pensando...';
+  status.textContent = analyzing ? 'Localizando projeto...' : 'Cyro está pensando...';
   try {
     const data = await api('/chat', {
       method: 'POST',
@@ -445,7 +445,7 @@ window.jarvisWindow.onOpenChat?.((id) => {
     status.textContent = 'Conectado';
     await refreshProject();
   } catch {
-    status.textContent = 'Serviço local indisponível — reinicie o Cyro IA';
+    status.textContent = 'Serviço local indisponível — reinicie o Cyro';
   }
 })();
 

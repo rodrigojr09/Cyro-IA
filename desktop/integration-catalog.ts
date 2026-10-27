@@ -31,7 +31,7 @@ const definitions: IntegrationDefinition[] = [
     name: 'Spotify',
     category: 'Música e entretenimento',
     icon: 'music-2',
-    description: 'Controle suas músicas e reprodução diretamente pelo Cyro IA.',
+    description: 'Controle suas músicas e reprodução diretamente pelo Cyro.',
     status: 'disconnected',
     capabilities: [
       'Controlar a reprodução de músicas.',
@@ -57,7 +57,7 @@ const definitions: IntegrationDefinition[] = [
     name: 'Google Calendar',
     category: 'Produtividade',
     icon: 'calendar-days',
-    description: 'Consulte e organize seus compromissos com auxílio do Cyro IA.',
+    description: 'Consulte e organize seus compromissos com auxílio do Cyro.',
     status: 'coming_soon',
     capabilities: [
       'Consultar a agenda.',
@@ -96,12 +96,12 @@ const definitions: IntegrationDefinition[] = [
     name: 'Google Drive',
     category: 'Arquivos',
     icon: 'hard-drive',
-    description: 'Prepare a integração dos seus arquivos e documentos com o Cyro IA.',
+    description: 'Prepare a integração dos seus arquivos e documentos com o Cyro.',
     status: 'coming_soon',
     capabilities: [
       'Localizar arquivos autorizados.',
       'Consultar informações dos documentos.',
-      'Selecionar conteúdo para trabalhar no Cyro IA.',
+      'Selecionar conteúdo para trabalhar no Cyro.',
     ],
   },
 ];

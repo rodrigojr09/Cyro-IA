@@ -3,7 +3,7 @@ import { HttpError } from "./http";
 import type { Prisma } from "../generated/prisma/client";
 
 export const STORAGE_MESSAGE =
-  "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro IA.";
+  "Limite de memória na nuvem atingido. Apague alguns chats para liberar memória e continuar usando o Cyro.";
 // Logical UTF-8 payload, including summaries and metadata; not Postgres disk size.
 export const STORAGE_HEADROOM = 65536;
 export async function storageStatus(

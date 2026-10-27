@@ -367,7 +367,7 @@ export function createSpotifyService(
         if (other && other.userId !== tx.userId)
           throw new HttpError(
             409,
-            "Esta conta Spotify já está vinculada a outra conta Cyro IA.",
+            "Esta conta Spotify já está vinculada a outra conta Cyro.",
           );
         const data = {
           spotifyUserId: profile.id,
