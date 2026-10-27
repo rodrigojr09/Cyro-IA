@@ -1,3 +1,7 @@
+# JARVIS 5.1.0 — fechamento da v5 em 27/10/2026
+
+- Versão de fechamento definida pelo proprietário em 5.1.0. Manifests/locks, VERSION, FastAPI, título do Desktop, Sobre e guias atuais sincronizados. Os registros e o checksum 5.0.0 permanecem no histórico. 460 testes automatizados, sete smokes Electron e 40 verificações de layout aprovados. Setup 5.1.0 recompilado e auditado, FileVersion/ProductVersion conferidos e reinício com perfil temporário/PATH restrito aprovado; checksum em docs/VALIDATION.md. Sessões, dados, cotas e runtime Electron 44.9.1 preservados; sem migration ou tag de homologação.
+
 # JARVIS 5.0.0 — implementação consolidada em 27/10/2026
 
 Finalização do código v5; homologação externa e tag continuam condicionadas às evidências em [docs/VALIDATION.md](docs/VALIDATION.md).

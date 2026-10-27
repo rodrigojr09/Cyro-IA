@@ -6,6 +6,14 @@ const root = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const version = read("VERSION").trim();
 const errors = [];
+for (const [file, marker] of [
+  ["backend/main.py", `version="${version}" if CLOUD`],
+  ["desktop/index.html", `<title>JARVIS ${version} — Cloud + Desktop</title>`],
+  ["desktop/ui.js", `JARVIS · v${version}`],
+]) {
+  if (!read(file).includes(marker))
+    errors.push(`Versão visível/runtime divergente: ${file}`);
+}
 for (const file of [
   "package.json",
   "cloud/package.json",

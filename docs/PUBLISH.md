@@ -19,7 +19,7 @@ $env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
 python tools/build_cloud_desktop.py
 ```
 
-`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v5/JARVIS-Setup-5.0.0.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
+`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v5/JARVIS-Setup-5.1.0.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
 
 A auditoria é automática ao compilar. Depois da conclusão do empacotamento:
 

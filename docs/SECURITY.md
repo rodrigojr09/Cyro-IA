@@ -36,4 +36,4 @@ OAuth Spotify vincula uma transação curta e de uso único à sessão individua
 
 ## Runtime da finalização
 
-Electron atualizado de 44.9.0 para 44.9.1 para incluir a mitigação de certificados intermediários comprometidos, conforme [GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9). A correção do runtime não altera a versão 5.0.0 do produto.
+Electron atualizado de 44.9.0 para 44.9.1 para incluir a mitigação de certificados intermediários comprometidos, conforme [GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9). A correção do runtime não altera a versão 5.1.0 do produto.

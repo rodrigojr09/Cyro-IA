@@ -45,7 +45,7 @@ backend\.venv\Scripts\python.exe tools/start_cloud.py
 
 Para distribuição, configurar JARVIS_CLOUD_ORIGIN com o domínio HTTPS real (localhost é recusado no pacote), instalar requisitos de requirements-build.txt previamente e executar build.bat. A configuração pública da origem é gravada em desktop/electron/cloud-config.json e fica fora do Git. PyInstaller compila cloud_entry.py; electron-builder usa electron/builder.json e NSIS. Não embute .env, banco ou chave OpenAI.
 
-Artefato esperado da v5: `release/v5/JARVIS-Setup-5.0.0.exe`, apontando para `https://cronosjarvis.vercel.app` quando essa origem é configurada no build. O executável não tem assinatura Authenticode. O pipeline exige `npm run check:v5` antes de empacotar. Execute `tools/audit_cloud_artifact.py` e `tools/smoke_cloud_release.py` depois de terminar a compilação; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo. Consulte [PUBLISH.md](PUBLISH.md).
+Artefato esperado da v5: `release/v5/JARVIS-Setup-5.1.0.exe`, apontando para `https://cronosjarvis.vercel.app` quando essa origem é configurada no build. O executável não tem assinatura Authenticode. O pipeline exige `npm run check:v5` antes de empacotar. Execute `tools/audit_cloud_artifact.py` e `tools/smoke_cloud_release.py` depois de terminar a compilação; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo. Consulte [PUBLISH.md](PUBLISH.md).
 
 
 ## Diagnóstico da voz
@@ -60,4 +60,4 @@ O SDK Python utiliza `InternalServerError` também para respostas HTTP 503 do pr
 2. Configurar AUTH_SECRET aleatório, APP_ORIGIN=https://cronosjarvis.vercel.app, OPENAI_API_KEY e modelos permitidos no ambiente seguro da Vercel. Preços são opcionais; sem preço não exibir custo como zero confirmado.
 3. Aplicar todas as migrations, incluindo a de login Desktop v4, e executar o bootstrap seguro do primeiro administrador por CLI com BOOTSTRAP_* temporários. Remover BOOTSTRAP_* depois.
 4. Implantar cloud/ com acesso ao workspace packages/shared e executar os fluxos reais de cadastro, login, sessão, bloqueio de acesso, logout, streaming e limites.
-5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, login automático e preservação dos dados. Somente depois da homologação decidir uma tag v5.0.0; esta finalização não a cria.
+5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, login automático e preservação dos dados. Somente depois da homologação decidir uma tag v5.1.0; esta finalização não a cria.

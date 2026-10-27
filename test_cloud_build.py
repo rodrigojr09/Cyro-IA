@@ -59,6 +59,16 @@ class CloudBuildTests(unittest.TestCase):
         self.assertNotIn(".env", json.dumps(config))
 
     def test_versions_synchronized(self):
+        version = (ROOT / "VERSION").read_text().strip()
+        for name, marker in [
+            ("backend/main.py", f'version="{version}" if CLOUD'),
+            (
+                "desktop/index.html",
+                f"<title>JARVIS {version} — Cloud + Desktop</title>",
+            ),
+            ("desktop/ui.js", f"JARVIS · v{version}"),
+        ]:
+            self.assertIn(marker, (ROOT / name).read_text(encoding="utf-8"))
         paths = [
             "package.json",
             "cloud/package.json",

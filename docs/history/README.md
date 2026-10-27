@@ -18,3 +18,5 @@ Estes documentos registram versões anteriores e decisões durante o desenvolvim
 | [Plano Writer](WRITER-PLAN.md) | Planejamento inicial; o comportamento vigente está no guia Writer. |
 
 Os caminhos de código escritos em texto nesses registros descrevem o repositório da época. Resultados históricos não certificam o binário mais recente. Nenhum arquivo foi importado de `Backup/` nesta organização.
+
+- [Consolidação 5.0.0](V5-CONSOLIDATION-5.0.md): evidências anteriores à escolha de fechamento em 5.1.0.

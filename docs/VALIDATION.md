@@ -1,4 +1,4 @@
-# Validação — JARVIS 5.0.0
+# Validação — JARVIS 5.1.0
 
 Este documento acompanha a implementação atual. Evidências de versões anteriores estão no [arquivo histórico](history/README.md); o relato cronológico de desenvolvimento v5 está em [V5-DEVELOPMENT.md](history/V5-DEVELOPMENT.md).
 
@@ -23,29 +23,24 @@ O runner Electron elimina `ELECTRON_RUN_AS_NODE` apenas no ambiente dos processo
 
 Também é possível executar cada script separado: consulte `package.json` e `desktop/package.json`. Não existe lint ESLint configurado; formatação usa Prettier no JS/TS e Black nos módulos Python revisados. O build de distribuição exige a validação completa antes de empacotar.
 
-## Registro desta finalização
+## Registro da versão 5.1.0
 
-Execução de consolidação em **27/10/2026**:
+Execução completa em **27/10/2026**, com os manifests, título, tela Sobre e backend sincronizados em **5.1.0**. O [registro da consolidação anterior](history/V5-CONSOLIDATION-5.0.md) preserva as evidências e o checksum 5.0.0, sem atribuí-los ao instalador novo.
 
 | Verificação | Resultado |
 | --- | --- |
-| Instalação dos workspaces | `npm ci` na raiz concluído; depois aplicada a correção Electron 44.9.1 e sincronizados os dois locks. |
-| Auditoria npm após a correção | Zero vulnerabilidades conhecidas reportadas. |
-| Repositório | Versões e 36 documentos com links locais válidos; índice sem caminhos privados proibidos. |
+| Repositório | Versões sincronizadas e 37 documentos com links locais válidos; índice sem caminhos privados proibidos. |
 | Ferramentas de validação | 2 testes aprovados. |
 | Cloud | 84 testes aprovados; TypeScript e build de produção aprovados. |
 | Desktop | 149 testes aprovados; TypeScript e bundle aprovados. |
 | Backend Python | 191 testes aprovados. |
-| Iniciadores e empacotamento | 34 testes aprovados. |
+| Iniciadores e empacotamento | 34 testes aprovados, incluindo versões visíveis e runtime. |
 | Electron 44.9.1 | Sete smokes aprovados: principal, Quick Chat, Cloud, sessão, clipboard, Writer e Spotify. |
-| Dashboard | 40 verificações de layout aprovadas, incluindo versão 5.0.0 e consumo. |
-| Formatação | Prettier dos JS/TS/JSON revisados e Black dos seis módulos Python revisados aprovados. |
+| Dashboard | 40 verificações de layout aprovadas, incluindo rodapé 5.1.0 e consumo. |
 
-São **460 testes automatizados**, além dos sete smokes e das 40 verificações de layout. Cloud/IA/Spotify são simulados onde indicado nas fixtures. O smoke de clipboard imprime uma rejeição IPC esperada ao testar uma solicitação não autorizada; isso não é uma falha da suíte.
+São **460 testes automatizados**, além dos sete smokes e das 40 verificações de layout. Provedores externos são simulados onde indicado nas fixtures. A rejeição IPC não autorizada impressa pelo smoke de clipboard é esperada. O runtime permanece fixado em Electron 44.9.1; a auditoria npm após essa correção não reportou vulnerabilidades conhecidas, e a mudança para 5.1.0 não altera as versões de dependências.
 
-Uma execução preliminar dos testes de iniciador, durante a reinstalação de dependências, excedeu a espera de dez segundos para o backend de teste. A execução completa posterior passou nos 34 testes; a mensagem de timeout também foi corrigida para informar a duração efetivamente configurada. Nenhuma validação externa foi inferida dessa reexecução.
-
-O empacotamento encontrou a dependência Electron instalada na raiz do workspace e recusou a faixa ^44.9.1. A versão foi fixada em 44.9.1 nos manifests/locks e um teste impede regressão. A suíte de iniciadores/compilação foi reexecutada com 34 testes aprovados; o empacotamento foi retomado sobre o backend e os bundles já validados. A auditoria e o teste de reinício do payload final passaram, conforme os dados abaixo.
+A compilação, auditoria e reinicialização do pacote 5.1.0 foram concluídas. Nenhum checksum 5.0.0 é reutilizado na entrega nova.
 
 ## Homologação externa pendente
 
@@ -57,16 +52,16 @@ O empacotamento encontrou a dependência Electron instalada na raiz do workspace
 
 A falta de homologação não é ocultada por mocks. Não criar tag ou afirmar certificação externa com base apenas nos resultados locais.
 
-## Artefato final — 27/10/2026
+## Instalador final 5.1.0 — 27/10/2026
 
-- Arquivo: `release/v5/JARVIS-Setup-5.0.0.exe`.
-- Tamanho: **186.202.959 bytes**.
-- FileVersion/ProductVersion: **5.0.0**; runtime Electron **44.9.1**.
-- SHA-256: `9b6f7911a6d157c2b2ee0aadaf425355f70efc82f820c6c928749ca632448239`.
-- Verificação ao lado do arquivo: `JARVIS-Setup-5.0.0.exe.sha256`.
+- Arquivo: `release/v5/JARVIS-Setup-5.1.0.exe`.
+- Tamanho: **186.203.076 bytes**.
+- FileVersion e ProductVersion: **5.1.0**; runtime Electron **44.9.1**.
+- SHA-256: `bc4833f6e7a0123611b137658b6e395e0afa0a812e7dc75420a0e7ece21ce218`.
+- Arquivo de verificação: `JARVIS-Setup-5.1.0.exe.sha256`.
 - Assinatura Authenticode: **NotSigned**.
 - Origem Cloud embutida e auditada: `https://cronosjarvis.vercel.app`.
 
-PyInstaller concluiu a compilação e o backend congelado passou em `--self-check` com dados de teste. O empacotamento NSIS terminou com sucesso depois da fixação da versão Electron. A auditoria comparou fontes e configuração Cloud no ASAR/runtime e recusou arquivos privados proibidos. O payload final iniciou e reiniciou com perfil temporário e PATH sem Python/Node; identidade, autenticação local e persistência passaram. A execução ocorreu depois de concluída a compactação. O setup não foi instalado sobre o perfil pessoal, nem certificado em Windows limpo. Não houve chamada paga ou OAuth real nessa validação.
+O pipeline completo terminou com sucesso, incluindo PyInstaller e NSIS. O backend congelado passou em `--self-check`. A auditoria comparou fontes e configuração do ASAR/runtime e não encontrou arquivos privados proibidos. Depois de concluído o empacotamento, o payload 5.1.0 iniciou e reiniciou com perfil temporário e PATH sem Python/Node; identidade/versão 5.1.0, autenticação local e persistência passaram.
 
-Logs locais não versionados: `build/v5/finalization.log` e `build/v5/finalization-package.log`. Artefato e checksum permanecem locais; não há upload automático, assinatura digital ou tag de release.
+O executável foi recompilado; não se renomeou o setup 5.0.0. O log local desta execução fica em `build/v5/finalization-5.1.0.log`. Não houve instalação sobre o perfil pessoal, teste de Windows limpo, chamada paga ou OAuth real. Não foram criados tag ou upload de binário para GitHub Release. O artefato 5.0.0 anterior permanece identificado separadamente no histórico.

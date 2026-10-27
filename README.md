@@ -1,6 +1,6 @@
 # JARVIS v5
 
-Assistente Windows com chat principal, Quick Chat, projetos locais, JARVIS Writer e comandos Spotify pelo chat. Versão **5.0.0**.
+Assistente Windows com chat principal, Quick Chat, projetos locais, JARVIS Writer e comandos Spotify pelo chat. Versão **5.1.0**.
 
 A implementação v5 está consolidada. A homologação externa de OAuth completo, áudio pago, microfone físico e instalação/atualização em Windows limpo permanece separada das verificações automatizadas. Não há tag de release homologada. Veja o [estado da v5](docs/V5.md) e as [evidências de validação](docs/VALIDATION.md).
 
@@ -46,7 +46,7 @@ Depois de configurar, `start.bat` inicia o Cloud local, aguarda o login e abre o
 npm run check:v5
 ```
 
-O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v5/JARVIS-Setup-5.0.0.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
+O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v5/JARVIS-Setup-5.1.0.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
 
 ## Documentação e autoria
 
