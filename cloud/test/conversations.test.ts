@@ -399,3 +399,52 @@ test("PostgreSQL migration: unique fixed slots, message retries and cascading de
     await pg.close();
   }
 });
+
+test("read-only chat access and fixed reuse do not invoke storage mutations or quota scans", async () => {
+  const { conversations } = await import("../lib/conversations");
+  const fixed = (await conversations(owner, {
+    action: "fixed",
+    slot: "general",
+  })) as any;
+  const transaction = fake.$transaction;
+  const quota = fake.$queryRaw;
+  fake.$transaction = async () => {
+    throw Error("Unexpected write transaction");
+  };
+  fake.$queryRaw = async () => {
+    throw Error("Unexpected quota scan");
+  };
+  try {
+    assert.equal(
+      (
+        (await conversations(owner, {
+          action: "fixed",
+          slot: "general",
+        })) as any
+      ).id,
+      fixed.id,
+    );
+    assert.equal(
+      ((await conversations(owner, { action: "get", id: fixed.id })) as any).id,
+      fixed.id,
+    );
+    assert.ok(
+      Array.isArray(
+        await conversations(owner, {
+          action: "history",
+          id: fixed.id,
+          limit: 20,
+        }),
+      ),
+    );
+    await assert.rejects(
+      conversations(owner === userA ? userB : userA, {
+        action: "get",
+        id: fixed.id,
+      }),
+    );
+  } finally {
+    fake.$transaction = transaction;
+    fake.$queryRaw = quota;
+  }
+});

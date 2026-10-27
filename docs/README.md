@@ -29,6 +29,10 @@ Os arquivos abaixo descrevem a implementação vigente. Registros antigos ficam 
 - [Spotify pelo chat](SPOTIFY.md)
 - [Relatório de consumo](CONSUMPTION.md)
 
+## Desempenho do banco
+
+- [Auditoria](performance/DATABASE_AUDIT.md), [baseline](performance/BASELINE.md), [otimizações](performance/OPTIMIZATIONS.md) e [resultados](performance/RESULTS.md).
+
 ## Qualidade e histórico
 
 - [Validações e limites das evidências](VALIDATION.md)

@@ -1,3 +1,8 @@
+# JARVIS 6.0.1 — em desenvolvimento
+
+- Versão solicitada pelo proprietário em 27/10/2026 para o setup, após auditoria de Operations Prisma Postgres. Leituras de conversa sem transações/quota de escrita, reutilização de conversa fixa, redução do catálogo remoto, progresso local separado, atualização de presença limitada e métricas amostradas sem conteúdo privado. APIs de autorização continuam revalidadas por requisição. Medições e limitações em docs/performance/.
+- Empacotamento v6 em release/v6 e build/v6, preservando artefatos v5. Smoke de sessão com porta temporária própria. Push ao GitHub e compilação foram autorizados explicitamente pelo proprietário; nenhuma autorização implícita para tag, release ou implantação manual de produção.
+
 # JARVIS 6.0.0 — em desenvolvimento
 
 - Refinamento visual do Desktop: apresentação vazia mantém rolagem no topo, sem texto cortado; remoção da marca central repetida, seis atalhos com descrições mais legíveis e bordas definidas, conversa ativa com destaque reforçado e nota de leitura em tooltip acessível. Quick Chat respeita margem de 24 DIP nas bordas, com elevação, sombra nativa e hover suave. Preferências de movimento reduzido respeitadas. Alterações no código, sem atualização automática do aplicativo instalado.

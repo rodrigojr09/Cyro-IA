@@ -1,3 +1,4 @@
+import { metricIdentity } from "./metrics";
 import { cookies } from "next/headers";
 import { db } from "./db";
 import { hash } from "./crypto";
@@ -24,6 +25,7 @@ export async function admin() {
     session.user.role === "EMPLOYEE"
   )
     throw new HttpError(401, "Sessão inválida.");
+  metricIdentity(session.user.id, session.id);
   return session.user;
 }
 export async function deviceAuth(request: Request) {
@@ -41,10 +43,18 @@ export async function deviceAuth(request: Request) {
       401,
       "Sessão inválida ou acesso bloqueado. Entre novamente.",
     );
-  await db.device.update({
-    where: { id: session.device.id },
-    data: { lastSeenAt: now },
-  });
+  metricIdentity(session.user.id, session.id);
+  // Presence is informational, never an authorization decision. The session above
+  // is still revalidated on every request; only redundant timestamp writes stop.
+  if (
+    !session.device.lastSeenAt ||
+    now.getTime() - session.device.lastSeenAt.getTime() >= 300_000
+  ) {
+    await db.device.update({
+      where: { id: session.device.id },
+      data: { lastSeenAt: now },
+    });
+  }
   return {
     ...session.device,
     user: session.user,

@@ -1,3 +1,4 @@
+import { requestMetrics } from "./metrics";
 import type { ZodType } from "zod";
 export class HttpError extends Error {
   constructor(
@@ -44,19 +45,20 @@ export async function body<T>(
   }
 }
 export function endpoint(handler: (request: Request) => Promise<Response>) {
-  return async (request: Request) => {
-    try {
-      return await handler(request);
-    } catch (error) {
-      if (error instanceof HttpError)
+  return async (request: Request) =>
+    requestMetrics(request, async () => {
+      try {
+        return await handler(request);
+      } catch (error) {
+        if (error instanceof HttpError)
+          return Response.json(
+            { error: error.message },
+            { status: error.status },
+          );
         return Response.json(
-          { error: error.message },
-          { status: error.status },
+          { error: "Operação indisponível. Tente novamente." },
+          { status: 503 },
         );
-      return Response.json(
-        { error: "Operação indisponível. Tente novamente." },
-        { status: 503 },
-      );
-    }
-  };
+      }
+    });
 }

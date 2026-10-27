@@ -89,6 +89,10 @@ export async function conversations(
       return { cleared: true };
     });
   if (command.action === "fixed") {
+    const existing = await db.conversation.findFirst({
+      where: { userId, slot: command.slot },
+    });
+    if (existing && !existing.archived) return view(existing);
     return view(
       await storageMutation(userId, (tx) =>
         tx.conversation.upsert({
@@ -129,16 +133,15 @@ export async function conversations(
       return view(row);
     });
   }
-  return storageMutation(userId, async (tx) => {
-    // Serialize mutations, including delete and message insertion, across devices.
-    await tx.$queryRaw`SELECT id FROM "Conversation" WHERE id=${command.id}::uuid AND "userId"=${userId}::uuid FOR UPDATE`;
-    const row = await tx.conversation.findFirst({
+  // Read paths authenticate ownership without write locks or storage quota scans.
+  if (command.action === "get" || command.action === "history") {
+    const row = await db.conversation.findFirst({
       where: { id: command.id, userId },
     });
     if (!row) throw new HttpError(404, "Conversa inexistente.");
     if (command.action === "get") return view(row);
     if (command.action === "history") {
-      const rows = await tx.chatMessage.findMany({
+      const rows = await db.chatMessage.findMany({
         where: {
           conversationId: row.id,
           ...(command.before ? { id: { lt: command.before } } : {}),
@@ -155,6 +158,14 @@ export async function conversations(
         attachment_count: message.localAttachmentCount,
       }));
     }
+  }
+  return storageMutation(userId, async (tx) => {
+    // Serialize mutations, including delete and message insertion, across devices.
+    await tx.$queryRaw`SELECT id FROM "Conversation" WHERE id=${command.id}::uuid AND "userId"=${userId}::uuid FOR UPDATE`;
+    const row = await tx.conversation.findFirst({
+      where: { id: command.id, userId },
+    });
+    if (!row) throw new HttpError(404, "Conversa inexistente.");
     if (command.action === "change") {
       if (row.slot && (command.delete || command.archived))
         throw new HttpError(400, "Esta conversa fixa é preservada.");

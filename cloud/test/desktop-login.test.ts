@@ -171,3 +171,51 @@ test("administradores sem perfil Desktop podem entrar, renovar e sair sem altera
   }
   user.role = "EMPLOYEE";
 });
+
+test("presence throttle preserves fresh authorization and never accepts a revoked session", async () => {
+  const { deviceAuth } = await import("../lib/auth");
+  const originalFind = fake.session.findUnique;
+  const originalUpdate = fake.device.update;
+  let updates = 0,
+    checks = 0,
+    revoked = false;
+  const session = {
+    id: "fixture-session",
+    userId: user.id,
+    tokenHash: "fixture",
+    expiresAt: new Date(Date.now() + 86400000),
+    device: {
+      id: "fixture-device",
+      userId: user.id,
+      revokedAt: null,
+      lastSeenAt: new Date(),
+    },
+    user: { ...user, status: "ACTIVE", client: {} },
+  };
+  fake.session.findUnique = async () => {
+    checks++;
+    return revoked ? null : session;
+  };
+  fake.device.update = async ({ data }: any) => {
+    updates++;
+    session.device.lastSeenAt = data.lastSeenAt;
+    return session.device;
+  };
+  try {
+    for (let i = 0; i < 10; i++) await deviceAuth(authorized("a".repeat(43)));
+    assert.equal(updates, 0);
+    assert.equal(checks, 10);
+    session.device.lastSeenAt = new Date(Date.now() - 301000);
+    await deviceAuth(authorized("a".repeat(43)));
+    assert.equal(updates, 1);
+    revoked = true;
+    await assert.rejects(
+      deviceAuth(authorized("a".repeat(43))),
+      /inválida|bloqueado/,
+    );
+    assert.equal(checks, 12);
+  } finally {
+    fake.session.findUnique = originalFind;
+    fake.device.update = originalUpdate;
+  }
+});
