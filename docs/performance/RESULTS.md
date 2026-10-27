@@ -24,7 +24,7 @@ A meta de 80% foi superada nos fluxos de leitura/inatividade desta fixture, mas 
 
 Seguranca: isolamento entre contas recusado no benchmark; verificacao de sessao continua em cada requisicao. Sem migration, indice novo, exclusao de dados pessoais ou mudanca de credencial.
 
-Validacao completa, checksum do setup e push serao registrados apos as respectivas execucoes. A v6 arquitetural completa continua com as pendencias de docs/architecture/MIGRATION_PLAN.md; setup 6.0.1 nao equivale a certificacao de todas essas etapas.
+Validacao completa: 481 testes, sete smokes Electron, TypeScript/build e 40 verificacoes de layout aprovados. Setup final Cyro IA 6.0.1 compilado e auditado; checksum e limites em docs/VALIDATION.md. Repositorio Cyro-IA, destino master autorizado. A v6 arquitetural completa continua com as pendencias de docs/architecture/MIGRATION_PLAN.md; setup 6.0.1 nao equivale a certificacao de todas essas etapas.
 
 ## Contadores adicionais da fixture
 

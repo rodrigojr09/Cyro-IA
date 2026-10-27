@@ -2,7 +2,19 @@
 
 Em 27/10/2026 a suite completa foi repetida apos a renomeacao: 88 testes Cloud, 161 Desktop, 195 backend Python, 35 iniciadores/empacotamento e 2 ferramentas Node (481 sem dupla contagem), TypeScript/build Cloud/Desktop e sete smokes Electron aprovados. O contrato adicional verifica productName Cyro IA e preservacao de appId, executavel e pasta de dados JARVIS. Captura da tela inicial com marca C conferida visualmente.
 
-O repositorio foi renomeado pela API autenticada do GitHub para rodrigojr09/Cyro-IA, com autorizacao explicita; origem local atualizada. Push, auditoria final do pacote e checksum serao registrados ao concluir o empacotamento. A identidade comum passou a apresentar-se como Cyro IA. Dados, sessoes, IPC, cookies e identificadores internos existentes nao foram renomeados.
+O repositorio foi renomeado pela API autenticada do GitHub para rodrigojr09/Cyro-IA, com autorizacao explicita; origem local atualizada. Auditoria final e checksum registrados abaixo. A identidade comum passou a apresentar-se como Cyro IA. Dados, sessoes, IPC, cookies e identificadores internos existentes nao foram renomeados.
+
+## Setup final Cyro IA 6.0.1
+
+- Arquivo: `release/v6/Cyro-IA-Setup-6.0.1.exe`; 186,211,907 bytes.
+- SHA-256: `43f189d5fc2657871c3c65f1496c5b1008844392cef2508c54dc8bb785c11728`. Arquivo `.exe.sha256` conferido com calculo independente.
+- Setup ProductName/Version: Cyro IA / 6.0.1. Aplicativo: Cyro IA / 6.0.1.0; executavel JARVIS.exe mantido por compatibilidade.
+- Authenticode: NotSigned; nenhuma assinatura digital adicionada.
+- Pipeline completo, NSIS e auditoria ASAR/runtime aprovados; fontes conferidas e sem arquivos privados proibidos no pacote. Backend congelado passou em --self-check com identificacao Cyro IA. Sem chamada paga.
+- Origem HTTPS preservada: https://cronosjarvis.vercel.app. Repositorio renomeado: https://github.com/rodrigojr09/Cyro-IA, destino de envio master, autorizado pelo proprietario.
+- Artefatos intermediarios com marca JARVIS 6.0.1 foram movidos para release/v6/intermediate-jarvis. Artefatos v5 preservados. Log final: build/v6/cyro-setup-6.0.1.log.
+- Nao foi executado o instalador no perfil pessoal. Windows limpo, atualizacao/desinstalacao reais, audio pago e OAuth real continuam sem homologacao. Inicio/reinicio do payload completo com PATH restrito nao foi repetido porque a porta 8765 esta ocupada pelo aplicativo instalado, preservado; o smoke Electron/FastAPI usa porta temporaria e passou.
+- A alteracao preexistente cloud/next-env.d.ts foi restaurada apos a compilacao e permanece fora dos commits. Backup/ nao foi alterado. Sem migration, tag ou GitHub Release.
 
 # Validacao 6.0.1 - otimizacao de banco e distribuicao
 
