@@ -155,14 +155,20 @@
   margin: 0 auto;
 }
 .composer {
-  border: 1px solid #354254;
+  border: 1px solid #4a5d74;
   border-radius: 15px;
   background: #151e2b;
-  box-shadow: 0 8px 24px #0002;
+  box-shadow: 0 8px 24px #0003;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
   padding: 13px 15px 10px;
 }
 .composer:focus-within {
-  border-color: #4b788f;
+  border-color: #7dd3fc;
+  box-shadow:
+    0 0 0 1px #7dd3fc55,
+    0 8px 24px #0003;
 }
 .composer textarea {
   display: block;
@@ -269,4 +275,9 @@
 }
 .message-copy {
   color: #a0afc0;
+}
+
+:root[data-theme='light'] .composer {
+  background: #fff;
+  border-color: #aebdcd;
 }

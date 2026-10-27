@@ -90,10 +90,10 @@ function createQuick({
   }
   const primary = screen.getPrimaryDisplay().workArea;
   position = position || {
-    x: primary.x + primary.width - 80,
-    y: primary.y + Math.round(primary.height * 0.6),
+    x: primary.x + primary.width - core.ICON_SIZE - 24,
+    y: primary.y + primary.height - core.ICON_SIZE - 24,
   };
-  position = core.clamp(position, display().workArea);
+  position = core.clamp(position, display().workArea, core.ICON_SIZE, 24);
   function state() {
     return {
       config,
@@ -131,7 +131,7 @@ function createQuick({
       minimizable: false,
       maximizable: false,
       fullscreenable: false,
-      hasShadow: kind !== 'orb',
+      hasShadow: true,
       focusable: kind !== 'orb',
       webPreferences: {
         ...(stateStorage ? { partition: 'jarvis-private' } : {}),
@@ -166,7 +166,7 @@ function createQuick({
   safeWindow('response', 360, 230);
   if (process.platform === 'win32') windows.orb.setShape(core.circle());
   function layout() {
-    position = core.clamp(position, display().workArea);
+    position = core.clamp(position, display().workArea, core.ICON_SIZE, 24);
     windows.orb.setBounds({ ...position, width: core.ICON_SIZE, height: core.ICON_SIZE });
     const bounds = core.panels(position, display().workArea, responseHeight, composerHeight);
     windows.composer.setBounds(bounds.input);

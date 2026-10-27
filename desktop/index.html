@@ -50,8 +50,17 @@
         </nav>
         <div class="sidebar-bottom">
           <button id="logout"><i data-lucide="log-out"></i>Sair da conta</button>
-          <button id="settings-open"><i data-lucide="settings-2"></i>Configurações</button
-          ><span class="privacy"><span class="dot"></span> Seus projetos em modo leitura</span>
+          <div class="sidebar-account-actions">
+            <button id="settings-open"><i data-lucide="settings-2"></i>Configurações</button>
+            <button
+              class="privacy"
+              type="button"
+              aria-label="Seus projetos em modo leitura"
+              title="Seus projetos em modo leitura. Alterações no Writer exigem aprovação."
+            >
+              <i data-lucide="shield-check" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
       </aside>
       <section class="main-panel">
@@ -85,7 +94,6 @@
         </div>
         <div id="conversation-scroll">
           <section id="welcome">
-            <div class="welcome-mark">J</div>
             <div class="eyebrow">SEU ASSISTENTE PESSOAL</div>
             <h2>Como posso ajudar?</h2>
             <p>

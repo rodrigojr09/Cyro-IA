@@ -40,7 +40,15 @@
       Math.max(config.minSeconds, Math.min(config.maxSeconds, (count / config.wpm) * 60 + 3)) * 1000
     );
   }
-  function clamp(point, area, size = ICON_SIZE) {
+  function clamp(point, area, size = ICON_SIZE, margin = 0) {
+    const insetX = Math.max(0, Math.min(margin, (area.width - size) / 2));
+    const insetY = Math.max(0, Math.min(margin, (area.height - size) / 2));
+    area = {
+      x: area.x + insetX,
+      y: area.y + insetY,
+      width: area.width - 2 * insetX,
+      height: area.height - 2 * insetY,
+    };
     return {
       x: Math.round(Math.max(area.x, Math.min(point.x, area.x + area.width - size))),
       y: Math.round(Math.max(area.y, Math.min(point.y, area.y + area.height - size))),

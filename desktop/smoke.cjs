@@ -180,7 +180,18 @@ app.whenReady().then(async () => {
     );
     assert.equal(await js(`document.querySelectorAll('#sidebar select').length`), 0);
     assert.equal(await js(`document.getElementById('welcome').hidden`), false);
+    win.setSize(1366, 738);
+    await frame();
+    await js('window.jarvisUI.scroll(true)');
+    assert.equal(await js(`document.getElementById('conversation-scroll').scrollTop`), 0);
+    assert.equal(
+      await js(
+        `document.querySelector('#welcome .eyebrow').getBoundingClientRect().top >= document.getElementById('conversation-scroll').getBoundingClientRect().top`,
+      ),
+      true,
+    );
     await shot('jarvis-v1-home.png');
+    win.setSize(1280, 850);
     await js(`document.querySelector('.project-item').onclick()`);
     await js(`document.querySelector('.chat-item[title="Investigando a autenticação"]').onclick()`);
     await js(

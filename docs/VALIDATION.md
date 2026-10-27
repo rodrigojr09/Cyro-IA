@@ -19,6 +19,10 @@ Total sem dupla contagem: **468 testes automatizados**, mais seis smokes Electro
 Não houve implantação, migration de banco, chamada paga, OAuth real, instalação v6 ou teste em Windows limpo. A migração permanece parcial: memória GLOBAL_USER, React, registro/orquestração central completos, cache Writer/Quick compartilhado, eventos/revisões remotos e rascunhos ao F5 ainda pendentes. Veja o [plano incremental](architecture/MIGRATION_PLAN.md). Não marcar v6 estável ou pronta para distribuição.
 
 
+## Refinamento visual do Desktop — 27/10/2026
+
+155 testes Desktop passaram na execução inicial; após acrescentar a regressão da margem, os 32 testes direcionados de Quick/UI passaram. TypeScript Desktop, verificação do repositório e smokes Electron principal/Quick aprovados. O smoke principal verifica rolagem no topo e eyebrow visível em 1366×738; captura conferida visualmente com os seis cartões inteiros. O smoke Quick passou após ajustar a expectativa antiga de 20 DIP para a nova margem de 24 DIP. Dados de serviços simulados e perfis temporários; sombra física do shell depende do Windows. Sem novo instalador, alteração de perfil pessoal ou implantação Cloud. Esta mudança afeta o renderer Electron; o dashboard Cloud não contém a tela da imagem.
+
 # Validação — JARVIS 5.1.0
 
 Este documento acompanha a implementação atual. Evidências de versões anteriores estão no [arquivo histórico](history/README.md); o relato cronológico de desenvolvimento v5 está em [V5-DEVELOPMENT.md](history/V5-DEVELOPMENT.md).

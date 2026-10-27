@@ -183,7 +183,7 @@ app.whenReady().then(async () => {
     await orb.webContents.executeJavaScript(
       `window.quick.move(${area.x + 20},${area.y + 100},true)`,
     );
-    assert.equal(orb.getBounds().x, area.x + 20);
+    assert.equal(orb.getBounds().x, area.x + 24);
     await response.webContents.executeJavaScript('window.quick.openMain()');
     assert.deepEqual(opened, ['quick-fixture']);
     await response.webContents.executeJavaScript('window.quick.pin(false)');

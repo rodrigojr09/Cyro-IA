@@ -58,7 +58,7 @@ body.large-text .markdown {
   padding: 0;
 }
 #welcome {
-  margin-top: clamp(30px, 7vh, 85px);
+  margin-top: clamp(24px, 4vh, 44px);
   margin-bottom: 25px;
 }
 .message.user .markdown {

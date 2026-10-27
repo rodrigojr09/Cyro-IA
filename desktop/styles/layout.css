@@ -93,7 +93,7 @@
   min-width: 0;
 }
 .nav-item.active {
-  background: #203344;
+  background: #263e51;
   color: #a9e7ff;
 }
 .nav-item .nav-title {
@@ -125,7 +125,7 @@
 }
 .chat-item.active {
   color: var(--text);
-  background: #1e2d40;
+  background: #26394d;
 }
 .chat-item.archived {
   font-style: italic;
@@ -260,7 +260,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin: 36px auto 0;
+  margin: 28px auto 0;
   max-width: 650px;
 }
 .suggestions button {
@@ -268,7 +268,7 @@
   grid-template-columns: 24px 1fr;
   text-align: left;
   justify-content: initial;
-  border: 1px solid var(--border);
+  border: 1px solid #3a485b;
   padding: 18px;
   background: #121a25;
 }
@@ -282,7 +282,8 @@
 }
 .suggestions span {
   font-size: 11px;
-  color: #8190a2;
+  color: #b0bdce;
+  line-height: 1.5;
 }
 .suggestions button:hover {
   border-color: #47728a;
@@ -291,6 +292,7 @@
 
 .nav-item.active {
   box-shadow: inset 3px 0 var(--accent);
+  font-weight: 600;
 }
 #nav-empty {
   color: var(--muted);
@@ -304,4 +306,45 @@
 .search:focus-within {
   border-color: var(--focus);
   box-shadow: 0 0 0 1px var(--focus);
+}
+
+/* Shortcut descriptions and boundaries stay readable in both themes. */
+.suggestions button {
+  row-gap: 6px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.suggestions button:hover {
+  box-shadow: 0 4px 16px #0003;
+}
+.sidebar-bottom .privacy {
+  margin: 0;
+  width: auto;
+  padding: 7px;
+  color: var(--muted);
+}
+.sidebar-account-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-account-actions #settings-open {
+  flex: 1;
+}
+.sidebar-account-actions .privacy svg {
+  width: 15px;
+  height: 15px;
+}
+:root[data-theme='light'] .suggestions button {
+  background: var(--side);
+  border-color: #aebdcd;
+}
+:root[data-theme='light'] .suggestions span {
+  color: #4c5b70;
+}
+:root[data-theme='light'] .nav-item.active {
+  background: #d4e7f3;
+  color: #123f59;
 }

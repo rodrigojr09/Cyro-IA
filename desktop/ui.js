@@ -133,11 +133,16 @@ window.jarvisUI = (() => {
     return area.scrollHeight - area.scrollTop - area.clientHeight < 110;
   }
   function scroll(force = false) {
+    if (!$('welcome').hidden) {
+      $('conversation-scroll').scrollTop = 0;
+      return;
+    }
     if (force || nearBottom())
       $('conversation-scroll').scrollTop = $('conversation-scroll').scrollHeight;
   }
   function welcome(show) {
     $('welcome').hidden = !show;
+    if (show) $('conversation-scroll').scrollTop = 0;
   }
   function stopVoice() {
     audioGeneration++;

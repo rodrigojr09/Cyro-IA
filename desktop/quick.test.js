@@ -485,3 +485,12 @@ test(
     }
   }),
 );
+
+test('ícone flutuante mantém margem de 24 DIP, inclusive em monitor com origem negativa', () => {
+  const area = { x: -1920, y: 0, width: 1920, height: 1080 };
+  assert.deepEqual(core.clamp({ x: 0, y: 1080 }, area, core.ICON_SIZE, 24), { x: -66, y: 1014 });
+  assert.deepEqual(core.clamp({ x: -2000, y: -100 }, area, core.ICON_SIZE, 24), {
+    x: -1896,
+    y: 24,
+  });
+});

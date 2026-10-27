@@ -38,7 +38,15 @@ textarea:focus-visible {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(18, 43, 59, 0.78);
+  background-color: #183b50;
+  background-image: linear-gradient(145deg, #8ee0ff18, #0002);
+  box-shadow:
+    inset 0 1px 2px #bceaff33,
+    inset 0 -3px 8px #0005;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
   border: 1px solid #4691af;
   color: #8ee0ff;
   font-size: 18px;
@@ -47,6 +55,11 @@ textarea:focus-visible {
   user-select: none;
   touch-action: none;
   position: relative;
+}
+#orb:hover {
+  background-color: #28556d;
+  border-color: #8ee0ff;
+  color: #e0f7ff;
 }
 #orb:active {
   cursor: grabbing;
@@ -257,4 +270,11 @@ header button:hover,
 }
 #listen {
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

@@ -1,5 +1,7 @@
 # JARVIS 6.0.0 — em desenvolvimento
 
+- Refinamento visual do Desktop: apresentação vazia mantém rolagem no topo, sem texto cortado; remoção da marca central repetida, seis atalhos com descrições mais legíveis e bordas definidas, conversa ativa com destaque reforçado e nota de leitura em tooltip acessível. Quick Chat respeita margem de 24 DIP nas bordas, com elevação, sombra nativa e hover suave. Preferências de movimento reduzido respeitadas. Alterações no código, sem atualização automática do aplicativo instalado.
+
 - Início da migração arquitetural autorizado em 27/10/2026. Base v5 preservada em `631d0c7`; auditoria inicial, inventário e plano incremental em docs/architecture/. Não representa release estável, implantação ou homologação externa.
 
 - Identidade comum em backend/jarvis_identity.py para chat/Quick e modo Writer, preservando contrato editorial e aprovação. Cache inicial de histórico comum na janela principal, invalidação no envio e por mudança observada no catálogo; abertura do Quick sem busca preliminar duplicada. Não inclui memória GLOBAL_USER, renderer React ou sincronização incremental completa.
