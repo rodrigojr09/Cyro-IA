@@ -1,22 +1,21 @@
-# Migração e reaproveitamento v3
+# Migração e compatibilidade — JARVIS v5
 
-Em 20/10/2026 o proprietário colocou manualmente todo o projeto anterior em Backup/. A pasta é somente leitura e não foi movida, renomeada, apagada ou editada na reconstrução atual. O conteúdo inclui a implementação anterior e o trabalho preliminar Cloud. O manifesto histórico dentro do arquivo pertence à etapa anterior; não representa um backup novo criado nesta etapa.
+## Atualização do Cloud
 
-Foram copiados para a nova raiz 163 arquivos de fontes/configuração/documentação reaproveitáveis, sem .git, node_modules, ambientes virtuais, builds, caches, .env, bancos pessoais, arquivos de contexto privados ou inventários locais. Dependências foram reinstaladas na nova raiz. O histórico Git anterior foi clonado localmente sem hardlinks e mantido no novo .git, sem executar push. Nenhum código de produção importa módulos diretamente de Backup/.
+Faça uma cópia de recuperação do banco pelo processo autorizado antes de mudanças estruturais. Aplique as migrations versionadas com `npm run db:deploy -w @jarvis/cloud`; não substitua o histórico por `db push`, reset ou edição de migrations já aplicadas. O build apenas gera o Prisma Client e compila.
 
-## Componentes reaproveitados
+A evolução inclui login Desktop, chats gerais Cloud, armazenamento, anexos, Spotify e configuração criptografada de provedores. As duas migrations Spotify/credenciais foram aplicadas no ambiente autorizado em 26/10/2026; o registro está em [CREDENTIALS.md](CREDENTIALS.md). Isso não aplica migrations de uma instalação nova automaticamente. Um registro remoto anterior de configuração pública foi preservado, sem reset do banco.
 
-- desktop/: janela nativa, sidebar, chats/projetos, Markdown sanitizado, configurações/temas, Quick Chat e ícone independentes, áudio, bandeja, IPC por papel e validação de links.
-- backend/: ProjectStore/SQLite, contexto, indexador, IDEIA.md por projeto, leitura somente autorizada, políticas de fontes e confirmações humanas com prazo e uso único.
-- O FastAPI local foi mantido por preservar armazenamento, migrações, análise e ferramentas já testados, e não apenas por conveniência. Ele é empacotado; não exige Python instalado no cliente. Não roda na Vercel.
-- desktop/electron/ e services/: entrada v3, credencial DPAPI, ativação/código/deep link, conexão/renovação e transmissão segura para a interface.
+## Atualização do Desktop
 
-A entidade Client é uma especialização de User com a mesma chave: User guarda identidade, papel e status; Client guarda os limites de dispositivos e tem relações próprias com dispositivos e ativações. Administradores não recebem Client. IDs de dados locais não são IDs administrativos: os dados de clientes diferentes não são mesclados; um perfil ativado não permite trocar silenciosamente de cliente.
+Feche o aplicativo, preserve uma cópia externa dos dados locais e use o instalador autorizado. O perfil fica fora dos binários. O nome de sessão `cloud-session-v4.bin` é intencionalmente preservado; não renomear nem remover para atualizar o rótulo da versão. Senhas não são salvas no Desktop.
 
-## Dados e histórico
+Chats gerais e Quick Chat usam a conta Cloud; projetos, memória e Writer permanecem locais. Não há importação automática dos históricos gerais antigos. O formato editorial e os recursos locais precisam do backend empacotado correspondente: apenas reabrir uma janela não atualiza o Python de um ambiente de desenvolvimento ainda em execução.
 
-Nenhum perfil externo foi importado. O padrão novo é APPDATA/JARVIS, fora dos binários. Backup/ contém segredos e memória antiga e é integralmente ignorado pelo Git. Não publicar nem incluir no instalador/Vercel. Backups locais devem ser feitos com todos os processos do aplicativo encerrados.
+## Instalações antigas e recuperação
 
-Para reutilizar memória SQLite anterior não criptografada, fazer cópia externa offline e selecionar explicitamente JARVIS_DATA_DIR absoluto. Não usar bancos de cofre portátil como SQLite comum: sua migração exige fluxo humano separado. Não apagar nem sobrescrever originais. O instalador NSIS mantém dados fora da instalação e preserva-os na desinstalação; validar esse fluxo com dados temporários em Windows limpo antes de declarar release.
+Credenciais/códigos de ativação anteriores não autenticam a v5. Contas existentes precisam de senha válida administrada pelo responsável. Não enviar chaves OpenAI/Spotify ou dados de banco ao Desktop para contornar login ou indisponibilidade de rede.
 
-Metadados atuais: 3.0.0, sem tag de release até validação externa. As referências portáteis remanescentes são históricas/testes e não são o pipeline de distribuição vigente.
+Não tratar cofres portáteis criptografados como bancos SQLite comuns. A migração desses perfis continua explícita e dependente de recuperação segura; não sobrescrever nem apagar a origem. O [arquivo de migração v3](history/MIGRATION-V3.md) é somente histórico, assim como os guias portáteis.
+
+`Backup/` permanece arquivo manual somente leitura; não é fonte automática de runtime, migração, build ou deploy. Para operar o ambiente atual, use [INSTALL.md](../INSTALL.md), [DEPLOYMENT.md](DEPLOYMENT.md) e [VALIDATION.md](VALIDATION.md).

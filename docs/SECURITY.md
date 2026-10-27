@@ -16,9 +16,9 @@ A migration v4 remove credenciais antigas de Device e revoga códigos legados. T
 
 ## OpenAI e custo
 
-Somente Cloud carrega OPENAI_API_KEY. Modelos são permitidos por lista do servidor. Limites de corpo, mensagens, ferramentas, tokens de saída, frequência e timeout são aplicados no servidor. Chamadas usam store:false. Uso registrado vem exclusivamente do provedor. Reservas por funcionário e mês são serializadas por lock da linha de usuário; chamadas simultâneas não liberam o mesmo saldo duas vezes. Reserva conservadora usa bytes UTF-8 do contexto mais saída e margem; pode restringir uso antes do limite real.
+Somente Cloud carrega a chave OpenAI, configurada por variável ou pela dashboard SUPER_ADMIN. Segredos de provedores salvos no banco usam AES-256-GCM com chave derivada do AUTH_SECRET; não devolvem valores à interface. Modelos são permitidos por lista do servidor. Limites de corpo, mensagens, ferramentas, tokens de saída, frequência e timeout são aplicados no servidor. Chamadas usam store:false. Uso registrado vem exclusivamente do provedor. Reservas por funcionário e mês são serializadas por lock da linha de usuário; chamadas simultâneas não liberam o mesmo saldo duas vezes. Reserva conservadora usa bytes UTF-8 do contexto mais saída e margem; pode restringir uso antes do limite real.
 
-Se o provedor não retornar uso por cancelamento, timeout ou falha, a reserva fica retida e a auditoria registra uso desconhecido. Não há liberação automática insegura; reconciliação operacional ainda é necessária. Preços configurados são estimativas em USD, não uma fatura. Voz retorna áudio binário sem tokens; registra caracteres em auditoria, mantém reserva conservadora e possui limite diário adicional. Não somar caracteres a UsageLog como se fossem tokens do provedor. Conteúdo de conversas/arquivos não é gravado pelo Cloud, mas é enviado ao provedor quando necessário; obedecer políticas do provedor e consentimento dos funcionários.
+Se o provedor não retornar uso por cancelamento, timeout ou falha, a reserva fica retida e a auditoria registra uso desconhecido. Não há liberação automática insegura; reconciliação operacional ainda é necessária. Preços configurados são estimativas em USD, não uma fatura. Voz retorna áudio binário sem tokens; registra caracteres em auditoria, mantém reserva conservadora e possui limite diário adicional. Não somar caracteres a UsageLog como se fossem tokens do provedor. Chats gerais e Quick Chat geral ficam no PostgreSQL, isolados por conta e sujeitos à cota de armazenamento; projetos e Writer persistem localmente. O contexto autorizado é enviado ao provedor conforme o pedido e os consentimentos existentes. `store:false` refere-se às chamadas do provedor e não significa ausência de armazenamento de chats no JARVIS.
 
 ## Desktop/local
 
@@ -26,4 +26,14 @@ contextIsolation:true, nodeIntegration:false, sandbox:true, navegação/janelas 
 
 Ferramentas continuam registradas com allowlists; ler contexto não concede autorização. Pastas exigem seleção e confirmação humanas; abrir apps/pastas exige confirmação expirada/uso único. Não há execução automática de comandos da IA. O serviço só escuta loopback e requer token local aleatório. Usuário ou malware com acesso à mesma sessão Windows ainda pode ler memória do processo; DPAPI não protege contra comprometimento da máquina ativa.
 
-Histórico/memória SQLite v4 são locais e não têm criptografia integral adicionada por esta migração. Não confundir proteção da credencial com criptografia dos bancos. Perfis criptografados da edição portátil anterior exigem migração explícita ainda pendente. Não importar automaticamente dados privados do desenvolvimento, nem incluir Backup/legacy em Vercel ou instalador.
+Projetos, memória e Writer usam SQLite local; essa edição Cloud não adiciona criptografia integral aos bancos locais. Não confundir proteção da sessão com criptografia dos documentos. Perfis criptografados da edição portátil anterior exigem migração explícita ainda pendente. O nome `cloud-session-v4.bin` é preservado por compatibilidade. Não importar automaticamente dados privados do desenvolvimento, nem incluir `Backup/` em Vercel ou instalador.
+
+## Clipboard, Writer e Spotify
+
+Clipboard é opt-in e mantém conteúdo somente em RAM, com expiração, descarte, limites e filtro preventivo de credenciais. Não envia automaticamente; o filtro não é infalível e não analisa pixels. Writer valida propostas, versões e conflitos antes de atualizar um arquivo escolhido; continuar uma conversa aprova a proposta anterior conforme o fluxo visível. Fontes de contexto não autorizam comandos.
+
+OAuth Spotify vincula uma transação curta e de uso único à sessão individual. Tokens e Client Secret permanecem criptografados no Cloud; comandos usam endpoints fixos e a conta do usuário, não URLs fornecidas pelo modelo. Metadados não retornam ao modelo de interpretação nem à memória de chats; com voz habilitada, a resposta exibida passa pelo serviço de síntese configurado, a pedido do proprietário. Consulte [SPOTIFY.md](SPOTIFY.md), [CREDENTIALS.md](CREDENTIALS.md), [CLIPBOARD.md](CLIPBOARD.md) e [WRITER.md](WRITER.md).
+
+## Runtime da finalização
+
+Electron atualizado de 44.9.0 para 44.9.1 para incluir a mitigação de certificados intermediários comprometidos, conforme [GHSA-jr5w-w6x2-84p9](https://github.com/electron/electron/security/advisories/GHSA-jr5w-w6x2-84p9). A correção do runtime não altera a versão 5.0.0 do produto.

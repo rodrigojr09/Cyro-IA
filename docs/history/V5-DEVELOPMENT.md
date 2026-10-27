@@ -1,0 +1,135 @@
+# JARVIS 5.0.0 — Clipboard Assistant
+
+Evolução autorizada pelo proprietário em 23/10/2026. Alvo sem tag e sem declaração de release, implantação ou Windows limpo validado.
+
+## Arquitetura e privacidade
+
+`desktop/clipboard-manager.js` mantém uma pendente e, no máximo, uma reivindicação por ambiente. A reivindicação é síncrona no processo principal, antes da resposta IPC: apenas um solicitante recebe cada conteúdo. O estado público contém identificadores, tipo, horários e titularidade; nunca texto. Os status das notificações são PENDING, CLAIMED_MAIN e CLAIMED_QUICK; ausência de notificação representa IDLE e descartar remove a referência, sem histórico de DISMISSED.
+
+`desktop/clipboard-service.js` conecta Electron clipboard, overlay Windows, preferências e IPC restrito à conta autenticada, à janela conhecida e ao frame principal local. O orb e a janela de resposta não podem reivindicar conteúdo, abrir links ou configurar o monitor. A reivindicação exige um chat visível e com foco. Nenhuma detecção chama show, restore ou focus.
+
+O monitor é único, opt-in e usa 850 ms. O estado inicial e a retomada estabelecem uma referência silenciosa; conteúdo já existente não notifica. Cada alteração válida notifica uma vez, com intervalo mínimo de dois segundos entre sons. O som PCM de 160 ms é local, com volume de 0 a 100%, opção de desligar e silêncio quando a voz global está desligada. A reprodução é solicitada somente à janela principal, inclusive minimizada.
+
+Somente preferências são persistidas em `config/clipboard-settings.json`. Conteúdo e referências ficam em RAM, expiram após dez minutos da detecção e são removidos ao ignorar, pausar, desativar, sair da sessão ou encerrar. Recarregar/encerrar um renderer libera sua reivindicação. Prévia não usa o rascunho persistido dos chats. Depois de uma confirmação de envio, a mensagem integra o histórico normal, sujeito às regras existentes.
+
+Textos e códigos são classificados por heurísticas locais. URLs exigem HTTP/HTTPS, sem credenciais, caracteres de controle ou barras invertidas. Filtros preventivos bloqueiam padrões de tokens, chaves privadas, atribuições de senhas e URLs com possíveis credenciais. Esses filtros podem errar; a interface informa essa limitação. Nenhum conteúdo é gravado em logs. Imagens são reconhecidas pelos formatos disponíveis e lidas com a API nativa assíncrona clipboard.read(), ClipboardItem.getType() e Blob do Electron 44. Há compatibilidade com a API síncrona antiga para outros runtimes. A representação PNG precisa caber em 5 MB e 50 megapixels; antes de guardar, a prévia é reduzida para até 1.536 px e 350 KB, preservando transparência. Somente a prévia local permanece em RAM. O título “Imagem copiada” é clicável, sem ações falsas de envio/análise pelo clipboard. Não há OCR ou detecção de credenciais em pixels; a interface informa essa limitação. Outros formatos sem texto não oferecem ações.
+
+## Limites e confirmação
+
+- Captura aceita até 5.400 unidades UTF-16 e 21.600 bytes UTF-8; conteúdo maior é recusado integralmente. ClipboardItem.getType materializa um Blob nativo; o tamanho do Blob é conferido antes de consumir seu corpo. Os cabeçalhos PNG/JPEG/WebP são verificados por dimensões antes da decodificação nativa. A imagem é verificada por dimensões antes da serialização PNG, e pela representação PNG antes da retenção; a representação pode ser maior que o arquivo originalmente copiado. Imagens sem alteração não são redimensionadas novamente.
+- A mensagem preparada, incluindo a instrução, continua limitada a 6.000 caracteres. A prévia editável tem o mesmo limite; confirmação e envio verificam o tamanho novamente.
+- O chat principal reaproveita o envio, cota, validação de projeto e cliente existentes. Permite prévia em conversa selecionada ou na tela Nova conversa; detectar/reivindicar não cria conversa. Um rascunho só cria o chat ao confirmar o envio. Anexos já selecionados precisam ser enviados ou removidos antes de usar a prévia, evitando incluí-los sem revisão.
+- O Quick Chat reaproveita seu envio existente, incluindo o limite de 5 MB da seleção de projeto e os controles do backend. Nenhum endpoint Cloud foi adicionado.
+- A prévia do principal fica associada ao chat ou rascunho em que foi aberta. O rascunho passa a usar o identificador do chat criado por seu envio confirmado. Mudar de conversa oculta o card e impede envio no destino errado; retornar restaura a edição. Nova cópia não sobrescreve a edição.
+- Ação de link apresenta o destino e exige confirmação para abrir no navegador; não envia à IA. Preparar análise não afirma que a página foi acessada.
+- Falha de envio mantém a prévia para revisão/tentativa. A expiração, pausa ou desativação limpa a prévia mesmo se estava em edição; o prazo é informado nas configurações.
+
+## Validação
+
+Execução local em 23/10/2026:
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm ci` na raiz | 483 pacotes instalados; auditoria sem vulnerabilidades reportadas |
+| `npm test -w jarvis-desktop` | 111 testes aprovados, incluindo estado, IPC, interface, consentimento e limites do clipboard |
+| `npm run test:cloud` | 24 testes aprovados, com PostgreSQL embarcado e provedor simulado conforme as fixtures |
+| `npm run typecheck` / `npm run build:cloud` | aprovados; compilação de produção local não representa implantação |
+| `python -m unittest discover -s backend -p 'test_*.py'` | 139 testes aprovados |
+| `python -m unittest -q test_start test_cloud_build test_build test_setup` | 24 testes aprovados; teste de contrato Cloud repetido após ajuste dos caminhos v5: 4 aprovados |
+| `npm run test:electron -w jarvis-desktop` | Electron real, interface e cota com dados sintéticos: aprovado |
+| `npm run test:quick -w jarvis-desktop` | Electron real, principal minimizada, áudio e Quick Chat com backend sintético: aprovado |
+| `npm run test:cloud-electron -w jarvis-desktop` | Electron e safeStorage reais, Cloud simulado: aprovado |
+| `npm run test:session-electron -w jarvis-desktop` | Electron + FastAPI reais, Cloud simulado, perfil temporário: aprovado |
+| `npm run test:clipboard -w jarvis-desktop` | aprovado; janela minimizada, sem foco automático, overlay API, orb, prévia expansível de texto/imagem, NativeImage real, PCM decodificado e reproduzido com saída silenciada, exclusividade e rejeição IPC |
+| `npm run test:admin-layout` | 35 verificações aprovadas, Chromium real e dados sintéticos |
+| Formatação dos arquivos Desktop alterados / `git diff --check` | aprovados |
+
+O smoke de clipboard testa uma tentativa não autorizada, que gera uma mensagem esperada de rejeição IPC. O smoke de sessão terminou com código zero e suas verificações aprovadas; houve aviso de backend indisponível durante o encerramento da fixture, após encerrar o serviço. Não se trata de evidência de conexão real com o Cloud.
+
+O design foi ajustado após a revisão do proprietário: faixa compacta acima do campo de mensagem, ações discretas, descarte por “×”, cores do tema e prévia somente após escolher uma ação. O Quick Chat ajusta a altura ao conteúdo, sem reservar um painel grande para as opções. Depois da revisão do proprietário, o título passou a ser um botão acessível: expande/recolhe o original literal ou uma imagem local; imagens não exibem ações de IA não suportadas. Capturas reais do Electron foram inspecionadas para principal, opções e prévia do Quick Chat.
+
+ Os testes novos cobrem estado, classificação, repetição, som, mute, limites, credenciais, URLs, consentimento, pausa, expiração, logout, encerramento, disputa simultânea, indicadores, IPC, prévia, confirmação, isolamento de chat e falha de envio.
+
+O teste `npm run test:clipboard -w jarvis-desktop` usa janelas, preloads, IPC e API de overlay do Electron real. O teste valida primeiro uma leitura nativa real, sem escrever no clipboard pessoal. As alterações posteriores usam ClipboardItem/Blob reais com conteúdo sintético e backend simulado, sem enviar dados à conta. Isso ainda não comprova detecção de cópias realizadas manualmente em outros aplicativos Windows, aparência da bolinha no shell, audição do som no dispositivo, conexão real com o Cloud ou execução em Windows limpo.
+
+Validação manual ainda necessária: ativar por consentimento, minimizar o principal, copiar texto não sensível em outro aplicativo e conferir os dois indicadores e o som sem mudança de foco; alternar quem abre primeiro; confirmar uma mensagem numa conta com Cloud disponível. Testar volume/silêncio, copiar uma imagem nativa no Windows, expandir/recolher sua prévia e confirmar que não exibe ações de IA não suportadas. Não há validação de áudio pago ou implantação nova nesta entrega.
+
+## Arquivos
+
+- Gerenciador, integração, interface e estilo: `desktop/clipboard-manager.js`, `desktop/clipboard-service.js`, `desktop/clipboard-ui.js`, `desktop/clipboard.css`.
+- Pontos existentes: `desktop/main.js`, preloads, HTML, renderer principal, Quick Chat/controller/core, configurações e seleção de chat.
+- Testes: `desktop/clipboard.test.js`, `desktop/clipboard-service.test.js`, `desktop/clipboard-ui.test.js`, `desktop/clipboard-smoke.cjs`, ajuste do isolamento do serviço no teste de segurança.
+- Metadados e distribuição: VERSION, manifests/locks dos workspaces, versão informativa FastAPI, builder Cloud/Desktop e seu teste; README, CHANGELOG e instruções vigentes.
+
+`Backup/` permanece sem alterações. Nenhum push, publicação ou tag foi executado.
+
+## Inventário completo da alteração
+
+- `AGENTS.md`
+- `CHANGELOG.md`
+- `README.md`
+- `VERSION`
+- `backend/main.py`
+- `cloud/package.json`
+- `desktop/clipboard-manager.js`
+- `desktop/clipboard-service.js`
+- `desktop/clipboard-service.test.js`
+- `desktop/clipboard-smoke.cjs`
+- `desktop/clipboard-ui.js`
+- `desktop/clipboard-ui.test.js`
+- `desktop/clipboard.css`
+- `desktop/clipboard.test.js`
+- `desktop/electron/builder.json`
+- `desktop/index.html`
+- `desktop/main.js`
+- `desktop/package-lock.json`
+- `desktop/package.json`
+- `desktop/preload.js`
+- `desktop/quick-controller.js`
+- `desktop/quick-core.js`
+- `desktop/quick-preload.js`
+- `desktop/quick-renderer.js`
+- `desktop/quick-smoke.cjs`
+- `desktop/quick.html`
+- `desktop/renderer.js`
+- `desktop/security.test.js`
+- `desktop/smoke.cjs`
+- `desktop/ui.js`
+- `desktop/ui.test.js`
+- `desktop/workspace.js`
+- `desktop/workspace.test.js`
+- `docs/V5.md`
+- `package-lock.json`
+- `package.json`
+- `packages/shared/package.json`
+- `test_cloud_build.py`
+- `tools/audit_cloud_artifact.py`
+- `tools/build_cloud_desktop.py`
+
+## Correção da leitura nativa — 23/10/2026
+
+O proprietário relatou que ativar e reiniciar não detectava cópias. A preferência estava salva corretamente. A leitura nativa reproduziu `TypeError: clipboard.availableFormats is not a function`: o Electron 44.9 usa uma API assíncrona e a implementação inicial ainda chamava a antiga, diferença encoberta pelas fixtures síncronas. A correção usa clipboard.read(), ClipboardItem.getType() e Blob; impede polling sobreposto e invalida respostas atrasadas após pausar/desativar/logout. O smoke agora exige sucesso na leitura nativa real, preservando o clipboard, e usa ClipboardItem reais nas alterações sintéticas. Regressões cobrem texto/código/link assíncronos, falha temporária, limite antes de ler Blob, dimensões antes de decodificar imagem e resultado atrasado após pausa. 108 testes Desktop e smoke Electron aprovados.
+
+## Correção da janela principal — 23/10/2026
+
+Com uma cópia nova e o principal aberto primeiro, a tela Nova conversa não reivindicava conteúdo porque exigia um chat salvo. Além disso, uma notificação detectada após o evento de foco não tentava reivindicação; se chegava enquanto a solicitação inicial ainda estava em andamento, podia ficar sem outra tentativa. A janela agora aceita uma prévia vinculada ao rascunho, reage à chegada da notificação somente quando está com foco e repete a solicitação quando um novo identificador chega durante a anterior. Nenhum chat é criado antes da confirmação; o envio continua passando por cotas, tamanho e permissões existentes. Troca de contexto durante o pré-processamento bloqueia o envio para destino diferente. O smoke usa foco nativo real ao restaurar o principal minimizado e cobre cópia detectada após o foco na tela sem chat salvo, sem disparar um evento artificial de seleção. 111 testes Desktop aprovados; smoke Electron aprovado com leitura nativa somente leitura, alterações de conteúdo sintéticas e backend simulado.
+
+A regressão de descarte também cobre uma nova cópia reivindicada durante a remoção da anterior: a conclusão do descarte antigo não limpa o novo card.
+
+## Compilação e Cloud — 26/10/2026
+
+Compilação autorizada pelo proprietário. Cloud funcional no commit `35908a5`: status GitHub/Vercel confirmou deployment concluído; login HTTPS de produção respondeu 200 e solicitação sem sessão com Origin de produção foi aceita pela validação de origem (401 de autenticação, sem alterar sessão de usuário). Não houve validação OAuth real nem chamadas pagas.
+
+Instalador Windows x64: `release/v5/JARVIS-Setup-5.0.0.exe`, 186324282 bytes, FileVersion/ProductVersion 5.0.0, sem assinatura digital. SHA-256: `e4655852adacdb68b74f2998fee0288e700dff45ae38c16ce6e50a98958a604b`; arquivo de verificação ao lado do executável. Destino Cloud embutido e auditado: `https://cronosjarvis.vercel.app`. O `start.bat` continua sendo o iniciador do Cloud local e não equivale ao aplicativo instalado; seu callback OAuth exige configuração própria HTTPS.
+
+Validações desta compilação: 55 testes Cloud; 25 testes de iniciadores/compilação; 149 testes Desktop; 112 testes Python/backend do pipeline; TypeScript/build Cloud; Electron principal, Quick Chat, Cloud, sessões e clipboard. A primeira execução do smoke clipboard excedeu a espera de decodificação de áudio; reexecução completa aprovada, e empacotamento retomado depois dos testes já aprovados. PyInstaller `--self-check`, auditoria ASAR/runtime sem arquivos privados proibidos e comparação da configuração Cloud embutida aprovados. O payload v5 iniciou duas vezes com perfil temporário e PATH sem Python/Node; autenticação local e persistência após reinício passaram.
+
+A auditoria passa a comparar também `electron/cloud-config.json`. O smoke usa o diretório do builder atual, evitando testar o antigo payload v4. Não houve execução do setup sobre a instalação pessoal, teste em Windows limpo, certificação de áudio físico, criação de tag nem publicação do instalador como release.
+
+## Spotify conversacional e novo setup — 26/10/2026
+
+Atualização solicitada pelo proprietário: Spotify controlado pelo chat, com interpretação estruturada da mensagem humana no Cloud, mini players removidos e escolha de aparelho em diálogo. Mantém o aparelho que o Spotify informa ativo, mesmo pausado há muito tempo; não força uma preferência antiga do JARVIS. Sem ativo, pergunta antes de controlar. Nome exato ou interpretação do nome humano resolve o ID apenas na lista da conta autenticada; a confirmação da escolha pode retomar o pedido original de continuar.
+
+Validação final: 77 testes Cloud, 149 Desktop, 190 Python/backend, TypeScript/build Next.js, bundles e formatação aprovados. Smoke Electron com IPC real confirmou gerenciamento da conta e ausência de players/controles automáticos nas duas janelas; chamadas IA/Spotify foram simuladas. Classificador respeita armazenamento, cotas, suspensão e modelos permitidos. Nenhum teste pago ou novo comando na conta real do proprietário foi executado. Guias e limites em docs/SPOTIFY.md.
+
+Setup atualizado: `release/v5/JARVIS-Setup-5.0.0.exe`, 186324484 bytes, versão 5.0.0, sem assinatura digital, SHA-256 `34e8a53596e7bc6bcb8dc923719565b3e7a08cff98d6b7b02597809627f6d73c`. Origem HTTPS de produção auditada; ASAR contém fontes atuais e rejeita o antigo bundle quick-spotify.js. PyInstaller self-check aprovado. O primeiro smoke de reinício, ainda durante o empacotamento, falhou e encontrou cache Chromium bloqueado ao limpar o perfil temporário; a execução completa depois de finalizado o pacote passou nos dois ciclos (autenticação local, persistência e PATH sem Python/Node). Não certifica Windows limpo nem instalação sobre dados pessoais. Artefato de runtime corresponde às alterações do commit `a8d1dc5`; o ajuste posterior de reutilização da lista é exclusivamente Cloud. Sem tag de release.

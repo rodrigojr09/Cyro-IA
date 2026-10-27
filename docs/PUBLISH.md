@@ -1,28 +1,37 @@
-# Publicação do JARVIS v4
+# Publicação e distribuição — JARVIS v5
 
-Destino atual: repositório privado `rodrigojr09/Jarvis`, branch `master`, com integração automática ao projeto Vercel `jarvis-v0-1`. Domínio Cloud: `https://cronosjarvis.vercel.app`. Em 22/10/2026, o proprietário autorizou o envio da v4.0.0 à nuvem e a compilação do instalador. Publicar somente o código revisado, sem `.env`, bancos, perfis, `Backup/`, `build/` ou `release/`. Não criar tag antes das validações exigidas. Evidências e limitações em [V4.md](V4.md).
+O código está em `rodrigojr09/Jarvis`, branch `master`, com Cloud em `https://cronosjarvis.vercel.app`. O envio de código depende de autorização do proprietário; o envio ao GitHub pode acionar a implantação Vercel configurada. Verifique o status do mesmo commit antes de declarar o deploy concluído.
 
-O instalador usa a origem HTTPS de produção e é gerado localmente pelo pipeline `tools/build_cloud_desktop.py`, com saída `release/v4/JARVIS-Setup-4.1.0.exe` e checksum SHA-256. Em 22/10/2026, o proprietário também autorizou publicar e compilar a v4.1.0, com chats gerais Cloud, Quick Chat fixo e projetos locais de uso geral limitados a 5 MB. O envio ao GitHub não substitui a confirmação de que a Vercel concluiu o deploy do mesmo commit.
+## Antes de publicar código
 
-## Histórico de configuração
+1. Execute `npm ci` na raiz e `npm run check:v5` com requisitos Python disponíveis.
+2. Revise o diff, a documentação e o índice. Não incluir `.env`, segredos, bancos, perfis, `Backup/`, `build/` ou `release/`.
+3. Registre o commit e envie somente quando autorizado. Não publicar o diretório local inteiro na Vercel; ela deve usar o checkout revisado.
+4. Se houver migrations novas, aplicá-las separadamente no ambiente autorizado; build não deve migrar o banco de previews ou produção automaticamente.
+5. Confira a implantação e execute o roteiro humano aplicável em [VALIDATION.md](VALIDATION.md).
 
-O projeto está na branch master, com o histórico anterior preservado. O remoto que apontava para Backup/ foi removido. Nenhum push foi executado.
+## Compilar o setup Windows x64
 
-## Criar o repositório
-
-No GitHub, crie um repositório privado chamado jarvis (ou outro nome de sua preferência). Deixe-o vazio: não adicionar README, .gitignore ou licença na criação, pois o projeto já tem arquivos e histórico próprios.
-
-Copie a URL HTTPS do novo repositório. Na raiz do projeto, substitua o texto entre aspas pela URL real e execute:
+Requisitos de compilação: dependências npm da raiz, Python com `backend/requirements-dev.txt` e `backend/requirements-build.txt`, Windows x64 e origem HTTPS real autorizada.
 
 ```powershell
-git remote add origin "COLE_A_URL_HTTPS_DO_REPOSITORIO_AQUI"
-git push -u origin master
+$env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
+python tools/build_cloud_desktop.py
 ```
 
-Esses comandos são para você executar quando o repositório existir. Não enviar Backup/, instaladores, bancos pessoais ou credenciais. Os modelos .env.example já estão no código; configure os valores reais privadamente no ambiente de desenvolvimento e na Vercel. Antes de publicar arquivos novos, confira git status para evitar adicionar dados privados.
+`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v5/JARVIS-Setup-5.0.0.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
 
-## Conectar à Vercel
+A auditoria é automática ao compilar. Depois da conclusão do empacotamento:
 
-Importe o repositório criado, escolha a branch master e Root Directory cloud. Habilite a inclusão dos arquivos fora da Root Directory, pois packages/shared é uma dependência do Cloud.
+```powershell
+python tools/audit_cloud_artifact.py
+python tools/smoke_cloud_release.py
+```
 
-As configurações de instalação/build já estão em cloud/vercel.json. Variáveis necessárias, migrations e criação do primeiro administrador estão documentadas em [VERCEL.md](VERCEL.md).
+O smoke inicia e reinicia o payload com perfil temporário e PATH restrito, sem chamadas pagas. A porta local 8765 precisa estar livre; não encerre serviço de outro aplicativo para liberar a porta. Não executar o setup sobre o perfil pessoal para substituir uma VM de teste.
+
+## O que não é automático
+
+A compilação não faz push, upload do instalador, GitHub Release, tag, assinatura ou certificação de Windows limpo. O verificador de índice/caminhos e a auditoria não substituem revisão de segredos no diff. Guarde os segredos somente no servidor e mantenha `AUTH_SECRET` estável.
+
+Origem Cloud, variáveis e bootstrap: [DEPLOYMENT.md](DEPLOYMENT.md), [VERCEL.md](VERCEL.md) e [CREDENTIALS.md](CREDENTIALS.md). Evidências do artefato vigente: [VALIDATION.md](VALIDATION.md).

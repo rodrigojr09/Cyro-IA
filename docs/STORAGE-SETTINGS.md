@@ -74,7 +74,7 @@ Aplicar as migrations `20261022150000_local_attachment_notice` e
 delas foi aplicada ao banco remoto nesta etapa. Não houve push, implantação,
 tag ou geração de novo instalador na etapa inicial de implementação. A publicação
 e a compilação posteriores, autorizadas em 23/10/2026, estão registradas em
-[V4_2.md](V4_2.md).
+[V4_2.md](history/V4_2.md).
 
 ## Verificações
 

@@ -11,6 +11,41 @@ ROOT = Path(__file__).resolve().parent
 
 
 class CloudBuildTests(unittest.TestCase):
+    def test_electron_runtime_is_pinned_and_matches_the_lock(self):
+        package = json.loads((ROOT / "desktop/package.json").read_text())
+        runtime = package["devDependencies"]["electron"]
+        self.assertRegex(runtime, r"^\d+\.\d+\.\d+$")
+        lock = json.loads((ROOT / "package-lock.json").read_text())
+        installed = [
+            value["version"]
+            for key, value in lock["packages"].items()
+            if key.endswith("node_modules/electron")
+        ]
+        self.assertEqual(installed, [runtime])
+
+    def test_validation_children_reuse_build_python_without_changing_parent_path(self):
+        with patch.dict("os.environ", {"PATH": "original-path"}), patch.object(
+            build_cloud_desktop.subprocess, "run"
+        ) as child:
+            build_cloud_desktop.run(["fixture"])
+            self.assertEqual(build_cloud_desktop.os.environ["PATH"], "original-path")
+            self.assertEqual(
+                child.call_args.kwargs["env"]["PATH"].split(
+                    build_cloud_desktop.os.pathsep
+                )[0],
+                str(Path(build_cloud_desktop.sys.executable).parent),
+            )
+
+    def test_final_build_requires_complete_v5_validation(self):
+        script = (ROOT / "tools/build_cloud_desktop.py").read_text()
+        self.assertIn('run([npm, "run", "check:v5"])', script)
+        validation = json.loads((ROOT / "package.json").read_text())["scripts"][
+            "check:v5"
+        ]
+        self.assertIn("unittest discover -s backend", validation)
+        self.assertIn("test:electron", validation)
+        self.assertIn("check:repository", validation)
+
     def test_installed_target_without_activation_protocol(self):
         config = json.loads((ROOT / "desktop/electron/builder.json").read_text())
         self.assertEqual(config["win"]["target"][0]["target"], "nsis")

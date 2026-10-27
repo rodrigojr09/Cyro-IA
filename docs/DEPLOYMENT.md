@@ -2,7 +2,7 @@
 
 ## Configuração externa necessária
 
-O proprietário deve criar o projeto Prisma Postgres e copiar privadamente suas URLs reais para DATABASE_URL e DIRECT_URL; criar um projeto Vercel ligado a este repositório; escolher o domínio HTTPS definitivo; gerar AUTH_SECRET aleatório de pelo menos 32 caracteres e configurar OPENAI_API_KEY somente no Cloud. Não enviar valores privados pelo chat ou salvá-los em commits. Não foi inventada URL de conexão nem criada implantação nesta tarefa.
+Para um novo ambiente, crie/selecione o Prisma Postgres, configure DATABASE_URL e DIRECT_URL privadamente, vincule o projeto Vercel ao repositório e gere AUTH_SECRET aleatório de pelo menos 32 caracteres. A produção existente usa `https://cronosjarvis.vercel.app`; não substitua os segredos ou o banco configurado durante uma atualização. OpenAI e Spotify podem ser configurados pelo SUPER_ADMIN em Dashboard → Credenciais; variáveis de ambiente são a alternativa antes do primeiro salvamento. Não envie segredos pelo chat nem os salve em commits.
 
 Use o mesmo AUTH_SECRET nas instâncias de uma implantação. Trocar esse segredo invalida hashes de sessões existentes; exige plano de rotação. Preview deve usar outro banco e segredo, sem dados de produção. Não configurar valores privados com prefixo NEXT_PUBLIC_. Segredos BOOTSTRAP_* são temporários, apenas para CLI local segura.
 
@@ -12,7 +12,7 @@ Node 22.12+ (validado nesta máquina com Node 26.12), Python e npm são necessá
 
 ```powershell
 npm ci
-Copy-Item cloud/.env.example cloud/.env
+if (-not (Test-Path cloud/.env)) { Copy-Item cloud/.env.example cloud/.env }
 # Preencha cloud/.env privadamente; não sobrescreva um arquivo existente.
 npm run db:generate
 npm run db:validate -w @jarvis/cloud
@@ -45,12 +45,12 @@ backend\.venv\Scripts\python.exe tools/start_cloud.py
 
 Para distribuição, configurar JARVIS_CLOUD_ORIGIN com o domínio HTTPS real (localhost é recusado no pacote), instalar requisitos de requirements-build.txt previamente e executar build.bat. A configuração pública da origem é gravada em desktop/electron/cloud-config.json e fica fora do Git. PyInstaller compila cloud_entry.py; electron-builder usa electron/builder.json e NSIS. Não embute .env, banco ou chave OpenAI.
 
-Artefato esperado da v4: release/v4/JARVIS-Setup-4.0.0.exe, apontando para https://cronosjarvis.vercel.app. O executável ainda não tem assinatura Authenticode e não constitui release aprovada. Executar tools/audit_cloud_artifact.py e tools/smoke_cloud_release.py após compilar; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo.
+Artefato esperado da v5: `release/v5/JARVIS-Setup-5.0.0.exe`, apontando para `https://cronosjarvis.vercel.app` quando essa origem é configurada no build. O executável não tem assinatura Authenticode. O pipeline exige `npm run check:v5` antes de empacotar. Execute `tools/audit_cloud_artifact.py` e `tools/smoke_cloud_release.py` depois de terminar a compilação; o smoke exige a porta 8765 livre, usa perfil temporário e não chama a API paga. PATH restrito não equivale a Windows limpo. Consulte [PUBLISH.md](PUBLISH.md).
 
 
 ## Diagnóstico da voz
 
-`OPENAI_VOICE_ENABLED` precisa ser exatamente `true` no ambiente Production da Vercel; alterações nas variáveis exigem um novo deploy. `OPENAI_API_KEY` também deve estar configurada somente no Cloud. A configuração padrão mantém voz paga desabilitada. O modelo de texto em `OPENAI_ALLOWED_MODELS` não habilita síntese de voz.
+Prefira configurar a voz e a chave OpenAI na [dashboard de credenciais](CREDENTIALS.md). Antes do primeiro salvamento desse provedor, `OPENAI_VOICE_ENABLED` precisa ser exatamente `true` no ambiente da Vercel para habilitar voz por variáveis; alterações nas variáveis exigem novo deploy. A configuração salva na dashboard prevalece e vale nas próximas solicitações. A voz começa desabilitada; permitir um modelo de texto não habilita síntese de voz.
 
 O SDK Python utiliza `InternalServerError` também para respostas HTTP 503 do próprio Cloud. A mensagem isolada não comprova falha da OpenAI: pode indicar voz desabilitada ou configuração ausente. O Desktop atualizado mostra mensagens seguras específicas. Em falhas do provedor, o log `voice.failed` contém apenas status upstream e indicação de timeout; não registra texto, chave ou mensagem bruta do provedor. Conferir o status da rota `/api/v1/audio/speech` nos logs da Vercel. Testes automatizados usam respostas simuladas; não certificam áudio pago em produção.
 
@@ -60,4 +60,4 @@ O SDK Python utiliza `InternalServerError` também para respostas HTTP 503 do pr
 2. Configurar AUTH_SECRET aleatório, APP_ORIGIN=https://cronosjarvis.vercel.app, OPENAI_API_KEY e modelos permitidos no ambiente seguro da Vercel. Preços são opcionais; sem preço não exibir custo como zero confirmado.
 3. Aplicar todas as migrations, incluindo a de login Desktop v4, e executar o bootstrap seguro do primeiro administrador por CLI com BOOTSTRAP_* temporários. Remover BOOTSTRAP_* depois.
 4. Implantar cloud/ com acesso ao workspace packages/shared e executar os fluxos reais de cadastro, login, sessão, bloqueio de acesso, logout, streaming e limites.
-5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, login automático e preservação dos dados. Depois decidir a tag v4.0.0.
+5. Validar o instalador em outra máquina Windows sem Python/Node, incluindo atualização, atalhos, login automático e preservação dos dados. Somente depois da homologação decidir uma tag v5.0.0; esta finalização não a cria.

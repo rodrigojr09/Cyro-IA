@@ -42,6 +42,11 @@ def stop_fixture_tree(process):
 
 
 class LauncherTests(unittest.TestCase):
+    def test_backend_timeout_reports_the_configured_duration(self):
+        with patch.object(start.time, "monotonic", side_effect=[0, 2]):
+            with self.assertRaisesRegex(start.LaunchError, "1.5 segundos"):
+                start.wait_backend(None, timeout=1.5)
+
     def flow(self, reuse=False, probe=0, build=0):
         owner = Mock()
         backend = Mock()

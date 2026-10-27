@@ -1,41 +1,72 @@
-> Documento histórico de versões anteriores. Para o fluxo vigente de login e os testes da v4, consulte [V4.md](V4.md).
+# Validação — JARVIS 5.0.0
 
-# Validação da implementação JARVIS 3.0.0
+Este documento acompanha a implementação atual. Evidências de versões anteriores estão no [arquivo histórico](history/README.md); o relato cronológico de desenvolvimento v5 está em [V5-DEVELOPMENT.md](history/V5-DEVELOPMENT.md).
 
-Data: 20/10/2026. Metadados sincronizados em 3.0.0. Nenhuma tag de release foi criada; ainda não é uma release homologada em produção.
+## Reproduzir
 
-## Resultados executados
+Na raiz, após `npm ci` e a instalação dos requisitos Python:
 
-- Correção do diagnóstico de voz em 21/10/2026: 16 testes Cloud e 87 testes Python de backend aprovados; regressão HTTP/SDK/ASGI verifica que voz desabilitada, limite e licença aparecem corretamente no Desktop e que mensagens desconhecidas do provedor são ocultadas. TypeScript, build Next.js, 65 testes Node, 19 testes de iniciador/build e três smokes Electron também aprovados. Sem chamada de síntese paga; a causa do incidente de produção depende da configuração/log da Vercel.
-- Build com diagnóstico de voz: serviço congelado passou no `--self-check`. O smoke de inicialização/reinicialização do novo payload foi impedido pela porta 8765 ocupada; nenhum processo externo foi encerrado. O resultado anterior de reinicialização refere-se ao build anterior, não a este pacote atualizado.
-- Revisão de responsividade em 21/10/2026: 45 combinações de nove páginas e cinco larguras (320, 390, 768, 1024 e 1440 px) aprovadas em Chromium/Electron. Componentes reais com respostas de API sintéticas, incluindo link de ativação gerado, nomes extensos, saída de sessão visível e limite de espaçamento dos campos no celular. Capturas de login, dashboard e clientes revisadas; esse teste não valida autenticação ou dados de produção.
-- Reexecução em 21/10/2026: 15 testes Cloud, 65 testes Node Desktop, 86 testes Python de backend, 19 testes de iniciador/build, TypeScript, build de produção Next.js e três smokes Electron aprovados. Backend congelado também passou no `--self-check`. As chamadas externas dessas suítes permanecem simuladas.
-- Instalador recompilado em 21/10/2026 para `https://cronosjarvis.vercel.app`: auditoria de ASAR/runtime aprovada e checksum em `release/v3/JARVIS-Setup-3.0.0.exe.sha256`. Payload final iniciou e reiniciou com perfil temporário e PATH restrito, preservando histórico e rejeitando acesso local sem token. Sem chamadas pagas. Instalador sem assinatura digital; instalação/atualização/desinstalação em Windows limpo continuam pendentes.
-- Cloud: 15 testes aprovados, incluindo autorização por escopo, senha/token, códigos expirados/revogados/consumidos, licença/dispositivo/cliente bloqueados, associação de licença a outro cliente, proxy, streaming, cancelamento e uso retornado pelo provedor.
-- Duas migrations SQL aplicadas em PostgreSQL embarcado PGlite; constraints de cliente/cota/código exercitadas. Vinte atualizações concorrentes enfileiradas do mesmo código produziram um único vencedor. Isso não substitui concorrência de conexões reais contra Prisma Postgres.
-- Prisma Client 7.10.1 gerado; TypeScript e build Next.js de produção aprovados após alterações finais.
-- Desktop: 65 testes Node aprovados. Formatação Prettier e verificações de sintaxe dos arquivos principais aprovadas.
-- Backend: suíte completa anterior com 110 testes aprovada nesta raiz; validação final com 86 testes de chat, projetos, escopo, Quick Chat, Cloud e integração após a correção de mensagens de ferramentas. Mocks externos e dados temporários.
-- Integração ASGI/Cloud adapter: deltas de resposta, persistência no histórico local e proteção do endpoint privado de credenciais aprovados, com provedor simulado.
-- Iniciador/build: 24 testes aprovados; o pipeline final repetiu os 19 testes relevantes de iniciador/NSIS. Nenhum processo externo foi encerrado por usar a porta.
-- Três smokes Electron reais aprovados: interface principal; Quick Chat/ícone independente; ativação com HTTP Cloud simulado e safeStorage real do Windows. Áudio de regressão usa amostra silenciosa; não houve API paga.
-- Backend congelado passou --self-check, carregando dependências, SQLite e políticas de leitura sem Python instalado no PATH do processo de destino.
-- NSIS gerou release/v3/JARVIS-Setup-3.0.0.exe e checksum SHA-256. Código não tem assinatura Authenticode.
-- Payload empacotado iniciado e reiniciado com dados temporários e PATH restrito: saúde/identidade, rejeição sem token e persistência de conversa aprovadas. Não equivale a Windows limpo.
-- Auditoria de ASAR/runtime confirmou fontes atuais e ausência de Backup, .env, bancos pessoais e arquivos privados proibidos. Revisão do índice Git não encontrou caminhos proibidos nem possíveis chaves OpenAI embutidas.
+```powershell
+npm run check:v5
+```
 
-## Pendências externas obrigatórias antes da tag
+O comando verifica, em sequência:
 
-1. Configurar URLs reais Prisma Postgres, AUTH_SECRET e chave OpenAI privadamente; aplicar migrations e criar o primeiro administrador por CLI.
-2. Implantar na Vercel e testar cadastro, ativação, concorrência real, revogação, uso/limites e streaming/cancelamento através da infraestrutura hospedada. Não foi realizado deploy nesta tarefa.
-3. Executar o instalador em Windows sem Python/Node, incluindo atalhos, protocolo aberto/fechado, desinstalação, atualização e preservação de dados. O teste com PATH restrito não comprova ausência de instalações no Windows do desenvolvedor.
-4. Validar som real, entrada de voz quando suportada pelo runtime, DPI/monitores e eventuais políticas Windows. Não foi prometida sobreposição em jogos exclusivos.
+1. Versões de manifests/locks, links locais da documentação e ausência de caminhos privados proibidos no índice Git.
+2. Runner de testes, Cloud, TypeScript e build Next.js/Prisma.
+3. TypeScript, bundle e testes Node do Desktop.
+4. Descoberta completa de testes Python do backend e testes dos iniciadores/empacotamento.
+5. Sete smokes Electron reais: principal, Quick Chat, Cloud, sessão, clipboard, Writer e Spotify.
+6. Layout administrativo em cinco larguras, com cache, filtros, gráficos e formulários.
 
-## Limitações funcionais documentadas
+O runner Electron elimina `ELECTRON_RUN_AS_NODE` apenas no ambiente dos processos de teste que ele inicia. Isso permite rodar dentro de outro host Electron sem alterar o aplicativo pessoal. Os testes usam perfis temporários e serviços externos simulados; não acessam dados reais para provar cenários simulados.
 
-- Listas administrativas mostram até 100 registros recentes; consumo tem filtros por cliente/período, sem paginação completa.
-- Voz central é opt-in. O endpoint binário de síntese não retorna tokens; caracteres ficam em auditoria e reserva conservadora, sem inventar consumo de tokens.
-- Reservas de chamadas sem uso confirmado permanecem retidas para impedir liberação indevida de quota; reconciliação operacional é necessária.
-- Credencial individual é renovada antecipadamente; falha de disco depois de consumir código ou permanência offline além da validade exige suporte e nova ativação planejada.
-- Um perfil não permite substituir silenciosamente o cliente ativado. Não há migração automática de cofres portáteis nem importação de dados privados do desenvolvimento.
-- Recuperação de senha, MFA e transferência de clientes entre administradores são evoluções futuras, não funcionalidades verificadas desta implementação.
+Também é possível executar cada script separado: consulte `package.json` e `desktop/package.json`. Não existe lint ESLint configurado; formatação usa Prettier no JS/TS e Black nos módulos Python revisados. O build de distribuição exige a validação completa antes de empacotar.
+
+## Registro desta finalização
+
+Execução de consolidação em **27/10/2026**:
+
+| Verificação | Resultado |
+| --- | --- |
+| Instalação dos workspaces | `npm ci` na raiz concluído; depois aplicada a correção Electron 44.9.1 e sincronizados os dois locks. |
+| Auditoria npm após a correção | Zero vulnerabilidades conhecidas reportadas. |
+| Repositório | Versões e 36 documentos com links locais válidos; índice sem caminhos privados proibidos. |
+| Ferramentas de validação | 2 testes aprovados. |
+| Cloud | 84 testes aprovados; TypeScript e build de produção aprovados. |
+| Desktop | 149 testes aprovados; TypeScript e bundle aprovados. |
+| Backend Python | 191 testes aprovados. |
+| Iniciadores e empacotamento | 34 testes aprovados. |
+| Electron 44.9.1 | Sete smokes aprovados: principal, Quick Chat, Cloud, sessão, clipboard, Writer e Spotify. |
+| Dashboard | 40 verificações de layout aprovadas, incluindo versão 5.0.0 e consumo. |
+| Formatação | Prettier dos JS/TS/JSON revisados e Black dos seis módulos Python revisados aprovados. |
+
+São **460 testes automatizados**, além dos sete smokes e das 40 verificações de layout. Cloud/IA/Spotify são simulados onde indicado nas fixtures. O smoke de clipboard imprime uma rejeição IPC esperada ao testar uma solicitação não autorizada; isso não é uma falha da suíte.
+
+Uma execução preliminar dos testes de iniciador, durante a reinstalação de dependências, excedeu a espera de dez segundos para o backend de teste. A execução completa posterior passou nos 34 testes; a mensagem de timeout também foi corrigida para informar a duração efetivamente configurada. Nenhuma validação externa foi inferida dessa reexecução.
+
+O empacotamento encontrou a dependência Electron instalada na raiz do workspace e recusou a faixa ^44.9.1. A versão foi fixada em 44.9.1 nos manifests/locks e um teste impede regressão. A suíte de iniciadores/compilação foi reexecutada com 34 testes aprovados; o empacotamento foi retomado sobre o backend e os bundles já validados. A auditoria e o teste de reinício do payload final passaram, conforme os dados abaixo.
+
+## Homologação externa pendente
+
+- Clipboard manual entre aplicativos Windows, bolinha no shell, som/volume/mute no dispositivo físico, duas janelas abrindo em disputa e nova cópia durante edição.
+- Conta autorizada Spotify: conectar/negar/expirar/repetir callback, reiniciar, refresh/revogação, conta sem Premium, isolamento real entre contas e diálogo de dispositivo nos três meios (chat, Quick Chat e voz).
+- OpenAI real autorizado: texto, streaming, cancelar, cotas e voz paga. Conferir uso no provedor sem expor conteúdo ou credenciais.
+- Writer com documentos reais escolhidos pelo usuário: perguntas sem alteração, revisão/aprovação, conflito externo, seleção, desfazer e atualização do original. Não sobrescrever documentos pessoais apenas para executar testes.
+- Windows limpo: instalar, atualizar e desinstalar com dados temporários, conferir atalhos e preservação do perfil; DPI, múltiplos monitores, microfone e recuperação após falha.
+
+A falta de homologação não é ocultada por mocks. Não criar tag ou afirmar certificação externa com base apenas nos resultados locais.
+
+## Artefato final — 27/10/2026
+
+- Arquivo: `release/v5/JARVIS-Setup-5.0.0.exe`.
+- Tamanho: **186.202.959 bytes**.
+- FileVersion/ProductVersion: **5.0.0**; runtime Electron **44.9.1**.
+- SHA-256: `9b6f7911a6d157c2b2ee0aadaf425355f70efc82f820c6c928749ca632448239`.
+- Verificação ao lado do arquivo: `JARVIS-Setup-5.0.0.exe.sha256`.
+- Assinatura Authenticode: **NotSigned**.
+- Origem Cloud embutida e auditada: `https://cronosjarvis.vercel.app`.
+
+PyInstaller concluiu a compilação e o backend congelado passou em `--self-check` com dados de teste. O empacotamento NSIS terminou com sucesso depois da fixação da versão Electron. A auditoria comparou fontes e configuração Cloud no ASAR/runtime e recusou arquivos privados proibidos. O payload final iniciou e reiniciou com perfil temporário e PATH sem Python/Node; identidade, autenticação local e persistência passaram. A execução ocorreu depois de concluída a compactação. O setup não foi instalado sobre o perfil pessoal, nem certificado em Windows limpo. Não houve chamada paga ou OAuth real nessa validação.
+
+Logs locais não versionados: `build/v5/finalization.log` e `build/v5/finalization-package.log`. Artefato e checksum permanecem locais; não há upload automático, assinatura digital ou tag de release.

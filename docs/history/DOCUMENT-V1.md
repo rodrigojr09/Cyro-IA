@@ -2,7 +2,7 @@
 
 ## Fase 2 — trabalho ainda não lançado
 
-A versão dos metadados continua 1.0.1; o destino é 2.0.1. A documentação abaixo registra a base anterior. O [guia da fase portátil](INSTALL.md) descreve os novos fluxos, limitações e validações pendentes. Não confunda testes de diretórios temporários com validação do produto completo.
+A versão dos metadados continua 1.0.1; o destino é 2.0.1. A documentação abaixo registra a base anterior. O [guia da fase portátil](INSTALL-PORTABLE.md) descreve os novos fluxos, limitações e validações pendentes. Não confunda testes de diretórios temporários com validação do produto completo.
 
 - `desktop/portable-paths.js` resolve dados pelo executável externo do portátil e configura userData/sessionData/logs/crashDumps antes do lock e de ready. O perfil permanece no USB; a extração temporária do runtime ainda pertence ao empacotador.
 - `backend/portable_paths.py` fornece referências `volume:` para projetos cadastrados no mesmo volume. Fontes externas continuam com referência absoluta e podem ficar indisponíveis. A memória interna continua indexada por UUID, independente da letra.
@@ -14,7 +14,7 @@ A versão dos metadados continua 1.0.1; o destino é 2.0.1. A documentação aba
 
 **Pendências impeditivas:** criptografia de conversas/memória/backups, migração guiada do AppData, inicialização autorizada por computador, verificação do artefato completo e testes reais descritos em INSTALL. A existência de GUI e motor de instalação no código não prova funcionamento do instalador compilado.
 
-Este documento descreve a implementação existente. O [README](README.md) orienta instalação e uso; o [IDEIA](IDEIA.md) registra a visão e as propostas futuras.
+Este documento descreve a implementação existente. O [README](../../README.md) orienta instalação e uso; o [IDEIA](VISION-V1.md) registra a visão e as propostas futuras.
 
 ## Arquitetura e limites de confiança
 

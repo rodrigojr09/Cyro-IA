@@ -12,7 +12,7 @@ Abra **Dashboard → Credenciais** (`/credentials`) com uma conta **SUPER_ADMIN*
 
 ## Instalação
 
-Aplique a migration `202610260002_provider_configuration` no ambiente Cloud autorizado com `npm run db:deploy -w @jarvis/cloud` e publique o código atualizado. Esta tarefa não aplica migrations remotas nem publica automaticamente.
+Aplique a migration `202610260002_provider_configuration` no ambiente Cloud autorizado com `npm run db:deploy -w @jarvis/cloud` e publique o código atualizado. A aplicação na produção existente está registrada ao final deste guia; em ambientes novos, a operação exige autorização e não é executada automaticamente pelo build.
 
 `DATABASE_URL`, `DIRECT_URL`, `APP_ORIGIN` e o `AUTH_SECRET` estável continuam configurados no servidor/Vercel. A página usa `AUTH_SECRET` já existente para derivar, por HKDF-SHA256 com domínio separado, a chave AES-256-GCM dos registros. **Não troque nem apague o AUTH_SECRET sem uma migração criptográfica planejada**: além das sessões existentes, as credenciais criptografadas dependem dele. Mantenha essa variável em armazenamento protegido e em cópia de recuperação segura.
 
@@ -28,7 +28,7 @@ Trocar o Client ID é bloqueado enquanto houver contas vinculadas ou autorizaç�
 - `cloud/components/credentials.tsx`: formulários independentes, estados de carregamento/erro/sucesso, segredos vazios, sem localStorage ou segredos em URLs.
 - Chat e voz OpenAI usam a configuração central mantendo limites e lista de modelos. Spotify usa AsyncLocalStorage para manter uma configuração consistente durante cada operação, incluindo OAuth e refresh; a criptografia de tokens é preservada.
 
-Salvar indica persistência, **não comprova conexão real**. Credenciais inválidas, contas sem acesso, Premium/allowlist Spotify e saldo/permissões OpenAI continuam dependentes dos provedores. Não houve teste pago, OAuth real ou implantação nesta entrega.
+Salvar indica persistência, **não comprova conexão real**. Credenciais inválidas, contas sem acesso, Premium/allowlist Spotify e saldo/permissões OpenAI continuam dependentes dos provedores. A validação inicial desses formulários usou provedores simulados; o roteiro de homologação atual está em [VALIDATION.md](VALIDATION.md).
 
 Orientação oficial OpenAI usada: [boas práticas de produção e proteção das chaves](https://developers.openai.com/api/docs/guides/production-best-practices). Para OAuth, scopes e limitações Spotify, consulte [SPOTIFY.md](SPOTIFY.md).
 

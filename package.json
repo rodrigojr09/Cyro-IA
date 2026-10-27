@@ -17,7 +17,13 @@
     "test:admin-layout": "node tools/check_admin_layout.cjs",
     "typecheck": "npm run typecheck -w @jarvis/cloud",
     "db:generate": "npm run db:generate -w @jarvis/cloud",
-    "db:migrate": "npm run db:migrate -w @jarvis/cloud"
+    "db:migrate": "npm run db:migrate -w @jarvis/cloud",
+    "check:repository": "node tools/check_repository.cjs",
+    "test:tools": "node --test tools/repository.test.cjs",
+    "test:electron": "node tools/run_electron_smoke.cjs --all",
+    "typecheck:desktop": "npm run typecheck -w jarvis-desktop",
+    "check:v5": "npm run check:repository && npm run test:tools && npm run test:cloud && npm run typecheck && npm run build:cloud && npm run typecheck:desktop && npm test -w jarvis-desktop && python -m unittest discover -s backend -p \"test_*.py\" && python -m unittest -q test_start test_start_local test_cloud_build test_build test_setup && npm run test:electron && npm run test:admin-layout",
+    "pretest:electron": "npm run build -w jarvis-desktop"
   },
   "author": {
     "name": "Rodrigo Junior",

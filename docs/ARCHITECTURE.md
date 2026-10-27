@@ -1,29 +1,55 @@
-# JARVIS Cloud + Desktop — v4 em desenvolvimento
+# Arquitetura — JARVIS v5
 
 ```mermaid
 flowchart LR
-  Admin[Administrador / navegador] --> Cloud[Next.js na Vercel]
-  Employee[Electron instalado] --> Cloud
-  Cloud --> Prisma[Prisma ORM 7 / Prisma Postgres]
-  Cloud --> OpenAI[OpenAI API]
-  Employee --> Local[FastAPI loopback autenticado]
-  Local --> SQLite[Histórico e memória SQLite locais]
-  Local --> Tools[Ferramentas registradas e pastas autorizadas]
+  Dashboard[Dashboard no navegador] --> Cloud[Next.js / APIs autenticadas]
+  Desktop[Electron principal e Quick Chat] --> Cloud
+  Desktop --> Local[FastAPI loopback autenticado]
+  Local --> Projects[SQLite de projetos / Writer / memória]
+  Local --> Tools[Ferramentas e fontes autorizadas]
   Local --> Cloud
+  Cloud --> Postgres[Prisma / PostgreSQL]
+  Cloud --> OpenAI[OpenAI: texto e voz]
+  Cloud --> Spotify[Spotify OAuth / Web API]
 ```
 
-## Decisões
+## Responsabilidades e localização
 
-Monorepo npm workspaces, sem orquestrador adicional. cloud/ usa Next.js App Router, TypeScript, React e runtime Node. Prisma 7 usa prisma.config.ts, gerador prisma-client com saída explícita e PrismaPg. DATABASE_URL é uma conexão PostgreSQL TCP fornecida pelo Prisma Postgres; DIRECT_URL é usada pela CLI de migrations. O build gera o cliente, mas não executa migrations nem precisa conectar ao banco.
+| Diretório | Responsabilidade |
+| --- | --- |
+| `cloud/app/` | Rotas App Router, dashboard e APIs. |
+| `cloud/components/` | Interface administrativa, dados compartilhados, credenciais e consumo. |
+| `cloud/lib/` | Autenticação, política, cotas, armazenamento, provedores e Spotify. |
+| `cloud/prisma/` | Schema, migrations revisadas e seed sem senha fixa. |
+| `cloud/test/` | Contratos, segurança, serviços e PostgreSQL embarcado. |
+| `desktop/electron/` | Entrada Cloud e configuração de empacotamento Windows. |
+| `desktop/services/` | Sessão individual protegida e transporte Cloud/stream local. |
+| `desktop/` e `desktop/styles/` | Janelas, preloads, chat, Quick Chat, clipboard, Writer e integração visual. |
+| `backend/` | FastAPI, projetos/memória locais, Writer, ferramentas e adaptadores Cloud. |
+| `packages/shared/` | Schemas, tipos e constantes comuns. |
+| `tools/` | Iniciadores, validação, auditoria e compilação; não é runtime Cloud. |
+| `docs/` | Guias vigentes; `docs/history/` guarda registros antigos. |
 
-FastAPI foi mantido para reaproveitar memória, indexação, projetos, IDEIA.md, ferramentas de leitura e confirmações humanas. backend/ permanece na raiz como componente local; mover esses módulos agora quebraria imports, testes e empacotamento sem benefício funcional. Desktop mantém os arquivos JS, HTML e styles/ existentes. electron/ contém o ponto de entrada v4 e configuração NSIS; services/ contém login e sessões protegidas. src/, components/, assets/ foram reservados para componentes novos; os existentes não foram reescritos por estética.
+Os módulos existentes permanecem em seus caminhos porque imports Python, preloads, fixtures e o empacotamento dependem deles. Não há segunda implementação de chat, Spotify ou voz criada para o Quick Chat. `Backup/` é somente leitura e nunca é importado em runtime.
 
-desktop/electron/main.cjs inicia o código existente em modo Cloud. backend/cloud_client.py mantém o contrato AsyncOpenAI usado pelo chat/indexador, mas envia chamadas exclusivamente a /api/v1 no servidor Cloud. A credencial individual é desencriptada somente no processo principal e entregue ao serviço local em endpoint privado autenticado, ausente das listas IPC do renderer e das ferramentas da IA. O processo local mantém essa credencial em memória. A chave OpenAI nunca é entregue ao desktop.
+## Sessão e fronteiras
 
-O painel usa APIs com autorização própria; o layout é uma proteção de navegação adicional. ADMIN administra somente funcionários cujo managerId é seu ID. SUPER_ADMIN cria administradores. EMPLOYEE usa o produto desktop, sem acesso administrativo. Históricos/conversas permanecem locais; o servidor recebe contexto necessário ao pedido e persiste apenas métricas e auditoria, sem conteúdo integral. Não há acesso local a PostgreSQL.
+O Electron principal protege a sessão individual com safeStorage/DPAPI. Renderers usam preloads e IPC com origem, frame, papel e parâmetros validados. A senha não é persistida. FastAPI recebe a sessão em memória por um endpoint privado autenticado e escuta somente loopback; não recebe chaves dos provedores. Produção usa HTTPS.
 
-## Estado e limites atuais
+OpenAI e PostgreSQL são acessados exclusivamente pelo Cloud. As APIs verificam sessão e permissões independentemente da proteção de navegação. ADMIN administra apenas seus EMPLOYEE; SUPER_ADMIN possui o escopo global autorizado. Contas administrativas ativas podem entrar no Desktop sem alterar seu papel.
 
-A estrutura e os fluxos existem em código e testes locais. Não equivalem à implantação completa. A API de chat suporta streaming/cancelamento; o renderer recebe deltas por IPC restrito, exibe texto durante a geração e sanitiza Markdown ao finalizar. O botão Parar cancela a chamada local e a transmissão Cloud. A interface administrativa lista até 100 registros recentes, sem paginação; consumo possui filtros por cliente e período. Recuperação de senha, MFA, transferência de funcionário entre administradores, migração humana de cofres portáteis continuam pendentes. Sessões de login substituem ativação e licenças. A renovação antecipada da sessão e as configurações globais estão implementadas. A raiz do Cloud é protegida pelo layout administrativo; não há site público. A voz central é opcional, desabilitada por padrão e tem limite conservador de caracteres; não há contagem de tokens do áudio binário inventada.
+O arquivo `cloud-session-v4.bin` mantém o nome por compatibilidade das instalações existentes. Ele não indica que a versão do produto é v4. Renomeá-lo sem migração perderia a restauração da sessão; esta finalização não faz essa alteração.
 
-Nenhum instalador v4 foi certificado em Windows limpo. Ferramentas de escritório preservam as capacidades existentes de escrita/análise pelo chat; não foi adicionado controle nativo de Office ou terminal arbitrário.
+## Dados e fluxos
+
+Chats gerais e o Quick Chat geral fixo são persistidos no PostgreSQL por conta. Projetos, chats de projetos, memória, documentos e revisões Writer ficam no SQLite local do projeto. Contexto autorizado é enviado ao Cloud no pedido do usuário. Regras detalhadas em [CHATS.md](CHATS.md), [WRITER.md](WRITER.md) e [SECURITY.md](SECURITY.md).
+
+`DashboardDataProvider` e `useDashboardData` mantêm cache em memória no layout administrativo, deduplicam consultas e aguardam os dados antes de exibir a página. Filtros de consumo têm chaves separadas; salvamentos e Atualizar renovam os recursos necessários. Segredos nunca entram nesse cache.
+
+O processo principal mantém o único serviço de clipboard e atribui cada notificação atomicamente a um dos chats. O Writer é uma conversa padrão com preview lateral, não um aplicativo separado. Spotify usa o mesmo serviço Cloud para chat, Quick Chat e voz; comandos locais determinísticos e interpretação estruturada respeitam as mesmas permissões e cotas.
+
+## Qualidade e distribuição
+
+A versão dos manifests e locks é conferida contra `VERSION` pelo verificador de repositório. O rodapé administrativo lê o manifesto, evitando rótulo de versão antigo. `npm run check:v5` reúne os testes e os sete smokes Electron. O runner inicia somente entradas de teste registradas, limpa o modo Node herdado de hosts Electron e não usa perfis pessoais.
+
+O pipeline Windows só empacota após essa validação. PyInstaller gera o backend e electron-builder gera NSIS; a auditoria compara fontes, configuração Cloud e proíbe arquivos privados no artefato. Não se publicam instaladores, tags ou credenciais automaticamente. Consulte [VALIDATION.md](VALIDATION.md) e [PUBLISH.md](PUBLISH.md).

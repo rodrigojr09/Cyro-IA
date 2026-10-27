@@ -234,7 +234,9 @@ def wait_backend(child, timeout=45):
         if healthy():
             return
         time.sleep(0.25)
-    raise LaunchError("O backend não respondeu ao /health dentro de 45 segundos.")
+    raise LaunchError(
+        f"O backend não respondeu ao /health dentro de {timeout:g} segundos."
+    )
 
 
 def dependencies():

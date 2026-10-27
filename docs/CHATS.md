@@ -42,4 +42,4 @@ Testes automatizados incluem isolamento entre duas contas administrativas, uma c
 - Quatro verificações Electron aprovadas: interface principal, Quick Chat, login/safeStorage e integração Electron/FastAPI. Cloud e áudio de teste simulados; nenhuma chamada paga.
 - Backend rejeita projeto acima de 5 MB com HTTP 413 em seleção, atualização, chat, Quick Chat e início do streaming. O Desktop bloqueia o envio antecipadamente e preserva a pergunta; erros 413 posteriores também mantêm o aviso de tamanho.
 - Testes adicionais recusam anexar contexto de projeto a uma conversa Cloud geral ou mudar o projeto de um chat local comum.
-- Na validação inicial, o código permaneceu local, sem push, deploy, tag ou novo instalador. A publicação posterior autorizada da v4.1.0 está documentada em [V4_1.md](V4_1.md). Portas locais 3000 e 8765 encerradas após os testes.
+- Na validação inicial, o código permaneceu local, sem push, deploy, tag ou novo instalador. A publicação posterior autorizada da v4.1.0 está documentada em [V4_1.md](history/V4_1.md). Portas locais 3000 e 8765 encerradas após os testes.

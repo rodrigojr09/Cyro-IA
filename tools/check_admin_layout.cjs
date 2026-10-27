@@ -108,7 +108,7 @@ async function render() {
           `new Promise((resolve,reject)=>{let tries=0;const poll=()=>{const ready=${JSON.stringify(section)}==='login'?document.querySelector('form'):document.querySelector('.employee-row, table, .metrics, .form-grid');if(ready) requestAnimationFrame(()=>requestAnimationFrame(resolve));else if(++tries>100)reject(Error('Render timeout'));else setTimeout(poll,20)};poll()})`,
         );
         const geometry = await window.webContents.executeJavaScript(
-          `({width:innerWidth,scroll:document.documentElement.scrollWidth,logoutVisible:!!document.querySelector('[aria-label="Sair"]')?.getClientRects().length,tallestField:Math.max(0,...Array.from(document.querySelectorAll('.form-grid label,.employee-row label,.generated label'),label=>label.getBoundingClientRect().height))})`,
+          `({width:innerWidth,scroll:document.documentElement.scrollWidth,logoutVisible:!!document.querySelector('[aria-label="Sair"]')?.getClientRects().length,footer:document.querySelector('footer')?.textContent,tallestField:Math.max(0,...Array.from(document.querySelectorAll('.form-grid label,.employee-row label,.generated label'),label=>label.getBoundingClientRect().height))})`,
         );
         if (geometry.scroll > geometry.width + 1)
           throw Error(
@@ -116,6 +116,11 @@ async function render() {
           );
         if (section !== "login" && !geometry.logoutVisible)
           throw Error(`Logout hidden at ${width}px`);
+        if (
+          section !== "login" &&
+          !geometry.footer?.includes(`v${require("../package.json").version}`)
+        )
+          throw Error(`Incorrect dashboard version at ${width}px`);
         if (width <= 420 && geometry.tallestField > 140)
           throw Error(`Excessive field spacing in ${section} at ${width}px`);
         if (

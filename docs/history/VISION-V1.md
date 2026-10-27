@@ -6,7 +6,7 @@ Referência da versão 1.0.1, em 20/10/2026. Este documento do próprio JARVIS �
 
 Oferecer um assistente pessoal para tarefas gerais, escritório, estudos e programação, com acesso rápido e memória duradoura, mantendo o usuário no controle das permissões e dos seus dados.
 
-A fase 2 tem destino v2.0.1 e pretende levar preferências, conversas e memória em um dispositivo portátil. Está em desenvolvimento; [INSTALL](INSTALL.md) distingue o código implementado das funcionalidades e validações ainda pendentes. A programação permanece uma capacidade, sem exigir que todas as conversas pertençam a projetos.
+A fase 2 tem destino v2.0.1 e pretende levar preferências, conversas e memória em um dispositivo portátil. Está em desenvolvimento; [INSTALL](INSTALL-PORTABLE.md) distingue o código implementado das funcionalidades e validações ainda pendentes. A programação permanece uma capacidade, sem exigir que todas as conversas pertençam a projetos.
 
 ## Implementado e verificável no código
 

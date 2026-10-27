@@ -17,6 +17,7 @@ function cloudOrigin(value, packaged = true) {
 }
 function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = fetch }) {
   const base = cloudOrigin(origin, packaged);
+  // Keep the on-disk name across v5 updates so existing protected sessions survive.
   const file = path.join(dataDir, 'cloud-session-v4.bin');
   let session = null;
   let state = { status: 'inactive', message: 'Entre com sua conta.' };

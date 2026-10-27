@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { version } from "../../package.json";
 import Management from "./management";
 import Credentials from "./credentials";
 import UsagePanel from "./usage-panel";
@@ -516,7 +517,7 @@ export default function Dashboard({
           </>
         )}
         <footer>
-          <span>JARVIS · v4.2.0 · © 2026 Rodrigo Junior</span>
+          <span>JARVIS · v{version} · © 2026 Rodrigo Junior</span>
           <span>
             <a href="mailto:rodrigo.macia019@gmail.com">Contato</a>
             {" · "}

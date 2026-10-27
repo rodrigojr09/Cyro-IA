@@ -13,7 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def run(args, cwd=ROOT):
-    subprocess.run(args, cwd=cwd, check=True)
+    environment = dict(os.environ)
+    # npm's Python checks must use the interpreter selected by build.bat as well.
+    environment["PATH"] = (
+        str(Path(sys.executable).parent) + os.pathsep + environment.get("PATH", "")
+    )
+    subprocess.run(args, cwd=cwd, check=True, env=environment)
 
 
 def main():
@@ -40,46 +45,7 @@ def main():
     root_package = json.loads((ROOT / "package.json").read_text())
     if package["version"] != root_package["version"]:
         raise SystemExit("Metadados divergentes.")
-    run([npm, "run", "test:cloud"])
-    run(
-        [
-            sys.executable,
-            "-m",
-            "unittest",
-            "-q",
-            "test_start",
-            "test_start_local",
-            "test_cloud_build",
-        ]
-    )
-    run([npm, "run", "typecheck"])
-    run([npm, "run", "build:cloud"])
-    run([npm, "test"], ROOT / "desktop")
-    run(
-        [
-            sys.executable,
-            "-m",
-            "unittest",
-            "-q",
-            "test_cloud",
-            "test_cloud_integration",
-            "test_cloud_conversations",
-            "test_project_limits",
-            "test_attachments",
-            "test_storage_settings",
-            "test_jarvis",
-            "test_programming",
-            "test_projects",
-            "test_scope",
-            "test_quick",
-        ],
-        ROOT / "backend",
-    )
-    run([npm, "run", "test:electron"], ROOT / "desktop")
-    run([npm, "run", "test:quick"], ROOT / "desktop")
-    run([npm, "run", "test:cloud-electron"], ROOT / "desktop")
-    run([npm, "run", "test:session-electron"], ROOT / "desktop")
-    run([npm, "run", "test:clipboard"], ROOT / "desktop")
+    run([npm, "run", "check:v5"])
     run(
         [
             sys.executable,

@@ -46,6 +46,10 @@ npm run admin:bootstrap -w @jarvis/cloud
 
 O bootstrap exige BOOTSTRAP_EMAIL, BOOTSTRAP_NAME e BOOTSTRAP_PASSWORD temporários no ambiente local seguro. Remova essas variáveis depois. Não colocar senha na linha de comando ou no Git. Não executar migrations automaticamente em todo build de preview.
 
-Depois do deploy, testar login, cadastro de cliente, login no Desktop, sessão automática, bloqueio, logout e consumo. A configuração acima está preparada no código, mas uma implantação real ainda depende das suas contas e variáveis privadas.
+Depois do deploy, testar login, cadastro de cliente, login no Desktop, sessão automática, bloqueio, logout e consumo. A produção existente já possui deploys confirmados; um novo ambiente ainda exige banco, variáveis e autorização próprios. O status de deploy não valida as operações autenticadas nem chamadas pagas.
+
+## Credenciais pela dashboard
+
+Em uma instalação atualizada, configure OpenAI e Spotify por **Dashboard → Credenciais** com SUPER_ADMIN. Configuração salva prevalece sobre as variáveis de provedor; banco, APP_ORIGIN e AUTH_SECRET continuam no ambiente do servidor. Não troque AUTH_SECRET sem planejar a recuperação das sessões e segredos criptografados. Callback Spotify exato de produção: `https://cronosjarvis.vercel.app/api/integrations/spotify/callback`. Leia [CREDENTIALS.md](CREDENTIALS.md) e [SPOTIFY.md](SPOTIFY.md).
 
 Referências: [Vercel — monorepos](https://vercel.com/docs/monorepos/monorepo-faq), [Vercel — build](https://vercel.com/docs/builds/configure-a-build), [npm ci e workspaces](https://docs.npmjs.com/cli/commands/npm-ci/).
