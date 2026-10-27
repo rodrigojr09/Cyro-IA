@@ -9,3 +9,7 @@ A arquitetura alvo preserva esses caminhos até que cada mudança tenha compatib
 JARVIS deve ter identidade comum, modos contextuais e ferramentas especializadas. Cloud continua responsável por provedores, contas, autorização, cotas e PostgreSQL. Electron guarda sessão protegida e executa recursos nativos por IPC restrito. FastAPI executa as ferramentas autorizadas e mantém documentos locais.
 
 Este diretório registra a migração solicitada e complementa os guias vigentes; não substitui evidências históricas nem declara v6 concluída.
+
+## Primeira extração validada
+
+Identidade e regras básicas de confirmação foram extraídas de backend/main.py para backend/jarvis_identity.py. Chat principal/Quick mantêm SYSTEM derivado desse módulo; Writer acrescenta seu contrato editorial à mesma identidade. Não centraliza ainda toda a orquestração nem implementa memória global. Suíte Python: 193 testes aprovados em 27/10/2026, com provedores simulados; sem chamada paga.
