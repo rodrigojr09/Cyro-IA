@@ -289,6 +289,11 @@ export async function conversations(
     }
     if (row.archived) throw new HttpError(400, "Conversa arquivada.");
     if (command.action === "exchange") {
+      if (command.requestId === command.assistantRequestId)
+        throw new HttpError(
+          400,
+          "Use identificadores distintos para as mensagens.",
+        );
       // Both messages and their summary commit together before the device receives success.
       const inserted = await tx.chatMessage.createMany({
         data: [

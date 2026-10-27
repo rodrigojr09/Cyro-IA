@@ -488,6 +488,10 @@ def workspace_bootstrap():
         for row in chats
         if row["project_id"] is None or row["project_id"] in active_projects
     ]
+    chats.sort(
+        key=lambda row: str(row.get("last_message_at") or row.get("created_at") or ""),
+        reverse=True,
+    )
     for row in chats:
         if not CLOUD or row["project_id"]:
             collected, before = [], None
