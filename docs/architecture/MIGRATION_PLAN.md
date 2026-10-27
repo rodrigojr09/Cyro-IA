@@ -22,3 +22,11 @@ Auditoria e inventário iniciais registrados; revisão integral ainda pendente. 
 ## Validação
 
 Instalar workspaces com npm ci na raiz. Executar testes Cloud, TypeScript/build, Desktop, Python, sete smokes Electron e layout. Builds não comprovam login remoto, OpenAI paga, áudio físico, OAuth Spotify real nem Windows limpo. Registrar execução atual separadamente das evidências v5 em docs/VALIDATION.md.
+
+## Balanço desta execução
+
+Entregue: documentação inicial solicitada, alvo 6.0.0 autorizado, identidade comum e cache inicial do histórico comum na janela principal. Sem alterações no banco ou nos caminhos persistidos; nenhuma remoção de funcionalidade foi planejada nesta entrega.
+
+Validação: 468 testes automatizados, seis smokes Electron, TypeScript/build Cloud/Desktop e 40 verificações de layout passaram. Smoke Electron/FastAPI bloqueado por backend instalado usando a porta 8765, preservado. Evidências e limitações em [VALIDATION.md](../VALIDATION.md).
+
+Ainda necessários para o objetivo completo: auditoria integral de referências/dependências/ciclos, contratos de revisões/eventos e cache entre janelas/dispositivos/Writer, rascunhos no F5, memória GLOBAL_USER autenticada com testes de escopo e migração/rollback, orquestração e registro de ferramentas completos, extrações Cloud/Desktop restantes, decisão React com cobertura de IPC e instalador v6 auditado. Não há base para marcar os 15 estágios como concluídos. A validação parcial desta execução não constitui conclusão da reestruturação completa.

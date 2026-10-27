@@ -11,9 +11,10 @@ Execução atual em **27/10/2026**, branch `codex/jarvis-v6-architecture`. Resul
 | Python backend | 193 testes aprovados, incluindo identidade comum; 42 testes Writer também executados separadamente. |
 | Iniciadores/empacotamento | 34 testes aprovados; não equivale a gerar ou instalar um setup v6. |
 | Electron | Principal, Quick, login Cloud, clipboard, Writer e Spotify aprovados com serviços externos simulados. |
+| Layout administrativo | 40 verificações aprovadas em Chromium real, com dados sintéticos. |
 | Electron/FastAPI sessão | Bloqueado: porta 8765 ocupada por jarvis-backend.exe já instalado. Não encerrado nem substituído. A execução agregada parou nesse ponto; os três smokes seguintes foram executados separadamente. |
 
-Total sem dupla contagem: **468 testes automatizados**, mais seis smokes Electron. Logs locais em `build/v6/`. Layout administrativo será registrado após conclusão. A alteração prévia de cloud/next-env.d.ts foi restaurada exatamente após o build e permanece fora dos commits.
+Total sem dupla contagem: **468 testes automatizados**, mais seis smokes Electron. Logs locais em `build/v6/`. Layout administrativo: 40 verificações aprovadas. A alteração prévia de cloud/next-env.d.ts foi restaurada exatamente após o build e permanece fora dos commits.
 
 Não houve implantação, migration de banco, chamada paga, OAuth real, instalação v6 ou teste em Windows limpo. A migração permanece parcial: memória GLOBAL_USER, React, registro/orquestração central completos, cache Writer/Quick compartilhado, eventos/revisões remotos e rascunhos ao F5 ainda pendentes. Veja o [plano incremental](architecture/MIGRATION_PLAN.md). Não marcar v6 estável ou pronta para distribuição.
 
