@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-async function setup({ partial = false, delayed = false, oversized = false } = {}) {
+async function setup({ partial = false, delayed = false, oversized = false, clock = null } = {}) {
   const calls = [];
   const timers = [];
   let resolveChat;
@@ -50,6 +50,7 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
     if (route === '/health') data = { ok: true };
     else if (route === '/workspace')
       data = { projects: [project], chats, general_chat_id: 'general' };
+    else if (route === '/workspace/progress') data = { projects: [project] };
     else if (route === '/workspace/view')
       data = JSON.parse(options.body).project_id
         ? { project, chats, archived_chats: [] }
@@ -91,6 +92,13 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
     console,
     encodeURIComponent,
     URLSearchParams,
+    Date: clock
+      ? class extends Date {
+          static now() {
+            return clock.now;
+          }
+        }
+      : Date,
     setTimeout: (fn) => {
       timers.push(fn);
       return timers.length;
@@ -104,7 +112,7 @@ async function setup({ partial = false, delayed = false, oversized = false } = {
   for (const file of ['scope.js', 'workspace.js', 'renderer.js'])
     vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
   await new Promise((resolve) => setImmediate(resolve));
-  return { window, elements, calls, timers, chats, resolve: () => resolveChat() };
+  return { window, document, elements, calls, timers, chats, resolve: () => resolveChat() };
 }
 
 test('projetos e chats trocam histórico sem contaminar o contexto e novo chat reutiliza memória', async () => {
@@ -227,7 +235,7 @@ test('mudança de outra janela invalida e sincroniza somente a conversa ativa', 
   const { window, calls, timers, chats } = await setup();
   await window.jarvisWorkspace.view('project-a', 'first');
   chats[0].last_message_at = '2026-10-27T12:00:00.001Z';
-  await timers.find((fn) => fn.name === 'poll')();
+  await timers.find((fn) => fn.name === 'poll')(true);
   assert.equal(calls.filter((item) => item.route === '/chats/history?chat_id=first').length, 2);
   await window.jarvisWorkspace.view('project-a', 'second');
   await window.jarvisWorkspace.view('project-a', 'first');
@@ -262,7 +270,48 @@ test('exclusão observada em outra janela remove conteúdo e entrada do cache at
   const { window, elements, timers, chats } = await setup();
   await window.jarvisWorkspace.view('project-a', 'first');
   chats.splice(0, 1);
-  await timers.find((fn) => fn.name === 'poll')();
+  await timers.find((fn) => fn.name === 'poll')(true);
   assert.equal(window.jarvisWorkspace.chat, null);
   assert.equal(elements.messages.children.length, 0);
+});
+
+test('catálogo remoto não é consultado novamente nos ticks de dois segundos', async () => {
+  const { calls, timers } = await setup();
+  const before = calls.filter((item) => item.route === '/workspace').length;
+  for (let tick = 0; tick < 30; tick++) await timers.find((fn) => fn.name === 'poll')();
+  assert.equal(calls.filter((item) => item.route === '/workspace').length, before);
+});
+
+test('dez minutos com relógio controlado produzem dez sincronizações, não 300', async () => {
+  const clock = { now: 0 };
+  const { calls, timers } = await setup({ clock });
+  const initial = calls.filter((item) => item.route === '/workspace').length;
+  for (let tick = 1; tick <= 300; tick++) {
+    clock.now = tick * 2000;
+    await timers.find((fn) => fn.name === 'poll')();
+  }
+  assert.equal(calls.filter((item) => item.route === '/workspace').length - initial, 10);
+});
+
+test('janela oculta não consulta catálogo e visibilidade permite sincronização explícita', async () => {
+  const clock = { now: 0 };
+  const { calls, timers, document } = await setup({ clock });
+  const initial = calls.filter((item) => item.route === '/workspace').length;
+  document.visibilityState = 'hidden';
+  clock.now = 600000;
+  await timers.find((fn) => fn.name === 'poll')(true);
+  assert.equal(calls.filter((item) => item.route === '/workspace').length, initial);
+  document.visibilityState = 'visible';
+  await timers.find((fn) => fn.name === 'poll')(true);
+  assert.equal(calls.filter((item) => item.route === '/workspace').length, initial + 1);
+});
+
+test('indexação atualiza progresso local sem consultar o catálogo Cloud a cada tick', async () => {
+  const { window, calls, timers } = await setup();
+  await window.jarvisWorkspace.view('project-a', 'first');
+  window.jarvisWorkspace.project.state = 'indexing';
+  const initial = calls.filter((item) => item.route === '/workspace').length;
+  await timers.find((fn) => fn.name === 'poll')();
+  assert.equal(calls.filter((item) => item.route === '/workspace').length, initial);
+  assert.equal(calls.filter((item) => item.route === '/workspace/progress').length, 1);
 });

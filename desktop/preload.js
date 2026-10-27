@@ -27,6 +27,11 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   attachmentInfo: (id) => ipcRenderer.invoke('jarvis:attachments-info', id),
   saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
   discardAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-discard', id),
+  onWorkspaceChanged: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('jarvis:workspace-changed', listener);
+    return () => ipcRenderer.removeListener('jarvis:workspace-changed', listener);
+  },
   onDelta: (callback) => ipcRenderer.on('jarvis:stream-delta', (_event, value) => callback(value)),
   cancelChat: () => ipcRenderer.invoke('jarvis:cancel-chat'),
   initialSettings: () => ipcRenderer.invoke('jarvis:initial-settings'),

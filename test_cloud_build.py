@@ -36,11 +36,11 @@ class CloudBuildTests(unittest.TestCase):
                 str(Path(build_cloud_desktop.sys.executable).parent),
             )
 
-    def test_final_build_requires_complete_v5_validation(self):
+    def test_final_build_requires_complete_v6_validation(self):
         script = (ROOT / "tools/build_cloud_desktop.py").read_text()
-        self.assertIn('run([npm, "run", "check:v5"])', script)
+        self.assertIn('run([npm, "run", "check:v6"])', script)
         validation = json.loads((ROOT / "package.json").read_text())["scripts"][
-            "check:v5"
+            "check:v6"
         ]
         self.assertIn("unittest discover -s backend", validation)
         self.assertIn("test:electron", validation)
@@ -53,7 +53,7 @@ class CloudBuildTests(unittest.TestCase):
         self.assertFalse(config["nsis"]["deleteAppDataOnUninstall"])
         self.assertNotIn("**/*", config["files"])
         self.assertEqual(
-            config["extraResources"][0]["from"], "../build/v5/backend/jarvis-backend"
+            config["extraResources"][0]["from"], "../build/v6/backend/jarvis-backend"
         )
         self.assertNotIn("Backup", json.dumps(config))
         self.assertNotIn(".env", json.dumps(config))

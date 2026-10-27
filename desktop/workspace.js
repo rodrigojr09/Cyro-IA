@@ -10,6 +10,11 @@ window.jarvisWorkspace = (() => {
     busy = false,
     initialising = null;
   const historyCache = new Map();
+  let lastCatalogSync = Date.now(),
+    pollInFlight = null,
+    pollTimer = null,
+    pollFailures = 0,
+    refreshRequested = false;
   const revision = (item) =>
     JSON.stringify([item?.last_message_at, item?.archived, item?.writer_document_id]);
   const expanded = new Set(),
@@ -430,6 +435,7 @@ window.jarvisWorkspace = (() => {
     preserveAttachments = false,
   ) {
     const result = await api('/workspace');
+    lastCatalogSync = Date.now();
     projects = result.projects;
     allChats = result.chats || allChats;
     if (result.chats) chats = allChats.filter((item) => (item.project_id || '') === selected);
@@ -437,6 +443,7 @@ window.jarvisWorkspace = (() => {
   }
   async function openById(id) {
     const result = await api('/workspace');
+    lastCatalogSync = Date.now();
     projects = result.projects;
     allChats = result.chats || allChats;
     const item = allChats.find((item) => item.id === id);
@@ -463,10 +470,16 @@ window.jarvisWorkspace = (() => {
       controls();
     }
   }
-  async function poll() {
+  async function syncWorkspace(force = false) {
+    if (pollFailures >= 5 && !force) return;
     try {
-      if (!loading && !busy) {
-        const result = await api('/workspace');
+      if (!loading && !busy && document.visibilityState !== 'hidden') {
+        const remote = force || Date.now() - lastCatalogSync >= 60000;
+        const indexing = project && ['queued', 'indexing'].includes(project.state);
+        if (!remote && !indexing) return;
+        const result = await api(remote ? '/workspace' : '/workspace/progress');
+        if (remote) lastCatalogSync = Date.now();
+        pollFailures = 0;
         projects = result.projects;
         allChats = result.chats || allChats;
         if (result.chats)
@@ -503,9 +516,18 @@ window.jarvisWorkspace = (() => {
         controls();
       }
     } catch {
-    } finally {
-      setTimeout(poll, 2000);
+      pollFailures = Math.min(pollFailures + 1, 5);
     }
+  }
+  function poll(force = false) {
+    if (force && (busy || loading)) refreshRequested = true;
+    if (pollInFlight) return pollInFlight;
+    clearTimeout(pollTimer);
+    pollInFlight = syncWorkspace(force).finally(() => {
+      pollInFlight = null;
+      pollTimer = setTimeout(poll, 2000 * 2 ** pollFailures);
+    });
+    return pollInFlight;
   }
   async function run(fn) {
     if (busy || loading) return;
@@ -684,7 +706,18 @@ window.jarvisWorkspace = (() => {
     } catch {
       await catalog('', null);
     }
-    setTimeout(poll, 2000);
+    lastCatalogSync = Date.now();
+    pollTimer = setTimeout(poll, 2000);
+    window.addEventListener?.('focus', () => {
+      void poll(true);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void poll(true);
+    });
+    window.jarvisWindow.onWorkspaceChanged?.(() => {
+      void poll(true);
+    });
+    window.addEventListener?.('beforeunload', () => clearTimeout(pollTimer));
   }
   return {
     init,
@@ -714,6 +747,10 @@ window.jarvisWorkspace = (() => {
     end() {
       busy = false;
       controls();
+      if (refreshRequested) {
+        refreshRequested = false;
+        void poll(true);
+      }
     },
   };
 })();

@@ -55,6 +55,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ['/programming/status', 'GET'],
     ['/programming/revoke', 'POST'],
     ['/workspace', 'GET'],
+    ['/workspace/progress', 'GET'],
     ['/storage', 'GET'],
     ['/projects/settings', 'POST'],
     ['/chats/settings', 'POST'],
@@ -92,6 +93,28 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       event.senderFrame.url === pageURL
     );
   }
+  function notifyWorkspaceChanged() {
+    try {
+      if (win && !win.isDestroyed()) win.webContents.send('jarvis:workspace-changed');
+    } catch {
+      // Closing a renderer must never turn a committed operation into a retry.
+    }
+  }
+  function mutatesWorkspace(route, method) {
+    return (
+      method === 'POST' &&
+      [
+        '/chat',
+        '/quick/chat',
+        '/chats/change',
+        '/chats/create',
+        '/chats/settings',
+        '/projects/register',
+        '/projects/remove',
+        '/projects/settings',
+      ].includes(route)
+    );
+  }
   async function backend(route, method, body) {
     if (process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1')
       throw Error('Entre com sua conta.');
@@ -104,7 +127,9 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         redirect: 'error',
         signal: AbortSignal.timeout(180000),
       });
-      return { ok: response.ok, data: await response.json() };
+      const result = { ok: response.ok, data: await response.json() };
+      if (result.ok && mutatesWorkspace(route, method)) notifyWorkspaceChanged();
+      return result;
     } catch {
       throw new Error('Backend indisponível. Inicie ou reinicie o Python.');
     }
@@ -524,6 +549,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
           activeStreams.delete(event.sender.id);
         }
       } else result = await backend(route, method, options.body);
+      if (result.ok && baseRoute === '/chat' && process.env.JARVIS_CLOUD === '1')
+        notifyWorkspaceChanged();
       if (result.ok && result.data?.spotify)
         for (const window of BrowserWindow.getAllWindows?.() || [])
           if (!window.isDestroyed()) window.webContents.send('spotify:changed');

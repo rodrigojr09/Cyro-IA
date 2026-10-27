@@ -45,7 +45,7 @@ def main():
     root_package = json.loads((ROOT / "package.json").read_text())
     if package["version"] != root_package["version"]:
         raise SystemExit("Metadados divergentes.")
-    run([npm, "run", "check:v5"])
+    run([npm, "run", "check:v6"])
     run(
         [
             sys.executable,
@@ -60,11 +60,11 @@ def main():
             "--paths",
             str(ROOT / "backend"),
             "--distpath",
-            str(ROOT / "build/v5/backend"),
+            str(ROOT / "build/v6/backend"),
             "--workpath",
-            str(ROOT / "build/v5/work"),
+            str(ROOT / "build/v6/work"),
             "--specpath",
-            str(ROOT / "build/v5"),
+            str(ROOT / "build/v6"),
             "--collect-submodules",
             "uvicorn",
             str(ROOT / "backend/cloud_entry.py"),
@@ -88,7 +88,7 @@ def main():
         ROOT / "desktop",
     )
     run([sys.executable, str(ROOT / "tools/audit_cloud_artifact.py")])
-    artifact = ROOT / "release/v5" / f"JARVIS-Setup-{package['version']}.exe"
+    artifact = ROOT / "release/v6" / f"JARVIS-Setup-{package['version']}.exe"
     with artifact.open("rb") as stream:
         checksum = hashlib.file_digest(stream, "sha256").hexdigest()
     artifact.with_suffix(".exe.sha256").write_text(

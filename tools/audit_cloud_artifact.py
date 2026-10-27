@@ -8,7 +8,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def audit():
-    payload = ROOT / "release/v5/win-unpacked"
+    builder = json.loads((ROOT / "desktop/electron/builder.json").read_text())
+    payload = (
+        ROOT / "desktop" / builder["directories"]["output"]
+    ).resolve() / "win-unpacked"
     archive = payload / "resources/app.asar"
     with archive.open("rb") as stream:
         fields = struct.unpack("<4I", stream.read(16))

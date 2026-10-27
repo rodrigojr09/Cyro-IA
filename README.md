@@ -1,6 +1,6 @@
-# JARVIS v6.0.0 — em desenvolvimento
+# JARVIS v6.0.1 — em desenvolvimento
 
-Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
+Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Setup solicitado: `release/v6/JARVIS-Setup-6.0.1.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
 
 # Base funcional v5
 
@@ -47,10 +47,10 @@ Depois de configurar, `start.bat` inicia o Cloud local, aguarda o login e abre o
 ## Validar e compilar
 
 ```powershell
-npm run check:v5
+npm run check:v6
 ```
 
-O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v5/JARVIS-Setup-5.1.0.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
+O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v6/JARVIS-Setup-6.0.1.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
 
 ## Documentação e autoria
 

@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="6.0.0" if CLOUD else "2.0.1-dev.0",
+    version="6.0.1" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -433,6 +433,12 @@ async def read_error_handler(request: Request, exc: ReadError):
     )
 
 
+@app.get("/workspace/progress")
+def workspace_progress():
+    # Indexing progress is local; never invoke Cloud conversation/catalog services.
+    return {"projects": store.projects()}
+
+
 @app.get("/workspace")
 def workspace():
     projects = store.projects()
@@ -482,12 +488,17 @@ async def workspace_view(req: WorkspaceRequest):
         and not (store.project_dir(project["id"]) / "IDEIA.md").is_file()
     ):
         store.export_knowledge(project["id"])
+    if CLOUD and not req.project_id:
+        rows = await asyncio.to_thread(store.request, {"action": "list"})
+        active = [row for row in rows if not row["archived"]]
+        archived = [row for row in rows if row["archived"]]
+    else:
+        active = await asyncio.to_thread(store.chats, req.project_id)
+        archived = await asyncio.to_thread(store.chats, req.project_id, archived=True)
     return {
         "project": store.project(req.project_id) if project else None,
-        "chats": await asyncio.to_thread(store.chats, req.project_id),
-        "archived_chats": await asyncio.to_thread(
-            store.chats, req.project_id, archived=True
-        ),
+        "chats": active,
+        "archived_chats": archived,
     }
 
 

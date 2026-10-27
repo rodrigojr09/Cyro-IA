@@ -5,6 +5,16 @@ const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
 const { spawn } = require('node:child_process');
+const net = require('node:net');
+let backendPort;
+const realFetch = global.fetch;
+global.fetch = (input, options) =>
+  realFetch(
+    typeof input === 'string'
+      ? input.replace('http://127.0.0.1:8765', 'http://127.0.0.1:' + backendPort)
+      : input,
+    options,
+  );
 const assert = require('node:assert/strict');
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'jarvis-session-smoke-'));
 process.env.LOCALAPPDATA = directory;
@@ -69,19 +79,21 @@ function finish(code) {
 require('./electron/main.cjs');
 app.whenReady().then(async () => {
   try {
-    // Never attach to or replace a running user's backend.
-    try {
-      await fetch('http://127.0.0.1:8765/health', { signal: AbortSignal.timeout(500) });
-      throw Error('Porta de teste ocupada');
-    } catch (error) {
-      if (error.message === 'Porta de teste ocupada') throw error;
-    }
+    // Select an ephemeral local port; never attach to a personal backend.
+    const reservation = net.createServer();
+    await new Promise((resolve) => reservation.listen(0, '127.0.0.1', resolve));
+    backendPort = reservation.address().port;
+    await new Promise((resolve) => reservation.close(resolve));
     const python = fs.existsSync(path.join(root, 'backend/.venv/Scripts/python.exe'))
       ? path.join(root, 'backend/.venv/Scripts/python.exe')
       : 'python';
     const script =
-      'import os;from pathlib import Path;import main,uvicorn;main.ROOT=Path(os.environ["LOCALAPPDATA"]);main.DB=main.ROOT/"unused.sqlite3";uvicorn.run(main.app,host="127.0.0.1",port=8765,log_level="error")';
-    const backendEnv = { ...process.env, JARVIS_CLOUD: '1' };
+      'import os;from pathlib import Path;import main,uvicorn;main.ROOT=Path(os.environ["LOCALAPPDATA"]);main.DB=main.ROOT/"unused.sqlite3";uvicorn.run(main.app,host="127.0.0.1",port=int(os.environ["JARVIS_SMOKE_PORT"]),log_level="error")';
+    const backendEnv = {
+      ...process.env,
+      JARVIS_CLOUD: '1',
+      JARVIS_SMOKE_PORT: String(backendPort),
+    };
     delete backendEnv.JARVIS_DATA_DIR;
     backend = spawn(python, ['-c', script], {
       cwd: path.join(root, 'backend'),

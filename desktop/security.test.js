@@ -32,6 +32,7 @@ function setup({
   const frame = { url: pathToFileURL(path.join(__dirname, 'index.html')).href };
   const contents = {
     mainFrame: frame,
+    send() {},
     setWindowOpenHandler() {},
     on(name, fn) {
       windowEvents.set(name, fn);
@@ -56,6 +57,9 @@ function setup({
     }
     isFullScreen() {
       return fullscreen;
+    }
+    isDestroyed() {
+      return false;
     }
     loadFile() {}
   }
@@ -573,4 +577,22 @@ test('Writer pendente bloqueia encerramento até descarte explícito', async () 
   discard.windowEvents.get('close')({ preventDefault() {} });
   await Promise.resolve();
   assert.equal(discard.quitCalls, 1);
+});
+
+test('workspace notification contains no payload and failure does not mask a successful write', async () => {
+  const { invoke, event } = setup();
+  const notices = [];
+  event.sender.send = (...args) => notices.push(args);
+  assert.equal(
+    (await invoke(event, '/chat', { method: 'POST', body: '{"message":"test"}' })).ok,
+    true,
+  );
+  assert.deepEqual(notices, [['jarvis:workspace-changed']]);
+  event.sender.send = () => {
+    throw Error('Renderer closed');
+  };
+  assert.equal(
+    (await invoke(event, '/chat', { method: 'POST', body: '{"message":"test"}' })).ok,
+    true,
+  );
 });

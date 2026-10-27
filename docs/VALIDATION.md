@@ -1,3 +1,11 @@
+# Validacao 6.0.1 - otimizacao de banco e distribuicao
+
+Em 27/10/2026: npm ci na raiz concluiu (485 pacotes instalados, 489 auditados, nenhuma vulnerabilidade reportada). Pipeline check:v6 aprovado: 88 testes Cloud, 161 Desktop, 195 backend Python, 34 iniciadores/empacotamento e 2 ferramentas Node (480 sem dupla contagem); TypeScript e builds Cloud/Desktop; sete smokes Electron e 40 verificacoes de layout. A falha inicial no mock de IPC foi corrigida com notificacao best-effort e regressao que impede falha de renderer de mascarar escrita concluida.
+
+O primeiro setup 6.0.1 com a marca anterior foi compilado e auditado antes do pedido de renomeacao. A entrega final Cyro IA sera recompilada; nao confundir esse artefato intermediario com a entrega final. Logs locais: build/v6/setup-6.0.1-retry.log. Smokes usam perfis temporarios e servicos externos simulados. Nenhuma certificacao de audio pago, OAuth real ou Windows limpo.
+
+A sonda SQL somente leitura para contagem de conexoes nao obteve resposta utilizavel; nao foi registrado zero como resultado. Metricas do provedor permanecem dependentes de observacao apos implantacao. Benchmark local e limites em [RESULTS.md](performance/RESULTS.md).
+
 # Validação da migração v6.0.0 — em desenvolvimento
 
 Execução atual em **27/10/2026**, branch `codex/jarvis-v6-architecture`. Resultados v5 abaixo são históricos e não certificam v6.

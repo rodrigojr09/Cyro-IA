@@ -52,6 +52,33 @@ class ProjectChatBindingTests(unittest.TestCase):
                 )
                 self.assertEqual(response.status_code, 400, response.text)
 
+    def test_indexing_progress_never_requests_cloud_catalog(self):
+        def request(command):
+            self.fail("Local progress must not query Cloud")
+
+        with patch.object(main, "CLOUD", True), patch.object(
+            main, "store", CloudConversations(main.store, request)
+        ):
+            response = self.client.get("/workspace/progress")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("projects", response.json())
+
+    def test_general_view_uses_one_cloud_list_for_active_and_archived(self):
+        calls = []
+
+        def request(command):
+            calls.append(command)
+            return []
+
+        with patch.object(main, "CLOUD", True), patch.object(
+            main, "store", CloudConversations(main.store, request)
+        ):
+            response = self.client.post("/workspace/view", json={"project_id": None})
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()["chats"], [])
+            self.assertEqual(response.json()["archived_chats"], [])
+        self.assertEqual(calls, [{"action": "list"}])
+
 
 class CloudConversationTests(unittest.TestCase):
     def setUp(self):
