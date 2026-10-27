@@ -1,3 +1,9 @@
+# Cyro IA 6.0.1 - validacao da marca e compatibilidade
+
+Em 27/10/2026 a suite completa foi repetida apos a renomeacao: 88 testes Cloud, 161 Desktop, 195 backend Python, 35 iniciadores/empacotamento e 2 ferramentas Node (481 sem dupla contagem), TypeScript/build Cloud/Desktop e sete smokes Electron aprovados. O contrato adicional verifica productName Cyro IA e preservacao de appId, executavel e pasta de dados JARVIS. Captura da tela inicial com marca C conferida visualmente.
+
+O repositorio foi renomeado pela API autenticada do GitHub para rodrigojr09/Cyro-IA, com autorizacao explicita; origem local atualizada. Push, auditoria final do pacote e checksum serao registrados ao concluir o empacotamento. A identidade comum passou a apresentar-se como Cyro IA. Dados, sessoes, IPC, cookies e identificadores internos existentes nao foram renomeados.
+
 # Validacao 6.0.1 - otimizacao de banco e distribuicao
 
 Em 27/10/2026: npm ci na raiz concluiu (485 pacotes instalados, 489 auditados, nenhuma vulnerabilidade reportada). Pipeline check:v6 aprovado: 88 testes Cloud, 161 Desktop, 195 backend Python, 34 iniciadores/empacotamento e 2 ferramentas Node (480 sem dupla contagem); TypeScript e builds Cloud/Desktop; sete smokes Electron e 40 verificacoes de layout. A falha inicial no mock de IPC foi corrigida com notificacao best-effort e regressao que impede falha de renderer de mascarar escrita concluida.

@@ -1,6 +1,10 @@
 /** Local product catalog only. Statuses are data, never inferred from UI actions. */
 export type IntegrationStatus =
-  'coming_soon' | 'available' | 'connected' | 'disconnected' | 'error';
+  | 'coming_soon'
+  | 'available'
+  | 'connected'
+  | 'disconnected'
+  | 'error';
 export type IntegrationFilter = 'all' | 'connected' | 'available' | 'coming_soon';
 
 export interface IntegrationDefinition {
@@ -27,7 +31,7 @@ const definitions: IntegrationDefinition[] = [
     name: 'Spotify',
     category: 'Música e entretenimento',
     icon: 'music-2',
-    description: 'Controle suas músicas e reprodução diretamente pelo JARVIS.',
+    description: 'Controle suas músicas e reprodução diretamente pelo Cyro IA.',
     status: 'disconnected',
     capabilities: [
       'Controlar a reprodução de músicas.',
@@ -53,7 +57,7 @@ const definitions: IntegrationDefinition[] = [
     name: 'Google Calendar',
     category: 'Produtividade',
     icon: 'calendar-days',
-    description: 'Consulte e organize seus compromissos com auxílio do JARVIS.',
+    description: 'Consulte e organize seus compromissos com auxílio do Cyro IA.',
     status: 'coming_soon',
     capabilities: [
       'Consultar a agenda.',
@@ -92,12 +96,12 @@ const definitions: IntegrationDefinition[] = [
     name: 'Google Drive',
     category: 'Arquivos',
     icon: 'hard-drive',
-    description: 'Prepare a integração dos seus arquivos e documentos com o JARVIS.',
+    description: 'Prepare a integração dos seus arquivos e documentos com o Cyro IA.',
     status: 'coming_soon',
     capabilities: [
       'Localizar arquivos autorizados.',
       'Consultar informações dos documentos.',
-      'Selecionar conteúdo para trabalhar no JARVIS.',
+      'Selecionar conteúdo para trabalhar no Cyro IA.',
     ],
   },
 ];

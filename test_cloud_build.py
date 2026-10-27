@@ -58,15 +58,24 @@ class CloudBuildTests(unittest.TestCase):
         self.assertNotIn("Backup", json.dumps(config))
         self.assertNotIn(".env", json.dumps(config))
 
+    def test_cyro_brand_preserves_existing_installation_identity(self):
+        config = json.loads((ROOT / "desktop/electron/builder.json").read_text())
+        self.assertEqual(config["productName"], "Cyro IA")
+        self.assertEqual(config["appId"], "com.jarvis.assistant")
+        self.assertEqual(config["executableName"], "JARVIS")
+        self.assertEqual(config["nsis"]["artifactName"], "Cyro-IA-Setup-${version}.exe")
+        entry = (ROOT / "desktop/electron/main.cjs").read_text(encoding="utf-8")
+        self.assertIn("path.join(app.getPath('appData'), 'JARVIS')", entry)
+
     def test_versions_synchronized(self):
         version = (ROOT / "VERSION").read_text().strip()
         for name, marker in [
             ("backend/main.py", f'version="{version}" if CLOUD'),
             (
                 "desktop/index.html",
-                f"<title>JARVIS {version} — Cloud + Desktop</title>",
+                f"<title>Cyro IA {version} — Cloud + Desktop</title>",
             ),
-            ("desktop/ui.js", f"JARVIS · v{version}"),
+            ("desktop/ui.js", f"Cyro IA · v{version}"),
         ]:
             self.assertIn(marker, (ROOT / name).read_text(encoding="utf-8"))
         paths = [

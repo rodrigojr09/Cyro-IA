@@ -213,7 +213,7 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('#project-list .navigation-add').click()`);
     assert.deepEqual(
       await js(`Array.from(document.querySelectorAll('[role="menuitem"]'), b=>b.textContent)`),
-      ['Chat do projeto', 'JARVIS Writer'],
+      ['Chat do projeto', 'Cyro IA Writer'],
     );
     await js(
       `Array.from(document.querySelectorAll('[role="menuitem"]')).find(b=>b.textContent==='Chat do projeto').click()`,

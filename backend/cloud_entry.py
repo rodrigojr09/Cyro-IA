@@ -39,7 +39,7 @@ if __name__ == "__main__":
         with sqlite3.connect(":memory:") as connection:
             assert connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         print(
-            "JARVIS Cloud local runtime: FastAPI, SQLite, OpenAI adapter, local images/PDF and read policy OK."
+            "Cyro IA Cloud local runtime: FastAPI, SQLite, OpenAI adapter, local images/PDF and read policy OK."
         )
         raise SystemExit(0)
     if args.parent is None:

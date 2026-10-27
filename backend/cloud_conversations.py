@@ -45,7 +45,7 @@ class CloudConversations:
                 return row["value"]
             except ReadError:
                 pass
-        chat = self.local.create_chat(project_id, "JARVIS Quick Chat")
+        chat = self.local.create_chat(project_id, "Cyro IA Quick Chat")
         with database(self.local.registry) as con:
             con.execute(
                 "INSERT OR REPLACE INTO settings VALUES(?,?)", (key, chat["id"])

@@ -26,7 +26,7 @@
   padding: 2px 0 10px;
 }
 .message.assistant::before {
-  content: 'JARVIS';
+  content: 'Cyro IA';
   display: block;
   font-size: 10px;
   letter-spacing: 1.6px;

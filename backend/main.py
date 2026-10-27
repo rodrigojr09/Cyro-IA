@@ -128,7 +128,7 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError):
                 # A disconnected/full device must not expose paths or personal data in logs.
                 print(
-                    "JARVIS: backup de encerramento indisponível; confira o dispositivo.",
+                    "Cyro IA: backup de encerramento indisponível; confira o dispositivo.",
                     file=sys.stderr,
                 )
 
@@ -811,13 +811,13 @@ def require_api_key():
         return
     if not configured_key() or configured_key() == "coloque_sua_chave_aqui":
         location = (
-            "no cofre da pasta de dados do JARVIS. Abra Configurações → Inteligência artificial → Configurar OpenAI API"
+            "no cofre da pasta de dados do Cyro IA. Abra Configurações → Inteligência artificial → Configurar OpenAI API"
             if FROZEN
             else "no backend/.env"
         )
         raise HTTPException(
             503,
-            f"Configure OPENAI_API_KEY {location}. Depois encerre o JARVIS pela bandeja e abra novamente.",
+            f"Configure OPENAI_API_KEY {location}. Depois encerre o Cyro IA pela bandeja e abra novamente.",
         )
 
 
@@ -958,7 +958,7 @@ async def process_chat(req: ChatRequest):
         messages.append(
             {
                 "role": "system",
-                "content": "Modo JARVIS Quick Chat: responda diretamente, preferencialmente em 30 a 80 palavras, no idioma da conversa. "
+                "content": "Modo Cyro IA Quick Chat: responda diretamente, preferencialmente em 30 a 80 palavras, no idioma da conversa. "
                 "Evite introduções e respostas longas. Adapte a ajuda ao tema; em programação, apresente causa provável e solução objetiva. "
                 "Use mais palavras se necessário para precisão, completude e alertas importantes; não corte informações essenciais. "
                 "Contexto de projeto só existe se explicitamente incluído nesta requisição. Não execute ações no computador.",
@@ -1042,7 +1042,7 @@ async def process_chat(req: ChatRequest):
     service.progress = (
         "Consultando memória do projeto..."
         if mode == "programming"
-        else "JARVIS está pensando..."
+        else "Cyro IA está pensando..."
     )
 
     def record_usage(usage):

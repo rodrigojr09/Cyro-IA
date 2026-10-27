@@ -1,6 +1,6 @@
 {
   "appId": "com.jarvis.assistant",
-  "productName": "JARVIS",
+  "productName": "Cyro IA",
   "asar": true,
   "directories": {
     "output": "../release/v6"
@@ -28,7 +28,9 @@
     {
       "from": "../build/v6/backend/jarvis-backend",
       "to": "backend",
-      "filter": ["**/*"]
+      "filter": [
+        "**/*"
+      ]
     },
     {
       "from": "../build/icons/jarvis.png",
@@ -39,13 +41,15 @@
     "target": [
       {
         "target": "nsis",
-        "arch": ["x64"]
+        "arch": [
+          "x64"
+        ]
       }
     ],
     "icon": "../build/icons/jarvis.ico"
   },
   "nsis": {
-    "artifactName": "JARVIS-Setup-${version}.exe",
+    "artifactName": "Cyro-IA-Setup-${version}.exe",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
@@ -53,5 +57,6 @@
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false
   },
-  "copyright": "Copyright Â© 2026 Rodrigo Junior"
+  "copyright": "Copyright © 2026 Rodrigo Junior",
+  "executableName": "JARVIS"
 }

@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   let message =
-      "Autorização concluída. Volte ao JARVIS para conferir a conexão.",
+      "Autorização concluída. Volte ao Cyro IA para conferir a conexão.",
     status = 200;
   try {
     const query = new URL(request.url).searchParams;
@@ -31,14 +31,15 @@ export async function GET(request: Request) {
       query.has("error"),
     );
     if (query.has("error"))
-      message = "Autorização cancelada. Volte ao JARVIS para tentar novamente.";
+      message =
+        "Autorização cancelada. Volte ao Cyro IA para tentar novamente.";
   } catch (error) {
     status = error instanceof HttpError ? error.status : 503;
     message =
-      "Não foi possível concluir a autorização. Volte ao JARVIS e inicie uma nova conexão.";
+      "Não foi possível concluir a autorização. Volte ao Cyro IA e inicie uma nova conexão.";
   }
   return new Response(
-    `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Spotify · JARVIS</title><h1>Spotify · JARVIS</h1><p>${message}</p></html>`,
+    `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Spotify · Cyro IA</title><h1>Spotify · Cyro IA</h1><p>${message}</p></html>`,
     {
       status,
       headers: {

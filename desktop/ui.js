@@ -165,7 +165,7 @@ window.jarvisUI = (() => {
   }
   const settings = {
     Aparência: () =>
-      '<h3>Aparência</h3><p>JARVIS Dark · um espaço focado no seu trabalho.</p><label><input type="checkbox" id="setting-large">Texto ampliado nas respostas</label><button id="setting-sidebar">Alternar barra lateral</button>',
+      '<h3>Aparência</h3><p>Cyro IA Dark · um espaço focado no seu trabalho.</p><label><input type="checkbox" id="setting-large">Texto ampliado nas respostas</label><button id="setting-sidebar">Alternar barra lateral</button>',
     Voz: () =>
       '<h3>Voz</h3><p>Respostas de programação usam uma explicação falada resumida.</p><label><input type="checkbox" id="setting-voice">Reproduzir respostas automaticamente</label><button id="setting-stop">Interromper reprodução</button>',
     Armazenamento: () =>
@@ -173,13 +173,13 @@ window.jarvisUI = (() => {
     'Chats arquivados': () =>
       '<h3>Chats arquivados</h3><p>Restaure uma conversa para que ela apareça novamente na barra lateral.</p><div id="archived-chat-list"></div><p id="archived-status" role="status"></p>',
     'Quick Chat': () =>
-      '<h3>JARVIS Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o JARVIS será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
+      '<h3>Cyro IA Quick Chat</h3><p>O ícone permanece disponível sobre as janelas. Use Escape para recolher.</p><label>Opacidade dos painéis (%)<input id="quick-opacity" type="number" min="40" max="95"></label><label>Palavras por minuto<input id="quick-wpm" type="number" min="80" max="600"></label><label>Tempo mínimo (segundos)<input id="quick-min" type="number" min="3" max="60"></label><label>Tempo máximo (segundos)<input id="quick-max" type="number" min="3" max="120"></label><label><input id="quick-voice" type="checkbox">Respostas faladas no Quick Chat (respeita a voz global)</label><p>Ao fechar a janela principal, o Cyro IA será encerrado.</p><button id="quick-save">Salvar preferências</button><p id="quick-config-status" role="status"></p>',
     'Área de transferência': () => '<p>Carregando preferências...</p>',
     Integrações: () => '',
     Conta: () =>
-      '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o JARVIS é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
+      '<h3>Conta e acesso</h3><p>Use o login cadastrado pelo administrador. Acesso, modelos e limites são gerenciados no painel administrativo.</p><p>Ao fechar a janela principal, o Cyro IA é encerrado. Para trocar de conta, use Sair da conta na barra lateral.</p>',
     Sobre: () =>
-      '<h3>Sobre o JARVIS</h3><p>JARVIS · v6.0.1</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
+      '<h3>Sobre o Cyro IA</h3><p>Cyro IA · v6.0.1</p><p>Desenvolvido por <strong>Rodrigo Junior</strong>.</p><p>Contato: rodrigo.macia019@gmail.com</p><button id="about-github">GitHub: rodrigojr09</button><p id="about-status" role="status"></p><p>© 2026 Rodrigo Junior.</p>',
   };
   function category(name) {
     $('settings-content').innerHTML = settings[name]();

@@ -14,7 +14,7 @@ function installSpotifyIPC({ electron, service }) {
       !service()?.current() ||
       process.env.JARVIS_AUTHENTICATED !== '1'
     )
-      throw Error('Entre no JARVIS para usar o Spotify.');
+      throw Error('Entre no Cyro IA para usar o Spotify.');
     const credential = service().current().credential;
     if (
       input?.operation === 'open-track' &&
@@ -39,7 +39,7 @@ function installSpotifyIPC({ electron, service }) {
         type: 'question',
         message: 'Desconectar sua conta Spotify?',
         detail:
-          'Os tokens serão apagados do JARVIS. Você também pode revogar o acesso nas configurações da sua conta Spotify.',
+          'Os tokens serão apagados do Cyro IA. Você também pode revogar o acesso nas configurações da sua conta Spotify.',
         buttons: ['Cancelar', 'Desconectar'],
         defaultId: 0,
         cancelId: 0,

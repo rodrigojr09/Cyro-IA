@@ -309,7 +309,7 @@
   window.jarvisClipboardSettings = async () => {
     const container = $('settings-content');
     container.innerHTML =
-      '<h3>Área de transferência</h3><p>Com sua autorização, o JARVIS verifica textos, códigos, links e imagens a cada 850 ms. Nada é enviado automaticamente. Cópias ficam apenas em memória por até 10 minutos. Imagens oferecem apenas prévia local, sem envio à IA.</p>' +
+      '<h3>Área de transferência</h3><p>Com sua autorização, o Cyro IA verifica textos, códigos, links e imagens a cada 850 ms. Nada é enviado automaticamente. Cópias ficam apenas em memória por até 10 minutos. Imagens oferecem apenas prévia local, sem envio à IA.</p>' +
       '<p>Até 5.400 caracteres copiados; a mensagem completa continua limitada a 6.000. Imagens: PNG de até 5 MB e 50 MP, com prévia de até 1.536 px e 350 KB. Os filtros de credenciais são preventivos e podem falhar; não há leitura automática de texto nas imagens. Revise sempre antes de enviar.</p>' +
       '<label><input id="clipboard-consent" type="checkbox">Autorizo o monitoramento local da área de transferência</label>' +
       '<label><input id="clipboard-sound-setting" type="checkbox">Som de notificação (respeita a voz global desligada)</label>' +

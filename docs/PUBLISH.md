@@ -1,6 +1,6 @@
-# Publicação e distribuição — JARVIS v6.0.1 em desenvolvimento
+# Publicação e distribuição — Cyro IA v6.0.1 em desenvolvimento
 
-O código está em `rodrigojr09/Jarvis`, branch `master`, com Cloud em `https://cronosjarvis.vercel.app`. O envio de código depende de autorização do proprietário; o envio ao GitHub pode acionar a implantação Vercel configurada. Verifique o status do mesmo commit antes de declarar o deploy concluído.
+O código está em `rodrigojr09/Cyro-IA`, branch `master`, com Cloud em `https://cronosjarvis.vercel.app`. O envio de código depende de autorização do proprietário; o envio ao GitHub pode acionar a implantação Vercel configurada. Verifique o status do mesmo commit antes de declarar o deploy concluído.
 
 ## Antes de publicar código
 
@@ -19,7 +19,7 @@ $env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
 python tools/build_cloud_desktop.py
 ```
 
-`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v6/JARVIS-Setup-6.0.1.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
+`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v6/Cyro-IA-Setup-6.0.1.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
 
 A auditoria é automática ao compilar. Depois da conclusão do empacotamento:
 

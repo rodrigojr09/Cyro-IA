@@ -461,25 +461,23 @@ function createQuick({
     for (let x = 0; x < 32; x++) {
       const i = (y * 32 + x) * 4,
         inside = (x - 16) ** 2 + (y - 16) ** 2 < 225,
-        j =
-          (x >= 19 && x <= 21 && y >= 7 && y <= 22) ||
-          (y >= 22 && y <= 24 && x >= 11 && x <= 20) ||
-          (x >= 9 && x <= 12 && y >= 19 && y <= 23);
-      pixels[i] = j ? 248 : inside ? 66 : 0;
-      pixels[i + 1] = j ? 224 : inside ? 44 : 0;
-      pixels[i + 2] = j ? 170 : inside ? 20 : 0;
+        radius = (x - 16) ** 2 + (y - 16) ** 2,
+        mark = radius >= 49 && radius <= 100 && !(x > 18 && Math.abs(y - 16) < 6);
+      pixels[i] = mark ? 142 : inside ? 18 : 0;
+      pixels[i + 1] = mark ? 224 : inside ? 43 : 0;
+      pixels[i + 2] = mark ? 255 : inside ? 59 : 0;
       pixels[i + 3] = inside ? 255 : 0;
     }
   let tray = null;
   try {
     tray = new Tray(nativeImage.createFromBitmap(pixels, { width: 32, height: 32 }));
-    tray.setToolTip('JARVIS · Quick Chat');
+    tray.setToolTip('Cyro IA · Quick Chat');
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Abrir JARVIS', click: () => openMain() },
+        { label: 'Abrir Cyro IA', click: () => openMain() },
         { label: 'Quick Chat', click: toggle },
         { type: 'separator' },
-        { label: 'Encerrar JARVIS', click: quit },
+        { label: 'Encerrar Cyro IA', click: quit },
       ]),
     );
     tray.on('double-click', () => openMain());

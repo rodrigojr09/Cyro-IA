@@ -7,7 +7,7 @@ export default function Login() {
     <main className="login">
       <section className="login-card">
         <div className="brand">
-          J<span>ARVIS</span>
+          C<span>YRO IA</span>
           <i>CLOUD</i>
         </div>
         <p className="eyebrow">CENTRAL ADMINISTRATIVA</p>
@@ -74,7 +74,7 @@ export default function Login() {
         <small>Acesso exclusivo para administradores autorizados.</small>
       </section>
       <div className="login-orbit" aria-hidden="true">
-        <b>J</b>
+        <b>C</b>
       </div>
     </main>
   );

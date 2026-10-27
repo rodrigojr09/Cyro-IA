@@ -125,7 +125,7 @@ export default function Dashboard({
     <div className="shell">
       <aside>
         <Link className="brand" href="/dashboard">
-          J<span>ARVIS</span>
+          C<span>YRO IA</span>
           <i>CLOUD</i>
         </Link>
         <p className="nav-label">WORKSPACE</p>
@@ -174,7 +174,7 @@ export default function Dashboard({
           </span>
           <span className="environment">
             <i />
-            JARVIS Cloud
+            Cyro IA Cloud
           </span>
         </header>
         <div className="page-heading">
@@ -517,7 +517,7 @@ export default function Dashboard({
           </>
         )}
         <footer>
-          <span>JARVIS · v{version} · © 2026 Rodrigo Junior</span>
+          <span>Cyro IA · v{version} · © 2026 Rodrigo Junior</span>
           <span>
             <a href="mailto:rodrigo.macia019@gmail.com">Contato</a>
             {" · "}

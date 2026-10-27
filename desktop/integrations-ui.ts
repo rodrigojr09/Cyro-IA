@@ -13,7 +13,7 @@ export function mountIntegrations(
   catalog: readonly IntegrationDefinition[] = integrationCatalog,
 ): void {
   container.innerHTML = `<section class="integrations-page" aria-labelledby="integrations-heading">
-    <header class="integrations-heading"><span class="integrations-eyebrow">APLICATIVOS E SERVIÇOS</span><h3 id="integrations-heading">Integrações</h3><p>Conecte seus aplicativos e serviços favoritos ao JARVIS para ampliar suas possibilidades.</p></header>
+    <header class="integrations-heading"><span class="integrations-eyebrow">APLICATIVOS E SERVIÇOS</span><h3 id="integrations-heading">Integrações</h3><p>Conecte seus aplicativos e serviços favoritos ao Cyro IA para ampliar suas possibilidades.</p></header>
     <div id="integrations-catalog-view">
       <label class="integrations-search-label" for="integrations-search">Pesquisar integrações</label>
       <div class="integrations-search"><i data-lucide="search" aria-hidden="true"></i><input id="integrations-search" type="search" placeholder="Buscar por nome, categoria ou descrição" autocomplete="off"></div>
@@ -89,7 +89,7 @@ export function mountIntegrations(
       content.append(
         text(
           'p',
-          'Esta integração ainda não está disponível. Estamos preparando o suporte para uma versão futura do JARVIS.',
+          'Esta integração ainda não está disponível. Estamos preparando o suporte para uma versão futura do Cyro IA.',
           'integration-unavailable',
         ),
       );

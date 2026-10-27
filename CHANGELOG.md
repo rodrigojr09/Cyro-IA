@@ -1,4 +1,6 @@
-# JARVIS 6.0.1 — em desenvolvimento
+# Cyro IA 6.0.1 — em desenvolvimento
+
+- Marca pública alterada para Cyro IA e repositório renomeado para rodrigojr09/Cyro-IA, com autorização explícita. Desktop, Cloud, identidade compartilhada, monograma C e setup atualizados. Identificadores de instalação, arquivos de sessão, dados e IPC mantidos para compatibilidade; histórico JARVIS preservado.
 
 - Versão solicitada pelo proprietário em 27/10/2026 para o setup, após auditoria de Operations Prisma Postgres. Leituras de conversa sem transações/quota de escrita, reutilização de conversa fixa, redução do catálogo remoto, progresso local separado, atualização de presença limitada e métricas amostradas sem conteúdo privado. APIs de autorização continuam revalidadas por requisição. Medições e limitações em docs/performance/.
 - Empacotamento v6 em release/v6 e build/v6, preservando artefatos v5. Smoke de sessão com porta temporária própria. Push ao GitHub e compilação foram autorizados explicitamente pelo proprietário; nenhuma autorização implícita para tag, release ou implantação manual de produção.

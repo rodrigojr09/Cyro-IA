@@ -1,6 +1,6 @@
-# Documentação do JARVIS v5
+# Documentação do Cyro IA 6.0.1
 
-Os arquivos abaixo descrevem a implementação vigente. Registros antigos ficam em `history/` e preservam o contexto de suas datas, sem substituir os guias atuais.
+Cyro IA é o novo nome do JARVIS; os registros históricos mantêm a marca anterior. Os arquivos abaixo descrevem a implementação vigente. Registros antigos ficam em `history/` e preservam o contexto de suas datas, sem substituir os guias atuais.
 
 ## Produto e operação
 

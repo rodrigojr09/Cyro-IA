@@ -101,7 +101,9 @@ export async function conversations(
             userId,
             slot: command.slot,
             title:
-              command.slot === "quick" ? "JARVIS Quick Chat" : "Conversa geral",
+              command.slot === "quick"
+                ? "Cyro IA Quick Chat"
+                : "Conversa geral",
           },
           update: { archived: false },
         }),

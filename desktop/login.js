@@ -11,10 +11,10 @@ form.addEventListener('submit', async (event) => {
       email: document.getElementById('login-email').value.trim(),
       password: password.value,
     });
-    status.textContent = 'Conectado. Abrindo JARVIS…';
+    status.textContent = 'Conectado. Abrindo Cyro IA…';
   } catch (error) {
     status.textContent = String(error?.message).includes('Conta autenticada.')
-      ? 'Sua conta foi autenticada, mas o serviço local não conectou. Reinicie o JARVIS.'
+      ? 'Sua conta foi autenticada, mas o serviço local não conectou. Reinicie o Cyro IA.'
       : 'Login recusado. Confira e-mail, senha, acesso e conexão com o administrador.';
   } finally {
     password.value = '';

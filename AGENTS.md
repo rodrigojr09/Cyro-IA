@@ -1,4 +1,4 @@
-# JARVIS v6 — instruções vigentes
+# Cyro IA v6 — instruções vigentes
 
 - Desenvolver Cloud Next.js/Prisma Postgres e Desktop Electron de forma integrada.
 - Backup/ é arquivo manual do proprietário: somente leitura; nunca alterar, mover ou importar diretamente dele em runtime.
@@ -8,3 +8,5 @@
 - Versão alvo 6.0.1 em desenvolvimento, evolução arquitetural da v5 autorizada pelo proprietário em 27/10/2026. Não criar tag de release antes de validar os requisitos. Registrar testes reais e limitações externas.
 - Instalar workspaces na raiz com npm ci; executar testes Cloud, TypeScript/build, Python e Electron.
 - Não declarar implantação, áudio pago ou Windows limpo validados com mocks.
+
+- Cyro IA é o nome público autorizado em 27/10/2026 (antes JARVIS). Preservar caminhos de dados JARVIS, appId, executável e IPC existentes para compatibilidade. Repositório: rodrigojr09/Cyro-IA.

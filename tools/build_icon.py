@@ -1,4 +1,4 @@
-"""Generate the JARVIS monogram as PNG/ICO without third-party image tools."""
+"""Generate the Cyro IA monogram as PNG/ICO without third-party image tools."""
 
 from pathlib import Path
 import math
@@ -10,12 +10,15 @@ def generate(directory):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     size = 256
-    segments = [((91, 69), (165, 69)), ((153, 69), (153, 153))]
+    # Open circular stroke: C monogram. Resource filenames stay compatible.
     points = [
-        (126 + 27 * math.cos(t * math.pi / 32), 153 + 27 * math.sin(t * math.pi / 32))
-        for t in range(33)
+        (
+            132 + 51 * math.cos(math.pi / 4 + t * 3 * math.pi / 128),
+            128 + 61 * math.sin(math.pi / 4 + t * 3 * math.pi / 128),
+        )
+        for t in range(65)
     ]
-    segments.extend(zip(points, points[1:]))
+    segments = list(zip(points, points[1:]))
 
     def distance(x, y, a, b):
         dx, dy = b[0] - a[0], b[1] - a[1]

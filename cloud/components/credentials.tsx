@@ -80,7 +80,7 @@ export default function Credentials() {
       <div className="card">
         <h2>Credenciais dos serviços</h2>
         <p className="muted">
-          Configure os serviços utilizados pelo JARVIS. Estas configurações são
+          Configure os serviços utilizados pelo Cyro IA. Estas configurações são
           globais e exclusivas do SUPER_ADMIN.
         </p>
         <p>

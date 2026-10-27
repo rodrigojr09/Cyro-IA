@@ -41,11 +41,11 @@
   "overrides": {
     "global-agent": "4.1.3"
   },
-  "description": "Assistente desktop com projetos, memória e Quick Chat",
+  "description": "Cyro IA: assistente desktop com projetos, memoria e Quick Chat",
   "author": {
     "name": "Rodrigo Junior",
     "email": "rodrigo.macia019@gmail.com",
     "url": "https://github.com/rodrigojr09"
   },
-  "homepage": "https://github.com/rodrigojr09"
+  "homepage": "https://github.com/rodrigojr09/Cyro-IA"
 }

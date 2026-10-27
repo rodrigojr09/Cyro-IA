@@ -1,6 +1,6 @@
 import "./globals.css";
 export const metadata = {
-  title: "JARVIS · Administração",
+  title: "Cyro IA · Administração",
   description: "Central de acesso, dispositivos e inteligência artificial",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {

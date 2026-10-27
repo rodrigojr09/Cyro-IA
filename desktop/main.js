@@ -274,12 +274,12 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ipcMain.handle('jarvis:open-backups', async (event) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       if (process.env.JARVIS_CLOUD === '1')
-        throw Error('Backups Cloud: encerre o JARVIS e copie a pasta local de dados.');
+        throw Error('Backups Cloud: encerre o Cyro IA e copie a pasta local de dados.');
       if (!app.isPackaged) throw Error('Use o módulo portable_backup no desenvolvimento.');
       const answer = await dialog.showMessageBox(win, {
         type: 'question',
-        title: 'Backups do JARVIS',
-        message: 'Encerrar o JARVIS e abrir o gerenciador de backups?',
+        title: 'Backups do Cyro IA',
+        message: 'Encerrar o Cyro IA e abrir o gerenciador de backups?',
         detail:
           'O backend será encerrado antes de copiar ou restaurar bancos. Aguarde o término antes de remover o dispositivo.',
         buttons: ['Cancelar', 'Encerrar e abrir backups'],
@@ -302,8 +302,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         if (!trusted(event) || !app.isPackaged) throw Error('Disponível na edição portátil.');
         const answer = await dialog.showMessageBox(win, {
           type: 'question',
-          title: 'JARVIS',
-          message: `Encerrar o JARVIS para ${label}?`,
+          title: 'Cyro IA',
+          message: `Encerrar o Cyro IA para ${label}?`,
           buttons: ['Cancelar', 'Continuar'],
           defaultId: 0,
           cancelId: 0,
@@ -369,7 +369,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       const confirmation = await dialog.showMessageBox(win, {
         type: 'question',
         title: 'Autorizar análise somente leitura',
-        message: 'Permitir que o JARVIS leia código nesta pasta e nas subpastas?',
+        message: 'Permitir que o Cyro IA leia código nesta pasta e nas subpastas?',
         detail:
           selectedPath +
           '\nPrimeiro você escolherá os arquivos e pastas usados na análise, sem consumo de tokens. A OpenAI será usada somente após confirmar a seleção. A pasta original não será modificada.',
@@ -402,7 +402,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         throw new Error('Projeto inválido.');
       const result = await dialog.showMessageBox(win, {
         type: 'warning',
-        title: 'Remover projeto do JARVIS',
+        title: 'Remover projeto do Cyro IA',
         message: 'A pasta original será preservada. O que deseja remover?',
         detail:
           'Manter memória permite recuperar os chats ao cadastrar a mesma pasta novamente. Apagar memória remove os chats e o conhecimento internos deste projeto.',
@@ -654,7 +654,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       })
       .catch(() => {
         dialog.showErrorBox(
-          'JARVIS — inicialização',
+          'Cyro IA — inicialização',
           'Não foi possível iniciar o backend. Verifique se a porta 8765 está livre, se os arquivos do aplicativo estão íntegros e se você tem permissão para gravar os dados.',
         );
         app.exit(1);
@@ -666,7 +666,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   });
 
   process.on('uncaughtException', (error) => {
-    console.error('ERRO JARVIS: operação interrompida.');
+    console.error('ERRO Cyro IA: operação interrompida.');
   });
 
   app.on('before-quit', (event) => {
@@ -693,7 +693,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
               },
             );
             child.on('error', () => {
-              dialog.showErrorBox('JARVIS', 'Não foi possível abrir o gerenciador de backups.');
+              dialog.showErrorBox('Cyro IA', 'Não foi possível abrir o gerenciador de backups.');
               app.quit();
             });
             child.once('exit', () => app.quit());
@@ -704,7 +704,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         })
         .catch(() => {
           dialog.showErrorBox(
-            'JARVIS',
+            'Cyro IA',
             'O backend não confirmou o encerramento. O monitor do processo principal finalizará a instância própria.',
           );
           app.exit(1);
@@ -713,6 +713,6 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     }
     quitting = true;
     quickController?.destroy();
-    console.log('JARVIS está encerrando...');
+    console.log('Cyro IA está encerrando...');
   });
 }

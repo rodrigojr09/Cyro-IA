@@ -58,11 +58,11 @@
   const root = document.createElement('dialog');
   root.id = 'writer-dialog';
   root.setAttribute('aria-labelledby', 'writer-heading');
-  root.innerHTML = `<header class="writer-header"><div><span class="writer-eyebrow">JARVIS WRITER</span><h2 id="writer-heading">Escrita do projeto</h2></div><span id="writer-save-state" role="status">Salvo</span><button id="writer-retry" hidden>Tentar salvar</button><button id="writer-compare-save" hidden>Comparar edição</button><button id="writer-settings">Preferências</button><button id="writer-close" aria-label="Fechar Writer">×</button></header>
+  root.innerHTML = `<header class="writer-header"><div><span class="writer-eyebrow">Cyro IA WRITER</span><h2 id="writer-heading">Escrita do projeto</h2></div><span id="writer-save-state" role="status">Salvo</span><button id="writer-retry" hidden>Tentar salvar</button><button id="writer-compare-save" hidden>Comparar edição</button><button id="writer-settings">Preferências</button><button id="writer-close" aria-label="Fechar Writer">×</button></header>
   <div class="writer-workspace"><aside class="writer-files"><div class="writer-files-heading"><strong>Arquivos e chats</strong><button id="writer-new" title="Novo chat Writer">＋</button></div><div id="writer-recent"></div><nav id="writer-tree" aria-label="Documentos Writer"></nav><button id="writer-new-folder">Nova pasta</button><button id="writer-trash">Itens removidos</button><div class="writer-file-tools"><button id="writer-rename">Renomear</button><button id="writer-duplicate">Duplicar</button><button id="writer-move">Mover</button><button id="writer-delete">Remover</button></div></aside>
   <section class="writer-conversation"><div class="writer-chat-heading"><div><strong id="writer-chat-title">Escolha um arquivo</strong><p>Converse, escreva ou peça uma revisão.</p></div><button id="writer-toggle-files">Arquivos</button><button id="writer-toggle-preview" aria-expanded="true">Documento</button></div><div id="writer-messages" aria-live="polite"></div>
   <div id="writer-proposal" hidden><div><span id="writer-intent-badge"></span><strong id="writer-proposal-title"></strong></div><p id="writer-proposal-reason"></p><p id="writer-countdown" role="status"></p><div class="writer-proposal-actions"><button id="writer-approve">Aprovar alteração</button><button id="writer-reject">Rejeitar</button><button id="writer-adjust">Ajustar</button><button id="writer-show-target">Ver documento</button></div><div id="writer-adjust-area" hidden><label>Proposta editável<textarea id="writer-adjust-text" maxlength="12000"></textarea></label><button id="writer-apply-adjusted">Aplicar texto ajustado</button></div></div>
-  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o JARVIS..."></textarea><div><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
+  <footer class="writer-chat-composer"><p class="writer-cloud-notice">Enviar usa a IA Cloud e compartilha somente a mensagem e os trechos necessários. Edições manuais ficam neste computador.</p><textarea id="writer-input" maxlength="6000" rows="3" placeholder="Escreva um trecho ou converse com o Cyro IA..."></textarea><div><button id="writer-selection" title="Sem seleção, usa o documento inteiro; se exceder o limite, prioriza o final. Clique para limpar a seleção.">Documento inteiro</button><button id="writer-cancel" hidden>Cancelar IA</button><button id="writer-send">Enviar ao Writer</button></div><p id="writer-status" role="status"></p></footer></section>
   <aside class="writer-preview"><header><div><span>PRÉVIA DO DOCUMENTO</span><strong id="writer-filename">Nenhum arquivo</strong></div><button id="writer-edit" aria-pressed="false">Editar</button><button id="writer-collapse-assistant" aria-pressed="false" title="Ampliar documento">Ampliar</button></header><div class="writer-document-tools"><button id="writer-undo">Desfazer</button><button id="writer-redo">Refazer</button><button id="writer-history">Revisões</button><button id="writer-export">Exportar</button><span id="writer-word-count">0 palavras</span></div><p id="writer-preview-notice"></p><nav id="writer-outline" aria-label="Seções do documento"></nav><div id="writer-paper" tabindex="0"></div><div id="writer-edit-tools" hidden><button id="writer-add-block">＋ Parágrafo</button><button id="writer-bold">Negrito</button><button id="writer-italic">Itálico</button></div></aside></div>`;
   document.body.append(root);
   let layout, chatColumn, preview, writerStrip;
@@ -195,7 +195,7 @@
         ? 'Edição pendente — não feche'
         : 'Salvando…'
       : embeddedActive && fileInfo?.linked && fileInfo.saved_version !== doc?.version
-        ? 'Salvo no JARVIS · alterações pendentes no arquivo'
+        ? 'Salvo no Cyro IA · alterações pendentes no arquivo'
         : 'Salvo neste computador';
     $('writer-retry').hidden = !saveError;
     $('writer-compare-save').hidden = !saveError;
@@ -809,7 +809,7 @@
   async function create(kind = 'document') {
     await flush();
     const value = await ask(
-      kind === 'folder' ? 'Nome da pasta' : 'Novo chat JARVIS Writer',
+      kind === 'folder' ? 'Nome da pasta' : 'Novo chat Cyro IA Writer',
       '',
       kind !== 'folder',
       'Escolha o nome do arquivo. O texto fica no banco do projeto; a exportação Word usará este nome.',
@@ -1287,7 +1287,7 @@
       renderPreview();
       throw Error(
         result.data?.detail ||
-          'Edição salva no JARVIS, mas o arquivo original não foi atualizado. Exporte uma cópia para recuperar.',
+          'Edição salva no Cyro IA, mas o arquivo original não foi atualizado. Exporte uma cópia para recuperar.',
       );
     }
     fileInfo = result.data;
@@ -1309,7 +1309,7 @@
     writerStrip.hidden = false;
     layout.classList.add('has-writer-document');
     document.getElementById('attach-files').hidden = true;
-    document.getElementById('composer-context').textContent = 'Arquivo vinculado · JARVIS Writer';
+    document.getElementById('composer-context').textContent = 'Arquivo vinculado · Cyro IA Writer';
     document.querySelector('.attachment-caption').hidden = true;
     await load(activeChat.writer_document_id);
     if (bridge.file) {
