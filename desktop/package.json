@@ -1,11 +1,11 @@
 {
   "name": "jarvis-desktop",
-  "version": "6.0.2",
+  "version": "6.0.3",
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test attachments.test.js quick-renderer.test.js session.test.js security.test.js workspace.test.js scope.test.js ui.test.js quick.test.js backend-runtime.test.js package-output.test.js ai-config.test.js portable-paths.test.js encrypted-state.test.js services/cloud.test.js services/local-stream.test.js clipboard.test.js clipboard-service.test.js clipboard-ui.test.js writer-ui.test.js writer-ipc.test.js integration-catalog.test.js spotify.test.js",
+    "test": "node --test tests/unit/*.test.js tests/renderer/*.test.cjs",
     "test:electron": "node ../tools/run_electron_smoke.cjs smoke.cjs",
     "build": "node build.cjs",
     "typecheck": "tsc -p tsconfig.integrations.json",
@@ -13,8 +13,8 @@
     "pretest": "npm run build",
     "pretest:electron": "npm run build",
     "test:quick": "node ../tools/run_electron_smoke.cjs quick-smoke.cjs",
-    "format": "prettier --write \"*.js\" \"*.ts\" \"*.cjs\" \"*.html\" \"*.css\" \"styles/*.css\" \"*.json\"",
-    "format:check": "prettier --check \"*.js\" \"*.ts\" \"*.cjs\" \"*.html\" \"*.css\" \"styles/*.css\" \"*.json\"",
+    "format": "prettier --write \"scripts/**/*.{js,jsx,ts,cjs}\" \"tests/**/*.{js,cjs}\" \"*.{cjs,html,css,json}\" \"styles/*.css\"",
+    "format:check": "prettier --check \"scripts/**/*.{js,jsx,ts,cjs}\" \"tests/**/*.{js,cjs}\" \"*.{cjs,html,css,json}\" \"styles/*.css\"",
     "package": "npm run build && electron-builder --config electron/builder.json --win --publish never",
     "test:cloud-electron": "node ../tools/run_electron_smoke.cjs cloud-smoke.cjs",
     "test:session-electron": "node ../tools/run_electron_smoke.cjs session-smoke.cjs",
@@ -36,7 +36,9 @@
     "dompurify": "^3.4.17",
     "highlight.js": "^11.12.0",
     "lucide": "^1.60.0",
-    "marked": "^18.1.1"
+    "marked": "^18.1.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "overrides": {
     "global-agent": "4.1.3"

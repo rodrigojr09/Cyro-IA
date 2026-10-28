@@ -1,3 +1,10 @@
+# 6.0.3 — em desenvolvimento
+
+- Frontend Desktop integralmente convertido para componentes React: aplicativo, login, Quick Chat, Writer e configurações. Scripts separados por função; testes centralizados em desktop/tests.
+- Revalidação da mesma sessão preserva o carregamento concluído. Quick Chat atualiza a disponibilidade sem Ctrl+R e permite preparar rascunhos durante a carga.
+- Clipboard ignora conteúdo anterior à ativação, conteúdo já consumido e cópias do próprio Cyro; consentimento de envio preservado.
+- Mensagens com autoria e horário quando disponível, cópia no hover/foco, navegação até o final fora da digitação, maior espaçamento e contraste.
+
 # 6.0.2 — em desenvolvimento
 
 - Carregamento inicial do histórico em lotes, cache de sessão e bloqueio de envio até a preparação concluir.

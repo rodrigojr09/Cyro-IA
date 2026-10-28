@@ -171,7 +171,7 @@ class ProtectionTests(unittest.TestCase):
         storage.write_text(
             self.data / "config/settings.json", '{"display_name":"fixture"}'
         )
-        module = Path(__file__).resolve().parents[1] / "desktop/encrypted-state.js"
+        module = Path(__file__).resolve().parents[1] / "desktop/scripts/session/encrypted-state.js"
         script = "const fs=require('node:fs');const p=require('node:path');const input=JSON.parse(fs.readFileSync(0,'utf8'));const store=require(process.argv[1]).create(input.root,input.key);if(store.readJSON(p.join(input.root,'config/settings.json')).display_name!=='fixture')process.exit(2);store.writeJSON(p.join(input.root,'config/browser-state.json'),{draft:'private fixture draft'});"
         subprocess.run(
             [node, "-e", script, str(module)],

@@ -31,7 +31,7 @@ function main(args = process.argv.slice(2)) {
   );
   for (const smoke of smokes) {
     process.stdout.write(`\nElectron: ${smoke}\n`);
-    const result = spawnSync(electron, [smoke], {
+    const result = spawnSync(electron, [path.join("tests", "electron", smoke)], {
       cwd: desktop,
       env: smokeEnvironment(process.env),
       stdio: "inherit",

@@ -278,3 +278,16 @@ header button:hover,
     transition: none !important;
   }
 }
+
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+#quick-startup-status {
+  color: #b3c1d3;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 6px 0;
+}

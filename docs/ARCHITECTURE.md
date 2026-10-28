@@ -23,7 +23,7 @@ flowchart LR
 | `cloud/prisma/` | Schema, migrations revisadas e seed sem senha fixa. |
 | `cloud/test/` | Contratos, segurança, serviços e PostgreSQL embarcado. |
 | `desktop/electron/` | Entrada Cloud e configuração de empacotamento Windows. |
-| `desktop/services/` | Sessão individual protegida e transporte Cloud/stream local. |
+| `desktop/scripts/session/` | Sessão individual protegida e transporte Cloud/stream local. |
 | `desktop/` e `desktop/styles/` | Janelas, preloads, chat, Quick Chat, clipboard, Writer e integração visual. |
 | `backend/` | FastAPI, projetos/memória locais, Writer, ferramentas e adaptadores Cloud. |
 | `packages/shared/` | Schemas, tipos e constantes comuns. |

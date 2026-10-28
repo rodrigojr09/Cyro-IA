@@ -7,20 +7,20 @@ for (const key of Object.keys(process.env))
 const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
-const cloud = require('../services/cloud');
+const cloud = require('../scripts/session/cloud');
 const dataDir =
   process.env.JARVIS_DATA_DIR ||
   (app.isPackaged
     ? path.join(app.getPath('appData'), 'JARVIS')
-    : require('../portable-paths').resolveData({
+    : require('../scripts/app/portable-paths').resolveData({
         packaged: false,
         localAppData: process.env.LOCALAPPDATA,
         home: require('node:os').homedir(),
       }));
 process.env.JARVIS_DATA_DIR = dataDir;
-require('../portable-paths').configureElectron(app, dataDir);
+require('../scripts/app/portable-paths').configureElectron(app, dataDir);
 let service;
-require('../spotify-ipc').installSpotifyIPC({
+require('../scripts/integrations/spotify-ipc').installSpotifyIPC({
   electron: require('electron'),
   service: () => service,
 });
@@ -204,4 +204,4 @@ app
       'Configure a origem Cloud HTTPS. A chave OpenAI pertence somente ao servidor.',
     ),
   );
-require('../main.js');
+require('../scripts/app/main.js');

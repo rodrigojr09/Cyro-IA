@@ -12,50 +12,7 @@
     <link rel="stylesheet" href="styles/integrations.css" />
   </head>
   <body>
-    <button id="orb" title="Cyro IA Quick Chat · arraste para mover" aria-label="Abrir Quick Chat">
-      C<span></span>
-    </button>
-    <section id="composer" hidden>
-      <div class="caption">
-        <strong>Cyro IA <span>QUICK CHAT</span></strong>
-        <div class="caption-actions">
-          <button
-            id="quick-voice-toggle"
-            aria-label="Alternar voz do Quick Chat"
-            aria-pressed="true"
-          >
-            Voz ativa</button
-          ><button id="collapse" aria-label="Recolher">Esc</button>
-        </div>
-      </div>
-      <textarea
-        id="question"
-        rows="2"
-        maxlength="6000"
-        placeholder="Pergunte ao Cyro..."
-        aria-label="Pergunta rápida"
-      ></textarea>
-      <div class="tools">
-        <label
-          ><input type="checkbox" id="use-project" />
-          <span id="project-label">Usar projeto ativo</span></label
-        ><button id="send" aria-label="Enviar">↑</button>
-      </div>
-    </section>
-    <section id="response" hidden>
-      <header>
-        <strong>Cyro IA</strong><span id="remaining"></span
-        ><button id="pin" title="Fixar resposta" aria-pressed="false">Fixar</button
-        ><button id="close-response" aria-label="Fechar resposta">×</button>
-      </header>
-      <article id="answer" tabindex="0"></article>
-      <div class="tools">
-        <span id="result-status" role="status"></span><button id="listen">Ouvir</button
-        ><button id="stop-audio" hidden>Parar voz</button><button id="copy">Copiar</button
-        ><button id="open-main">Abrir conversa ↗</button>
-      </div>
-    </section>
-    <script src="quick-renderer.js"></script>
-    <script src="clipboard-ui.js"></script>
+    <div id="root"></div>
+    <script src="dist/quick.js"></script>
   </body>
 </html>

@@ -36,41 +36,11 @@ def audit():
                 or name.endswith((".db", ".sqlite", ".sqlite3", ".key", ".pfx"))
             ):
                 raise RuntimeError("Arquivo privado/proibido no ASAR.")
-        for name in [
-            "main.js",
-            "preload.js",
-            "renderer.js",
-            "index.html",
-            "ui.js",
-            "vendor.js",
-            "workspace.js",
-            "scope.js",
-            "attachments-main.js",
-            "attachments-ui.js",
-            "storage-ui.js",
-            "package.json",
-            "electron/main.cjs",
-            "electron/cloud-config.json",
-            "voice-input.js",
-            "services/cloud.js",
-            "services/local-stream.js",
-            "login.html",
-            "login.js",
-            "quick-renderer.js",
-            "quick-controller.js",
-            "quick-preload.js",
-            "clipboard-manager.js",
-            "clipboard-service.js",
-            "clipboard-ui.js",
-            "clipboard.css",
-            "writer-ui.js",
-            "writer-ipc.js",
-            "writer.css",
-            "styles/integrations.css",
-            "spotify-ipc.js",
-            "assets/spotify-white.svg",
-            "assets/spotify-black.svg",
-        ]:
+        expected = json.loads((ROOT / "desktop/electron/runtime-files.json").read_text(encoding="utf-8"))
+        if any(name.startswith("tests/") or name.endswith((".jsx", ".tsx", ".test.js")) for name in entries):
+            raise RuntimeError("Fontes de desenvolvimento ou testes presentes no pacote.")
+        expected.extend(p.relative_to(ROOT / "desktop").as_posix() for p in (ROOT / "desktop/styles").glob("*.css"))
+        for name in expected:
             item = header
             for part in name.split("/"):
                 item = item["files"][part]

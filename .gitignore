@@ -48,3 +48,6 @@ cloud-credential.bin*
 cloud-session-v4.bin*
 
 desktop/quick-spotify.js
+
+# Desktop React bundles are rebuilt from scripts/.
+/desktop/dist/

@@ -36,7 +36,7 @@ O salvamento inclui versão-base e identificador idempotente. Escritas usam tran
 | `backend/writer_api.py` | API local autenticada; não é uma API pública do Cloud. |
 | `backend/writer_export.py` | DOCX com python-docx, Markdown/TXT e publicação atômica. |
 | `desktop/writer-ipc.js` | IPC restrito à janela principal e diálogos de arquivo. |
-| `desktop/writer-ui.js` e `writer.css` | Integração com chat, preview, seleção e comparação segura. |
+| `desktop/scripts/writer/WriterPreview.jsx` e `writer.css` | Integração com chat, preview, seleção e comparação segura. |
 
 O contrato `writer_editorial` usa função nominal, schema estrito e apenas uma chamada validada. A resposta é dado editorial, não permissão para executar ferramentas. O frontend renderiza texto sem executar HTML retornado pelo modelo.
 

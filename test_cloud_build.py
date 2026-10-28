@@ -75,7 +75,7 @@ class CloudBuildTests(unittest.TestCase):
                 "desktop/index.html",
                 f"<title>Cyro IA {version} — Cloud + Desktop</title>",
             ),
-            ("desktop/ui.js", f"Versão {version}"),
+            ("desktop/scripts/ui/Settings.jsx", f"Versão {version}"),
         ]:
             self.assertIn(marker, (ROOT / name).read_text(encoding="utf-8"))
         paths = [

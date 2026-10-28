@@ -1,4 +1,4 @@
-@import url('./node_modules/highlight.js/styles/github-dark.css');
+@import url('./dist/highlight.css');
 @import url('./styles/tokens.css');
 @import url('./styles/layout.css');
 @import url('./styles/chat.css');
@@ -6,6 +6,7 @@
 @import url('./styles/dialogs.css');
 @import url('./styles/responsive.css');
 @import url('./styles/integrations.css');
+@import url('./styles/conversation.css');
 
 .chat-context-menu {
   position: fixed;
@@ -69,4 +70,42 @@
 }
 .archived-chat-row button {
   flex-shrink: 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* React shell retains the established viewport and sidebar rhythm. */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+}
+.sidebar-footer button {
+  justify-content: flex-start;
+}
+.read-only-note {
+  color: var(--muted);
+  font-size: 10px;
+  padding: 4px 10px;
+}
+.startup-status {
+  padding: 32px;
+  text-align: center;
+}
+
+.project-item {
+  text-align: left;
+  justify-content: flex-start;
+}
+.breadcrumbs > button {
+  justify-content: flex-start;
+  padding: 0;
+  min-height: 0;
+  text-align: left;
 }

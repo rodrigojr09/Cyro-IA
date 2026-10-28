@@ -2,7 +2,7 @@
 const {
   NodeModulesCollector,
 } = require('app-builder-lib/out/node-module-collector/nodeModulesCollector');
-const { parsePackageOutput } = require('./package-output');
+const { parsePackageOutput } = require('./scripts/app/package-output');
 const { build } = require('electron-builder');
 const path = require('node:path');
 

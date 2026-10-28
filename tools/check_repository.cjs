@@ -9,7 +9,7 @@ const errors = [];
 for (const [file, marker] of [
   ["backend/main.py", `version="${version}" if CLOUD`],
   ["desktop/index.html", `<title>Cyro IA ${version} — Cloud + Desktop</title>`],
-  ["desktop/ui.js", `Versão ${version}`],
+  ["desktop/scripts/ui/Settings.jsx", `Versão ${version}`],
 ]) {
   if (!read(file).includes(marker))
     errors.push(`Versão visível/runtime divergente: ${file}`);
