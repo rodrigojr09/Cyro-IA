@@ -1,3 +1,15 @@
+# Entrega 6.1.2 — Cloud e instalador Windows
+
+Em 28/10/2026, por autorização explícita do proprietário, a revisão e4c4f3b2e1a9b63a502fa1a3913dfb83fc686122 foi enviada a origin/master e origin/codex/jarvis-v6-architecture. A Vercel confirmou success às 16:30:10 America/Sao_Paulo (19:30:10 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/9MNGAvei8tYFX3XAtGos43JoSxre . Produção https://cronosjarvis.vercel.app/login respondeu 200 com marca Cyro; /api/provider-settings sem sessão respondeu 401. Não houve alteração de banco, migrations, segredos ou configurações privadas.
+
+O pipeline oficial tools/build_cloud_desktop.py passou check:v6 com 483 testes (142 Desktop, 212 Python backend, 92 Cloud, 35 iniciadores/empacotamento e 2 ferramentas Node), TypeScript/build Cloud e Desktop, sete cenários Electron e 40 verificações administrativas em Chromium. Prettier final aprovado após normalizar quebras de linha, sem alteração semântica. Dependências não foram alteradas; npm ci na raiz havia sido executado na etapa 6.1.0. cloud/next-env.d.ts restaurado byte a byte após a compilação.
+
+Instalador: release/v6/Cyro-IA-Setup-6.1.2.exe, 183632802 bytes. ProductVersion 6.1.2 e payload 6.1.2.0. SHA256 `8d9d7f63defb2b0009144b17ae28f27e285e10c48b37935cabf3f2817073e264`, conferido independentemente contra .exe.sha256. Authenticode NotSigned. Auditoria de fontes/ASAR/runtime e self-check congelado aprovados. Smoke do payload final passou: inicialização sem Python/Node no PATH, autenticação local e persistência após reinício, exclusivamente com perfil temporário. Sem chamadas pagas ou instalação sobre o perfil pessoal.
+
+Inclui as correções 6.1.1 e todos os ajustes posteriores da sidebar, busca das integrações, remoção de Computador/Conta, cabeçalho ciano e X, e ícone azul. Nenhum conteúdo de Backup/ foi modificado. Instaladores anteriores preservados. Não certifica Windows limpo, atualização de atalhos fixados/cache Windows, áudio físico, OpenAI paga, login manual de produção ou Operations do provedor. Sem tag ou GitHub Release. O registro de entrega posterior é local para evitar novo deploy sem mudança de runtime.
+
+Evidências locais: build/v6/cyro-setup-6.1.2.log, v612-format-final.log, v612-deployment-latest.json, v612-production-check.json, cyro-6.1.2-frozen-selfcheck.log e cyro-6.1.2-payload-smoke.log.
+
 # Ícone Windows — 6.1.1
 
 Ícone da janela de desenvolvimento definido explicitamente por desktop/assets/cyro.png; produção continua usando o recurso jarvis.png e o ICO do executável. O gerador existente foi atualizado para a paleta do Quick Chat (#8ee0ff sobre #122b3b). PNG/ICO gerados e PNG conferido visualmente. Build e 142 testes Desktop passaram (build/v6/v611-taskbar-tests.log). Não foi alterado appId, nome do executável ou perfil. Não validada a atualização de atalhos fixados/cache de ícones do Windows. Instalador anterior não recompilado, sem push/deploy.
