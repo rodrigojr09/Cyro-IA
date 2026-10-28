@@ -1,3 +1,13 @@
+# Entrega 6.2.0 — Cloud e instalador Windows
+
+Em 28/10/2026, mediante autorização explícita do proprietário, b527b56f737104928e280474cd13b11423c80a14 foi enviado a origin/master e origin/codex/jarvis-v6-architecture. Vercel success às 17:01:18 America/Sao_Paulo (20:01:18 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/5CEHNofgLSFwxwnzjex2ScRoajA7 . Login em https://cronosjarvis.vercel.app/login respondeu 200; CSS de produção confirmou --muted:#a6afbd e --accent:#7dd3fc; /api/provider-settings sem sessão respondeu 401. Sem alterações de segredos, banco ou migrations; nenhuma chamada paga.
+
+Instalador local: release/v6/Cyro-IA-Setup-6.2.0.exe, 183634624 bytes, ProductVersion 6.2.0 e payload 6.2.0.0. SHA256 `3a2ef365c041d31ee6ae9bf4df11538c13a424a1805b6d4ed40450911c416fe2`, conferido independentemente contra .exe.sha256. Authenticode NotSigned. Compilação PyInstaller, montagem NSIS e auditoria de fontes/ASAR/runtime aprovadas. O pipeline de empacotamento reutilizou explicitamente os 483 testes, sete cenários Electron e 40 verificações de layout já aprovados nesta revisão, executando as etapas oficiais de freeze, ícones, empacotamento e auditoria sem repetir a validação.
+
+Self-check do serviço congelado aprovado. O payload final iniciou com PATH sem Node/Python, autenticou localmente e preservou dados após reiniciar, usando somente perfil temporário. Não equivale a instalar/atualizar em Windows limpo, testar login manual com credenciais de produção, auditar todos os leitores de tela ou validar áudio/IA pagos. Nenhum perfil pessoal ou conteúdo de Backup/ foi alterado. Instaladores anteriores preservados. Sem tag/GitHub Release. O registro final de entrega é local para não iniciar novo deploy sem mudança de runtime.
+
+Evidências: build/v6/cyro-setup-6.2.0.log, cyro-6.2.0-frozen-selfcheck.log, cyro-6.2.0-payload-smoke.log, v620-deployment-latest.json e v620-production-check.json.
+
 # Validação 6.2.0 — refinamento visual global
 
 Em 28/10/2026, foram aprovados 483 testes (142 Desktop, 212 backend Python, 92 Cloud, 35 iniciadores/empacotamento e 2 ferramentas Node), TypeScript/build Cloud e Desktop, sete cenários Electron e 40 verificações administrativas em Chromium. O pipeline check:v6 concluiu testes/builds/Python e parou em uma expectativa antiga do foco do Quick Chat; a expectativa foi atualizada para exigir contorno sólido de 2 px sem sombra. Todos os sete cenários Electron e a matriz administrativa foram então executados novamente e aprovados. Não foi repetida a parte já aprovada de testes/builds. A consistência final do repositório confirmou 6.2.0. Prettier Desktop e git diff --check aprovados.
