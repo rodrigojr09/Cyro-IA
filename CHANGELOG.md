@@ -1,3 +1,8 @@
+# 6.1.2 — em desenvolvimento
+
+- Consolida os ajustes de sidebar, busca das integrações, remoção de Computador/Conta das configurações, cabeçalho ciano com fechamento por X e ícone Windows azul como o Quick Chat.
+- Publicação Cloud e compilação Windows autorizadas pelo proprietário nesta entrega; validação e resultados em docs/VALIDATION.md.
+
 # 6.1.1 — em desenvolvimento
 
 - Ícone da janela em desenvolvimento definido explicitamente e paleta do ícone Windows alinhada ao azul do Quick Chat.
