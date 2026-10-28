@@ -1,0 +1,27 @@
+# Cyro IA 6.1.0 — plano e auditoria do Writer
+
+28/10/2026. Base Git b7da82d, versão 6.0.3. Única alteração preexistente: cloud/next-env.d.ts; preservar bytes e não incluir nos commits. Backup/ não será lido nem modificado.
+
+## Auditoria
+
+O renderer React atual apresenta blocos como editores separados e usa debounce de 350 ms. writer_nodes.blocks guarda uma lista JSON ordenada de Block(id,type,text) em SQLite por projeto. writer_revisions guarda snapshots comprimidos antes/depois, versão, origem e operação; writer_proposals guarda planos e revisões de origem; writer_messages é independente. writer_requests fornece idempotência. Existem arquivos vinculados com hash/conflito, pastas, exportação DOCX/MD/TXT, revisões, restauração, desfazer/refazer persistidos e aprovação de propostas. Writer utiliza system_prompt/identidade compartilhada, memória de projeto e o cliente Cloud existente, sem chave OpenAI local. O banco Prisma não armazena os documentos locais do Writer.
+
+## Decisão e migração segura
+
+TipTap/ProseMirror será o único editor visual. Um documento lógico possui nós de formatação internos, nunca controles individuais. Os identificadores técnicos servem somente para mapear operações e não serão exibidos. Acrescentar representação rica opcional aos nós persistidos mantém as colunas, identificadores, ordem, associações, snapshots e documentos anteriores. Dados legados são adaptados na leitura; somente uma edição explícita salva a representação rica numa revisão nova. Não haverá remoção de conteúdo ou migração destrutiva. A lista interna passa a ser a projeção serializada dos nós superiores de um documento ProseMirror, não uma coleção de editores.
+
+## Etapas
+
+1. Contrato rico validado, leitura legada e exportação fiel; testes Python.
+2. Editor TipTap contínuo, formatação essencial e painel documento principal/chat lateral; remover implementação visual antiga.
+3. Histórico de operações do editor, seleção precisa, comandos de chat e aprovação/conflitos; autosave de 1500 ms, recuperação e revisão otimista.
+4. Testes de interação Electron, regressões, eficiência de requisições e compatibilidade de exportação.
+5. Documentação, evidências reais e commits lógicos da v6.1.0. Sem push, tag ou publicação automática.
+
+## Invariantes
+
+Perguntas não escrevem. Respostas não viram conteúdo sem intenção clara. Aprovação não pode sobrescrever edição posterior à revisão da proposta. Histórico de mensagens não é apagado por undo. Undo específico de IA deve preservar edições manuais posteriores ou pedir esclarecimento. Editor não é reconstruído ao salvar. Não há chamada ao banco por tecla, IA duplicada ou segunda memória. Falha de gravação preserva o rascunho e impede navegação destrutiva. Restaurar versão exige confirmação.
+
+## Validação prevista
+
+Cobrir os 25 cenários solicitados em testes de contratos/store, editor real e Electron: vazio, digitação/parágrafos, seleção/clipboard/formatação, undo/redo chat/teclado, consulta, revisão e geração, autosave/reload/falha, legado, DOCX, restauração, conflito durante geração, projetos/isolamento e contagem de operações. Registrar limites externos; mocks não certificam IA paga ou Windows limpo.
