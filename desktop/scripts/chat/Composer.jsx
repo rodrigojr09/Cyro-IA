@@ -54,7 +54,7 @@ export function Composer({
         <div className="composer-tools">
           <span id="composer-context">
             {isWriter ? (
-              'Arquivo vinculado · Cyro Writer'
+              'Documento do projeto'
             ) : (
               <>
                 <Icon name="shield" />
@@ -62,7 +62,7 @@ export function Composer({
               </>
             )}
           </span>
-          {isWriter && (
+          {isWriter && writerState.selectedIds.length > 0 && (
             <button id="writer-selection" onClick={onClearSelection}>
               {writerState.selectedIds.length
                 ? 'Trecho selecionado · limpar ×'

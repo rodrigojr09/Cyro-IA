@@ -8,7 +8,7 @@ const output = path.resolve(root, '../build/v6/react-test-components-' + process
 require('esbuild').buildSync({
   absWorkingDir: root,
   stdin: {
-    contents: `export {App} from './scripts/app/App'; export {Login} from './scripts/session/Login'; export {QuickApp} from './scripts/quick/QuickApp'; export {Clipboard,ClipboardSettings} from './scripts/clipboard/Clipboard'; export {ScopeDialog,isSelected} from './scripts/workspace/ScopeDialog'; export {AttachmentList,useAttachments} from './scripts/attachment/components'; export {Markdown} from './scripts/ui/components'; export {Integrations,SpotifySettings} from './scripts/integrations/Integrations'; export {createWorkspace} from './scripts/workspace/store'; export {createWriter} from './scripts/writer/store';`,
+    contents: `export {Editor} from '@tiptap/core'; export {extensions,toDocument,editorBlocks,connectEditor} from './scripts/writer/editor'; export {WriterPreview} from './scripts/writer/WriterPreview'; export {App} from './scripts/app/App'; export {Login} from './scripts/session/Login'; export {QuickApp} from './scripts/quick/QuickApp'; export {Clipboard,ClipboardSettings} from './scripts/clipboard/Clipboard'; export {ScopeDialog,isSelected} from './scripts/workspace/ScopeDialog'; export {AttachmentList,useAttachments} from './scripts/attachment/components'; export {Markdown} from './scripts/ui/components'; export {Integrations,SpotifySettings} from './scripts/integrations/Integrations'; export {createWorkspace} from './scripts/workspace/store'; export {createWriter} from './scripts/writer/store';`,
     resolveDir: root,
     loader: 'jsx',
   },
@@ -31,6 +31,10 @@ function environment() {
     FormData: dom.window.FormData,
     localStorage: dom.window.localStorage,
     HTMLElement: dom.window.HTMLElement,
+    Node: dom.window.Node,
+    Element: dom.window.Element,
+    getComputedStyle: dom.window.getComputedStyle,
+    cancelAnimationFrame: clearTimeout,
     MutationObserver: dom.window.MutationObserver,
     requestAnimationFrame: (callback) => setTimeout(callback, 0),
     IS_REACT_ACT_ENVIRONMENT: true,

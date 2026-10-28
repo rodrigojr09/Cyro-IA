@@ -426,7 +426,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               status={status}
             />
           </div>
-          {isWriter && showPreview && <WriterDivider/>}
+          {isWriter && showPreview && <WriterDivider />}
           {isWriter && (
             <WriterPreview
               writer={writer}

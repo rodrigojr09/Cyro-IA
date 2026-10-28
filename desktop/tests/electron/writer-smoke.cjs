@@ -56,7 +56,9 @@ app.whenReady().then(async () => {
       child.on('error', reject);
       child.on('exit', (code) => reject(Error('Backend teste terminou: ' + code)));
     });
+    let saveRequests = 0;
     const backend = async (route, method, body) => {
+      if (route === '/writer' && body && JSON.parse(body).action === 'save') saveRequests++;
       const response = await fetch('http://127.0.0.1:' + port + route, {
         method,
         headers: { 'Content-Type': 'application/json', 'X-Jarvis-Token': token },
@@ -137,6 +139,7 @@ app.whenReady().then(async () => {
       height: 900,
       show: false,
       webPreferences: {
+        backgroundThrottling: false,
         preload: path.join(DESKTOP_ROOT, 'scripts/app/preload.js'),
         sandbox: true,
         contextIsolation: true,
@@ -160,7 +163,13 @@ app.whenReady().then(async () => {
         }),
       },
     });
-    const execute = (code) => window.webContents.executeJavaScript(code, true);
+    const execute = async (code) => {
+      try {
+        return await window.webContents.executeJavaScript(code, true);
+      } catch (error) {
+        throw Error('Renderer: ' + code + ' / ' + error.message);
+      }
+    };
     const waitFor = async (condition) => {
       for (let i = 0; i < 120; i++) {
         if (await execute(condition)) return;
@@ -199,113 +208,187 @@ app.whenReady().then(async () => {
       `document.getElementById('writer-paper')?.textContent.includes('Lucas abriu a porta.')`,
     );
     assert.equal(await execute(`typeof require`), 'undefined');
-    await waitFor(`!document.getElementById('writer-edit').disabled`);
-    await execute(`document.getElementById('writer-edit').click()`);
-    await waitFor(`!!document.querySelector('#writer-paper textarea')`);
-    await enter('#writer-paper textarea', 'Lucas abriu a porta. Sua mão tremia.');
-    await waitFor(`document.getElementById('writer-save-state').textContent==='Salvo'`);
+
     assert.equal(
-      (await getDocument(boot.document)).blocks[0].text,
-      'Lucas abriu a porta. Sua mão tremia.',
+      await execute(
+        `document.querySelectorAll('.cyro-document-editor[contenteditable=true]').length`,
+      ),
+      1,
     );
-    await waitFor(`!document.getElementById('writer-edit').disabled`);
-    await execute(`document.getElementById('writer-edit').click()`);
-    await waitFor(`!document.querySelector('#writer-paper textarea')`);
-    await enter('#input', 'Deixe o trecho mais misterioso.');
-    await execute(`document.getElementById('send').click()`);
-    await waitFor(`!!document.querySelector('.writer-change mark')`);
     assert.equal(
-      (await getDocument(boot.document)).blocks[0].text,
-      'Lucas abriu a porta. Sua mão tremia.',
+      await execute(
+        `document.querySelectorAll('#writer-paper textarea,.writer-block-editor,#writer-undo,#writer-redo').length`,
+      ),
+      0,
+    );
+    async function key(keyCode, modifiers = []) {
+      window.webContents.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
+      window.webContents.sendInputEvent({ type: 'keyUp', keyCode, modifiers });
+      await pause(80);
+    }
+    async function replaceText(text) {
+      await execute(`document.querySelector('.cyro-document-editor').focus()`);
+      await key('A', ['control']);
+      await window.webContents.insertText(text);
+      await pause(100);
+    }
+    async function chat(text) {
+      await enter('#input', text);
+      await execute(`document.getElementById('send').click()`);
+      await waitFor(`!document.getElementById('send').disabled`);
+    }
+    await replaceText('Lucas abriu a porta. Sua mão tremia.');
+    await key('A', ['control']);
+    const copiedText = await execute(
+      `(() => {const data=new DataTransfer();document.querySelector('.cyro-document-editor').dispatchEvent(new ClipboardEvent('copy',{clipboardData:data,bubbles:true,cancelable:true}));return data.getData('text/plain');})()`,
+    );
+    assert.match(copiedText, /Lucas abriu a porta/);
+
+    await key('End', ['control']);
+    await key('Enter');
+    await window.webContents.insertText('Segundo parágrafo preservado.');
+    await waitFor(`document.getElementById('writer-save-state').textContent==='Salvo'`);
+    let saved = await getDocument(boot.document);
+    assert.equal(
+      saveRequests,
+      1,
+      'Native keystrokes and two paragraphs must share one idle checkpoint',
+    );
+    assert.equal(saved.blocks.length, 2);
+    assert.match(saved.blocks[1].text, /Segundo/);
+    await key('Z', ['control']);
+    await key('Z', ['control', 'shift']);
+    await waitFor(
+      `document.getElementById('writer-paper')?.textContent.includes('Segundo parágrafo')`,
+    );
+    // Real contenteditable clipboard event handling without touching the user's OS clipboard.
+    const pasted = await execute(
+      `(() => {const el=document.querySelector('.cyro-document-editor');el.focus();const data=new DataTransfer();data.setData('text/html','<p><strong>Conteúdo colado</strong> com <em>formatação</em>.</p>');el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));return true;})()`,
+    );
+    assert.equal(pasted, true);
+    await waitFor(`!!document.querySelector('.cyro-document-editor strong')`);
+    await replaceText('Lucas abriu a porta. Sua mão tremia.');
+    await key('End', ['control']);
+    await key('Enter');
+    await window.webContents.insertText('Segundo parágrafo preservado.');
+    await waitFor(`document.getElementById('writer-save-state').textContent==='Salvo'`);
+    const geometry = await execute(
+      `(() => {const doc=document.querySelector('.continuous-writer').getBoundingClientRect(),chat=document.querySelector('.writer-standard-chat').getBoundingClientRect();return {doc:doc.width,chat:chat.width,left:doc.left<chat.left};})()`,
+    );
+    assert.ok(geometry.left);
+    assert.ok(geometry.doc > geometry.chat);
+    await execute(`document.querySelector('.writer-divider').focus()`);
+    await key('Left');
+    assert.ok(
+      (await execute(
+        `document.querySelector('.writer-standard-chat').getBoundingClientRect().width`,
+      )) > geometry.chat,
+    );
+    await key('Right');
+
+    await chat('Deixe o trecho mais misterioso.');
+    await waitFor(`!!document.getElementById('writer-proposal')`);
+    assert.match((await getDocument(boot.document)).blocks[0].text, /Sua mão tremia/);
+    await execute(
+      'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
     );
     fs.writeFileSync(
-      path.join(directory, 'writer-proposal.png'),
+      path.join(directory, 'writer-continuous-proposal.png'),
       (await window.webContents.capturePage()).toPNG(),
     );
     await execute(`document.getElementById('writer-approve').click()`);
     await waitFor(
-      `!document.getElementById('writer-proposal') && document.getElementById('writer-paper').textContent.includes('lentamente')`,
+      `!document.getElementById('writer-proposal') && document.getElementById('writer-paper')?.textContent.includes('lentamente')`,
     );
-    assert.match((await getDocument(boot.document)).blocks[0].text, /lentamente/);
-    await execute(`document.getElementById('writer-undo').click()`);
-    await waitFor(`document.getElementById('writer-paper').textContent.includes('Sua mão tremia')`);
-    await execute(`document.getElementById('writer-redo').click()`);
-    await waitFor(`document.getElementById('writer-paper').textContent.includes('lentamente')`);
-    await enter('#input', 'Quem abriu a porta?');
-    await execute(`document.getElementById('send').click()`);
+    assert.equal(
+      (await getDocument(boot.document)).blocks[1].text,
+      'Segundo parágrafo preservado.',
+    );
+    await chat('Cyro, desfaça sua última alteração.');
     await waitFor(
-      `document.getElementById('messages').textContent.includes('Lucas abriu a porta.')&&!document.getElementById('send').disabled`,
+      `document.getElementById('writer-paper')?.textContent.includes('Sua mão tremia')`,
     );
-    assert.equal(await execute(`!!document.getElementById('writer-proposal')`), false);
-    await enter('#input', 'Deixe o trecho mais misterioso.');
-    await execute(`document.getElementById('send').click()`);
+    await chat('Refazer');
+    await waitFor(`document.getElementById('writer-paper')?.textContent.includes('lentamente')`);
+    const beforeQuestion = await getDocument(boot.document);
+    await chat('Quem abriu a porta?');
+    assert.deepEqual((await getDocument(boot.document)).blocks, beforeQuestion.blocks);
+    await chat('Deixe o trecho mais misterioso.');
     await waitFor(`!!document.getElementById('writer-proposal')`);
-    const external = await getDocument(boot.document);
-    const externalSave = await backend(
-      '/writer',
-      'POST',
-      JSON.stringify({
-        project_id: boot.project.id,
-        action: 'save',
-        payload: {
-          id: external.id,
-          base_version: external.version,
-          request_id: randomUUID(),
-          blocks: external.blocks.map((block) => ({
-            ...block,
-            text: 'Edição externa preservada.',
-          })),
-        },
-      }),
-    );
-    assert(externalSave.ok);
+    await replaceText('Edição manual posterior à proposta.');
     await execute(`document.getElementById('writer-approve').click()`);
     await waitFor(`document.getElementById('writer-countdown')?.textContent.includes('Conflito')`);
-    assert.equal((await getDocument(boot.document)).blocks[0].text, 'Edição externa preservada.');
+    assert.match((await getDocument(boot.document)).blocks[0].text, /Edição manual posterior/);
     await execute(`document.getElementById('writer-reload').click()`);
-    await waitFor(
-      `document.getElementById('writer-paper').textContent.includes('Edição externa preservada.')`,
+    await pause(100);
+    await execute(
+      `document.querySelector('.writer-file-menu summary').click();document.getElementById('writer-export').click()`,
     );
-    await execute(`document.getElementById('writer-export').click()`);
     await waitFor(`document.getElementById('writer-export-dialog').open`);
-    assert.ok(await execute(`document.querySelectorAll('#writer-export-items input').length>0`));
     await execute(`document.getElementById('writer-export-docx').click()`);
     await waitFor(`!document.getElementById('writer-export-dialog').open`);
     assert.equal(
       fs.readFileSync(path.join(directory, 'Livro.docx')).subarray(0, 2).toString(),
       'PK',
     );
+    // Revision restoration remains an explicit confirmation and never deletes messages.
+    await execute(`document.getElementById('writer-history').click()`);
+    await waitFor(`document.getElementById('writer-history-dialog').open`);
+    assert.ok(await execute(`document.querySelectorAll('#writer-revisions button').length>1`));
+    await execute(`document.querySelector('#writer-revisions button').click()`);
+    await waitFor(`document.getElementById('writer-revision-dialog').open`);
+    await execute(`document.getElementById('writer-restore').click()`);
+    await waitFor(`!!document.querySelector('#writer-name-dialog[open]')`);
+    await enter('#writer-name', 'RESTAURAR');
+    await execute(`document.getElementById('writer-name-save').click()`);
+    await waitFor(`!document.getElementById('writer-revision-dialog').open`);
+    await waitFor(`!document.querySelector('dialog[open]')`);
+    await execute(
+      'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',
+    );
+    fs.writeFileSync(
+      path.join(directory, 'writer-continuous.png'),
+      (await window.webContents.capturePage()).toPNG(),
+    );
+    const beforeReload = await getDocument(boot.document);
+    const loaded = new Promise((resolve) => window.webContents.once('did-finish-load', resolve));
+    window.webContents.reload();
+    await loaded;
+    await waitFor(
+      `document.getElementById('writer-paper')?.textContent.includes(${JSON.stringify(beforeReload.blocks[0].text)})`,
+    );
+    assert.deepEqual((await getDocument(boot.document)).blocks, beforeReload.blocks);
     fs.writeFileSync(path.join(directory, 'Original.txt'), 'Arquivo original autorizado.');
     await execute(`document.getElementById('project-writer').click()`);
     await waitFor(`document.getElementById('writer-file-choice').open`);
     await execute(`document.getElementById('writer-choose-file').click()`);
     await waitFor(
-      `document.getElementById('writer-paper').textContent.includes('Arquivo original autorizado.')`,
+      `document.getElementById('writer-paper')?.textContent.includes('Arquivo original autorizado.')`,
     );
-    await waitFor(`!document.getElementById('writer-edit').disabled`);
-    await execute(`document.getElementById('writer-edit').click()`);
-    await waitFor(`!!document.querySelector('#writer-paper textarea')`);
-    await enter('#writer-paper textarea', 'Arquivo original autorizado e editado manualmente.');
-    await waitFor(
-      `!document.getElementById('writer-save-state').textContent.includes('Salvando') && !document.getElementById('writer-save-state').textContent.includes('pendente')`,
+    await replaceText('Arquivo original autorizado e editado manualmente.');
+    await waitFor(`document.getElementById('writer-save-state').textContent==='Salvo'`);
+    await execute(
+      `document.querySelector('.writer-file-menu summary').click();document.getElementById('writer-save-file').click()`,
     );
-    await execute(`document.getElementById('writer-save-file').click()`);
     for (
-      let attempt = 0;
-      attempt < 100 &&
+      let i = 0;
+      i < 100 &&
       !fs
         .readFileSync(path.join(directory, 'Original.txt'), 'utf8')
         .includes('editado manualmente');
-      attempt++
+      i++
     )
       await pause(30);
     assert.match(
       fs.readFileSync(path.join(directory, 'Original.txt'), 'utf8'),
       /editado manualmente/,
     );
+    await waitFor(
+      `document.getElementById('status')?.textContent.includes('Arquivo original atualizado')`,
+    );
     finish(
       0,
-      'Writer React + Electron + IPC + FastAPI/SQLite: edição manual, salvamento, prévia sem aplicar, aprovação, desfazer/refazer, pergunta sem edição, conflito externo, recuperação, exportação DOCX e arquivo original autorizado aprovados. IA sintética. Capturas: ' +
+      'Writer contínuo TipTap + Electron + IPC + FastAPI/SQLite: edição manual, salvamento, prévia sem aplicar, aprovação, desfazer/refazer, pergunta sem edição, conflito externo, recuperação, exportação DOCX e arquivo original autorizado aprovados. IA sintética. Capturas: ' +
         directory,
     );
   } catch (error) {

@@ -1,4 +1,4 @@
-# Publicação e distribuição — Cyro IA v6.0.3 em desenvolvimento
+# Publicação e distribuição — Cyro IA v6.1.0 em desenvolvimento
 
 O código está em `rodrigojr09/Cyro-IA`, branch `master`, com Cloud em `https://cronosjarvis.vercel.app`. O envio de código depende de autorização do proprietário; o envio ao GitHub pode acionar a implantação Vercel configurada. Verifique o status do mesmo commit antes de declarar o deploy concluído.
 
@@ -10,7 +10,7 @@ O código está em `rodrigojr09/Cyro-IA`, branch `master`, com Cloud em `https:/
 4. Se houver migrations novas, aplicá-las separadamente no ambiente autorizado; build não deve migrar o banco de previews ou produção automaticamente.
 5. Confira a implantação e execute o roteiro humano aplicável em [VALIDATION.md](VALIDATION.md).
 
-O Desktop 6.0.3 depende dos comandos Cloud `bootstrap` e `exchange`. Esses comandos já existem no Cloud 6.0.2; esta migração do frontend mantém o contrato compatível com Cloud 6.0.2 ou posterior. Esta revisao nao adiciona migrations.
+O Desktop 6.1.0 depende dos comandos Cloud `bootstrap` e `exchange`. Esses comandos já existem no Cloud 6.0.2; o transporte básico continua compatível com Cloud 6.0.2 ou posterior. O compartilhamento de memória da conta no endpoint comum requer publicar o Cloud 6.1.0 após autorização. Esta revisao nao adiciona migrations.
 
 ## Compilar o setup Windows x64
 
@@ -21,7 +21,7 @@ $env:JARVIS_CLOUD_ORIGIN = 'https://cronosjarvis.vercel.app'
 python tools/build_cloud_desktop.py
 ```
 
-`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v6/Cyro-IA-Setup-6.0.3.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
+`build.bat` chama o mesmo pipeline. A validação completa precede PyInstaller e electron-builder. O destino é `release/v6/Cyro-IA-Setup-6.1.0.exe` com `.exe.sha256`. O backend é empacotado; usuários finais não precisam instalar Node/Python. O artefato não tem assinatura digital adicionada nesta tarefa.
 
 A auditoria é automática ao compilar. Depois da conclusão do empacotamento:
 

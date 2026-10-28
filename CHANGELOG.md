@@ -1,3 +1,11 @@
+# 6.1.0 — em desenvolvimento
+
+- Writer convertido em um editor rico contínuo com TipTap/ProseMirror, documento principal e chat lateral redimensionável. Removidos controles por parágrafo e a folha de estilos da interface obsoleta.
+- Comandos de desfazer/refazer no chat e atalhos do editor; seleção precisa, aprovação de propostas e proteção contra conflito com edições manuais.
+- Autosave após 1,5 segundo, revisão otimista, retries idempotentes, recuperação protegida e exportação do rascunho sem sobrescrever a versão salva.
+- Dados legados, associações, mensagens e checkpoints preservados por adaptação compatível, sem migração destrutiva. DOCX inclui formatação rica, tabelas simples e links.
+- Writer reutiliza a identidade, o cliente Cloud, a memória da conta e as permissões do Cyro. Sem nova memória ou chamada duplicada à IA.
+
 # 6.0.3 — em desenvolvimento
 
 - Frontend Desktop integralmente convertido para componentes React: aplicativo, login, Quick Chat, Writer e configurações. Scripts separados por função; testes centralizados em desktop/tests.

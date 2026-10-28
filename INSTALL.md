@@ -1,8 +1,10 @@
-# Instalação e atualização — Cyro IA 6.0.3 em desenvolvimento
+# Instalação e atualização — Cyro IA 6.1.0 em desenvolvimento
+
+Esta revisão 6.1.0 entrega fontes em desenvolvimento. Nenhum setup 6.1.0 foi compilado neste pedido; o instalador local anterior permanece 6.0.3. As instruções abaixo aplicam-se quando houver uma entrega 6.1.0 autorizada.
 
 ## Aplicativo Windows
 
-1. Obtenha o `Cyro-IA-Setup-6.0.3.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
+1. Obtenha o `Cyro-IA-Setup-6.1.0.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
 2. Confira o SHA-256 do instalador com `Get-FileHash` e compare com o arquivo de verificação da mesma entrega. O instalador atual não tem assinatura Authenticode.
 3. Feche o Cyro IA antes de atualizar. Faça uma cópia externa dos dados locais com o aplicativo encerrado. Não apague o perfil nem use `Backup/` como origem automática.
 4. Execute o instalador Windows x64, escolha o destino e abra o Cyro IA. Python e Node são dependências de desenvolvimento/compilação, não do usuário instalado.

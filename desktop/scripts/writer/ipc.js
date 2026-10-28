@@ -101,7 +101,9 @@ function install({ ipcMain, dialog, trusted, mainWindow, backend }) {
       !['docx', 'md', 'txt'].includes(value.format) ||
       !Array.isArray(value.document_ids) ||
       value.document_ids.length > 200 ||
-      Object.keys(value).some((k) => !['project_id', 'document_ids', 'format'].includes(k))
+      (value.draft !== undefined &&
+        (!Array.isArray(value.draft) || value.document_ids.length !== 1)) ||
+      Object.keys(value).some((k) => !['project_id', 'document_ids', 'format', 'draft'].includes(k))
     )
       throw Error('Exportação inválida.');
     const result = await backend('/writer/export', 'POST', JSON.stringify(value));
