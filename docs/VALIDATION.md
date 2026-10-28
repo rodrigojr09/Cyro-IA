@@ -1,3 +1,13 @@
+# Validacao 6.0.2 — preparacao da sessao e gravacao confirmada
+
+Em 27/10/2026, implementacao nos commits c271395 e a54cdad. Pipeline check:v6 aprovado: 91 testes Cloud, 166 Desktop, 198 backend Python, 35 iniciadores/empacotamento e 2 ferramentas Node (492 testes sem dupla contagem), TypeScript Cloud/Desktop, builds Cloud/Desktop, sete smokes Electron reais com provedores simulados e 40 verificacoes de layout com Chromium real.
+
+Regressoes novas cobrem bloqueio durante bootstrap, falha e nova tentativa, invalidacao da permissao ao trocar sessao, Quick Chat bloqueado antes da carga, cache de historicos carregados e de gravacoes confirmadas, isolamento entre contas, pagina de mais de 500 mensagens, catalogo de mais de 50 conversas, limite de bytes UTF-8 por lote, IDs de retry e uma transacao por par. O teste ASGI verifica que falha de persistencia impede o retorno da resposta gerada. O relogio controlado registrou duas sincronizacoes de catalogo em dez minutos, sem gatilhos externos. Resultados e limites em [RESULTS.md](performance/RESULTS.md).
+
+Sem migrations novas, sem uso de API paga e sem validacao de Windows limpo. Nao foram medidos tempo de login com historico real, Operations do provedor apos deploy, OAuth ou audio fisico. O Desktop 6.0.2 exige publicar o Cloud da mesma revisao antes da instalacao: os comandos bootstrap/exchange nao existem no servidor anterior. Nao foi declarado deploy concluido. A alteracao preexistente em cloud/next-env.d.ts e preservada e fica fora dos commits. Backup/ nao foi alterado.
+
+Instalador gerado em 27/10/2026 e conferido em 28/10/2026: `release/v6/Cyro-IA-Setup-6.0.2.exe`, 186215312 bytes. SHA256 `4f793224544a39732ee2fe305e77f71008201d90c041f87feda263f00db43ae9`, confirmado independentemente contra o arquivo `.exe.sha256`. Setup ProductVersion 6.0.2 e payload ProductVersion 6.0.2.0, ambos Cyro IA. Auditoria de ASAR/runtime aprovada; self-check do backend congelado aprovado. Assinatura Authenticode: NotSigned. Logs locais: `build/v6/cyro-setup-6.0.2.log` e `build/v6/cyro-6.0.2-frozen-selfcheck.log`. Compilacao local, sem envio ao GitHub, tag, release ou deploy nesta revisao.
+
 # Validacao 6.0.1 - apelido Cyro
 
 Em 27/10/2026: mensagens, botoes, textos de apoio e apresentacao do assistente usam Cyro; logos e titulos mantem Cyro IA. A regra foi registrada no AGENTS.md. Passaram 161 testes Desktop, 88 Cloud, 2 de identidade, 6 de Quick Chat e 8 de empacotamento/versionamento. A revisao final passou ainda por 33 testes focados de interface/workspace e pelo smoke Electron real com dados Cloud simulados. Verificador de repositorio e git diff --check aprovados.
