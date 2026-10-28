@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardSettings } from '../clipboard/Clipboard';
 import { Integrations } from '../integrations/Integrations';
 import { Storage } from '../storage/Storage';
-import { Computer } from '../computer/Computer';
 export function Settings({
   open,
   onClose,
@@ -47,7 +46,6 @@ export function Settings({
     'Quick Chat',
     'Área de transferência',
     'Integrações',
-    'Computador',
     'Conta',
     'Sobre',
   ];
@@ -264,7 +262,6 @@ export function Settings({
               )}
               {category === 'Área de transferência' && <ClipboardSettings />}
               {category === 'Integrações' && <Integrations />}
-              {category === 'Computador' && <Computer />}
               {category === 'Conta' && (
                 <>
                   <h3>Conta e acesso</h3>

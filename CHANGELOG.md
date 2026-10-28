@@ -1,5 +1,7 @@
 # 6.1.1 — em desenvolvimento
 
+- Removida a seção Computador da página de configurações.
+
 - Busca das integrações com uma única borda/fundo e largura completa, corrigindo a sobreposição do estilo geral de formulários.
 
 - Sidebar com hierarquia por indentação, destaque discreto apenas na conversa ativa, títulos longos truncados, espaçamentos consistentes e rodapé separado com status leve.
