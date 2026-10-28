@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createWorkspace } from '../workspace/store';
 import { createWriter } from '../writer/store';
-import { WriterPreview } from '../writer/WriterPreview';
+import { WriterPreview, WriterDivider } from '../writer/WriterPreview';
 import { WriterLibrary } from '../writer/WriterLibrary';
 import { ScopeDialog } from '../workspace/ScopeDialog';
 import { Settings } from '../ui/Settings';
@@ -426,6 +426,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               status={status}
             />
           </div>
+          {isWriter && showPreview && <WriterDivider/>}
           {isWriter && (
             <WriterPreview
               writer={writer}

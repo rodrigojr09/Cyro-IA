@@ -317,6 +317,14 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                 result["proposal"] = writer.proposal(result["proposal"]["id"])
             return result
     context = WriterContextService.build(writer, req)
+    if req.selection:
+        selected_doc=writer.get(req.document_id)
+        selected_block=next((b for b in selected_doc["blocks"] if b["id"]==req.selection.block_id),None)
+        if not selected_block or req.selected_block_ids != [req.selection.block_id] or req.selection.end < req.selection.start or selected_block["text"][req.selection.start:req.selection.end] != req.selection.text:
+            raise ReadError("A seleção mudou. Selecione novamente antes de solicitar a edição.")
+        context["selection"]=req.selection.text
+        context["selection_scope"]="Somente o texto selecionado. Retorne apenas a substituição, sem repetir o prefixo/sufixo do parágrafo."
+
     if req.chat_id:
         context["chat_instructions"] = chat.get("instructions", "")[:2000]
         context["file_focus"] = (
@@ -372,6 +380,8 @@ async def assist(writer, request, client, model, available, cancel_event=None):
             "Não invente documentos ou ids existentes. Confiança é apenas sinal auxiliar. O contrato está nos parâmetros da função writer_editorial."
         )
     )
+    if req.continuous:
+        system += " Editor contínuo: cada id representa apenas um nó interno, não um controle visual. Identifique o trecho exato solicitado por sua ordem e conteúdo. Não reescreva o documento inteiro para corrigir uma frase. Se houver selection_scope, retorne somente o texto substituto. Para criar tabela, use Markdown de tabela no texto. Perguntas e pedidos de avaliação são CHAT e nunca escrita. Na dúvida, pergunte."
     if feedback:
         system += (
             " O usuário forneceu feedback editorial explícito: " + feedback + ". "
@@ -506,8 +516,19 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                     if part.strip()
                 ]
             proposed_text = "\n\n".join(b["text"] for b in plan["blocks"])
+            if req.continuous and req.selection and result.operation == "replace":
+                if result.blockIds != [req.selection.block_id] or len(plan["blocks"])!=1:
+                    raise ReadError("A alteração da seleção deve ser um único trecho do parágrafo selecionado.")
+                source=next(b for b in active["blocks"] if b["id"]==req.selection.block_id)
+                replacement=plan["blocks"][0]["text"]
+                new={"id":uid(),"type":source["type"],"text":source["text"][:req.selection.start]+replacement+source["text"][req.selection.end:]}
+                if source.get("rich"):
+                    from writer_rich import splice_inline
+                    new["rich"]=splice_inline(source["rich"],req.selection.start,req.selection.end,replacement)
+                plan["blocks"]=[new]
             auto = (
-                settings["auto_write"]
+                not req.continuous
+                and settings["auto_write"]
                 and result.intent == "WRITE"
                 and result.operation == "append"
                 and active is not None

@@ -66,7 +66,7 @@ def title(value):
 
 def blocks(value):
     result = [
-        Block.model_validate(b).model_dump() if isinstance(b, dict) else b.model_dump()
+        Block.model_validate(b).model_dump(exclude_none=True) if isinstance(b, dict) else b.model_dump(exclude_none=True)
         for b in value
     ]
     if (
@@ -107,6 +107,29 @@ class WriterStore:
                 r[1] for r in con.execute("PRAGMA table_info(writer_proposals)")
             }:
                 con.execute("ALTER TABLE writer_proposals ADD COLUMN result_node TEXT")
+
+    def control(self, payload):
+        from writer_models import Strict
+        from pydantic import Field
+        class Control(Strict):
+            id: str
+            chat_id: str
+            message: str = Field(min_length=1,max_length=6000)
+            reply: str = Field(min_length=1,max_length=1000)
+            request_id: str
+        req=Control.model_validate(payload)
+        self.get(req.id)
+        chat=self.store.chat(req.chat_id)
+        if chat.get("writer_document_id")!=req.id or chat.get("project_id")!=self.project_id: raise ReadError("Conversa não pertence ao documento.")
+        with self.transaction() as con:
+            key=identifier(req.request_id)
+            old=con.execute("SELECT result FROM writer_requests WHERE id=?",(key,)).fetchone()
+            if old: return json.loads(old[0])
+            for role,text in [("user",req.message),("assistant",req.reply)]:
+                con.execute("INSERT INTO writer_messages VALUES(?,?,?,?,?,?,?)",(uid(),req.id,role,text,"CONTROL",None,now()))
+            result={"reply":req.reply}
+            con.execute("INSERT INTO writer_requests VALUES(?,?)",(key,dump(result)))
+        return result
 
     def bind_chat(self, document_id):
         node = self.get(document_id)

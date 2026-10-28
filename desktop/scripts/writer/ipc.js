@@ -19,6 +19,7 @@ const actions = new Set([
   'messages',
   'prune',
   'assist',
+  'control',
 ]);
 function install({ ipcMain, dialog, trusted, mainWindow, backend }) {
   let dirty = false;

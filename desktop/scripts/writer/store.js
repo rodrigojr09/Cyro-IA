@@ -1,4 +1,4 @@
-import { createStore } from '../shared/bridge';
+import { createStore, preferenceStorage } from '../shared/bridge';
 export function createWriter(bridge = window.jarvisWriter) {
   const store = createStore({
     project: null,
@@ -24,11 +24,20 @@ export function createWriter(bridge = window.jarvisWriter) {
     saving = null,
     autoTimer = null,
     saveTimer = null,
-    epoch = 0;
+    epoch = 0,
+    editorAdapter = null,
+    selectionRange = null,
+    recoveryTimer = null;
+  const recoveryKey = () => 'cyro.writer.recovery.'+store.get().project?.id+'.'+store.get().document?.id;
+  const preserve = () => {
+    try { if(version!==savedVersion && store.get().document) preferenceStorage().setItem(recoveryKey(),JSON.stringify({base:store.get().document.version,blocks:store.get().document.blocks})); } catch {store.set({error:'Não foi possível gravar a recuperação local. Mantenha esta janela aberta e exporte uma cópia.'});}
+  };
   const dirty = () => {
     const value = version !== savedVersion || store.get().proposal?.state === 'PENDING';
-    store.set({ dirty: value });
-    void bridge.dirty(value).catch(() => {});
+    if(store.get().dirty!==value) {
+      store.set({ dirty: value });
+      void bridge.dirty(value).catch(() => {});
+    }
   };
   async function command(action, payload = {}, projectId = store.get().project?.id) {
     if (!projectId) throw Error('Abra um projeto para usar o Writer.');
@@ -82,9 +91,11 @@ export function createWriter(bridge = window.jarvisWriter) {
         store.set({ document: { ...store.get().document, version: result.version } });
       }
       dirty();
+      if(version===savedVersion) {clearTimeout(recoveryTimer); try{preferenceStorage().removeItem(recoveryKey());}catch{}}
       store.set({ status: 'Salvo no Cyro.' });
     })()
       .catch((error) => {
+        preserve();
         store.set({ error: error.message + ' Sua edição permanece aberta para recuperação.' });
         throw error;
       })
@@ -113,7 +124,7 @@ export function createWriter(bridge = window.jarvisWriter) {
       error: '',
       selectedIds: [],
       selectedText: '',
-      editing: false,
+      editing: true,
       proposal: null,
     });
     try {
@@ -124,6 +135,15 @@ export function createWriter(bridge = window.jarvisWriter) {
       if (current !== epoch) return;
       version = savedVersion = 0;
       store.set({ catalog, document });
+      try {
+        const recovered=JSON.parse(preferenceStorage().getItem(recoveryKey())||'null');
+        if(recovered?.blocks) {
+          document.blocks=recovered.blocks; version++;
+          store.set({document:{...document},status:'Edição não sincronizada recuperada.',error:recovered.base!==document.version?'A versão salva mudou. Exporte sua edição antes de comparar ou recarregar.':''});
+          if(recovered.base!==document.version) document.version=recovered.base;
+          dirty();
+        }
+      } catch {}
       if (bridge.file) {
         const result = await bridge.file({
           project_id: project.id,
@@ -142,19 +162,23 @@ export function createWriter(bridge = window.jarvisWriter) {
     }
   }
   function edit(blocks) {
-    if (!store.get().editing || store.get().busy || store.get().chat?.archived) return;
+    if (!store.get().document || store.get().applying || store.get().chat?.archived) return;
     version++;
-    store.set({ document: { ...store.get().document, blocks }, selectedIds: [], selectedText: '' });
+    store.get().document.blocks = blocks;
+    clearTimeout(recoveryTimer); recoveryTimer=setTimeout(preserve,400);
     dirty();
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => void flush().catch(() => {}), 350);
+    saveTimer = setTimeout(() => void flush().catch(() => {}), 1500);
   }
   async function decide(approve, automatic = false, edited_blocks = null) {
     stopAuto();
     await flush();
     const proposal = store.get().proposal;
     if (!proposal) return;
-    const result = await command('decide', { id: proposal.id, approve, automatic, edited_blocks });
+    store.set({applying:true});
+    let result;
+    try {result=await command('decide', { id: proposal.id, approve, automatic, edited_blocks });}
+    finally {store.set({applying:false});}
     if (result.state === 'CONFLICTED') {
       store.set({ proposal: { ...proposal, state: result.state }, error: result.message });
       dirty();
@@ -162,6 +186,7 @@ export function createWriter(bridge = window.jarvisWriter) {
     }
     if (approve && result.state === 'APPLIED') {
       const document = await command('get', { id: store.get().document.id, include_removed: true });
+      editorAdapter?.apply(document.blocks,'ai');
       store.set({ document });
       await syncFile();
     }
@@ -188,17 +213,32 @@ export function createWriter(bridge = window.jarvisWriter) {
       !initial.document
     )
       return false;
+    const normalized=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[.!]+$/,'');
+    const historyMatch=normalized.match(/^(?:(?:cyro|por favor)[, ]+)?(desfazer|desfaca|refazer|refaca|volte)(?: (?:a |sua )?(?:ultima (?:alteracao|edicao)(?: (?:do|pelo) cyro)?|o que foi desfeito|para a versao anterior))?$/);
+    const historyAction=historyMatch?(/^ref/.test(historyMatch[1])?'redo':'undo'):null;
+    if(historyAction) {
+      store.set({busy:true,error:''});
+      try {
+        let reply;
+        if(editorAdapter) {reply=editorAdapter.control(historyAction,/sua|cyro|pelo/.test(normalized.replace(/^cyro[, ]+/,'')));await flush();}
+        else { await flush(); const doc=store.get().document; await command(historyAction,{id:doc.id,base_version:doc.version}); store.set({document:await command('get',{id:doc.id})}); reply=historyAction==='undo'?'Última edição desfeita.':'Última edição refeita.'; }
+        const doc=store.get().document;
+        await command('control',{id:doc.id,chat_id:store.get().chat.id,message:text,reply,request_id:crypto.randomUUID()});
+        store.set({messages:[...store.get().messages,{role:'user',content:text},{role:'assistant',content:reply}],status:reply});
+        return {reply};
+      } finally {store.set({busy:false});}
+    }
+    if(store.get().proposal?.state==='PENDING') {
+      if(/^(?:aplicar|aprovar|confirmar)(?: (?:a )?(?:alteracao|proposta))?$/.test(normalized)) {await decide(true);return {reply:'Alteração aprovada.'};}
+      if(/^(?:rejeitar|descartar|cancelar)(?: (?:a )?proposta)?$/.test(normalized)) {await decide(false);return {reply:'Proposta descartada.'};}
+      throw Error('Há uma proposta pendente. Revise e aprove ou descarte pelo chat antes de continuar.');
+    }
     store.set({ busy: true, error: '' });
     const preflightEpoch = epoch;
     try {
       await flush();
       if (preflightEpoch !== epoch || store.get().document?.id !== initial.document.id)
         return false;
-      if (store.get().proposal?.state === 'PENDING') {
-        const result = await decide(true);
-        if (result?.state === 'CONFLICTED')
-          throw Error('Resolva o conflito da proposta anterior antes de enviar.');
-      }
       if (store.get().document.deleted) throw Error('Escolha um documento ativo para continuar.');
       const current = epoch,
         document = store.get().document;
@@ -218,6 +258,8 @@ export function createWriter(bridge = window.jarvisWriter) {
           selected_block_ids: store.get().selectedIds,
           selected_text: store.get().selectedText,
           intent_override: null,
+          continuous: true,
+          selection: selectionRange,
         });
         if (current !== epoch) return false;
         store.set({
@@ -226,7 +268,7 @@ export function createWriter(bridge = window.jarvisWriter) {
             { role: 'assistant', content: result.reply, context_notice: result.context_notice },
           ],
           proposal: result.proposal,
-          editing: result.proposal ? false : store.get().editing,
+          editing: true,
           status: 'Pronto',
         });
         dirty();
@@ -266,6 +308,8 @@ export function createWriter(bridge = window.jarvisWriter) {
   }
   return {
     ...store,
+    bindEditor(adapter) {editorAdapter=adapter;},
+    preserve,
     command,
     load,
     flush,
@@ -274,7 +318,8 @@ export function createWriter(bridge = window.jarvisWriter) {
     send,
     structure,
     syncFile,
-    select(ids, text) {
+    select(ids, text, range=null) {
+      selectionRange=range;
       store.set({ selectedIds: ids, selectedText: text.slice(0, 2000) });
     },
     async toggleEdit() {
@@ -283,7 +328,11 @@ export function createWriter(bridge = window.jarvisWriter) {
       store.set({ editing: !store.get().editing });
     },
     async reload() {
+      clearTimeout(saveTimer);clearTimeout(recoveryTimer);
+      version=savedVersion=0;
+      try{preferenceStorage().removeItem(recoveryKey());}catch{}
       const document = await command('get', { id: store.get().document.id, include_removed: true });
+      editorAdapter?.apply(document.blocks);
       store.set({ document, error: '', selectedIds: [], selectedText: '' });
       await messages();
     },
@@ -319,6 +368,7 @@ export function createWriter(bridge = window.jarvisWriter) {
       await bridge.dirty(false);
     },
     dispose() {
+      preserve();clearTimeout(recoveryTimer);editorAdapter=null;
       stopAuto();
       clearTimeout(saveTimer);
       epoch++;

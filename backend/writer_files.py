@@ -187,7 +187,10 @@ class WriterFiles:
                     document.element.body.remove(child)
             for b in current["blocks"]:
                 unchanged = previous.get(b["text"])
-                if unchanged:
+                if b.get("rich"):
+                    from writer_rich import export_node
+                    export_node(document,b["rich"])
+                elif unchanged:
                     document.element.body.insert(
                         len(document.element.body) - 1, unchanged.pop(0)
                     )

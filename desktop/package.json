@@ -33,6 +33,11 @@
     "prettier": "3.9.10"
   },
   "dependencies": {
+    "@tiptap/extension-table": "3.32.0",
+    "@tiptap/extension-text-align": "3.32.0",
+    "@tiptap/extension-unique-id": "3.32.0",
+    "@tiptap/react": "3.32.0",
+    "@tiptap/starter-kit": "3.32.0",
     "dompurify": "^3.4.17",
     "highlight.js": "^11.12.0",
     "lucide": "^1.60.0",

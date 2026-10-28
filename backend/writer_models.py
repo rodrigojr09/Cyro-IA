@@ -20,6 +20,15 @@ class Block(Strict):
     ] = "paragraph"
     text: str = Field(default="", max_length=12000)
 
+    rich: dict | None = None
+
+    @field_validator("rich")
+    @classmethod
+    def valid_rich(cls, value):
+        if value is None: return value
+        from writer_rich import validate
+        return validate(value)
+
     @field_validator("id")
     @classmethod
     def valid_id(cls, value):
@@ -106,6 +115,7 @@ class Command(Strict):
         "messages",
         "prune",
         "assist",
+        "control",
     ]
     payload: dict = Field(default_factory=dict)
 
@@ -142,6 +152,12 @@ class Structure(Strict):
     plan: Operation
 
 
+class Selection(Strict):
+    block_id: str
+    start: int = Field(ge=0, le=12000)
+    end: int = Field(ge=0, le=12000)
+    text: str = Field(max_length=12000)
+
 class Assist(Strict):
     chat_id: str | None = None
     request_id: str
@@ -150,6 +166,8 @@ class Assist(Strict):
     base_version: int = Field(default=0, ge=0)
     selected_block_ids: list[str] = Field(default_factory=list, max_length=100)
     selected_text: str = Field(default="", max_length=2000)
+    selection: Selection | None = None
+    continuous: bool = False
     intent_override: Literal["WRITE", "INSTRUCT", "ORGANIZE", "CHAT"] | None = None
 
 

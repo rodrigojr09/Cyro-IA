@@ -25,3 +25,9 @@ Perguntas não escrevem. Respostas não viram conteúdo sem intenção clara. Ap
 ## Validação prevista
 
 Cobrir os 25 cenários solicitados em testes de contratos/store, editor real e Electron: vazio, digitação/parágrafos, seleção/clipboard/formatação, undo/redo chat/teclado, consulta, revisão e geração, autosave/reload/falha, legado, DOCX, restauração, conflito durante geração, projetos/isolamento e contagem de operações. Registrar limites externos; mocks não certificam IA paga ou Windows limpo.
+
+## Checkpoint solicitado para envio ao GitHub
+
+Em 28/10/2026, o proprietário interrompeu a implementação para solicitar o envio de todo o trabalho ao GitHub. Este checkpoint da v6.1.0 é parcial e não representa uma versão pronta: há contratos ricos, exportação inicial, editor TipTap e comandos de histórico em implementação. A instalação das dependências reportou zero vulnerabilidades e o bundle Desktop compilou, mas a nova interface, os estilos, a migração, os testes obrigatórios e a validação integrada ainda não foram concluídos. Os metadados de versão continuam na base 6.0.3 até a retomada do versionamento da 6.1.0. O setup 6.0.3 anterior não inclui estas alterações parciais.
+
+O envio deste trabalho ocorre na branch de desenvolvimento, sem tag ou release. A alteração preexistente em cloud/next-env.d.ts permanece local, fora do commit, assim como dados, segredos, build/release e Backup/.

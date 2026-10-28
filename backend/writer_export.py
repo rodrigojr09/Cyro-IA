@@ -102,6 +102,10 @@ class WriterExportService:
                 "Title" if index == 0 else "Heading 1",
             )
             for block in node["blocks"]:
+                if block.get("rich"):
+                    from writer_rich import export_node
+                    export_node(document, block["rich"])
+                    continue
                 if block["type"] == "pagebreak":
                     document.add_page_break()
                     continue

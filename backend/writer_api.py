@@ -70,6 +70,8 @@ def install(app, environment):
             req = Command.model_validate_json(raw)
             w = writer(req.project_id)
             p = req.payload
+            if req.action == "control":
+                return w.control(p)
             if req.action == "bind_chat":
                 return w.bind_chat(p["id"])
             if req.action == "open":
