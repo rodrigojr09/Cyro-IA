@@ -339,6 +339,18 @@ class AttachmentStore:
             else:
                 _, partial = document_text(raw, extension)
             prepared.append((path.name, raw, kind, partial))
+        return self._store_prepared(prepared, owner)
+
+    def import_image(self, raw, owner):
+        if not owner: raise ReadError("Entre com sua conta antes de colar imagens.")
+        if not raw or len(raw)>MAX_BYTES: raise AttachmentLimitError("Cada imagem pode ter no máximo 5 MB.")
+        image_bytes(raw)
+        from PIL import Image
+        with Image.open(io.BytesIO(raw)) as image:
+            extension={"PNG":"png","JPEG":"jpg","WEBP":"webp","GIF":"gif"}[image.format]
+        return self._store_prepared([("Imagem colada."+extension,raw,"image",False)],owner)
+
+    def _store_prepared(self, prepared, owner):
         created = []
         try:
             with database(self.registry) as con:

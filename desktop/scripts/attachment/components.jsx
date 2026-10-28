@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 export function AttachmentCard({ file, onRemove }) {
-  const [preview, setPreview] = useState(null),
+  const [preview, setPreview] = useState(file.preview || null),
     [error, setError] = useState('');
   return (
     <div className="attachment-card">
@@ -84,8 +84,70 @@ export function useAttachments() {
       setError('');
     },
     remove(id) {
-      setFiles((previous) => previous.filter((file) => file.id !== id));
+      const next = filesRef.current.filter((file) => file.id !== id);
+      filesRef.current = next;
+      setFiles(next);
       discard(id);
+    },
+    async paste(images, unavailable = '') {
+      if (unavailable) {
+        setError(unavailable);
+        return;
+      }
+      if (selecting.current) {
+        setError('Aguarde a seleção de anexos terminar.');
+        return;
+      }
+      if (!images.length) return;
+      if (images.length + filesRef.current.length > 5) {
+        setError('Limite de 5 arquivos por mensagem.');
+        return;
+      }
+      if (
+        images.some(
+          (file) =>
+            !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) ||
+            !Number.isFinite(file.size) ||
+            file.size <= 0 ||
+            file.size > 5242880,
+        )
+      ) {
+        setError('Use imagens PNG, JPEG, WebP ou GIF estático de até 5 MB.');
+        return;
+      }
+      selecting.current = true;
+      setChoosing(true);
+      setError('');
+      const generation = epoch.current,
+        created = [];
+      try {
+        for (const file of images) {
+          const data = await new Promise((resolve, reject) => {
+            const reader = new window.FileReader();
+            reader.onload = () => resolve(String(reader.result).split(',')[1]);
+            reader.onerror = () => reject(Error('Não foi possível ler a imagem colada.'));
+            reader.readAsDataURL(file);
+          });
+          if (generation !== epoch.current) break;
+          const result = await window.jarvisWindow.pasteImage({ data, type: file.type });
+          if (!result?.ok || !Array.isArray(result.data?.files))
+            throw Error(result?.data?.detail || 'Não foi possível colar a imagem.');
+          created.push(...result.data.files);
+        }
+        if (generation !== epoch.current) {
+          created.forEach((file) => discard(file.id));
+          return;
+        }
+        const next = [...filesRef.current, ...created];
+        filesRef.current = next;
+        setFiles(next);
+      } catch (error) {
+        created.forEach((file) => discard(file.id));
+        setError(error.message);
+      } finally {
+        selecting.current = false;
+        setChoosing(false);
+      }
     },
     async choose() {
       if (selecting.current || files.length >= 5) return;
@@ -109,7 +171,9 @@ export function useAttachments() {
           files.length + selected.length > 5
         )
           throw Error('Limite de 5 arquivos de até 5 MB.');
-        setFiles((previous) => [...previous, ...selected]);
+        const next = [...filesRef.current, ...selected];
+        filesRef.current = next;
+        setFiles(next);
       } catch (error) {
         setError(error.message);
       } finally {

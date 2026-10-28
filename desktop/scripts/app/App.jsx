@@ -164,6 +164,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       busy ||
       submitting ||
       writerState.saving ||
+      settings ||
       document.querySelector('dialog[open]')
     )
       return;
@@ -176,7 +177,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       setInput('');
       await workspace.openById(id);
     });
-  }, [openRequest, state.ready, busy, submitting, writerState.saving]);
+  }, [openRequest, state.ready, busy, submitting, writerState.saving, settings]);
   useEffect(() => {
     if (state.project) setExpanded((value) => new Set([...value, state.project.id]));
   }, [state.project?.id]);

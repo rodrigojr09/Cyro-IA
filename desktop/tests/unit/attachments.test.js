@@ -53,3 +53,24 @@ function setup(response) {
   dom.window.eval(fs.readFileSync(path.join(DESKTOP_ROOT, 'scripts/attachment/ui.js'), 'utf8'));
   return { window: dom.window, document: dom.window.document, dom, discarded };
 }
+
+test('explicit image paste validates MIME, bounded base64 and never accepts paths or URLs', async () => {
+  const calls = [];
+  const service = createAttachments({
+    backend: async (...args) => {
+      calls.push(args);
+      return { ok: true };
+    },
+  });
+  await service.pasteImage({ type: 'image/png', data: 'AQID' });
+  assert.equal(calls[0][0], '/desktop/attachments/paste-image');
+  assert.deepEqual(JSON.parse(calls[0][2]), { data: 'AQID' });
+  for (const value of [
+    { type: 'image/svg+xml', data: 'AQID' },
+    { type: 'image/png', data: 'https://example.com/image.png' },
+    { type: 'image/png', data: 'AQID', path: 'C:/private' },
+    { type: 'image/png', data: Buffer.alloc(MAX_BYTES + 1).toString('base64') },
+  ])
+    await assert.rejects(service.pasteImage(value));
+  assert.equal(calls.length, 1);
+});

@@ -42,6 +42,17 @@ class AttachmentStoreTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_pasted_image_is_protected_owned_and_validated_without_source_paths(self):
+        raw=io.BytesIO();Image.new("RGB",(12,12),"blue").save(raw,"PNG")
+        files=self.store.import_image(raw.getvalue(),"owner-a")
+        self.assertEqual(len(files),1);self.assertEqual(files[0]["kind"],"image")
+        self.assertTrue(files[0]["preview"].startswith("data:image/jpeg;base64,"))
+        self.assertEqual(self.store.content(files[0]["id"],"owner-a")[1],raw.getvalue())
+        with self.assertRaises(ReadError):self.store.content(files[0]["id"],"owner-b")
+        with self.assertRaises(ReadError):self.store.import_image(b"not an image","owner-a")
+        with self.assertRaises(AttachmentLimitError):self.store.import_image(b"x"*(MAX_BYTES+1),"owner-a")
+        with self.assertRaises(ReadError):self.store.import_image(raw.getvalue(),"")
+
     def test_five_files_and_exact_five_mb_are_accepted_but_overages_fail_atomically(
         self,
     ):

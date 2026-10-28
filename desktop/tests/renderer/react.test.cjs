@@ -284,3 +284,167 @@ test('React attachments display an unavailable history notice without unsafe HTM
     await env.dispose();
   }
 });
+
+test('clipboard settings open, save, pause and disable without the floating widget', async () => {
+  const env = environment();
+  fixture(env);
+  let settings = { enabled: false, paused: false, sound: true, volume: 0.25 };
+  const writes = [];
+  window.jarvisClipboard.state = async () => ({ settings });
+  window.jarvisClipboard.configure = async (patch) => {
+    writes.push(patch);
+    settings = { ...settings, ...patch };
+    return { settings };
+  };
+  try {
+    await env.mount(env.ClipboardSettings);
+    await settle();
+    assert.equal(document.querySelector('#clipboard-volume').value, '25');
+    await click('#clipboard-consent');
+    await click('#clipboard-save');
+    assert.equal(settings.enabled, true);
+    await click('#clipboard-pause');
+    assert.equal(settings.paused, true);
+    await click('#clipboard-disable');
+    assert.equal(settings.enabled, false);
+    assert.equal(writes.length, 3);
+  } finally {
+    await env.dispose();
+  }
+});
+test('a clipboard settings render failure stays inside its category and navigation recovers', async () => {
+  const env = environment(),
+    f = fixture(env);
+  const original = console.error;
+  const bad = {
+    get enabled() {
+      throw Error('Synthetic settings failure');
+    },
+    volume: 0.25,
+  };
+  window.jarvisClipboard.state = async () => ({ settings: bad });
+  try {
+    console.error = () => {};
+    await env.mount(env.Settings, {
+      open: true,
+      onClose() {},
+      workspace: { storage: async () => {} },
+      state: {},
+      preferences: { theme: 'dark' },
+      onPreferences() {},
+      onRun: async (fn) => fn(),
+      onView() {},
+    });
+    await click(
+      [...document.querySelectorAll('#settings-tabs button')].find(
+        (b) => b.textContent === 'Área de transferência',
+      ),
+    );
+    await settle();
+    assert.ok(document.querySelector('#settings-retry-section'));
+    assert.ok(document.querySelector('#settings-tabs'));
+    window.jarvisClipboard.state = async () => ({
+      settings: { enabled: false, sound: false, volume: 0.2 },
+    });
+    await click('#settings-retry-section');
+    await settle();
+    assert.ok(document.querySelector('#clipboard-consent'));
+    await click(
+      [...document.querySelectorAll('#settings-tabs button')].find(
+        (b) => b.textContent === 'Aparência',
+      ),
+    );
+    assert.ok(document.querySelector('#setting-theme'));
+    assert.equal(document.querySelector('#settings-retry-section'), null);
+  } finally {
+    console.error = original;
+    await env.dispose();
+  }
+});
+
+test('pasted image becomes a preview attachment without sending a message', async () => {
+  const env = environment(),
+    f = fixture(env);
+  let attachments;
+  const imported = [];
+  window.jarvisWindow.pasteImage = async (value) => {
+    imported.push(value);
+    return {
+      ok: true,
+      data: {
+        files: [
+          {
+            id: 'image-a',
+            kind: 'image',
+            name: 'Imagem colada.png',
+            size: 3,
+            preview: 'data:image/png;base64,AQID',
+          },
+        ],
+      },
+    };
+  };
+  function Harness() {
+    attachments = env.useAttachments();
+    return React.createElement(env.AttachmentList, {
+      files: attachments.files,
+      onRemove: attachments.remove,
+    });
+  }
+  try {
+    await env.mount(Harness);
+    const file = new window.File([new Uint8Array([1, 2, 3])], 'paste.png', { type: 'image/png' });
+    await act(async () => attachments.paste([file]));
+    assert.equal(imported.length, 1);
+    assert.equal(imported[0].data, 'AQID');
+    assert.ok(document.querySelector('img'));
+    assert.equal(f.calls.filter((c) => c.route === '/chat').length, 0);
+    await act(async () => attachments.paste(Array(5).fill(file)));
+    assert.match(attachments.error, /5 arquivos/);
+    assert.equal(imported.length, 1);
+  } finally {
+    await env.dispose();
+  }
+});
+test('paste rejects unsupported images and discards a late response after context changes', async () => {
+  const env = environment();
+  fixture(env);
+  let attachments;
+  const pending = deferred(),
+    discarded = [];
+  let requests = 0;
+  window.jarvisWindow.pasteImage = async () => {
+    requests++;
+    return pending.promise;
+  };
+  window.jarvisWindow.discardAttachment = async (id) => discarded.push(id);
+  function Harness() {
+    attachments = env.useAttachments();
+    return null;
+  }
+  try {
+    await env.mount(Harness);
+    await act(async () =>
+      attachments.paste([new window.File(['x'], 'bad.svg', { type: 'image/svg+xml' })]),
+    );
+    assert.equal(requests, 0);
+    assert.match(attachments.error, /PNG/);
+    const operation = attachments.paste([
+      new window.File(['x'], 'paste.png', { type: 'image/png' }),
+    ]);
+    for (let i = 0; i < 40 && !requests; i++)
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    await act(async () => {
+      attachments.clear();
+      pending.resolve({
+        ok: true,
+        data: { files: [{ id: 'late-image', kind: 'image', size: 1 }] },
+      });
+      await operation;
+    });
+    assert.equal(attachments.files.length, 0);
+    assert.deepEqual(discarded, ['late-image']);
+  } finally {
+    await env.dispose();
+  }
+});

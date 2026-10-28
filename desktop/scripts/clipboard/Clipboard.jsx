@@ -276,11 +276,6 @@ export function Clipboard({
   );
 }
 export function ClipboardSettings() {
-  useEffect(() => {
-    if (orb) return;
-    document.addEventListener('copy', ignoreOwnSelection);
-    return () => document.removeEventListener('copy', ignoreOwnSelection);
-  }, [orb]);
   const bridge = window.jarvisClipboard;
   const [settings, setSettings] = useState(null),
     [status, setStatus] = useState(''),

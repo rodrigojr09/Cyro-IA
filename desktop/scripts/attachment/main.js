@@ -54,6 +54,27 @@ function createAttachments({ dialog, window, backend }) {
         JSON.stringify({ paths: selected.filePaths }),
       );
     },
+    async pasteImage(value) {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        Array.isArray(value) ||
+        Object.keys(value).some((key) => !['data', 'type'].includes(key)) ||
+        !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(value.type) ||
+        typeof value.data !== 'string' ||
+        value.data.length > Math.ceil(MAX_BYTES / 3) * 4 ||
+        !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data)
+      )
+        throw Error('Imagem colada inválida ou acima de 5 MB.');
+      const raw = Buffer.from(value.data, 'base64');
+      if (!raw.length || raw.length > MAX_BYTES || raw.toString('base64') !== value.data)
+        throw Error('Imagem colada inválida ou acima de 5 MB.');
+      return backend(
+        '/desktop/attachments/paste-image',
+        'POST',
+        JSON.stringify({ data: value.data }),
+      );
+    },
     async info(id) {
       if (typeof id !== 'string' || !/^[a-f\d-]{36}$/i.test(id)) throw Error('Anexo inválido.');
       return backend('/desktop/attachments/info', 'POST', JSON.stringify({ id }));

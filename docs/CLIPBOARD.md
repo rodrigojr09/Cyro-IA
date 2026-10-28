@@ -1,3 +1,9 @@
+# Área de transferência — atualização 6.1.1
+
+As configurações agora ocupam uma página inteira. A exceção ao abrir a categoria foi corrigida e falhas de renderização ficam limitadas à seção, preservando a navegação e o chat.
+
+No campo de mensagem do chat principal, Ctrl+V de uma imagem cria um anexo local com prévia. Não é necessário ativar o monitoramento automático. Texto colado normalmente não muda. PNG, JPEG, WebP e GIF estático são validados pelo conteúdo; limite de 5 MB por imagem e cinco anexos por mensagem. A imagem só vai para a IA ao enviar a mensagem. Não há download de URLs/HTML de clipboard. Writer e Quick Chat mantêm os contratos anteriores; essa colagem de anexos está disponível nas conversas comuns da janela principal.
+
 # Área de transferência — Cyro IA 6.0.3
 
 ## Uso

@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   workspaceReady: () => ipcRenderer.invoke('jarvis:workspace-ready'),
   permitMicrophone: () => ipcRenderer.invoke('jarvis:voice-input-permission'),
   chooseAttachments: (remaining) => ipcRenderer.invoke('jarvis:attachments-choose', remaining),
+  pasteImage: (value) => ipcRenderer.invoke('jarvis:attachments-paste-image', value),
   attachmentInfo: (id) => ipcRenderer.invoke('jarvis:attachments-info', id),
   saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
   discardAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-discard', id),

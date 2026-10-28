@@ -47,6 +47,27 @@ const timer = setTimeout(() => {
   console.error('Tempo de teste excedido');
   app.exit(1);
 }, 45000);
+const pastedImageId = '77777777-7777-4777-8777-777777777777';
+let pasteRequests = 0;
+ipcMain.handle('jarvis:attachments-paste-image', (_event, value) => {
+  pasteRequests++;
+  assert.equal(value.type, 'image/png');
+  return {
+    ok: true,
+    data: {
+      files: [
+        {
+          id: pastedImageId,
+          name: 'Imagem colada.png',
+          kind: 'image',
+          size: 3,
+          preview: 'data:image/png;base64,' + value.data,
+        },
+      ],
+    },
+  };
+});
+ipcMain.handle('jarvis:attachments-discard', () => ({ ok: true }));
 ipcMain.handle('jarvis:voice-preference', () => {});
 ipcMain.handle('jarvis:audio-claim', () => {});
 ipcMain.handle('jarvis:quick-settings', () => ({
@@ -253,6 +274,17 @@ app.whenReady().then(async () => {
       `document.getElementById('messages').textContent.includes('Assunto independente')`,
     );
     assert.equal(await js(`document.querySelectorAll('#messages pre').length`), 0);
+    const chatBeforePaste = submittedChat;
+    await js(
+      `(() => {const data=new DataTransfer();const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;const bytes=Uint8Array.from(atob(canvas.toDataURL('image/png').split(',')[1]),c=>c.charCodeAt(0));data.items.add(new File([bytes],'paste.png',{type:'image/png'}));document.getElementById('input').dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));})()`,
+    );
+    await waitFor(`!!document.querySelector('#attachment-list .attachment-card img')`);
+    await waitFor(`document.querySelector('#attachment-list img')?.naturalWidth>0`);
+    assert.equal(pasteRequests, 1);
+    assert.equal(submittedChat, chatBeforePaste);
+    await js(`document.querySelector('#attachment-list button[aria-label^="Remover"]').click()`);
+    await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
+
     await js(`document.getElementById('project-name').click()`);
     await waitFor(`document.getElementById('project-settings-dialog').open`);
     await js(`document.getElementById('project-select-sources').click()`);
@@ -266,7 +298,7 @@ app.whenReady().then(async () => {
     await waitFor(`!document.getElementById('scope-dialog').open`);
     assert.deepEqual(savedScope.include, []);
     await js(`document.getElementById('settings-open').click()`);
-    await waitFor(`document.getElementById('settings-dialog').open`);
+    await waitFor(`!document.getElementById('settings-dialog').hidden`);
     await js(
       `Array.from(document.querySelectorAll('#settings-tabs button')).find(node=>node.textContent==='Integrações').click()`,
     );
@@ -300,7 +332,7 @@ app.whenReady().then(async () => {
     await js(
       `Array.from(document.querySelectorAll('#storage-usage button')).find(node=>node.textContent==='Apagar chats na nuvem').click()`,
     );
-    await waitFor(`!document.getElementById('settings-dialog').open`);
+    await waitFor(`document.getElementById('settings-dialog').hidden`);
     assert.equal(quotaFull, false);
     await shot('cyro-v603-storage.png');
     clearTimeout(timer);

@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="6.1.0" if CLOUD else "2.0.1-dev.0",
+    version="6.1.1" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -234,6 +234,19 @@ async def import_attachments(req: ImportAttachments):
             "Não foi possível ler o arquivo selecionado. Confira as permissões e tente novamente."
         ) from None
 
+
+class PasteImage(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    data: str = Field(min_length=4,max_length=7*1024*1024)
+
+@app.post("/desktop/attachments/paste-image")
+async def paste_image(req: PasteImage):
+    if chat_lock.locked(): raise HTTPException(409,"Aguarde a operação em andamento.")
+    try: raw=base64.b64decode(req.data,validate=True)
+    except ValueError: raise ReadError("Imagem colada inválida.") from None
+    async with chat_lock:
+        files=await asyncio.to_thread(attachment_store.import_image,raw,attachment_account())
+        return {"files":files}
 
 @app.post("/desktop/attachments/info")
 def attachment_info(req: AttachmentId):

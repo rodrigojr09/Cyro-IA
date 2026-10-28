@@ -138,6 +138,53 @@ app.whenReady().then(async () => {
     )
       await delay(30);
     await main.webContents.executeJavaScript(`void 0;`);
+    const js = (code) => main.webContents.executeJavaScript(code);
+    const waitFor = async (condition) => {
+      for (let i = 0; i < 100; i++) {
+        if (await js(condition)) return;
+        await delay(25);
+      }
+      throw Error('Clipboard settings timeout: ' + condition);
+    };
+    await waitFor(`!!document.getElementById('settings-open')`);
+    await js(`document.getElementById('settings-open').click()`);
+    await waitFor(`!document.getElementById('settings-dialog').hidden`);
+    await js(
+      `[...document.querySelectorAll('#settings-tabs button')].find(button=>button.textContent==='Área de transferência').click()`,
+    );
+    await waitFor(`!!document.getElementById('clipboard-consent')`);
+    await js(`document.getElementById('clipboard-save').click()`);
+    await waitFor(
+      `document.getElementById('clipboard-settings-status').textContent.includes('desativado')`,
+    );
+    for (const [width, height] of [
+      [1000, 800],
+      [640, 600],
+    ]) {
+      main.setSize(width, height);
+      await delay(80);
+      const layout = await js(
+        `(() => {const page=document.getElementById('settings-dialog').getBoundingClientRect();return {width:page.width,height:page.height,windowWidth:innerWidth,windowHeight:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
+      );
+      assert.equal(layout.width, layout.windowWidth);
+      assert.equal(layout.height, layout.windowHeight);
+      assert.equal(layout.overflow, false);
+      assert.equal(
+        await js(
+          `document.getElementById('settings-content').scrollWidth<=document.getElementById('settings-content').clientWidth`,
+        ),
+        true,
+      );
+      await js('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+      fs.writeFileSync(
+        path.join(directory, 'settings-full-' + width + '.png'),
+        (await main.webContents.capturePage()).toPNG(),
+      );
+    }
+    main.setSize(1000, 800);
+    await js(`document.querySelector('#settings-dialog .dialog-header button').click()`);
+    await waitFor(`document.getElementById('settings-dialog').hidden`);
+
     await main.webContents.executeJavaScript(
       `window.clipboardChimes=0;window.clipboardDecoded=0;
        window.NativeClipboardAudio=window.Audio;

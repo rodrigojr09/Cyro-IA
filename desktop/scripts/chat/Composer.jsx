@@ -38,6 +38,27 @@ export function Composer({
           placeholder="Converse com o Cyro..."
           aria-label="Mensagem"
           onChange={(event) => onInput(event.target.value)}
+          onPaste={(event) => {
+            const items = [...(event.clipboardData?.items || [])]
+              .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+              .map((item) => item.getAsFile())
+              .filter(Boolean);
+            const images = items.length
+              ? items
+              : [...(event.clipboardData?.files || [])].filter((file) =>
+                  file.type.startsWith('image/'),
+                );
+            if (!images.length) return;
+            event.preventDefault();
+            void attachments.paste(
+              images,
+              isWriter
+                ? 'Imagens podem ser coladas nas conversas comuns.'
+                : !canSend
+                  ? 'Aguarde o chat ficar disponível para anexar.'
+                  : '',
+            );
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
