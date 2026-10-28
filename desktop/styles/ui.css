@@ -1,0 +1,130 @@
+/* Shared surface, focus and typography rules. Round avatar/orb shapes are intentional. */
+button,
+input,
+select,
+textarea {
+  border-radius: var(--radius-control);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:disabled {
+  cursor: default;
+}
+dialog {
+  border-radius: var(--radius-panel);
+  padding: var(--space-5);
+}
+.suggestions button,
+.attachment-card,
+.storage-blocked,
+.continuous-writer .writer-recovery {
+  border-radius: var(--radius-panel);
+}
+.composer {
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--side) 80%, var(--surface));
+  border-color: var(--border);
+  box-shadow: none;
+  padding: var(--space-4);
+}
+.composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+.composer-tools {
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.composer-tools > .composer-actions {
+  gap: var(--space-3);
+  margin-left: auto;
+}
+.composer textarea:focus-visible {
+  outline: none;
+}
+.composer textarea {
+  border-radius: 0;
+}
+.composer-actions button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--radius-control);
+}
+.composer-actions button:not(#send):hover:not(:disabled) {
+  background: var(--hover-surface);
+}
+.search:focus-within {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+#sidebar .chat-item.active:hover {
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent) 12%);
+}
+.code-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: #0d1117;
+  color: #e6edf3;
+}
+.code-block > .code-header {
+  background: #17212e;
+  color: #b3c1d3;
+}
+.code-block .code-header button {
+  color: #b3c1d3;
+}
+.code-block pre,
+.code-block .hljs {
+  color: #e6edf3;
+  background: #0d1117;
+}
+.code-block .hljs-comment,
+.code-block .hljs-quote {
+  color: #a6afbd;
+}
+.continuous-writer .writer-file-menu {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  background: var(--surface);
+}
+.continuous-writer .writer-file-menu:hover:not(:disabled) {
+  background: var(--hover-surface);
+}
+.writer-menu-items {
+  display: grid;
+  gap: var(--space-1);
+}
+.continuous-writer .writer-formatting {
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+.continuous-writer .writer-formatting button[aria-pressed='true'] {
+  background: var(--hover-surface);
+  color: var(--accent);
+  box-shadow: none;
+}
+.continuous-writer #writer-save-state {
+  line-height: 1.5;
+}
+@media (max-width: 850px) {
+  dialog {
+    padding: var(--space-4);
+  }
+}
+
+.continuous-writer .writer-formatting button,
+.continuous-writer .writer-formatting select {
+  border-radius: var(--radius-control);
+  min-height: 32px;
+}

@@ -27,7 +27,7 @@ section {
 .brand {
   font-size: 40px;
   font-weight: 800;
-  color: #50e3d4;
+  color: #7dd3fc;
 }
 .brand span {
   font-size: 25px;
@@ -44,7 +44,7 @@ section {
 .eyebrow {
   font-size: 10px;
   letter-spacing: 2px;
-  color: #50e3d4;
+  color: #7dd3fc;
   margin-top: 45px;
 }
 h1 {
@@ -77,7 +77,7 @@ input {
   border: 1px solid #314353;
 }
 button {
-  background: #50e3d4;
+  background: #7dd3fc;
   color: #082b27;
   border: 0;
   margin-top: 15px;
@@ -89,7 +89,7 @@ button:disabled {
 }
 input:focus,
 button:focus-visible {
-  outline: 2px solid #50e3d4;
+  outline: 2px solid #7dd3fc;
   outline-offset: 3px;
 }
 #login-status {
@@ -100,7 +100,7 @@ button:focus-visible {
 }
 .privacy {
   font-size: 11px;
-  color: #698596;
+  color: #a6afbd;
   line-height: 2.3;
   border-top: 1px solid #233441;
   padding-top: 20px;
@@ -112,11 +112,11 @@ button:focus-visible {
   border: 1px solid #29635d;
   display: grid;
   place-items: center;
-  box-shadow: 0 0 100px #50e3d40c;
+  box-shadow: 0 0 100px #7dd3fc0c;
 }
 .orb b {
   font-size: 140px;
-  color: #50e3d4;
+  color: #7dd3fc;
   font-weight: 200;
 }
 @media (max-width: 900px) {
@@ -135,4 +135,25 @@ button:focus-visible {
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+/* Same control geometry and readable secondary text as the main workspace. */
+body {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+button,
+input {
+  border-radius: 8px;
+  min-height: 40px;
+}
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+  box-shadow: none;
 }

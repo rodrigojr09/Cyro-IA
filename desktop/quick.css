@@ -291,3 +291,29 @@ header button:hover,
   line-height: 1.4;
   margin: 6px 0;
 }
+
+/* Keep the compact Quick Chat aligned with the workspace controls. */
+:root {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+#composer,
+#response {
+  border-radius: 12px;
+}
+#question {
+  border-radius: 8px;
+}
+#question:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.caption span,
+#remaining {
+  color: #b3c1d3;
+}

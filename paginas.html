@@ -5,10 +5,10 @@
 <body class="cyro-source-catalog"><main>
 <!-- Catálogo estático: fontes escapadas para consulta, sem execução de scripts. -->
 <h1>Cyro IA — Páginas e componentes</h1>
-<p>Referência consolidada da v6.1.2. Abra as seções para consultar o código original. Este arquivo não executa as telas React nem substitui o aplicativo.</p>
+<p>Referência consolidada da v6.2.0. Abra as seções para consultar o código original. Este arquivo não executa as telas React nem substitui o aplicativo.</p>
 <p>Os HTMLs são entradas. As telas estão nos componentes React abaixo. styles.css reúne as folhas de estilo, com importações locais incorporadas e comentários de origem.</p>
 <p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>. Arquitetura: <a href="docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a>.</p>
-<p>3 HTMLs · 32 fontes React · 17 CSSs, incluindo realce de código compilado.</p>
+<p>3 HTMLs · 33 fontes React · 18 CSSs, incluindo realce de código compilado.</p>
 <!-- ===== INÍCIO: desktop/index.html — Página HTML ===== -->
 <details><summary>desktop/index.html — Página HTML</summary>
 <pre><code>&lt;!doctype html&gt;
@@ -20,7 +20,7 @@
       content=&quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; media-src &#x27;self&#x27; data:; img-src &#x27;self&#x27; data:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;
     /&gt;
     &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
-    &lt;title&gt;Cyro IA 6.1.2 — Cloud + Desktop&lt;/title&gt;
+    &lt;title&gt;Cyro IA 6.2.0 — Cloud + Desktop&lt;/title&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;app.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;clipboard.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;writer.css&quot; /&gt;
@@ -1559,6 +1559,7 @@ import { useSpeaker, useDictation } from &#x27;../voice/hooks&#x27;;
 import { usePreferences } from &#x27;../ui/preferences&#x27;;
 import { useAttachments } from &#x27;../attachment/components&#x27;;
 import { Sidebar } from &#x27;../workspace/Sidebar&#x27;;
+import { AnchoredMenu } from &#x27;../ui/AnchoredMenu&#x27;;
 import { Welcome } from &#x27;../workspace/Welcome&#x27;;
 import { Conversation } from &#x27;../chat/Conversation&#x27;;
 import { Composer } from &#x27;../chat/Composer&#x27;;
@@ -1778,6 +1779,18 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     await workspace.catalog(project.id, chat.id);
     setMenu(null);
   }
+  function openSidebarMenu(kind, item, event) {
+    const trigger = event.currentTarget;
+    const row = trigger.closest(&#x27;.project-row,.navigation-heading&#x27;) || trigger;
+    const bounds = row.getBoundingClientRect();
+    const sidebar = trigger.closest(&#x27;#sidebar&#x27;).getBoundingClientRect();
+    setMenu({
+      kind,
+      item,
+      trigger,
+      anchor: { left: sidebar.left, right: sidebar.right, top: bounds.top, bottom: bounds.bottom },
+    });
+  }
   return (
     &lt;div
       className=&quot;app-layout&quot;
@@ -1802,11 +1815,9 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         onNewChat={(id) =&gt; run(() =&gt; createChat(id))}
         onCreateMenu={(item, event) =&gt; {
           event.stopPropagation();
-          setMenu({ kind: &#x27;create&#x27;, item, x: event.clientX, y: event.clientY });
+          openSidebarMenu(&#x27;create&#x27;, item, event);
         }}
-        onChatMenu={(item, event) =&gt;
-          setMenu({ kind: &#x27;chat&#x27;, item, x: event.clientX, y: event.clientY })
-        }
+        onChatMenu={(item, event) =&gt; openSidebarMenu(&#x27;chat&#x27;, item, event)}
         onAddProject={() =&gt;
           run(async () =&gt; {
             const result = await window.jarvisWindow.authorizeFolder();
@@ -1988,15 +1999,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       &lt;/main&gt;
 
       {menu &amp;&amp; (
-        &lt;div
-          className={menu.kind === &#x27;create&#x27; ? &#x27;project-create-menu&#x27; : &#x27;context-menu&#x27;}
-          role=&quot;menu&quot;
-          style={{
-            position: &#x27;fixed&#x27;,
-            left: Math.min(menu.x, window.innerWidth - 220),
-            top: Math.min(menu.y, window.innerHeight - 200),
-          }}
-        &gt;
+        &lt;AnchoredMenu menu={menu} onClose={() =&gt; setMenu(null)}&gt;
           {menu.kind === &#x27;create&#x27; ? (
             &lt;&gt;
               &lt;button role=&quot;menuitem&quot; onClick={() =&gt; run(() =&gt; createChat(menu.item.id))}&gt;
@@ -2058,7 +2061,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               &lt;/button&gt;
             &lt;/&gt;
           )}
-        &lt;/div&gt;
+        &lt;/AnchoredMenu&gt;
       )}
       &lt;WriterLibrary
         project={library}
@@ -4180,11 +4183,17 @@ import {
   Globe,
   Gamepad2,
   GitBranch,
+  Plus,
+  ChevronRight,
+  ChevronDown,
 } from &#x27;lucide&#x27;;
 const nodes = {
   &#x27;panel-left&#x27;: PanelLeft,
   &#x27;folder-plus&#x27;: FolderPlus,
   search: Search,
+  plus: Plus,
+  &#x27;chevron-right&#x27;: ChevronRight,
+  &#x27;chevron-down&#x27;: ChevronDown,
   &#x27;messages-square&#x27;: MessagesSquare,
   settings: Settings2,
   logout: LogOut,
@@ -4507,7 +4516,7 @@ export function Settings({
               {category === &#x27;Sobre&#x27; &amp;&amp; (
                 &lt;&gt;
                   &lt;h3&gt;Sobre o Cyro IA&lt;/h3&gt;
-                  &lt;p&gt;Versão 6.1.2&lt;/p&gt;
+                  &lt;p&gt;Versão 6.2.0&lt;/p&gt;
                   &lt;p&gt;
                     Desenvolvido por &lt;strong&gt;Rodrigo Junior&lt;/strong&gt;.
                   &lt;/p&gt;
@@ -5023,7 +5032,7 @@ export function Sidebar({
             disabled={busy || !state.ready}
             onClick={() =&gt; onNewChat(&#x27;&#x27;)}
           &gt;
-            ＋
+            &lt;Icon name=&quot;plus&quot; /&gt;
           &lt;/button&gt;
         &lt;/div&gt;
         &lt;div id=&quot;general-chats&quot; className=&quot;chat-list&quot;&gt;
@@ -5047,7 +5056,7 @@ export function Sidebar({
                     aria-label={&#x27;Expandir ou recolher &#x27; + project.name}
                     onClick={() =&gt; onToggle(project.id)}
                   &gt;
-                    {expanded.has(project.id) ? &#x27;⌄&#x27; : &#x27;›&#x27;}
+                    &lt;Icon name={expanded.has(project.id) ? &#x27;chevron-down&#x27; : &#x27;chevron-right&#x27;} /&gt;
                   &lt;/button&gt;
                   &lt;button
                     className={
@@ -5065,7 +5074,7 @@ export function Sidebar({
                     disabled={busy || !state.ready}
                     onClick={(event) =&gt; onCreateMenu(project, event)}
                   &gt;
-                    ＋
+                    &lt;Icon name=&quot;plus&quot; /&gt;
                   &lt;/button&gt;
                 &lt;/div&gt;
                 {(expanded.has(project.id) || search) &amp;&amp; (
@@ -5317,9 +5326,11 @@ export function WriterLibrary({ project, writer, onClose, onSelect, onCreate, on
 import { useEditor, EditorContent } from &#x27;@tiptap/react&#x27;;
 import { extensions, toDocument, editorBlocks, connectEditor, nodeText } from &#x27;./editor&#x27;;
 import { Dialog, Markdown } from &#x27;../ui/components&#x27;;
+import { AnchoredMenu } from &#x27;../ui/AnchoredMenu&#x27;;
 export function WriterPreview({ writer, onRun, hidden = false }) {
   const state = useSyncExternalStore(writer.subscribe, writer.get),
     [dialog, setDialog] = useState(null),
+    [fileMenu, setFileMenu] = useState(null),
     [revisions, setRevisions] = useState([]),
     [revision, setRevision] = useState(null),
     [prefs, setPrefs] = useState(null);
@@ -5356,45 +5367,80 @@ export function WriterPreview({ writer, onRun, hidden = false }) {
         &lt;span id=&quot;writer-save-state&quot; role=&quot;status&quot;&gt;
           {state.saving ? &#x27;Salvando…&#x27; : state.unsynced ? &#x27;Alterações pendentes&#x27; : &#x27;Salvo&#x27;}
         &lt;/span&gt;
-        &lt;details
+        &lt;button
           className=&quot;writer-file-menu&quot;
+          aria-haspopup=&quot;menu&quot;
+          aria-expanded={!!fileMenu}
           onClick={(event) =&gt; {
-            if (event.target.closest(&#x27;button&#x27;)) event.currentTarget.open = false;
+            const trigger = event.currentTarget;
+            const rect = trigger.getBoundingClientRect();
+            setFileMenu(
+              fileMenu
+                ? null
+                : {
+                    kind: &#x27;writer&#x27;,
+                    label: &#x27;Arquivo do documento&#x27;,
+                    placement: &#x27;below-end&#x27;,
+                    trigger,
+                    anchor: {
+                      left: rect.left,
+                      right: rect.right,
+                      top: rect.top,
+                      bottom: rect.bottom,
+                    },
+                  },
+            );
           }}
         &gt;
-          &lt;summary&gt;Arquivo&lt;/summary&gt;
-          &lt;div&gt;
-            &lt;button id=&quot;writer-history&quot; disabled={disabled} onClick={history}&gt;
-              Versões salvas
-            &lt;/button&gt;
-            &lt;button id=&quot;writer-export&quot; disabled={disabled} onClick={() =&gt; setDialog(&#x27;export&#x27;)}&gt;
-              Exportar
-            &lt;/button&gt;
-            &lt;button
-              id=&quot;writer-settings&quot;
-              disabled={disabled}
-              onClick={() =&gt; {
-                setPrefs(state.catalog?.settings);
-                setDialog(&#x27;settings&#x27;);
+          Arquivo
+        &lt;/button&gt;
+        {fileMenu &amp;&amp; (
+          &lt;AnchoredMenu menu={fileMenu} onClose={() =&gt; setFileMenu(null)}&gt;
+            &lt;div
+              className=&quot;writer-menu-items&quot;
+              onClick={(event) =&gt; {
+                if (event.target.closest(&#x27;button:not(:disabled)&#x27;)) setFileMenu(null);
               }}
             &gt;
-              Preferências
-            &lt;/button&gt;
-            &lt;button
-              id=&quot;writer-save-file&quot;
-              hidden={!state.file?.linked}
-              disabled={disabled}
-              onClick={() =&gt;
-                onRun(async () =&gt; {
-                  await writer.flush();
-                  await writer.syncFile();
-                })
-              }
-            &gt;
-              Sincronizar arquivo vinculado
-            &lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/details&gt;
+              &lt;button role=&quot;menuitem&quot; id=&quot;writer-history&quot; disabled={disabled} onClick={history}&gt;
+                Versões salvas
+              &lt;/button&gt;
+              &lt;button
+                role=&quot;menuitem&quot;
+                id=&quot;writer-export&quot;
+                disabled={disabled}
+                onClick={() =&gt; setDialog(&#x27;export&#x27;)}
+              &gt;
+                Exportar
+              &lt;/button&gt;
+              &lt;button
+                role=&quot;menuitem&quot;
+                id=&quot;writer-settings&quot;
+                disabled={disabled}
+                onClick={() =&gt; {
+                  setPrefs(state.catalog?.settings);
+                  setDialog(&#x27;settings&#x27;);
+                }}
+              &gt;
+                Preferências
+              &lt;/button&gt;
+              &lt;button
+                role=&quot;menuitem&quot;
+                id=&quot;writer-save-file&quot;
+                hidden={!state.file?.linked}
+                disabled={disabled}
+                onClick={() =&gt;
+                  onRun(async () =&gt; {
+                    await writer.flush();
+                    await writer.syncFile();
+                  })
+                }
+              &gt;
+                Sincronizar arquivo vinculado
+              &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/AnchoredMenu&gt;
+        )}
       &lt;/header&gt;
       {doc &amp;&amp; !state.loading &amp;&amp; (
         &lt;RichEditor
@@ -5848,4 +5894,101 @@ export function WriterDivider() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/writer/WriterPreview.jsx ===== -->
+<!-- ===== INÍCIO: desktop/scripts/ui/AnchoredMenu.jsx — Componente React de popover compartilhado ===== -->
+<details><summary>desktop/scripts/ui/AnchoredMenu.jsx — Popover compartilhado</summary>
+<pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
+import { createPortal } from &#x27;react-dom&#x27;;
+
+// Measured outside the sidebar so row titles are never used as the popup surface.
+export function AnchoredMenu({ menu, onClose, children }) {
+  const ref = useRef(null);
+  const [position, setPosition] = useState(null);
+  useLayoutEffect(() =&gt; {
+    const node = ref.current;
+    const bounds = node.getBoundingClientRect();
+    const anchor = menu.anchor;
+    const gap = 8;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    let left = anchor.right + gap;
+    let top = anchor.top;
+    if (menu.placement === &#x27;below-end&#x27;) {
+      left = Math.max(gap, Math.min(anchor.right - bounds.width, width - bounds.width - gap));
+      top = anchor.bottom + gap;
+      if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
+    }
+    if (menu.placement !== &#x27;below-end&#x27; &amp;&amp; left + bounds.width &gt; width - gap) {
+      if (anchor.left - bounds.width - gap &gt;= gap) left = anchor.left - bounds.width - gap;
+      else {
+        left = Math.max(gap, width - bounds.width - gap);
+        top = anchor.bottom + gap;
+        if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
+      }
+    }
+    setPosition({
+      left: Math.max(gap, left),
+      top: Math.max(gap, Math.min(top, height - bounds.height - gap)),
+    });
+    const close = () =&gt; onClose();
+    const scroll = (event) =&gt; {
+      if (
+        !node.contains(event.target) &amp;&amp;
+        (event.target === document || event.target.contains?.(menu.trigger))
+      )
+        close();
+    };
+    const outside = (event) =&gt; {
+      if (!node.contains(event.target) &amp;&amp; !menu.trigger?.contains(event.target)) close();
+    };
+    window.addEventListener(&#x27;resize&#x27;, close);
+    document.addEventListener(&#x27;scroll&#x27;, scroll, true);
+    document.addEventListener(&#x27;pointerdown&#x27;, outside);
+    return () =&gt; {
+      window.removeEventListener(&#x27;resize&#x27;, close);
+      document.removeEventListener(&#x27;scroll&#x27;, scroll, true);
+      document.removeEventListener(&#x27;pointerdown&#x27;, outside);
+    };
+  }, [menu]);
+  useLayoutEffect(() =&gt; {
+    if (position)
+      ref.current
+        ?.querySelector(&#x27;button:not(:disabled):not([hidden])&#x27;)
+        ?.focus({ preventScroll: true });
+  }, [position]);
+  return createPortal(
+    &lt;div
+      ref={ref}
+      role=&quot;menu&quot;
+      aria-label={menu.label || (menu.kind === &#x27;create&#x27; ? &#x27;Criar no projeto&#x27; : &#x27;Ações da conversa&#x27;)}
+      className={
+        &#x27;ui-action-menu workspace-action-menu &#x27; +
+        (menu.kind === &#x27;create&#x27; ? &#x27;project-create-menu&#x27; : &#x27;context-menu&#x27;)
+      }
+      style={{ ...position, visibility: position ? &#x27;visible&#x27; : &#x27;hidden&#x27; }}
+      onKeyDown={(event) =&gt; {
+        if (event.key === &#x27;Escape&#x27; || event.key === &#x27;Tab&#x27;) {
+          if (event.key === &#x27;Escape&#x27;) event.preventDefault();
+          onClose();
+          menu.trigger?.focus({ preventScroll: true });
+        } else if ([&#x27;ArrowDown&#x27;, &#x27;ArrowUp&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) {
+          event.preventDefault();
+          const items = [...ref.current.querySelectorAll(&#x27;button:not(:disabled):not([hidden])&#x27;)];
+          const index = items.indexOf(document.activeElement);
+          const next =
+            event.key === &#x27;Home&#x27;
+              ? 0
+              : event.key === &#x27;End&#x27;
+                ? items.length - 1
+                : (index + (event.key === &#x27;ArrowUp&#x27; ? -1 : 1) + items.length) % items.length;
+          items[next]?.focus({ preventScroll: true });
+        }
+      }}
+    &gt;
+      {children}
+    &lt;/div&gt;,
+    document.body,
+  );
+}
+</code></pre></details>
+<!-- ===== FIM: desktop/scripts/ui/AnchoredMenu.jsx ===== -->
 </main></body></html>

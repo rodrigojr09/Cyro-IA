@@ -272,7 +272,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 6.1.2</p>
+                  <p>Versão 6.2.0</p>
                   <p>
                     Desenvolvido por <strong>Rodrigo Junior</strong>.
                   </p>

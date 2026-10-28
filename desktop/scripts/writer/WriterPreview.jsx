@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react';
 import { extensions, toDocument, editorBlocks, connectEditor, nodeText } from './editor';
 import { Dialog, Markdown } from '../ui/components';
+import { AnchoredMenu } from '../ui/AnchoredMenu';
 export function WriterPreview({ writer, onRun, hidden = false }) {
   const state = useSyncExternalStore(writer.subscribe, writer.get),
     [dialog, setDialog] = useState(null),
+    [fileMenu, setFileMenu] = useState(null),
     [revisions, setRevisions] = useState([]),
     [revision, setRevision] = useState(null),
     [prefs, setPrefs] = useState(null);
@@ -41,45 +43,80 @@ export function WriterPreview({ writer, onRun, hidden = false }) {
         <span id="writer-save-state" role="status">
           {state.saving ? 'Salvando…' : state.unsynced ? 'Alterações pendentes' : 'Salvo'}
         </span>
-        <details
+        <button
           className="writer-file-menu"
+          aria-haspopup="menu"
+          aria-expanded={!!fileMenu}
           onClick={(event) => {
-            if (event.target.closest('button')) event.currentTarget.open = false;
+            const trigger = event.currentTarget;
+            const rect = trigger.getBoundingClientRect();
+            setFileMenu(
+              fileMenu
+                ? null
+                : {
+                    kind: 'writer',
+                    label: 'Arquivo do documento',
+                    placement: 'below-end',
+                    trigger,
+                    anchor: {
+                      left: rect.left,
+                      right: rect.right,
+                      top: rect.top,
+                      bottom: rect.bottom,
+                    },
+                  },
+            );
           }}
         >
-          <summary>Arquivo</summary>
-          <div>
-            <button id="writer-history" disabled={disabled} onClick={history}>
-              Versões salvas
-            </button>
-            <button id="writer-export" disabled={disabled} onClick={() => setDialog('export')}>
-              Exportar
-            </button>
-            <button
-              id="writer-settings"
-              disabled={disabled}
-              onClick={() => {
-                setPrefs(state.catalog?.settings);
-                setDialog('settings');
+          Arquivo
+        </button>
+        {fileMenu && (
+          <AnchoredMenu menu={fileMenu} onClose={() => setFileMenu(null)}>
+            <div
+              className="writer-menu-items"
+              onClick={(event) => {
+                if (event.target.closest('button:not(:disabled)')) setFileMenu(null);
               }}
             >
-              Preferências
-            </button>
-            <button
-              id="writer-save-file"
-              hidden={!state.file?.linked}
-              disabled={disabled}
-              onClick={() =>
-                onRun(async () => {
-                  await writer.flush();
-                  await writer.syncFile();
-                })
-              }
-            >
-              Sincronizar arquivo vinculado
-            </button>
-          </div>
-        </details>
+              <button role="menuitem" id="writer-history" disabled={disabled} onClick={history}>
+                Versões salvas
+              </button>
+              <button
+                role="menuitem"
+                id="writer-export"
+                disabled={disabled}
+                onClick={() => setDialog('export')}
+              >
+                Exportar
+              </button>
+              <button
+                role="menuitem"
+                id="writer-settings"
+                disabled={disabled}
+                onClick={() => {
+                  setPrefs(state.catalog?.settings);
+                  setDialog('settings');
+                }}
+              >
+                Preferências
+              </button>
+              <button
+                role="menuitem"
+                id="writer-save-file"
+                hidden={!state.file?.linked}
+                disabled={disabled}
+                onClick={() =>
+                  onRun(async () => {
+                    await writer.flush();
+                    await writer.syncFile();
+                  })
+                }
+              >
+                Sincronizar arquivo vinculado
+              </button>
+            </div>
+          </AnchoredMenu>
+        )}
       </header>
       {doc && !state.loading && (
         <RichEditor

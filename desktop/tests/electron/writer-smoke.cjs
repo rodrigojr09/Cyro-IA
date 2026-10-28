@@ -321,9 +321,22 @@ app.whenReady().then(async () => {
     assert.match((await getDocument(boot.document)).blocks[0].text, /Edição manual posterior/);
     await execute(`document.getElementById('writer-reload').click()`);
     await pause(100);
-    await execute(
-      `document.querySelector('.writer-file-menu summary').click();document.getElementById('writer-export').click()`,
+    await execute(`document.querySelector('.writer-file-menu').click()`);
+    await waitFor(`document.querySelector('.ui-action-menu')?.style.visibility==='visible'`);
+    assert.equal(
+      await execute(
+        `(() => { const m=document.querySelector('.ui-action-menu').getBoundingClientRect(); return m.left>=8 && m.top>=8 && m.right<=innerWidth-8 && m.bottom<=innerHeight-8; })()`,
+      ),
+      true,
     );
+    await execute(
+      `new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`,
+    );
+    await fs.promises.writeFile(
+      path.join(directory, 'writer-file-menu.png'),
+      (await window.webContents.capturePage()).toPNG(),
+    );
+    await execute(`document.getElementById('writer-export').click()`);
     await waitFor(`document.getElementById('writer-export-dialog').open`);
     await execute(`document.getElementById('writer-export-docx').click()`);
     await waitFor(`!document.getElementById('writer-export-dialog').open`);
@@ -332,6 +345,8 @@ app.whenReady().then(async () => {
       'PK',
     );
     // Revision restoration remains an explicit confirmation and never deletes messages.
+    await execute(`document.querySelector('.writer-file-menu').click()`);
+    await waitFor(`!!document.getElementById('writer-history')`);
     await execute(`document.getElementById('writer-history').click()`);
     await waitFor(`document.getElementById('writer-history-dialog').open`);
     assert.ok(await execute(`document.querySelectorAll('#writer-revisions button').length>1`));
@@ -367,9 +382,9 @@ app.whenReady().then(async () => {
     );
     await replaceText('Arquivo original autorizado e editado manualmente.');
     await waitFor(`document.getElementById('writer-save-state').textContent==='Salvo'`);
-    await execute(
-      `document.querySelector('.writer-file-menu summary').click();document.getElementById('writer-save-file').click()`,
-    );
+    await execute(`document.querySelector('.writer-file-menu').click()`);
+    await waitFor(`!!document.getElementById('writer-save-file')`);
+    await execute(`document.getElementById('writer-save-file').click()`);
     for (
       let i = 0;
       i < 100 &&

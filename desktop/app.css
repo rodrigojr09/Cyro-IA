@@ -9,6 +9,7 @@
 @import url('./styles/conversation.css');
 @import url('./styles/settings.css');
 @import url('./styles/sidebar.css');
+@import url('./styles/ui.css');
 
 .chat-context-menu {
   position: fixed;

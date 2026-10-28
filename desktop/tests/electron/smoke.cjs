@@ -227,6 +227,50 @@ app.whenReady().then(async () => {
     assert.equal(await js(`document.querySelectorAll('.suggestions button').length`), 6);
     assert.equal(await js(`document.querySelectorAll('#sidebar select').length`), 0);
     await shot('cyro-v603-home.png');
+    // Sidebar action alignment and anchored popup geometry use real Chromium layout.
+    const actionLayout = await js(`(() => {
+      const general = document.querySelector('#new-general-chat').getBoundingClientRect();
+      const project = document.querySelector('.project-row .navigation-add').getBoundingClientRect();
+      const row = document.querySelector('.project-row').getBoundingClientRect();
+      return { edge: Math.abs(general.right-project.right), center: Math.abs((project.top+project.bottom-row.top-row.bottom)/2) };
+    })()`);
+    assert.ok(actionLayout.edge < 1);
+    assert.ok(actionLayout.center < 1);
+    await js(`document.querySelector('.project-row .navigation-add').click()`);
+    await waitFor(`document.querySelector('.workspace-action-menu')?.style.visibility==='visible'`);
+    assert.equal(
+      await js(`(() => {
+      const menu=document.querySelector('.workspace-action-menu').getBoundingClientRect();
+      const side=document.querySelector('#sidebar').getBoundingClientRect();
+      return menu.left >= side.right+7 && menu.right <= innerWidth-7 && menu.bottom <= innerHeight-7;
+    })()`),
+      true,
+    );
+    await shot('cyro-sidebar-create-menu.png');
+    await js(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+    );
+    await waitFor(`!document.querySelector('.workspace-action-menu')`);
+    await js(
+      `document.querySelector('.chat-item').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`,
+    );
+    await waitFor(`document.querySelector('.workspace-action-menu')?.style.visibility==='visible'`);
+    assert.equal(
+      await js(
+        `document.querySelector('.workspace-action-menu').getBoundingClientRect().left >= document.querySelector('#sidebar').getBoundingClientRect().right+7`,
+      ),
+      true,
+    );
+    await shot('cyro-sidebar-context-menu.png');
+    await js(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}))`,
+    );
+    assert.equal(await js(`document.activeElement.getAttribute('role')`), 'menuitem');
+    await js(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+    );
+    await waitFor(`!document.querySelector('.workspace-action-menu')`);
+
     await js(`document.querySelector('.project-item').click()`);
     await waitFor(`document.getElementById('project-name').textContent==='iPet'`);
     await js(`document.querySelector('.chat-item[title="Investigando a autenticação"]').click()`);
@@ -263,6 +307,20 @@ app.whenReady().then(async () => {
       assert.equal(geometry.overflow, false);
       assert.ok(geometry.gaps.every((gap) => gap >= 9));
       assert.match(geometry.font, /system-ui/);
+      await js(
+        `document.querySelector('.chat-item.active').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`,
+      );
+      await waitFor(`document.querySelector('.ui-action-menu')?.style.visibility==='visible'`);
+      assert.equal(
+        await js(
+          `(() => {const m=document.querySelector('.ui-action-menu').getBoundingClientRect(); const side=document.getElementById('sidebar').getBoundingClientRect(); return m.left>=side.right+7 && m.right<=innerWidth-7 && m.top>=7 && m.bottom<=innerHeight-7;})()`,
+        ),
+        true,
+      );
+      await js(
+        `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+      );
+      await waitFor(`!document.querySelector('.ui-action-menu')`);
       await shot('cyro-v603-chat-' + width + '.png');
     }
     win.setSize(1366, 738);

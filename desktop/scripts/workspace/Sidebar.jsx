@@ -81,7 +81,7 @@ export function Sidebar({
             disabled={busy || !state.ready}
             onClick={() => onNewChat('')}
           >
-            ＋
+            <Icon name="plus" />
           </button>
         </div>
         <div id="general-chats" className="chat-list">
@@ -105,7 +105,7 @@ export function Sidebar({
                     aria-label={'Expandir ou recolher ' + project.name}
                     onClick={() => onToggle(project.id)}
                   >
-                    {expanded.has(project.id) ? '⌄' : '›'}
+                    <Icon name={expanded.has(project.id) ? 'chevron-down' : 'chevron-right'} />
                   </button>
                   <button
                     className={
@@ -123,7 +123,7 @@ export function Sidebar({
                     disabled={busy || !state.ready}
                     onClick={(event) => onCreateMenu(project, event)}
                   >
-                    ＋
+                    <Icon name="plus" />
                   </button>
                 </div>
                 {(expanded.has(project.id) || search) && (

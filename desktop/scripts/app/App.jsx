@@ -11,6 +11,7 @@ import { useSpeaker, useDictation } from '../voice/hooks';
 import { usePreferences } from '../ui/preferences';
 import { useAttachments } from '../attachment/components';
 import { Sidebar } from '../workspace/Sidebar';
+import { AnchoredMenu } from '../ui/AnchoredMenu';
 import { Welcome } from '../workspace/Welcome';
 import { Conversation } from '../chat/Conversation';
 import { Composer } from '../chat/Composer';
@@ -230,6 +231,18 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     await workspace.catalog(project.id, chat.id);
     setMenu(null);
   }
+  function openSidebarMenu(kind, item, event) {
+    const trigger = event.currentTarget;
+    const row = trigger.closest('.project-row,.navigation-heading') || trigger;
+    const bounds = row.getBoundingClientRect();
+    const sidebar = trigger.closest('#sidebar').getBoundingClientRect();
+    setMenu({
+      kind,
+      item,
+      trigger,
+      anchor: { left: sidebar.left, right: sidebar.right, top: bounds.top, bottom: bounds.bottom },
+    });
+  }
   return (
     <div
       className="app-layout"
@@ -254,11 +267,9 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         onNewChat={(id) => run(() => createChat(id))}
         onCreateMenu={(item, event) => {
           event.stopPropagation();
-          setMenu({ kind: 'create', item, x: event.clientX, y: event.clientY });
+          openSidebarMenu('create', item, event);
         }}
-        onChatMenu={(item, event) =>
-          setMenu({ kind: 'chat', item, x: event.clientX, y: event.clientY })
-        }
+        onChatMenu={(item, event) => openSidebarMenu('chat', item, event)}
         onAddProject={() =>
           run(async () => {
             const result = await window.jarvisWindow.authorizeFolder();
@@ -440,15 +451,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       </main>
 
       {menu && (
-        <div
-          className={menu.kind === 'create' ? 'project-create-menu' : 'context-menu'}
-          role="menu"
-          style={{
-            position: 'fixed',
-            left: Math.min(menu.x, window.innerWidth - 220),
-            top: Math.min(menu.y, window.innerHeight - 200),
-          }}
-        >
+        <AnchoredMenu menu={menu} onClose={() => setMenu(null)}>
           {menu.kind === 'create' ? (
             <>
               <button role="menuitem" onClick={() => run(() => createChat(menu.item.id))}>
@@ -510,7 +513,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               </button>
             </>
           )}
-        </div>
+        </AnchoredMenu>
       )}
       <WriterLibrary
         project={library}

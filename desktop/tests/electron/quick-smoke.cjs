@@ -105,10 +105,12 @@ app.whenReady().then(async () => {
       `window.played=0;window.NativeAudio=window.Audio;window.Audio=function(src){const media=new window.NativeAudio(src);media.muted=true;const play=media.play.bind(media);media.play=async()=>{await play();window.played++;};return media;};void 0;`,
     );
     const field = await composer.webContents.executeJavaScript(
-      `(()=>{const el=document.getElementById('question');el.focus();el.value='Início da mensagem sem corte';const s=getComputedStyle(el);return {padding:parseFloat(s.paddingLeft),outline:s.outlineStyle,left:el.getBoundingClientRect().left,scroll:el.scrollLeft};})()`,
+      `(()=>{const el=document.getElementById('question');el.focus();el.value='Início da mensagem sem corte';const s=getComputedStyle(el);return {padding:parseFloat(s.paddingLeft),outline:s.outlineStyle,outlineWidth:parseFloat(s.outlineWidth),shadow:s.boxShadow,left:el.getBoundingClientRect().left,scroll:el.scrollLeft};})()`,
     );
     assert.ok(field.padding >= 12);
-    assert.equal(field.outline, 'none');
+    assert.equal(field.outline, 'solid');
+    assert.equal(field.outlineWidth, 2);
+    assert.equal(field.shadow, 'none');
     assert.equal(field.scroll, 0);
     await composer.webContents.executeJavaScript(
       'new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))',

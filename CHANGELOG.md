@@ -1,3 +1,10 @@
+# 6.2.0 — em desenvolvimento
+
+- Refinamento visual global do Desktop, Cloud, login, Quick Chat, Writer e configurações com variáveis de espaçamento/raio, foco limpo e contraste reforçado.
+- Ícones SVG de adição e expansão; ações da sidebar alinhadas em colunas fixas, hover discreto e conversa ativa sem glow.
+- Popover compartilhado com medição real, portal fora de painéis recortados, posicionamento limitado à janela, Escape, teclado e fechamento contextual. Usado por menus de conversas/projetos e Arquivo/Exportar do Writer.
+- Blocos de código preservam a paleta escura legível nos dois temas; componentes de uso Cloud ganham texto secundário de maior contraste.
+
 # 6.1.2 — em desenvolvimento
 
 - Consolida os ajustes de sidebar, busca das integrações, remoção de Computador/Conta das configurações, cabeçalho ciano com fechamento por X e ícone Windows azul como o Quick Chat.

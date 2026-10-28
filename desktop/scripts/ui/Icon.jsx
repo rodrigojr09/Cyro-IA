@@ -25,11 +25,17 @@ import {
   Globe,
   Gamepad2,
   GitBranch,
+  Plus,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide';
 const nodes = {
   'panel-left': PanelLeft,
   'folder-plus': FolderPlus,
   search: Search,
+  plus: Plus,
+  'chevron-right': ChevronRight,
+  'chevron-down': ChevronDown,
   'messages-square': MessagesSquare,
   settings: Settings2,
   logout: LogOut,

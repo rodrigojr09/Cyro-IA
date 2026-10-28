@@ -104,25 +104,9 @@
   color: var(--muted);
   font-size: 11px;
 }
-.writer-file-menu {
-  position: relative;
-}
-.writer-file-menu summary,
 .writer-formatting summary {
   cursor: pointer;
-  padding: 6px;
-}
-.writer-file-menu > div {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: var(--surface);
   padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  z-index: 10;
-  width: 220px;
-  display: grid;
 }
 .writer-formatting {
   display: flex;

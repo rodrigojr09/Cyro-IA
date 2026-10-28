@@ -4,8 +4,14 @@
   --panel: #111821;
   --border: #24303d;
   --text: #e6eef6;
-  --muted: #8c9cac;
-  --accent: #50e3d4;
+  --muted: #a6afbd;
+  --accent: #7dd3fc;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
 }
 .usage-section,
 .usage-panel {
@@ -885,3 +891,19 @@ footer {
     border-top-width: 6px;
   }
 }
+
+/* Shared visual rhythm with the Desktop; semantic success/error colors stay distinct. */
+button, input, select { border-radius: var(--radius-control); }
+button { transition: background-color 150ms ease, color 150ms ease; }
+button:hover { filter: none; }
+button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, white); }
+button.secondary:hover:not(:disabled), button.ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 7%, var(--panel));
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+.table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: none; }
+.card, .usage-chart, .usage-user, .usage-stats > div { border-radius: var(--radius-panel); }
+.card-title, .usage-chart h3 { line-height: 1.4; }
+.muted, small, label { line-height: 1.5; }
+.usage-stats strong { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }

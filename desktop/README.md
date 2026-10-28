@@ -1,4 +1,4 @@
-# Cyro IA Desktop 6.1.0
+# Cyro IA Desktop 6.2.0
 
 A interface principal, o login e os três painéis do Quick Chat usam React.js. Electron e os preloads continuam em CommonJS com IPC restrito; React não recebe acesso a Node, banco ou credenciais Cloud.
 
@@ -23,3 +23,9 @@ O envio permanece bloqueado até o bootstrap completo e a confirmação da janel
 Clipboard não oferece conteúdo anterior à ativação/retomada. Conteúdos consumidos e cópias feitas dentro do Cyro são ignorados por uma janela limitada em memória, sem gravar texto ou hashes no disco. Uma nova cópia externa continua exigindo revisão e envio humano.
 
 O Writer 6.1 utiliza TipTap 3.32.0 como único editor. A formatação e o histórico pertencem ao documento contínuo; operações inteligentes e desfazer/refazer ficam no chat. Autosave com debounce de 1,5 segundo, revisão e recuperação local protegida. Uso e limites em [WRITER.md](../docs/WRITER.md).
+
+## Padrão visual 6.2
+
+Use tokens.css para espaçamentos/raios, ui.css para superfícies e foco e sidebar.css para a navegação. AnchoredMenu.jsx renderiza popovers por portal, mede a janela, protege bordas e oferece Escape/setas/Home/End. A sidebar ancora o menu lateralmente; o Writer usa abaixo do botão, com inversão quando necessário. Rolagem só fecha o menu se mover sua âncora. Não reintroduzir menus absolutos dentro de painéis com overflow nem hover específico por símbolo Unicode.
+
+Os blocos de código mantêm fundo escuro nos dois temas; textos secundários são controlados por tokens. A folha clara do Writer preserva a aparência de documento.
