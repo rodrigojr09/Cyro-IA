@@ -1,6 +1,6 @@
 # Instalação e atualização — Cyro IA 6.1.0 em desenvolvimento
 
-Esta revisão 6.1.0 entrega fontes em desenvolvimento. Nenhum setup 6.1.0 foi compilado neste pedido; o instalador local anterior permanece 6.0.3. As instruções abaixo aplicam-se quando houver uma entrega 6.1.0 autorizada.
+O setup 6.1.0 foi gerado localmente em release/v6 e o Cloud correspondente foi publicado em 28/10/2026. Consulte os checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar; o smoke isolado desta entrega não iniciou porque a porta local 8765 estava ocupada.
 
 ## Aplicativo Windows
 
