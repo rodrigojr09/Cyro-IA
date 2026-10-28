@@ -1,5 +1,6 @@
-/* Cyro IA 6.2.0 — CSS consolidado para consulta; não é uma entrada de produção.
-Cada bloco identifica sua origem. Desktop e Cloud usam contextos globais distintos. */
+/* Cyro IA 6.2.0 — todos os estilos de interface para consulta.
+Cada bloco identifica sua origem; importações locais incorporadas.
+Desktop e Cloud têm contextos globais distintos. Não é uma entrada de produção. */
 
 /* ===== INÍCIO: desktop/app.css ===== */
 
@@ -4107,11 +4108,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
 
 /* ===== FIM: cloud/app/globals.css ===== */
+
 /* ===== VISUALIZADOR DO CATÁLOGO paginas.html ===== */
-body.cyro-source-catalog { display: block; margin: 0; padding: 24px; overflow: auto; height: auto; min-height: 100vh; font: 14px/1.6 system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
-.cyro-source-catalog main { max-width: 1200px; margin: auto; }
-.cyro-source-catalog h1, .cyro-source-catalog a { color: #8ee0ff; }
-.cyro-source-catalog details { margin: 16px 0; border: 1px solid #293241; border-radius: 8px; padding: 12px; }
-.cyro-source-catalog summary { cursor: pointer; overflow-wrap: anywhere; }
-.cyro-source-catalog pre { display: block; white-space: pre; overflow: auto; max-height: 70vh; padding: 16px; background: #111827; color: #e6edf3; font: 12px/1.6 ui-monospace, monospace; }
-.cyro-source-catalog code { background: transparent; color: inherit; }
+body.cyro-source-catalog { display:block; margin:0; padding:24px; overflow:auto; height:auto; min-height:100vh; font:14px/1.6 system-ui,sans-serif; background:#0d1117; color:#e6edf3; }
+.cyro-source-catalog main { max-width:1200px; margin:auto; }
+.cyro-source-catalog h1, .cyro-source-catalog a { color:#8ee0ff; }
+.cyro-source-catalog details { margin:16px 0; border:1px solid #293241; border-radius:8px; padding:12px; }
+.cyro-source-catalog summary { cursor:pointer; overflow-wrap:anywhere; }
+.cyro-source-catalog pre { display:block; white-space:pre; overflow:auto; max-height:70vh; padding:16px; background:#111827; color:#e6edf3; font:12px/1.6 ui-monospace,monospace; }
+.cyro-source-catalog code { background:transparent; color:inherit; }
+.cyro-source-catalog a:focus-visible, .cyro-source-catalog summary:focus-visible { outline:2px solid #8ee0ff; outline-offset:2px; }

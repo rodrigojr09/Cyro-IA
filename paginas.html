@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; base-uri 'none'; form-action 'none'">
-<title>Cyro IA — Catálogo das páginas</title><link rel="stylesheet" href="styles.css"></head>
+<title>Cyro IA — Todas as páginas e componentes</title><link rel="stylesheet" href="styles.css"></head>
 <body class="cyro-source-catalog"><main>
-<!-- Catálogo estático: fontes escapadas para consulta, sem execução de scripts. -->
-<h1>Cyro IA — Páginas e componentes</h1>
-<p>Referência consolidada da v6.2.0. Abra as seções para consultar o código original. Este arquivo não executa as telas React nem substitui o aplicativo.</p>
-<p>Os HTMLs são entradas. As telas estão nos componentes React abaixo. styles.css reúne as folhas de estilo, com importações locais incorporadas e comentários de origem.</p>
-<p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>. Arquitetura: <a href="docs/ARCHITECTURE.md">docs/ARCHITECTURE.md</a>.</p>
-<p>3 HTMLs · 33 fontes React · 18 CSSs, incluindo realce de código compilado.</p>
+<!-- Referência estática: fontes completas escapadas para não executar scripts ou chamadas. -->
+<h1>Cyro IA — Páginas, componentes e estilos</h1>
+<p>Referência consolidada da v6.2.0. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
+<p>Este catálogo mostra o código completo; não executa as telas React nem substitui o aplicativo. styles.css reúne as folhas de estilo, incluindo o realce de código compilado. As fontes de produção continuam separadas.</p>
+<p>3 HTMLs · 33 fontes React · 18 CSSs.</p>
+<p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>.</p>
+<details><summary>Índice completo de arquivos</summary><ul><li><a href="#fonte-1">desktop/index.html</a></li><li><a href="#fonte-2">desktop/login.html</a></li><li><a href="#fonte-3">desktop/quick.html</a></li><li><a href="#fonte-4">cloud/app/(admin)/[section]/page.tsx</a></li><li><a href="#fonte-5">cloud/app/(admin)/layout.tsx</a></li><li><a href="#fonte-6">cloud/app/(admin)/loading.tsx</a></li><li><a href="#fonte-7">cloud/app/(admin)/page.tsx</a></li><li><a href="#fonte-8">cloud/app/layout.tsx</a></li><li><a href="#fonte-9">cloud/app/login/page.tsx</a></li><li><a href="#fonte-10">cloud/components/credentials.tsx</a></li><li><a href="#fonte-11">cloud/components/dashboard-data.tsx</a></li><li><a href="#fonte-12">cloud/components/dashboard.tsx</a></li><li><a href="#fonte-13">cloud/components/management.tsx</a></li><li><a href="#fonte-14">cloud/components/usage-panel.tsx</a></li><li><a href="#fonte-15">desktop/scripts/app/App.jsx</a></li><li><a href="#fonte-16">desktop/scripts/app/main-entry.jsx</a></li><li><a href="#fonte-17">desktop/scripts/attachment/components.jsx</a></li><li><a href="#fonte-18">desktop/scripts/chat/Composer.jsx</a></li><li><a href="#fonte-19">desktop/scripts/chat/Conversation.jsx</a></li><li><a href="#fonte-20">desktop/scripts/clipboard/Clipboard.jsx</a></li><li><a href="#fonte-21">desktop/scripts/computer/Computer.jsx</a></li><li><a href="#fonte-22">desktop/scripts/integrations/Integrations.jsx</a></li><li><a href="#fonte-23">desktop/scripts/quick/QuickApp.jsx</a></li><li><a href="#fonte-24">desktop/scripts/quick/quick-entry.jsx</a></li><li><a href="#fonte-25">desktop/scripts/session/Login.jsx</a></li><li><a href="#fonte-26">desktop/scripts/session/login-entry.jsx</a></li><li><a href="#fonte-27">desktop/scripts/storage/Storage.jsx</a></li><li><a href="#fonte-28">desktop/scripts/ui/AnchoredMenu.jsx</a></li><li><a href="#fonte-29">desktop/scripts/ui/Icon.jsx</a></li><li><a href="#fonte-30">desktop/scripts/ui/Settings.jsx</a></li><li><a href="#fonte-31">desktop/scripts/ui/components.jsx</a></li><li><a href="#fonte-32">desktop/scripts/workspace/ScopeDialog.jsx</a></li><li><a href="#fonte-33">desktop/scripts/workspace/Sidebar.jsx</a></li><li><a href="#fonte-34">desktop/scripts/workspace/Welcome.jsx</a></li><li><a href="#fonte-35">desktop/scripts/writer/WriterLibrary.jsx</a></li><li><a href="#fonte-36">desktop/scripts/writer/WriterPreview.jsx</a></li></ul></details>
 <!-- ===== INÍCIO: desktop/index.html — Página HTML ===== -->
-<details><summary>desktop/index.html — Página HTML</summary>
+<details id="fonte-1"><summary>desktop/index.html — Página HTML</summary>
 <pre><code>&lt;!doctype html&gt;
 &lt;html lang=&quot;pt-BR&quot;&gt;
   &lt;head&gt;
@@ -33,7 +34,7 @@
 </code></pre></details>
 <!-- ===== FIM: desktop/index.html ===== -->
 <!-- ===== INÍCIO: desktop/login.html — Página HTML ===== -->
-<details><summary>desktop/login.html — Página HTML</summary>
+<details id="fonte-2"><summary>desktop/login.html — Página HTML</summary>
 <pre><code>&lt;!doctype html&gt;
 &lt;html lang=&quot;pt-BR&quot;&gt;
   &lt;head&gt;
@@ -54,7 +55,7 @@
 </code></pre></details>
 <!-- ===== FIM: desktop/login.html ===== -->
 <!-- ===== INÍCIO: desktop/quick.html — Página HTML ===== -->
-<details><summary>desktop/quick.html — Página HTML</summary>
+<details id="fonte-3"><summary>desktop/quick.html — Página HTML</summary>
 <pre><code>&lt;!doctype html&gt;
 &lt;html lang=&quot;pt-BR&quot;&gt;
   &lt;head&gt;
@@ -75,8 +76,8 @@
 &lt;/html&gt;
 </code></pre></details>
 <!-- ===== FIM: desktop/quick.html ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/[section]/page.tsx — Componente React ===== -->
-<details><summary>cloud/app/(admin)/[section]/page.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/(admin)/[section]/page.tsx — Componente / página React ===== -->
+<details id="fonte-4"><summary>cloud/app/(admin)/[section]/page.tsx — Componente / página React</summary>
 <pre><code>import { notFound } from &quot;next/navigation&quot;;
 import { admin } from &quot;@/lib/auth&quot;;
 import Dashboard from &quot;@/components/dashboard&quot;;
@@ -120,8 +121,8 @@ export default async function Page({
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/(admin)/[section]/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/layout.tsx — Componente React ===== -->
-<details><summary>cloud/app/(admin)/layout.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/(admin)/layout.tsx — Componente / página React ===== -->
+<details id="fonte-5"><summary>cloud/app/(admin)/layout.tsx — Componente / página React</summary>
 <pre><code>import { DashboardDataProvider } from &quot;@/components/dashboard-data&quot;;
 import { admin } from &quot;@/lib/auth&quot;;
 import { HttpError } from &quot;@/lib/http&quot;;
@@ -142,24 +143,24 @@ export default async function AdminLayout({
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/(admin)/layout.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/loading.tsx — Componente React ===== -->
-<details><summary>cloud/app/(admin)/loading.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/(admin)/loading.tsx — Componente / página React ===== -->
+<details id="fonte-6"><summary>cloud/app/(admin)/loading.tsx — Componente / página React</summary>
 <pre><code>import { DashboardLoading } from &quot;@/components/dashboard-data&quot;;
 export default function Loading() {
   return &lt;DashboardLoading /&gt;;
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/(admin)/loading.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/page.tsx — Componente React ===== -->
-<details><summary>cloud/app/(admin)/page.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/(admin)/page.tsx — Componente / página React ===== -->
+<details id="fonte-7"><summary>cloud/app/(admin)/page.tsx — Componente / página React</summary>
 <pre><code>import { redirect } from &quot;next/navigation&quot;;
 export default function Home() {
   redirect(&quot;/dashboard&quot;);
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/(admin)/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/layout.tsx — Componente React ===== -->
-<details><summary>cloud/app/layout.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/layout.tsx — Componente / página React ===== -->
+<details id="fonte-8"><summary>cloud/app/layout.tsx — Componente / página React</summary>
 <pre><code>import &quot;./globals.css&quot;;
 export const metadata = {
   title: &quot;Cyro IA · Administração&quot;,
@@ -174,8 +175,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/layout.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/login/page.tsx — Componente React ===== -->
-<details><summary>cloud/app/login/page.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/app/login/page.tsx — Componente / página React ===== -->
+<details id="fonte-9"><summary>cloud/app/login/page.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import { useState } from &quot;react&quot;;
 export default function Login() {
@@ -259,8 +260,8 @@ export default function Login() {
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/app/login/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/credentials.tsx — Componente React ===== -->
-<details><summary>cloud/components/credentials.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/components/credentials.tsx — Componente / página React ===== -->
+<details id="fonte-10"><summary>cloud/components/credentials.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import { useDashboardData } from &quot;./dashboard-data&quot;;
 import { useState } from &quot;react&quot;;
@@ -522,8 +523,8 @@ export default function Credentials() {
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/components/credentials.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/dashboard-data.tsx — Componente React ===== -->
-<details><summary>cloud/components/dashboard-data.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/components/dashboard-data.tsx — Componente / página React ===== -->
+<details id="fonte-11"><summary>cloud/components/dashboard-data.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import {
   createContext,
@@ -595,8 +596,8 @@ export function DashboardLoading({
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/components/dashboard-data.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/dashboard.tsx — Componente React ===== -->
-<details><summary>cloud/components/dashboard.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/components/dashboard.tsx — Componente / página React ===== -->
+<details id="fonte-12"><summary>cloud/components/dashboard.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import Link from &quot;next/link&quot;;
 import { version } from &quot;../../package.json&quot;;
@@ -1182,8 +1183,8 @@ function Table({
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/components/dashboard.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/management.tsx — Componente React ===== -->
-<details><summary>cloud/components/management.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/components/management.tsx — Componente / página React ===== -->
+<details id="fonte-13"><summary>cloud/components/management.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import { useDashboardData } from &quot;./dashboard-data&quot;;
 import Link from &quot;next/link&quot;;
@@ -1278,8 +1279,8 @@ export default function Management({ section }: { section: string }) {
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/components/management.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/usage-panel.tsx — Componente React ===== -->
-<details><summary>cloud/components/usage-panel.tsx — Componente React</summary>
+<!-- ===== INÍCIO: cloud/components/usage-panel.tsx — Componente / página React ===== -->
+<details id="fonte-14"><summary>cloud/components/usage-panel.tsx — Componente / página React</summary>
 <pre><code>&quot;use client&quot;;
 import Link from &quot;next/link&quot;;
 import type { UsageReport } from &quot;../lib/usage-report&quot;;
@@ -1544,8 +1545,8 @@ export default function UsagePanel({
 }
 </code></pre></details>
 <!-- ===== FIM: cloud/components/usage-panel.tsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/app/App.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/app/App.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/app/App.jsx — Componente / página React ===== -->
+<details id="fonte-15"><summary>desktop/scripts/app/App.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState, useSyncExternalStore } from &#x27;react&#x27;;
 import { createWorkspace } from &#x27;../workspace/store&#x27;;
 import { createWriter } from &#x27;../writer/store&#x27;;
@@ -2339,16 +2340,16 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/app/App.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/app/main-entry.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/app/main-entry.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/app/main-entry.jsx — Componente / página React ===== -->
+<details id="fonte-16"><summary>desktop/scripts/app/main-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { App } from &#x27;./App&#x27;;
 createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;App /&gt;);
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/app/main-entry.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/attachment/components.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/attachment/components.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/attachment/components.jsx — Componente / página React ===== -->
+<details id="fonte-17"><summary>desktop/scripts/attachment/components.jsx — Componente / página React</summary>
 <pre><code>import React, { useRef, useState } from &#x27;react&#x27;;
 export function AttachmentCard({ file, onRemove }) {
   const [preview, setPreview] = useState(file.preview || null),
@@ -2536,8 +2537,8 @@ export function useAttachments() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/attachment/components.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/chat/Composer.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/chat/Composer.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/chat/Composer.jsx — Componente / página React ===== -->
+<details id="fonte-18"><summary>desktop/scripts/chat/Composer.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { AttachmentList } from &#x27;../attachment/components&#x27;;
 import { Clipboard } from &#x27;../clipboard/Clipboard&#x27;;
@@ -2694,8 +2695,8 @@ export function Composer({
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/chat/Composer.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/chat/Conversation.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/chat/Conversation.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/chat/Conversation.jsx — Componente / página React ===== -->
+<details id="fonte-19"><summary>desktop/scripts/chat/Conversation.jsx — Componente / página React</summary>
 <pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
 import { Markdown } from &#x27;../ui/components&#x27;;
 import { AttachmentList } from &#x27;../attachment/components&#x27;;
@@ -2880,8 +2881,8 @@ function MessageTime({ value }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/chat/Conversation.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/clipboard/Clipboard.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/clipboard/Clipboard.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/clipboard/Clipboard.jsx — Componente / página React ===== -->
+<details id="fonte-20"><summary>desktop/scripts/clipboard/Clipboard.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { ignoreOwnSelection } from &#x27;../shared/bridge&#x27;;
 const choices = {
@@ -3257,8 +3258,8 @@ export function ClipboardSettings() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/clipboard/Clipboard.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/computer/Computer.jsx — Componente React legado; seção removida das configurações ===== -->
-<details><summary>desktop/scripts/computer/Computer.jsx — Componente React legado; seção removida das configurações</summary>
+<!-- ===== INÍCIO: desktop/scripts/computer/Computer.jsx — Componente / página React legado (seção removida das configurações) ===== -->
+<details id="fonte-21"><summary>desktop/scripts/computer/Computer.jsx — Componente / página React legado (seção removida das configurações)</summary>
 <pre><code>import React, { useState } from &#x27;react&#x27;;
 import { api, post } from &#x27;../shared/bridge&#x27;;
 import { ActionConfirmation } from &#x27;../chat/Conversation&#x27;;
@@ -3340,8 +3341,8 @@ export function Computer() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/computer/Computer.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/integrations/Integrations.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/integrations/Integrations.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/integrations/Integrations.jsx — Componente / página React ===== -->
+<details id="fonte-22"><summary>desktop/scripts/integrations/Integrations.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { integrationCatalog, integrationStatusLabels, filterIntegrations } from &#x27;./catalog&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
@@ -3637,8 +3638,8 @@ export function SpotifySettings({ onChanged }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/integrations/Integrations.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/quick/QuickApp.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/quick/QuickApp.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/quick/QuickApp.jsx — Componente / página React ===== -->
+<details id="fonte-23"><summary>desktop/scripts/quick/QuickApp.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { Clipboard } from &#x27;../clipboard/Clipboard&#x27;;
 import { preferenceStorage, ignoreOwnSelection } from &#x27;../shared/bridge&#x27;;
@@ -3983,16 +3984,16 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get(&#x2
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/quick/QuickApp.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/quick/quick-entry.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/quick/quick-entry.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/quick/quick-entry.jsx — Componente / página React ===== -->
+<details id="fonte-24"><summary>desktop/scripts/quick/quick-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { QuickApp } from &#x27;./QuickApp&#x27;;
 createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;QuickApp /&gt;);
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/quick/quick-entry.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/session/Login.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/session/Login.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/session/Login.jsx — Componente / página React ===== -->
+<details id="fonte-25"><summary>desktop/scripts/session/Login.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 export function Login() {
   const [busy, setBusy] = useState(false),
@@ -4099,16 +4100,16 @@ export function Login() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/session/Login.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/session/login-entry.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/session/login-entry.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/session/login-entry.jsx — Componente / página React ===== -->
+<details id="fonte-26"><summary>desktop/scripts/session/login-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { Login } from &#x27;./Login&#x27;;
 createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;Login /&gt;);
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/session/login-entry.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/storage/Storage.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/storage/Storage.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/storage/Storage.jsx — Componente / página React ===== -->
+<details id="fonte-27"><summary>desktop/scripts/storage/Storage.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 export function Storage({ snapshot, busy, onClear }) {
   const format = (bytes) =&gt;
@@ -4154,8 +4155,105 @@ export function Storage({ snapshot, busy, onClear }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/storage/Storage.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/ui/Icon.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/ui/Icon.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/ui/AnchoredMenu.jsx — Componente / página React ===== -->
+<details id="fonte-28"><summary>desktop/scripts/ui/AnchoredMenu.jsx — Componente / página React</summary>
+<pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
+import { createPortal } from &#x27;react-dom&#x27;;
+
+// Measured outside the sidebar so row titles are never used as the popup surface.
+export function AnchoredMenu({ menu, onClose, children }) {
+  const ref = useRef(null);
+  const [position, setPosition] = useState(null);
+  useLayoutEffect(() =&gt; {
+    const node = ref.current;
+    const bounds = node.getBoundingClientRect();
+    const anchor = menu.anchor;
+    const gap = 8;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    let left = anchor.right + gap;
+    let top = anchor.top;
+    if (menu.placement === &#x27;below-end&#x27;) {
+      left = Math.max(gap, Math.min(anchor.right - bounds.width, width - bounds.width - gap));
+      top = anchor.bottom + gap;
+      if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
+    }
+    if (menu.placement !== &#x27;below-end&#x27; &amp;&amp; left + bounds.width &gt; width - gap) {
+      if (anchor.left - bounds.width - gap &gt;= gap) left = anchor.left - bounds.width - gap;
+      else {
+        left = Math.max(gap, width - bounds.width - gap);
+        top = anchor.bottom + gap;
+        if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
+      }
+    }
+    setPosition({
+      left: Math.max(gap, left),
+      top: Math.max(gap, Math.min(top, height - bounds.height - gap)),
+    });
+    const close = () =&gt; onClose();
+    const scroll = (event) =&gt; {
+      if (
+        !node.contains(event.target) &amp;&amp;
+        (event.target === document || event.target.contains?.(menu.trigger))
+      )
+        close();
+    };
+    const outside = (event) =&gt; {
+      if (!node.contains(event.target) &amp;&amp; !menu.trigger?.contains(event.target)) close();
+    };
+    window.addEventListener(&#x27;resize&#x27;, close);
+    document.addEventListener(&#x27;scroll&#x27;, scroll, true);
+    document.addEventListener(&#x27;pointerdown&#x27;, outside);
+    return () =&gt; {
+      window.removeEventListener(&#x27;resize&#x27;, close);
+      document.removeEventListener(&#x27;scroll&#x27;, scroll, true);
+      document.removeEventListener(&#x27;pointerdown&#x27;, outside);
+    };
+  }, [menu]);
+  useLayoutEffect(() =&gt; {
+    if (position)
+      ref.current
+        ?.querySelector(&#x27;button:not(:disabled):not([hidden])&#x27;)
+        ?.focus({ preventScroll: true });
+  }, [position]);
+  return createPortal(
+    &lt;div
+      ref={ref}
+      role=&quot;menu&quot;
+      aria-label={menu.label || (menu.kind === &#x27;create&#x27; ? &#x27;Criar no projeto&#x27; : &#x27;Ações da conversa&#x27;)}
+      className={
+        &#x27;ui-action-menu workspace-action-menu &#x27; +
+        (menu.kind === &#x27;create&#x27; ? &#x27;project-create-menu&#x27; : &#x27;context-menu&#x27;)
+      }
+      style={{ ...position, visibility: position ? &#x27;visible&#x27; : &#x27;hidden&#x27; }}
+      onKeyDown={(event) =&gt; {
+        if (event.key === &#x27;Escape&#x27; || event.key === &#x27;Tab&#x27;) {
+          if (event.key === &#x27;Escape&#x27;) event.preventDefault();
+          onClose();
+          menu.trigger?.focus({ preventScroll: true });
+        } else if ([&#x27;ArrowDown&#x27;, &#x27;ArrowUp&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) {
+          event.preventDefault();
+          const items = [...ref.current.querySelectorAll(&#x27;button:not(:disabled):not([hidden])&#x27;)];
+          const index = items.indexOf(document.activeElement);
+          const next =
+            event.key === &#x27;Home&#x27;
+              ? 0
+              : event.key === &#x27;End&#x27;
+                ? items.length - 1
+                : (index + (event.key === &#x27;ArrowUp&#x27; ? -1 : 1) + items.length) % items.length;
+          items[next]?.focus({ preventScroll: true });
+        }
+      }}
+    &gt;
+      {children}
+    &lt;/div&gt;,
+    document.body,
+  );
+}
+</code></pre></details>
+<!-- ===== FIM: desktop/scripts/ui/AnchoredMenu.jsx ===== -->
+<!-- ===== INÍCIO: desktop/scripts/ui/Icon.jsx — Componente / página React ===== -->
+<details id="fonte-29"><summary>desktop/scripts/ui/Icon.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import {
   PanelLeft,
@@ -4240,8 +4338,8 @@ export function Icon({ name, className = &#x27;&#x27; }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/Icon.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/ui/Settings.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/ui/Settings.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/ui/Settings.jsx — Componente / página React ===== -->
+<details id="fonte-30"><summary>desktop/scripts/ui/Settings.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { ClipboardSettings } from &#x27;../clipboard/Clipboard&#x27;;
 import { Integrations } from &#x27;../integrations/Integrations&#x27;;
@@ -4563,8 +4661,8 @@ export class SettingsSectionBoundary extends React.Component {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/Settings.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/ui/components.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/ui/components.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/ui/components.jsx — Componente / página React ===== -->
+<details id="fonte-31"><summary>desktop/scripts/ui/components.jsx — Componente / página React</summary>
 <pre><code>import React, { useMemo } from &#x27;react&#x27;;
 import { marked } from &#x27;marked&#x27;;
 import DOMPurify from &#x27;dompurify&#x27;;
@@ -4734,8 +4832,8 @@ export function Status({ children, error }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/components.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/workspace/ScopeDialog.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/workspace/ScopeDialog.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/workspace/ScopeDialog.jsx — Componente / página React ===== -->
+<details id="fonte-32"><summary>desktop/scripts/workspace/ScopeDialog.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { api, post } from &#x27;../shared/bridge&#x27;;
 import { Dialog } from &#x27;../ui/components&#x27;;
@@ -4947,8 +5045,8 @@ export function ScopeDialog({ project, onClose, onSaved }) {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/ScopeDialog.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/workspace/Sidebar.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/workspace/Sidebar.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/workspace/Sidebar.jsx — Componente / página React ===== -->
+<details id="fonte-33"><summary>desktop/scripts/workspace/Sidebar.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
 export function Sidebar({
@@ -5111,8 +5209,8 @@ export function Sidebar({
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/Sidebar.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/workspace/Welcome.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/workspace/Welcome.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/workspace/Welcome.jsx — Componente / página React ===== -->
+<details id="fonte-34"><summary>desktop/scripts/workspace/Welcome.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
 export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }) {
@@ -5180,8 +5278,8 @@ export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/Welcome.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/writer/WriterLibrary.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/writer/WriterLibrary.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/writer/WriterLibrary.jsx — Componente / página React ===== -->
+<details id="fonte-35"><summary>desktop/scripts/writer/WriterLibrary.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { Dialog } from &#x27;../ui/components&#x27;;
 export function WriterLibrary({ project, writer, onClose, onSelect, onCreate, onOpenFile, onRun }) {
@@ -5320,8 +5418,8 @@ export function WriterLibrary({ project, writer, onClose, onSelect, onCreate, on
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/writer/WriterLibrary.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/writer/WriterPreview.jsx — Componente React ===== -->
-<details><summary>desktop/scripts/writer/WriterPreview.jsx — Componente React</summary>
+<!-- ===== INÍCIO: desktop/scripts/writer/WriterPreview.jsx — Componente / página React ===== -->
+<details id="fonte-36"><summary>desktop/scripts/writer/WriterPreview.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState, useSyncExternalStore } from &#x27;react&#x27;;
 import { useEditor, EditorContent } from &#x27;@tiptap/react&#x27;;
 import { extensions, toDocument, editorBlocks, connectEditor, nodeText } from &#x27;./editor&#x27;;
@@ -5894,101 +5992,4 @@ export function WriterDivider() {
 }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/writer/WriterPreview.jsx ===== -->
-<!-- ===== INÍCIO: desktop/scripts/ui/AnchoredMenu.jsx — Componente React de popover compartilhado ===== -->
-<details><summary>desktop/scripts/ui/AnchoredMenu.jsx — Popover compartilhado</summary>
-<pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
-import { createPortal } from &#x27;react-dom&#x27;;
-
-// Measured outside the sidebar so row titles are never used as the popup surface.
-export function AnchoredMenu({ menu, onClose, children }) {
-  const ref = useRef(null);
-  const [position, setPosition] = useState(null);
-  useLayoutEffect(() =&gt; {
-    const node = ref.current;
-    const bounds = node.getBoundingClientRect();
-    const anchor = menu.anchor;
-    const gap = 8;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    let left = anchor.right + gap;
-    let top = anchor.top;
-    if (menu.placement === &#x27;below-end&#x27;) {
-      left = Math.max(gap, Math.min(anchor.right - bounds.width, width - bounds.width - gap));
-      top = anchor.bottom + gap;
-      if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
-    }
-    if (menu.placement !== &#x27;below-end&#x27; &amp;&amp; left + bounds.width &gt; width - gap) {
-      if (anchor.left - bounds.width - gap &gt;= gap) left = anchor.left - bounds.width - gap;
-      else {
-        left = Math.max(gap, width - bounds.width - gap);
-        top = anchor.bottom + gap;
-        if (top + bounds.height &gt; height - gap) top = anchor.top - bounds.height - gap;
-      }
-    }
-    setPosition({
-      left: Math.max(gap, left),
-      top: Math.max(gap, Math.min(top, height - bounds.height - gap)),
-    });
-    const close = () =&gt; onClose();
-    const scroll = (event) =&gt; {
-      if (
-        !node.contains(event.target) &amp;&amp;
-        (event.target === document || event.target.contains?.(menu.trigger))
-      )
-        close();
-    };
-    const outside = (event) =&gt; {
-      if (!node.contains(event.target) &amp;&amp; !menu.trigger?.contains(event.target)) close();
-    };
-    window.addEventListener(&#x27;resize&#x27;, close);
-    document.addEventListener(&#x27;scroll&#x27;, scroll, true);
-    document.addEventListener(&#x27;pointerdown&#x27;, outside);
-    return () =&gt; {
-      window.removeEventListener(&#x27;resize&#x27;, close);
-      document.removeEventListener(&#x27;scroll&#x27;, scroll, true);
-      document.removeEventListener(&#x27;pointerdown&#x27;, outside);
-    };
-  }, [menu]);
-  useLayoutEffect(() =&gt; {
-    if (position)
-      ref.current
-        ?.querySelector(&#x27;button:not(:disabled):not([hidden])&#x27;)
-        ?.focus({ preventScroll: true });
-  }, [position]);
-  return createPortal(
-    &lt;div
-      ref={ref}
-      role=&quot;menu&quot;
-      aria-label={menu.label || (menu.kind === &#x27;create&#x27; ? &#x27;Criar no projeto&#x27; : &#x27;Ações da conversa&#x27;)}
-      className={
-        &#x27;ui-action-menu workspace-action-menu &#x27; +
-        (menu.kind === &#x27;create&#x27; ? &#x27;project-create-menu&#x27; : &#x27;context-menu&#x27;)
-      }
-      style={{ ...position, visibility: position ? &#x27;visible&#x27; : &#x27;hidden&#x27; }}
-      onKeyDown={(event) =&gt; {
-        if (event.key === &#x27;Escape&#x27; || event.key === &#x27;Tab&#x27;) {
-          if (event.key === &#x27;Escape&#x27;) event.preventDefault();
-          onClose();
-          menu.trigger?.focus({ preventScroll: true });
-        } else if ([&#x27;ArrowDown&#x27;, &#x27;ArrowUp&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) {
-          event.preventDefault();
-          const items = [...ref.current.querySelectorAll(&#x27;button:not(:disabled):not([hidden])&#x27;)];
-          const index = items.indexOf(document.activeElement);
-          const next =
-            event.key === &#x27;Home&#x27;
-              ? 0
-              : event.key === &#x27;End&#x27;
-                ? items.length - 1
-                : (index + (event.key === &#x27;ArrowUp&#x27; ? -1 : 1) + items.length) % items.length;
-          items[next]?.focus({ preventScroll: true });
-        }
-      }}
-    &gt;
-      {children}
-    &lt;/div&gt;,
-    document.body,
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: desktop/scripts/ui/AnchoredMenu.jsx ===== -->
 </main></body></html>

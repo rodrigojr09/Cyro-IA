@@ -8,7 +8,7 @@ O [Writer 6.1](docs/WRITER.md) usa um documento contínuo com chat lateral. A mi
 
 A sidebar usa indentação limpa para conversas e projetos, destaque discreto do chat ativo e rodapé separado. Estilos em `desktop/styles/sidebar.css` e componente em `desktop/scripts/workspace/Sidebar.jsx`.
 
-Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.2.0, sem substituir os módulos de produção; não se atualizam automaticamente. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
+Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.2.0, sem substituir os módulos de produção; não se atualizam automaticamente. Para regenerar ambos com todos os componentes/páginas e CSSs atuais, execute `python -X utf8 tools/generate_ui_catalog.py` na raiz. O gerador confere a integridade das fontes incluídas e identifica cada origem por comentário. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
 
 Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas; o instalador publicado 6.1.2 permanece separado do desenvolvimento 6.2.0.
 
