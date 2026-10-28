@@ -72,5 +72,6 @@
   "portable": {
     "artifactName": "JARVIS-${version}-${arch}.exe",
     "requestExecutionLevel": "user"
-  }
+  },
+  "beforeBuild": "./scripts/app/bundle-packaging.cjs"
 }

@@ -32,6 +32,12 @@ python tools/smoke_cloud_release.py
 
 O smoke inicia e reinicia o payload com perfil temporário e PATH restrito, sem chamadas pagas. A porta local 8765 precisa estar livre; não encerre serviço de outro aplicativo para liberar a porta. Não executar o setup sobre o perfil pessoal para substituir uma VM de teste.
 
+## Dependências do pacote Desktop
+
+As bibliotecas do renderer são compiladas em dist/ por esbuild. O hook beforeBuild verifica que todos os arquivos do manifesto existem e que o grafo nativo usa somente Electron, módulos internos do Node e os arquivos explicitamente autorizados. Somente após essa validação ele declara as dependências já tratadas, evitando o hoister de workspaces do empacotador. Se surgir uma dependência externa no código nativo, a compilação falha em vez de gerar um pacote incompleto. O hook é ferramenta de build e fica fora do instalador; usuários continuam sem precisar de Node/npm.
+
+Esse contrato foi exercitado com dois testes (aplicativo completo e incompleto) e pela geração do pacote Windows. A auditoria do ASAR e o teste do payload permanecem obrigatórios.
+
 ## O que não é automático
 
 A compilação não faz push, upload do instalador, GitHub Release, tag, assinatura ou certificação de Windows limpo. O verificador de índice/caminhos e a auditoria não substituem revisão de segredos no diff. Guarde os segredos somente no servidor e mantenha `AUTH_SECRET` estável.

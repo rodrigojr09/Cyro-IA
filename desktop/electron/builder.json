@@ -82,5 +82,6 @@
     "deleteAppDataOnUninstall": false
   },
   "copyright": "Copyright \u00a9 2026 Rodrigo Junior",
-  "executableName": "JARVIS"
+  "executableName": "JARVIS",
+  "beforeBuild": "./scripts/app/bundle-packaging.cjs"
 }
