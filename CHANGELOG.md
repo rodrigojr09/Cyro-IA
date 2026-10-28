@@ -1,5 +1,7 @@
 # 6.1.1 — em desenvolvimento
 
+- Marca do cabeçalho das configurações em ciano e fechamento por ícone X acessível.
+
 - Removidas as seções Computador e Conta da página de configurações. Sair da conta continua disponível na sidebar.
 
 - Busca das integrações com uma única borda/fundo e largura completa, corrigindo a sobreposição do estilo geral de formulários.

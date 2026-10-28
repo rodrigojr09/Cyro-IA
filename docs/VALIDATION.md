@@ -1,3 +1,7 @@
+# Cabeçalho das configurações — 6.1.1
+
+Marca CYRO IA em ciano no tema escuro e fechamento por X com área de 44×44 px, nome acessível e tooltip. Mantidos onClose e Escape. TypeScript, build Desktop e cenário Electron Spotify com fechamento/reabertura das configurações passaram (build/v6/v611-settings-header.log). Sem recompilar instalador, push ou deploy.
+
 # Correção visual da busca de integrações — 6.1.1
 
 O seletor geral de inputs da página de configurações sobrepunha o estilo da busca composta das integrações, criando borda e fundo internos limitados a 680 px. A exceção específica remove a borda/fundo internos e o limite de largura, mantendo o contorno externo e o foco acessível. Build Desktop e cenários Electron principal e Spotify passaram; captura cyro-v603-integrations.png conferida visualmente. Logs build/v6/v611-integrations-search.log e v611-integrations-search-main.log. Apenas CSS, sem mudança de serviços ou dependências; sem recompilação do instalador, push ou deploy.

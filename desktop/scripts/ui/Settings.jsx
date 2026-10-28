@@ -79,8 +79,16 @@ export function Settings({
           <p>CYRO IA</p>
           <h1 id="settings-heading">Configurações</h1>
         </div>
-        <button type="button" onClick={onClose}>
-          Voltar ao chat
+        <button
+          type="button"
+          className="settings-close"
+          aria-label="Fechar configurações"
+          title="Fechar configurações"
+          onClick={onClose}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
+          </svg>
         </button>
       </header>
       {open && (
