@@ -1,5 +1,7 @@
 # 6.1.1 — em desenvolvimento
 
+- Busca das integrações com uma única borda/fundo e largura completa, corrigindo a sobreposição do estilo geral de formulários.
+
 - Sidebar com hierarquia por indentação, destaque discreto apenas na conversa ativa, títulos longos truncados, espaçamentos consistentes e rodapé separado com status leve.
 
 - Corrigido o erro ao abrir Área de transferência: referência ao estado do botão flutuante removida das configurações. Falhas de uma seção ficam isoladas e permitem recuperar ou trocar de categoria.

@@ -1,3 +1,7 @@
+# Correção visual da busca de integrações — 6.1.1
+
+O seletor geral de inputs da página de configurações sobrepunha o estilo da busca composta das integrações, criando borda e fundo internos limitados a 680 px. A exceção específica remove a borda/fundo internos e o limite de largura, mantendo o contorno externo e o foco acessível. Build Desktop e cenários Electron principal e Spotify passaram; captura cyro-v603-integrations.png conferida visualmente. Logs build/v6/v611-integrations-search.log e v611-integrations-search-main.log. Apenas CSS, sem mudança de serviços ou dependências; sem recompilação do instalador, push ou deploy.
+
 # Ajuste visual da sidebar — 6.1.1
 
 Sidebar refatorada com indentação sem conectores, conversa ativa com borda interna de 2 px, grupo de projeto discreto, títulos truncados e tooltip, espaçamento uniforme e rodapé separado. Mantidos busca, navegação, menu de contexto, projetos recolhíveis e preferências existentes. A paleta usa variáveis de tema e hover suave, sem glow.
