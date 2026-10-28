@@ -29,12 +29,16 @@ def validate(value):
         if attrs.get("language") is not None and (not isinstance(attrs["language"],str) or len(attrs["language"])>80): raise ValueError("Linguagem inválida.")
         if attrs.get("colwidth") is not None and (not isinstance(attrs["colwidth"],list) or len(attrs["colwidth"])>100 or any(type(x) is not int or not 1<=x<=10000 for x in attrs["colwidth"])): raise ValueError("Largura inválida.")
         if "text" in node and (node["type"] != "text" or not isinstance(node["text"],str) or len(node["text"])>12000): raise ValueError("Texto inválido.")
+        if not isinstance(node.get("marks", []), list): raise ValueError("Formatação inválida.")
         for mark in node.get("marks",[]):
             if not isinstance(mark,dict) or set(mark)-{"type","attrs"} or mark.get("type") not in MARKS: raise ValueError("Formatação inválida.")
             ma=mark.get("attrs") or {}
+            if not isinstance(ma,dict): raise ValueError("Formatação inválida.")
             if mark["type"] == "link":
                 if set(ma)-{"href","target","rel","class","title"}: raise ValueError("Link inválido.")
-                href=ma.get("href",""); parsed=urlparse(href)
+                href=ma.get("href","")
+                if not isinstance(href,str):raise ValueError("Link inválido.")
+                parsed=urlparse(href)
                 if parsed.scheme not in {"https","http","mailto"} or parsed.username or parsed.password or len(href)>2048: raise ValueError("Link inválido.")
                 if parsed.scheme != "mailto" and not parsed.hostname: raise ValueError("Link inválido.")
                 if any(v is not None and (not isinstance(v,str) or len(v)>2048) for v in ma.values()): raise ValueError("Link inválido.")
@@ -47,28 +51,44 @@ def validate(value):
         if kind in {"bulletList","orderedList"} and any(k!="listItem" for k in kinds): raise ValueError("Lista inválida.")
         if kind=="table" and any(k!="tableRow" for k in kinds): raise ValueError("Tabela inválida.")
         if kind=="tableRow" and any(k not in {"tableCell","tableHeader"} for k in kinds): raise ValueError("Linha inválida.")
+        if kind == "listItem" and (not kinds or kinds[0] != "paragraph"): raise ValueError("Item de lista inválido.")
+        if kind in {"tableCell","tableHeader","blockquote"} and (not kinds or any(k in {"text","hardBreak","listItem","tableRow","tableCell","tableHeader"} for k in kinds)): raise ValueError("Estrutura inválida.")
         if kind in {"text","hardBreak","horizontalRule","pageBreak"} and children: raise ValueError("Nó inválido.")
     walk(value)
     if value["type"] in {"text","hardBreak","listItem","tableRow","tableCell","tableHeader"}: raise ValueError("Nó superior inválido.")
     return deepcopy(value)
 
 def splice_inline(node, start, end, replacement):
-    """Replace a text range while retaining untouched runs and their marks."""
-    if node.get("type") not in {"paragraph","heading"}: raise ValueError("Selecione texto dentro de um parágrafo ou título.")
-    result=deepcopy(node); before=[]; after=[]; offset=0
-    for child in node.get("content",[]):
-        length=len(plain(child)); left=max(0,min(length,start-offset)); right=max(0,min(length,end-offset))
-        if left:
-            part=deepcopy(child)
-            if part["type"]=="text": part["text"]=part["text"][:left]
-            before.append(part)
-        if right<length:
-            part=deepcopy(child)
-            if part["type"]=="text": part["text"]=part["text"][right:]
-            after.append(part)
-        offset+=length
-    result["content"]=before+([{"type":"text","text":replacement}] if replacement else [])+after
+    """Splice text leaves, preserving untouched formatting and list/table structure."""
+    result=deepcopy(node); offset=0; inserted=False
+    def walk(current):
+        nonlocal offset,inserted
+        kind=current['type']
+        if kind in {'text','hardBreak'}:
+            text=current.get('text','') if kind=='text' else '\n'
+            length=len(text); left=max(0,min(length,start-offset)); right=max(0,min(length,end-offset)); origin=offset; offset+=length
+            if start==end and not inserted and origin<=start<=offset:
+                inserted=True
+                return {**current,'type':'text','text':text[:left]+replacement+text[left:]}
+            if start>=offset or end<=origin:return current
+            middle=replacement if not inserted else ''; inserted=True
+            value=text[:left]+middle+text[right:]
+            if not value:return None
+            return {**current,'type':'text','text':value} if kind=='text' else {'type':'text','text':value}
+        separator='\n' if kind in {'bulletList','orderedList','listItem','table','tableRow','tableCell','tableHeader','blockquote'} else ''
+        children=[]
+        for index,child in enumerate(current.get('content',[])):
+            if index:offset+=len(separator)
+            updated=walk(child)
+            if updated:children.append(updated)
+        if 'content' in current:current['content']=children
+        return current
+    result=walk(result)
+    if not inserted and replacement:
+        if node['type'] in {'paragraph','heading','codeBlock'} and not plain(node): result['content']=[{'type':'text','text':replacement}]
+        else: raise ValueError('Seleção sem texto editável.')
     return result
+
 
 def export_node(container, node, list_style=None):
     from docx.enum.text import WD_ALIGN_PARAGRAPH

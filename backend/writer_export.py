@@ -50,8 +50,12 @@ class WriterExportService:
         return ordered
 
     @staticmethod
-    def export(writer, selected, format):
+    def export(writer, selected, format, draft=None):
         documents = WriterExportService.collect(writer, selected)
+        if draft is not None:
+            if len(selected) != 1 or len(documents) != 1: raise ReadError("Selecione um documento para exportar a recuperação.")
+            from writer_store import blocks
+            documents[0] = {**documents[0], "blocks": blocks(draft)}
         name = documents[0]["title"] if len(documents) == 1 else writer.project["name"]
         name = re.sub(r"\.(docx|md|txt)$", "", name, flags=re.I)
         if format in {"md", "txt"}:

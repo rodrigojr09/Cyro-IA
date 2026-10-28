@@ -317,13 +317,17 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                 result["proposal"] = writer.proposal(result["proposal"]["id"])
             return result
     context = WriterContextService.build(writer, req)
-    if req.selection:
+    ranges = req.selections or ([req.selection] if req.selection else [])
+    if ranges:
         selected_doc=writer.get(req.document_id)
-        selected_block=next((b for b in selected_doc["blocks"] if b["id"]==req.selection.block_id),None)
-        if not selected_block or req.selected_block_ids != [req.selection.block_id] or req.selection.end < req.selection.start or selected_block["text"][req.selection.start:req.selection.end] != req.selection.text:
-            raise ReadError("A seleção mudou. Selecione novamente antes de solicitar a edição.")
-        context["selection"]=req.selection.text
-        context["selection_scope"]="Somente o texto selecionado. Retorne apenas a substituição, sem repetir o prefixo/sufixo do parágrafo."
+        ids=[item.block_id for item in ranges]
+        if ids!=req.selected_block_ids or len(set(ids))!=len(ids):raise ReadError('Seleção inconsistente.')
+        for item in ranges:
+            source=next((b for b in selected_doc['blocks'] if b['id']==item.block_id),None)
+            if not source or item.end<item.start or source['text'][item.start:item.end]!=item.text:
+                raise ReadError('A seleção mudou. Selecione novamente antes de solicitar a edição.')
+        context['selection']='\n'.join(item.text for item in ranges)
+        context['selection_scope']='Somente os trechos selecionados. Retorne apenas a substituição, sem repetir prefixos ou sufixos dos parágrafos.'
 
     if req.chat_id:
         context["chat_instructions"] = chat.get("instructions", "")[:2000]
@@ -516,16 +520,31 @@ async def assist(writer, request, client, model, available, cancel_event=None):
                     if part.strip()
                 ]
             proposed_text = "\n\n".join(b["text"] for b in plan["blocks"])
-            if req.continuous and req.selection and result.operation == "replace":
-                if result.blockIds != [req.selection.block_id] or len(plan["blocks"])!=1:
-                    raise ReadError("A alteração da seleção deve ser um único trecho do parágrafo selecionado.")
-                source=next(b for b in active["blocks"] if b["id"]==req.selection.block_id)
-                replacement=plan["blocks"][0]["text"]
-                new={"id":uid(),"type":source["type"],"text":source["text"][:req.selection.start]+replacement+source["text"][req.selection.end:]}
-                if source.get("rich"):
-                    from writer_rich import splice_inline
-                    new["rich"]=splice_inline(source["rich"],req.selection.start,req.selection.end,replacement)
-                plan["blocks"]=[new]
+            if req.continuous and ranges and result.operation == 'replace':
+                if result.blockIds != [item.block_id for item in ranges] or not plan['blocks']:
+                    raise ReadError('A alteração deve se limitar aos trechos selecionados.')
+                replacement='\n'.join(item['text'] for item in plan['blocks']); updated=[]
+                for index,item in enumerate(ranges):
+                    source=next(b for b in active['blocks'] if b['id']==item.block_id)
+                    inserted=replacement if index==0 else ''
+                    new={'id':uid(),'type':source['type'],'text':source['text'][:item.start]+inserted+source['text'][item.end:]}
+                    if source.get('rich'):
+                        from writer_rich import splice_inline, plain
+                        new['rich']=splice_inline(source['rich'],item.start,item.end,inserted)
+                        new['text']=plain(new['rich'])
+                    updated.append(new)
+                plan['blocks']=updated
+            if req.continuous and not ranges and result.operation == 'replace' and len(result.blockIds)==len(plan['blocks']):
+                # Preserve untouched rich runs when a plain-text correction changes a few words.
+                import difflib
+                from writer_rich import splice_inline, plain
+                for index,(source_id,proposed_block) in enumerate(zip(result.blockIds,plan['blocks'])):
+                    source=next((b for b in active['blocks'] if b['id']==source_id),None) if active else None
+                    if not source or not source.get('rich') or proposed_block['type']!=source['type'] or any(mark in proposed_block['text'] for mark in ['**','*','[', '```']):continue
+                    rich=source['rich']; old=source['text']; new=proposed_block['text']
+                    for tag,a,b,c,d in reversed(difflib.SequenceMatcher(None,old,new,autojunk=True).get_opcodes()):
+                        if tag!='equal':rich=splice_inline(rich,a,b,new[c:d])
+                    plan['blocks'][index]={**proposed_block,'rich':rich,'text':plain(rich)}
             auto = (
                 not req.continuous
                 and settings["auto_write"]

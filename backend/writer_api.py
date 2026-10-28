@@ -170,13 +170,13 @@ def install(app, environment):
 
     @app.post("/writer/export")
     async def export(request: Request):
-        if len(await request.body()) > 20000:
+        if len(await request.body()) > 1024 * 1024:
             raise HTTPException(413, "Seleção acima do limite.")
         try:
             req = Export.model_validate(await request.json())
             w = writer(req.project_id)
             content, name = await asyncio.to_thread(
-                WriterExportService.export, w, req.document_ids, req.format
+                WriterExportService.export, w, req.document_ids, req.format, req.draft
             )
             if len(content) > 15 * 1024 * 1024:
                 raise ReadError(

@@ -167,6 +167,7 @@ class Assist(Strict):
     selected_block_ids: list[str] = Field(default_factory=list, max_length=100)
     selected_text: str = Field(default="", max_length=2000)
     selection: Selection | None = None
+    selections: list[Selection] = Field(default_factory=list,max_length=100)
     continuous: bool = False
     intent_override: Literal["WRITE", "INSTRUCT", "ORGANIZE", "CHAT"] | None = None
 
@@ -175,3 +176,4 @@ class Export(Strict):
     project_id: str
     document_ids: list[str] = Field(default_factory=list, max_length=200)
     format: Literal["docx", "md", "txt"] = "docx"
+    draft: list[Block] | None = Field(default=None, max_length=10000)

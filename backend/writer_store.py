@@ -69,6 +69,9 @@ def blocks(value):
         Block.model_validate(b).model_dump(exclude_none=True) if isinstance(b, dict) else b.model_dump(exclude_none=True)
         for b in value
     ]
+    from writer_rich import plain
+    if any(b.get("rich") and plain(b["rich"]) != b["text"] for b in result):
+        raise ReadError("Texto e documento rico inconsistentes. Sua edição foi preservada.")
     if (
         len({b["id"] for b in result}) != len(result)
         or len(dump(result).encode()) > MAX_DOCUMENT_BYTES
