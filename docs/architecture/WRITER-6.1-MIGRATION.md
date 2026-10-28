@@ -41,3 +41,7 @@ Referência técnica: https://tiptap.dev/docs/guides/performance — editor isol
 ## Contratos e persistência concluídos
 
 O contrato rico opcional valida nós/marcas/links e coerência com o texto plano. Faixas de seleção simples e múltiplas preservam prefixos, sufixos, formatação e nós não selecionados. Correções pontuais sem Markdown reaproveitam os runs ricos não alterados. Exportação de recuperação usa um snapshot transitório sem gravar o documento. O teste backend/test_writer_continuous.py executou 13 cenários reais com SQLite e OOXML, incluindo legado, restauração, deduplicação, seleção múltipla, conflito durante geração e DOCX. Provedor editorial sintético, sem API paga. As 198 regressões anteriores do backend também passaram na execução de 206 casos anterior à ampliação final; a suíte completa será repetida no fechamento.
+
+## Núcleo e memória compartilhados
+
+O endpoint existente de completions reconhece a ferramenta writer_editorial e reutiliza summary/instructions da conversa geral do usuário autenticado. Não há tabela nova de memória, identidade alternativa ou segunda chamada ao modelo. Uma leitura owner-bound limitada é incluída na mesma requisição editorial e contabilizada na reserva de tokens. O teste de contexto verifica isolamento e limites, a suíte Cloud passou 92 casos e o TypeScript passou. Para ativar essa parte em produção será necessário publicar o Cloud 6.1.0 após autorização; não houve push ou deploy nesta tarefa.

@@ -1,3 +1,4 @@
+import { writerAccountContext } from '@/lib/writer-context';
 import OpenAI from "openai";
 import { chatSchema, inputReservation } from "@jarvis/shared/schemas";
 import { deviceAuth } from "@/lib/auth";
@@ -36,6 +37,10 @@ export const POST = endpoint(async (request) => {
   if (!provider.allowedModels.includes(input.model))
     throw new HttpError(403, "Modelo não autorizado.");
   if (!provider.apiKey) throw new HttpError(503, "Provedor não configurado.");
+  if (input.tools?.some(tool=>tool.function.name==='writer_editorial')) {
+    const context=await writerAccountContext(device.userId, query=>db.conversation.findUnique(query));
+    if(context) input.messages.splice(1,0,{role:'user',content:context});
+  }
   const reservation = await reserve(
     device.userId,
     inputReservation(input.messages, input.model) +
