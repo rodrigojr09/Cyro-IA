@@ -6,6 +6,8 @@ Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o
 
 O [Writer 6.1](docs/WRITER.md) usa um documento contínuo com chat lateral. A migração preserva os documentos e históricos existentes; sem atualização automática do aplicativo instalado.
 
+A sidebar usa indentação limpa para conversas e projetos, destaque discreto do chat ativo e rodapé separado. Estilos em `desktop/styles/sidebar.css` e componente em `desktop/scripts/workspace/Sidebar.jsx`.
+
 # Base funcional v5
 
 Assistente Windows com chat principal, Quick Chat, projetos locais, JARVIS Writer e comandos Spotify pelo chat. Versão **5.1.0**.

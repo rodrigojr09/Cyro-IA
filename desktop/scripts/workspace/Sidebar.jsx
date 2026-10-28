@@ -32,7 +32,7 @@ export function Sidebar({
         if (!busy) onChatMenu(chat, event);
       }}
     >
-      {chat.title}
+      <span className="nav-title">{chat.title}</span>
     </button>
   );
   return (
@@ -66,7 +66,7 @@ export function Sidebar({
         <div className="navigation-heading">
           <button
             id="general-nav"
-            className={'nav-item' + (!state.project ? ' active' : '')}
+            className={'nav-item' + (!state.project ? ' current-group' : '')}
             disabled={busy || !state.ready}
             onClick={() => onView('')}
           >
@@ -108,11 +108,13 @@ export function Sidebar({
                     {expanded.has(project.id) ? '⌄' : '›'}
                   </button>
                   <button
-                    className={'project-item' + (state.project?.id === project.id ? ' active' : '')}
+                    className={
+                      'project-item' + (state.project?.id === project.id ? ' current-group' : '')
+                    }
                     disabled={busy || !state.ready}
                     onClick={() => onView(project.id)}
                   >
-                    {project.name}
+                    <span className="nav-title">{project.name}</span>
                   </button>
                   <button
                     className="navigation-add"
@@ -149,7 +151,8 @@ export function Sidebar({
           className="read-only-note"
           title="Os arquivos originais dos projetos são usados em modo leitura. O Writer só salva após aprovação ou edição explícita."
         >
-          ● Projetos em modo leitura
+          <span className="read-only-dot" aria-hidden="true" />
+          Projetos em modo leitura
         </span>
       </footer>
     </aside>

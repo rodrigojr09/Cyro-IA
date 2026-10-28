@@ -1,5 +1,7 @@
 # 6.1.1 — em desenvolvimento
 
+- Sidebar com hierarquia por indentação, destaque discreto apenas na conversa ativa, títulos longos truncados, espaçamentos consistentes e rodapé separado com status leve.
+
 - Corrigido o erro ao abrir Área de transferência: referência ao estado do botão flutuante removida das configurações. Falhas de uma seção ficam isoladas e permitem recuperar ou trocar de categoria.
 - Configurações transformadas em página completa, com navegação lateral ou abas horizontais conforme a largura, formulário padronizado, retorno ao chat e foco protegido.
 - Ctrl+V de imagens no chat principal adiciona anexos com prévia, sem enviar automaticamente. Limites de cinco arquivos e 5 MB, validação de imagem real, armazenamento protegido por conta e descarte de respostas atrasadas ao trocar de conversa.

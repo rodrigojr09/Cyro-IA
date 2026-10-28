@@ -1,3 +1,9 @@
+# Ajuste visual da sidebar — 6.1.1
+
+Sidebar refatorada com indentação sem conectores, conversa ativa com borda interna de 2 px, grupo de projeto discreto, títulos truncados e tooltip, espaçamento uniforme e rodapé separado. Mantidos busca, navegação, menu de contexto, projetos recolhíveis e preferências existentes. A paleta usa variáveis de tema e hover suave, sem glow.
+
+Validação executada: TypeScript Desktop, build, 142 testes Desktop e cenário principal Electron com navegação/temas e layouts 1366×738 e 800×600 aprovados. Capturas finais cyro-v603-chat-1366.png e cyro-v603-chat-800.png conferidas visualmente. Logs locais build/v6/v611-sidebar-unit.log e v611-sidebar-electron-final.log. Não foram adicionados testes que apenas reproduzem CSS. Cloud/Python não foram alterados; a validação completa anterior está registrada abaixo. Instalador 6.1.1 anterior não foi recompilado com este ajuste. Sem push, deploy ou alteração de Backup/.
+
 # Validação 6.1.1 — configurações e colagem de imagens
 
 Em 28/10/2026, o pipeline oficial check:v6 passou com 483 testes: 142 Desktop, 212 backend Python, 92 Cloud, 35 iniciadores/empacotamento e 2 ferramentas Node. Também passaram TypeScript/build Cloud e Desktop, sete cenários Electron e 40 verificações administrativas em Chromium real. Prettier Desktop aprovado. Não houve mudança de dependências; a instalação npm ci da raiz já havia sido concluída na etapa 6.1.0.
