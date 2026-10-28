@@ -180,7 +180,9 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       resizable: true,
       fullscreenable: true,
       backgroundColor: '#0D1117',
-      ...(app.isPackaged ? { icon: path.join(process.resourcesPath, 'jarvis.png') } : {}),
+      icon: app.isPackaged
+        ? path.join(process.resourcesPath, 'jarvis.png')
+        : path.join(DESKTOP_ROOT, 'assets/cyro.png'),
       webPreferences: {
         ...(app.isPackaged && process.env.JARVIS_CLOUD !== '1'
           ? { partition: 'jarvis-private' }

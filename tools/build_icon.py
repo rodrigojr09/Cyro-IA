@@ -35,7 +35,7 @@ def generate(directory):
             alpha = round(max(0, min(1, 121 - radius)) * 255)
             ink = max(0, min(1, 9 - min(distance(x, y, a, b) for a, b in segments)))
             color = tuple(
-                round(a + (b - a) * ink) for a, b in zip((17, 24, 39), (56, 189, 248))
+                round(a + (b - a) * ink) for a, b in zip((18, 43, 59), (142, 224, 255))
             )
             pixels.extend((*color, alpha))
 

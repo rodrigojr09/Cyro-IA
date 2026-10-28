@@ -1,3 +1,7 @@
+# Ícone Windows — 6.1.1
+
+Ícone da janela de desenvolvimento definido explicitamente por desktop/assets/cyro.png; produção continua usando o recurso jarvis.png e o ICO do executável. O gerador existente foi atualizado para a paleta do Quick Chat (#8ee0ff sobre #122b3b). PNG/ICO gerados e PNG conferido visualmente. Build e 142 testes Desktop passaram (build/v6/v611-taskbar-tests.log). Não foi alterado appId, nome do executável ou perfil. Não validada a atualização de atalhos fixados/cache de ícones do Windows. Instalador anterior não recompilado, sem push/deploy.
+
 # Cabeçalho das configurações — 6.1.1
 
 Marca CYRO IA em ciano no tema escuro e fechamento por X com área de 44×44 px, nome acessível e tooltip. Mantidos onClose e Escape. TypeScript, build Desktop e cenário Electron Spotify com fechamento/reabertura das configurações passaram (build/v6/v611-settings-header.log). Sem recompilar instalador, push ou deploy.

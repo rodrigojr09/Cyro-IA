@@ -1,5 +1,7 @@
 # 6.1.1 — em desenvolvimento
 
+- Ícone da janela em desenvolvimento definido explicitamente e paleta do ícone Windows alinhada ao azul do Quick Chat.
+
 - Marca do cabeçalho das configurações em ciano e fechamento por ícone X acessível.
 
 - Removidas as seções Computador e Conta da página de configurações. Sair da conta continua disponível na sidebar.
