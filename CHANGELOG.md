@@ -1,6 +1,6 @@
 # 6.1.1 — em desenvolvimento
 
-- Removida a seção Computador da página de configurações.
+- Removidas as seções Computador e Conta da página de configurações. Sair da conta continua disponível na sidebar.
 
 - Busca das integrações com uma única borda/fundo e largura completa, corrigindo a sobreposição do estilo geral de formulários.
 

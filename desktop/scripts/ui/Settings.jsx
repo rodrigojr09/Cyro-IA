@@ -46,7 +46,6 @@ export function Settings({
     'Quick Chat',
     'Área de transferência',
     'Integrações',
-    'Conta',
     'Sobre',
   ];
   useEffect(() => {
@@ -262,18 +261,6 @@ export function Settings({
               )}
               {category === 'Área de transferência' && <ClipboardSettings />}
               {category === 'Integrações' && <Integrations />}
-              {category === 'Conta' && (
-                <>
-                  <h3>Conta e acesso</h3>
-                  <p>
-                    Acesso, modelos e limites são gerenciados no painel administrativo. Use Sair da
-                    conta para trocar de usuário.
-                  </p>
-                  <button onClick={() => perform(() => window.jarvisAuth.logout())}>
-                    Sair da conta
-                  </button>
-                </>
-              )}
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
