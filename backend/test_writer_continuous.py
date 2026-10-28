@@ -74,6 +74,11 @@ class ContinuousWriterTests(unittest.IsolatedAsyncioTestCase):
         generated=response(doc,'Relatório de visita',intent='INSTRUCT',blocks=[{'type':'heading1','text':'Relatório'},{'type':'paragraph','text':'Dados da visita.'}],substantive=True)
         result=await assist(self.writer,{'request_id':uid(),'message':'Gere um relatório','document_id':doc['id'],'base_version':doc['version'],'continuous':True},client(generated),'fixture',True)
         self.assertFalse(result['proposal']['auto']); self.writer.decide(Decision(id=result['proposal']['id'],approve=True)); self.assertEqual(len(self.writer.get(doc['id'])['blocks']),2)
+        current=self.writer.get(doc['id']); original=current['blocks']
+        section=response(current,'',intent='INSTRUCT',blocks=[{'type':'heading2','text':'Conclusão'},{'type':'paragraph','text':'Nova seção.'}],substantive=True)
+        extra=await assist(self.writer,{'request_id':uid(),'message':'Acrescente uma conclusão','document_id':doc['id'],'base_version':current['version'],'continuous':True},client(section),'fixture',True)
+        self.writer.decide(Decision(id=extra['proposal']['id'],approve=True));self.assertEqual(self.writer.get(doc['id'])['blocks'][:2],original)
+
     def test_control_messages_do_not_change_document_or_duplicate(self):
         doc=self.save([self.rich()]); chat=self.writer.bind_chat(doc['id'])
         payload={'id':doc['id'],'chat_id':chat['id'],'message':'Desfazer','reply':'Última edição desfeita.','request_id':uid()}
