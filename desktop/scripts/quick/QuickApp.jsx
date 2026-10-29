@@ -251,7 +251,13 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
           quick
           baseHeight={state?.ready === false ? 200 : 150}
           canClaim={!!state && state.ready !== false && !state.busy && !submitting}
-          onSend={(text) => submit(text, true)}
+          onUseText={(text) => {
+            const next = (draft ? draft + '\n' : '') + '(' + text + ')\n';
+            if (next.length > 6000) return false;
+            setDraft(next);
+            question.current?.focus();
+            return true;
+          }}
         />
         <textarea
           id="question"

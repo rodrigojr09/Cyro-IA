@@ -12,3 +12,5 @@
 - Cyro IA é o nome público autorizado em 27/10/2026 (antes JARVIS). Preservar caminhos de dados JARVIS, appId, executável e IPC existentes para compatibilidade. Repositório: rodrigojr09/Cyro-IA.
 
 - Marca: usar Cyro em mensagens, textos de apoio, botões e conversas; reservar Cyro IA para logos e títulos.
+
+- Autorização contínua do proprietário em 29/10/2026: após concluir e validar alterações, criar commits, enviar ao GitHub/Cloud e compilar o instalador atualizado, salvo instrução posterior em contrário. Preservar os instaladores anteriores e registrar os resultados reais.

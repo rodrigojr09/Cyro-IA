@@ -14,7 +14,7 @@ Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, su
 
 A v6.2.2 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A entrega 6.2.2 foi publicada no Cloud e o instalador Windows foi compilado com o acabamento do controle Copiar mensagem; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
 
-A v6.2.2 mantém Copiar mensagem em uma única linha, com ícone, largura estável e aparência flutuante. O espaçamento reserva lugar para a ação sem cobrir outras mensagens.
+O ajuste posterior da v6.2.2 move Copiar mensagem para o menu do botão direito e compacta o campo com anexos acima, clipe à esquerda e áudio/envio alternados à direita. O clipboard oferece Usar para preencher o rascunho ou anexar uma imagem no chat principal, sem envio automático. Este ajuste ainda não integra o instalador publicado anteriormente.
 
 # Base funcional v5
 

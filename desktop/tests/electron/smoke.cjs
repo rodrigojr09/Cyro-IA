@@ -340,9 +340,14 @@ app.whenReady().then(async () => {
         `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
       );
       await waitFor(`!document.querySelector('.ui-action-menu')`);
+      assert.equal(await js(`document.querySelector('.message-copy') === null`), true);
+      await js(
+        `(() => { const message=[...document.querySelectorAll('.message.user')].at(-1); const r=message.getBoundingClientRect(); message.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:r.right-8,clientY:r.top+8})); })()`,
+      );
+      await waitFor(`!!document.querySelector('.message-copy')`);
       const copyLayout = await js(`(() => {
         const message=[...document.querySelectorAll('.message.user')].at(-1);
-        const button=message.querySelector('.message-copy');const label=button.querySelector('span');
+        const button=document.querySelector('.message-copy');const label=button.querySelector('span');
         const r=button.getBoundingClientRect();const s=getComputedStyle(button);const scroll=document.getElementById('conversation-scroll').getBoundingClientRect();
         return {nowrap:s.whiteSpace,lines:label.getClientRects().length,width:r.width,inside:r.left>=scroll.left && r.right<=scroll.right,space:parseFloat(getComputedStyle(document.getElementById('messages')).gap),height:r.height};
       })()`);
@@ -350,20 +355,27 @@ app.whenReady().then(async () => {
       assert.equal(copyLayout.lines, 1);
       assert.ok(copyLayout.width >= 160);
       assert.equal(copyLayout.inside, true);
-      assert.ok(copyLayout.space >= copyLayout.height + 8);
+
       await shot('cyro-v603-chat-' + width + '.png');
+      await js(
+        `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+      );
     }
     win.setSize(1366, 738);
     await frame();
     await shot('cyro-v603-chat.png');
-    await js(`document.querySelector('.message.user .message-copy').focus()`);
+    await js(
+      `document.querySelector('.message.user').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:700,clientY:200}))`,
+    );
+    await waitFor(`!!document.querySelector('.message-copy')`);
     await shot('cyro-v622-copy-action.png');
     const copyText = await js(`document.querySelector('.message.user p').textContent`);
-    await js(`document.querySelector('.message.user .message-copy').click()`);
-    await waitFor(
-      `document.querySelector('.message.user .message-copy span').textContent==='Copiado'`,
-    );
+    await js(`document.querySelector('.message-copy').click()`);
+    await waitFor(`document.querySelector('.message-copy span').textContent==='Copiado'`);
     assert.equal(copied, copyText);
+    await js(
+      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+    );
 
     await waitFor(`!document.getElementById('send').disabled`);
     await js(`document.querySelector('.chat-item[title="Melhorias no feed"]').click()`);
@@ -396,7 +408,7 @@ app.whenReady().then(async () => {
       `(() => {const c=document.querySelector('#attachment-list .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,background:s.backgroundColor,surface:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),save:c.textContent.includes('Salvar cópia'),preview:c.textContent.includes('Ver prévia')};})()`,
     );
     assert.equal(attachmentStyle.radius, '10px');
-    assert.equal(attachmentStyle.padding, '8px');
+    assert.equal(attachmentStyle.padding, '6px 8px');
     assert.equal(attachmentStyle.save, true);
     assert.equal(attachmentStyle.preview, true);
     await shot('cyro-v621-attachment.png');

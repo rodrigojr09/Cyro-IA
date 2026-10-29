@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Markdown } from '../ui/components';
+import { AnchoredMenu } from '../ui/AnchoredMenu';
 import { Icon } from '../ui/Icon';
 import { AttachmentList } from '../attachment/components';
 import { WriterProposal } from '../writer/WriterPreview';
@@ -18,7 +19,9 @@ export function Conversation({
     sticky = useRef(true),
     before = useRef(null),
     [atBottom, setAtBottom] = useState(true);
+  const [copyMenu, setCopyMenu] = useState(null);
   const thinking = state.busy || writerState.busy;
+  useLayoutEffect(() => setCopyMenu(null), [state.chat?.id]);
   useLayoutEffect(() => {
     if (thinking) sticky.current = true;
   }, [thinking]);
@@ -55,6 +58,22 @@ export function Conversation({
           {rows.map((message, index) => (
             <article
               className={'message ' + message.role}
+              tabIndex={0}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                setCopyMenu({
+                  text: message.content,
+                  trigger: event.currentTarget,
+                  label: 'Ações da mensagem',
+                  placement: 'below-end',
+                  anchor: {
+                    left: event.clientX,
+                    right: event.clientX,
+                    top: event.clientY,
+                    bottom: event.clientY,
+                  },
+                });
+              }}
               key={message.id ? 'message:' + message.id : 'temporary:' + index}
             >
               <div className="message-meta">
@@ -73,7 +92,6 @@ export function Conversation({
                 files={message.attachments}
                 unavailable={message.attachments_unavailable}
               />
-              <MessageCopy text={message.content} />
             </article>
           ))}
         </div>
@@ -96,6 +114,11 @@ export function Conversation({
         ))}
         {isWriter && <WriterProposal writer={writer} onRun={onRun} />}
       </div>
+      {copyMenu && (
+        <AnchoredMenu menu={copyMenu} onClose={() => setCopyMenu(null)}>
+          <MessageCopy key={copyMenu.text} text={copyMenu.text} />
+        </AnchoredMenu>
+      )}
       <div className="conversation-navigation" hidden={atBottom}>
         <button
           id="jump-bottom"
@@ -118,6 +141,7 @@ function MessageCopy({ text }) {
     <button
       className="message-copy"
       type="button"
+      role="menuitem"
       aria-label={label}
       onClick={async () => {
         try {

@@ -1,5 +1,9 @@
 # 6.2.2 — em desenvolvimento
 
+- Ajuste posterior: anexos compactos acima da digitação, clipe à esquerda, áudio/envio alternados à direita e remoção de Somente leitura no campo. Texto cresce até 140 px sem perder o formato compacto inicial.
+- Clipboard oferece Usar para preencher o rascunho com texto entre parênteses e quebra de linha ou importar imagem local no chat principal, sem envio automático.
+- Copiar mensagem foi movido para o menu do botão direito; não há mais ação flutuante no hover/foco dos balões.
+
 - Copiar mensagem em uma única linha, com ícone, largura estável de 160 px, padding consistente, contraste nos dois temas, borda arredondada e sombra suave.
 - Espaço entre mensagens e margem inferior ajustados para o controle flutuante não colidir com balões ou digitação; estados de hover/foco/pressionado e retorno da cópia preservados.
 

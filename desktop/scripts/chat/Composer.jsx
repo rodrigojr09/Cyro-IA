@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { AttachmentList } from '../attachment/components';
 import { Clipboard } from '../clipboard/Clipboard';
 import { Icon } from '../ui/Icon';
@@ -21,12 +21,24 @@ export function Composer({
   onClearSelection,
   status,
 }) {
+  useLayoutEffect(() => {
+    const field = inputRef.current;
+    if (!field) return;
+    field.style.height = '36px';
+    field.style.height = Math.min(140, Math.max(36, field.scrollHeight)) + 'px';
+  }, [input, inputRef]);
   return (
     <footer className="composer-wrap">
       <Clipboard
         context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
         canClaim={state.ready && !busy && !settings && !library}
-        onSend={onSend}
+        onUseText={(text) => {
+          const next = (input ? input + '\n' : '') + '(' + text + ')\n';
+          if (next.length > 6000) return false;
+          onInput(next);
+          inputRef.current?.focus();
+          return true;
+        }}
         onAttachImage={
           !isWriter
             ? async (dataURL) => {
@@ -43,6 +55,12 @@ export function Composer({
             : undefined
         }
       />
+      <div id="attachment-list">
+        <AttachmentList
+          files={attachments.files}
+          onRemove={busy ? undefined : attachments.remove}
+        />
+      </div>
       <div
         className="composer"
         onDragOver={(event) => {
@@ -66,12 +84,21 @@ export function Composer({
           );
         }}
       >
+        <button
+          id="attach-files"
+          aria-label="Anexar arquivos"
+          hidden={isWriter}
+          disabled={!canSend || attachments.files.length >= 5}
+          onClick={attachments.choose}
+        >
+          <Icon name="paperclip" />
+        </button>
         <textarea
           id="input"
           ref={inputRef}
           value={input}
           maxLength={6000}
-          rows={2}
+          rows={1}
           placeholder="Converse com o Cyro..."
           aria-label="Mensagem"
           onChange={(event) => onInput(event.target.value)}
@@ -103,74 +130,49 @@ export function Composer({
             }
           }}
         />
-        <div id="attachment-list">
-          <AttachmentList
-            files={attachments.files}
-            onRemove={busy ? undefined : attachments.remove}
-          />
-        </div>
-        <div className="composer-tools">
-          <span id="composer-context">
-            {isWriter ? (
-              'Documento do projeto'
-            ) : (
-              <>
-                <Icon name="shield" />
-                Somente leitura
-              </>
-            )}
-          </span>
-          {isWriter && writerState.selectedIds.length > 0 && (
-            <button id="writer-selection" onClick={onClearSelection}>
-              {writerState.selectedIds.length
-                ? 'Trecho selecionado · limpar ×'
-                : 'Documento inteiro'}
-            </button>
-          )}
-          <div className="composer-actions">
-            <button
-              id="attach-files"
-              aria-label="Anexar arquivos"
-              hidden={isWriter}
-              disabled={!canSend || attachments.files.length >= 5}
-              onClick={attachments.choose}
-            >
-              <Icon name="paperclip" />
-            </button>
-            <button
-              id="microphone"
-              aria-label="Ditar mensagem"
-              aria-pressed={dictation.listening}
-              disabled={!dictation.available || busy || !state.ready}
-              title={
-                dictation.available
-                  ? 'Ditar mensagem'
-                  : 'Entrada de voz indisponível neste Windows/runtime. Use o teclado.'
-              }
-              onClick={onDictation}
-            >
-              <Icon name="mic" />
-            </button>
-            <button
-              id="cancel-response"
-              aria-label="Cancelar resposta"
-              hidden={!state.busy && !writerState.busy}
-              onClick={onCancel}
-            >
-              ■
-            </button>
-            <button
-              id="send"
-              className="send-button"
-              aria-label="Enviar mensagem"
-              disabled={!canSend}
-              onClick={() => void onSend()}
-            >
-              <Icon name="arrow-up" />
-            </button>
-          </div>
+        <div className="composer-actions">
+          <button
+            id="microphone"
+            hidden={
+              !!input.trim() || attachments.files.length > 0 || state.busy || writerState.busy
+            }
+            aria-label="Ditar mensagem"
+            aria-pressed={dictation.listening}
+            disabled={!dictation.available || busy || !state.ready}
+            title={
+              dictation.available
+                ? 'Ditar mensagem'
+                : 'Entrada de voz indisponível neste Windows/runtime. Use o teclado.'
+            }
+            onClick={onDictation}
+          >
+            <Icon name="mic" />
+          </button>
+          <button
+            id="cancel-response"
+            aria-label="Cancelar resposta"
+            hidden={!state.busy && !writerState.busy}
+            onClick={onCancel}
+          >
+            ■
+          </button>
+          <button
+            id="send"
+            hidden={(!input.trim() && !attachments.files.length) || state.busy || writerState.busy}
+            className="send-button"
+            aria-label="Enviar mensagem"
+            disabled={!canSend}
+            onClick={() => void onSend()}
+          >
+            <Icon name="arrow-up" />
+          </button>
         </div>
       </div>
+      {isWriter && writerState.selectedIds.length > 0 && (
+        <button id="writer-selection" onClick={onClearSelection}>
+          Trecho selecionado · limpar ×
+        </button>
+      )}
       <div className="composer-caption">
         <span id="status" role="status">
           {attachments.error || status}

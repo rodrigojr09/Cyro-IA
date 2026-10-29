@@ -1,3 +1,13 @@
+# Ajuste 6.2.2 — campo compacto, clipboard e menu de mensagem
+
+Em 29/10/2026, o campo foi reduzido a uma linha inicial de 36 px, crescendo até 140 px. Anexos compactos ficam acima, com prévias de 40 px. Clipe à esquerda e áudio/envio alternados à direita; removido o rótulo Somente leitura da digitação, sem alterar permissões de arquivos. Copiar mensagem só aparece no menu do botão direito, com navegação e fechamento do AnchoredMenu existente.
+
+Clipboard oferece Usar: texto é acrescentado ao rascunho entre parênteses seguido de nova linha; imagem é importada como anexo local no chat principal. Não envia mensagem automaticamente. Falha mantém a sugestão; sucesso a descarta. Quick Chat recebe texto no rascunho; imagens continuam sendo usadas no chat principal. Consentimento, exclusividade e isolamento por conversa preservados.
+
+Validação completa executada: npm run check:v6 aprovado, com 490 testes (147 Desktop, 214 backend Python, 92 Cloud, 35 ferramentas Python e 2 ferramentas Node), TypeScript/build Cloud e Desktop, sete cenários Electron e 56 verificações administrativas em Chromium. Prettier e git diff --check aprovados. Evidências: build/v6/compact-verified-check.log e compact-verified-format.log. Integrações externas sintéticas não certificam IA paga, áudio físico, Spotify real ou Windows limpo.
+
+As alterações locais existentes foram preservadas, incluindo cloud/next-env.d.ts byte a byte após o build. Capturas cyro-v622-copy-action.png e cyro-v621-attachment.png conferidas visualmente. O instalador anteriormente publicado não contém este ajuste; sem novo push, deploy ou compilação de setup nesta etapa. Backup/ intacto.
+
 # Entrega 6.2.2 — Cloud e instalador Windows
 
 Em 29/10/2026, por autorização explícita do proprietário, o runtime 9914b0f3999ad51a2b61418b4e91f4524e24c000 foi enviado a origin/master e origin/codex/jarvis-v6-architecture. Vercel success às 10:57:49 America/Sao_Paulo (13:57:49 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/FR4BmCciwK2XZBtXWm4bxCaf2QAz . Produção https://cronosjarvis.vercel.app/login respondeu 200 com marca Cyro; /api/provider-settings sem sessão retornou 401. A documentação final também é enviada, sem alterar o runtime validado. Sem migrations ou alterações de credenciais.

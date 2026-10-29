@@ -282,7 +282,7 @@ app.whenReady().then(async () => {
       `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
     );
     assert.equal(shared.radius, '10px');
-    assert.equal(shared.padding, '8px');
+    assert.equal(shared.padding, '6px 8px');
     assert.equal(shared.overflow, false);
     fs.writeFileSync(
       path.join(directory, 'clipboard-options.png'),
@@ -324,18 +324,16 @@ app.whenReady().then(async () => {
       "document.getElementById('clipboard-actions').querySelector('button').click();void 0;",
     );
     const preview = await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-message').value",
+      "document.getElementById('question').value",
     );
-    assert.ok(preview.includes(text));
+    assert.equal(preview, '(' + text + ')\n');
     assert.equal(sends, 0);
     await delay(100);
     fs.writeFileSync(
       path.join(directory, 'clipboard-quick.png'),
       (await composer.webContents.capturePage()).toPNG(),
     );
-    await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-ignore').click()",
-    );
+    await composer.webContents.executeJavaScript("document.getElementById('question').value=''");
     await composer.webContents.executeJavaScript('window.quick.collapse()');
     main.restore();
     main.show();
@@ -434,7 +432,7 @@ app.whenReady().then(async () => {
       await composer.webContents.executeJavaScript(
         "document.getElementById('clipboard-actions').children.length",
       ),
-      0,
+      1,
     );
     fs.writeFileSync(
       path.join(directory, 'clipboard-image.png'),
@@ -472,7 +470,7 @@ app.whenReady().then(async () => {
     assert.equal(manager.state().pending, false);
     assert.equal(sends, 0);
     console.log(
-      'Electron real: leitura nativa Windows sem escrita, ClipboardItem/Blob assíncronos, janela minimizada, ausência de foco automático, orb, overlay API, WAV decodificado/reproduzido sem som físico, IPC, exclusividade e confirmação: OK. Alterações de conteúdo e backend sintéticos; shell visual e audição não certificados.',
+      'Electron real: leitura nativa Windows sem escrita, ClipboardItem/Blob assíncronos, janela minimizada, ausência de foco automático, orb, overlay API, WAV decodificado/reproduzido sem som físico, IPC, exclusividade e sugestão Usar sem envio: OK. Alterações de conteúdo e backend sintéticos; shell visual e audição não certificados.',
     );
     console.log('Capturas de validação: ' + directory);
     finish(0);

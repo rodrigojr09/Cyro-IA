@@ -1,3 +1,11 @@
+# Sugestão de clipboard — ajuste 6.2.2
+
+O conteúdo recém-copiado aparece como sugestão com um botão Usar abaixo. Usar não chama a IA nem envia mensagens: texto, código e links entram no rascunho entre parênteses, seguidos de uma quebra de linha. Um rascunho existente é preservado, com uma quebra antes do conteúdo adicionado. Se ultrapassar 6.000 caracteres, a sugestão permanece disponível e informa o limite, sem truncar.
+
+Na janela principal, Usar em uma imagem importa a prévia PNG como anexo local acima do campo; ela só é enviada após o envio explícito da mensagem. Falhas e limites mantêm a sugestão. O aviso de privacidade, consentimento, TTL, deduplicação e exclusividade continuam. O Quick Chat recebe texto no próprio rascunho; imagens continuam limitadas à prévia/cópia local e ao anexo no chat principal, conforme o contrato existente.
+
+Os anexos pendentes ficam acima da linha compacta de digitação, com miniaturas de 40 px. Clipe à esquerda; à direita, áudio quando vazio e envio quando há texto ou anexos. Durante a resposta há cancelamento. A indicação Somente leitura foi removida do campo, sem alterar permissões de arquivos. Copiar mensagem abre exclusivamente no menu contextual da mensagem, também acessível pelo comando de contexto do teclado. As seções abaixo são histórico de versões anteriores.
+
 # Clipboard e anexos unificados — 6.2.1
 
 O monitor e os anexos do chat usam AttachmentCard e attachment-card, com o mesmo fundo, borda, padding e miniaturas 64×64. Textos copiados continuam permitindo revisão antes de confirmar; imagens monitoradas podem ser adicionadas ao chat principal pelo botão explícito Adicionar ao chat, sem enviar a mensagem. A imagem monitorada é uma prévia PNG reduzida, identificada como tal; para usar o arquivo original, anexe pelo clipe ou arraste-o. Ctrl+V de imagem também produz o cartão de anexo com aviso de privacidade local.

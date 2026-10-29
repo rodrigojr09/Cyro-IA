@@ -107,55 +107,47 @@ test('React Markdown renders tables and code without executing model HTML or uns
     await env.dispose();
   }
 });
-test('React clipboard never sends automatically and requires an editable confirmation', async () => {
+test('React clipboard offers Use without sending and dismisses only after applying', async () => {
   const env = environment(),
     f = fixture(env);
-  let sent = null;
+  let used = null;
   try {
     await env.mount(env.Clipboard, {
       context: 'first',
-      onSend: async (text) => {
-        sent = text;
+      onUseText: async (text) => {
+        used = text;
         return true;
       },
     });
     await act(async () =>
       f.clipboard(
-        {
-          pending: true,
-          owned: { main: 'copy-1' },
-          notification: { id: 'copy-1' },
-          settings: { enabled: true },
-        },
+        { pending: true, owned: { main: 'copy-1' }, notification: { id: 'copy-1' } },
         { id: 'copy-1', contentType: 'text', text: 'Texto copiado' },
       ),
     );
     await settle();
-    assert.equal(sent, null);
-    await click(
-      [...document.querySelectorAll('#clipboard-actions button')].find(
-        (node) => node.textContent === 'Resumir',
-      ),
-    );
-    assert.equal(sent, null);
-    await input('#clipboard-message', 'Revise esta mensagem antes de enviar.');
-    await click('#clipboard-confirm');
-    assert.equal(sent, 'Revise esta mensagem antes de enviar.');
+    assert.equal(used, null);
+    assert.equal(document.querySelector('#clipboard-confirm'), null);
+    await click('#clipboard-use');
+    assert.equal(used, 'Texto copiado');
     assert.equal(f.calls.find((row) => row.dismiss).dismiss, 'copy-1');
   } finally {
     await env.dispose();
     assert.equal(f.listeners().clipboard, 0);
   }
 });
-test('React clipboard images stay local and expose no send action', async () => {
+
+test('React clipboard image Use imports locally and failed import keeps suggestion', async () => {
   const env = environment(),
     f = fixture(env);
-  let sends = 0;
+  let imported = null,
+    accept = false;
   try {
     await env.mount(env.Clipboard, {
       context: 'first',
-      onSend: async () => {
-        sends++;
+      onAttachImage: async (image) => {
+        imported = image;
+        return accept;
       },
     });
     await act(async () =>
@@ -165,20 +157,35 @@ test('React clipboard images stay local and expose no send action', async () => 
       ),
     );
     await settle();
-    await click('#clipboard-title');
-    assert.ok(document.querySelector('#clipboard-image'));
-    assert.equal(document.querySelector('#clipboard-confirm'), null);
-    assert.equal(document.querySelector('#clipboard-actions').children.length, 0);
-    assert.equal(sends, 0);
+    assert.equal(imported, null);
+    await click('#clipboard-use');
+    assert.equal(imported, 'data:image/png;base64,aA==');
+    assert.ok(document.querySelector('#clipboard-card'));
+    assert.equal(
+      f.calls.some((row) => row.dismiss),
+      false,
+    );
+    accept = true;
+    await click('#clipboard-use');
+    assert.equal(document.querySelector('#clipboard-card'), null);
   } finally {
     await env.dispose();
   }
 });
-test('React clipboard keeps review attached to its original conversation', async () => {
+
+test('React clipboard suggestion stays attached to its original conversation', async () => {
   const env = environment(),
     f = fixture(env);
+  let used = false;
   try {
-    await env.mount(env.Clipboard, { context: 'first', onSend: async () => true });
+    const props = {
+      context: 'first',
+      onUseText: () => {
+        used = true;
+        return true;
+      },
+    };
+    await env.mount(env.Clipboard, props);
     await act(async () =>
       f.clipboard(
         { pending: true, owned: { main: 'copy-1' }, notification: { id: 'copy-1' } },
@@ -186,15 +193,50 @@ test('React clipboard keeps review attached to its original conversation', async
       ),
     );
     await settle();
-    await click('#clipboard-actions button');
-    await env.mount(env.Clipboard, { context: 'second', onSend: async () => true });
+    await env.mount(env.Clipboard, { ...props, context: 'second' });
     assert.equal(document.querySelector('#clipboard-card'), null);
-    await env.mount(env.Clipboard, { context: 'first', onSend: async () => true });
-    assert.ok(document.querySelector('#clipboard-preview'));
+    assert.equal(used, false);
+    await env.mount(env.Clipboard, props);
+    assert.ok(document.querySelector('#clipboard-use'));
   } finally {
     await env.dispose();
   }
 });
+
+test('React composer switches microphone to send and Use inserts parenthesized text into existing draft', async () => {
+  const env = environment(),
+    f = fixture(env),
+    workspace = env.createWorkspace({ api: f.transport, post: f.post });
+  try {
+    await env.mount(env.App, { workspace });
+    assert.equal(document.querySelector('#send').hidden, true);
+    assert.equal(document.querySelector('#microphone').hidden, false);
+    assert.equal(document.querySelector('#composer-context'), null);
+    await input('#input', 'Minha pergunta');
+    assert.equal(document.querySelector('#send').hidden, false);
+    assert.equal(document.querySelector('#microphone').hidden, true);
+    await act(async () =>
+      f.clipboard(
+        { pending: true, owned: { main: 'copy-1' }, notification: { id: 'copy-1' } },
+        { id: 'copy-1', contentType: 'text', text: 'Texto copiado' },
+      ),
+    );
+    await settle();
+    await click('#clipboard-use');
+    assert.equal(document.querySelector('#input').value, 'Minha pergunta\n(Texto copiado)\n');
+    assert.equal(
+      f.calls.some((row) => row.route === '/chat'),
+      false,
+    );
+    assert.equal(
+      document.querySelector('#attachment-list').nextElementSibling.className,
+      'composer',
+    );
+  } finally {
+    await env.dispose();
+  }
+});
+
 test('React integration catalog searches locally and calls Spotify only inside its details', async () => {
   const env = environment(),
     f = fixture(env);
@@ -479,9 +521,7 @@ test('clipboard uses the shared card and attaches only after explicit local acti
     assert.match(card.textContent, /Nada é enviado automaticamente/);
     assert.equal(attached, 0);
     assert.equal(sent, 0);
-    const add = [...card.querySelectorAll('button')].find(
-      (x) => x.textContent === 'Adicionar ao chat',
-    );
+    const add = [...card.querySelectorAll('button')].find((x) => x.textContent === 'Usar');
     await act(async () => add.click());
     assert.equal(attached, 1);
     assert.equal(sent, 0);
