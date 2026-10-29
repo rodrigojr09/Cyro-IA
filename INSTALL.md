@@ -1,10 +1,10 @@
-# Instalação e atualização — Cyro IA 6.2.0 em desenvolvimento
+# Instalação e atualização — Cyro IA 6.2.1 em desenvolvimento
 
-O setup 6.2.0 foi gerado localmente em release/v6 e o Cloud correspondente foi publicado em 28/10/2026. Inclui o refinamento visual global, menus ancorados, ações alinhadas, contraste reforçado e as correções anteriores. Auditoria e teste do payload com perfil temporário passaram. Consulte os checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
+O setup 6.2.1 foi gerado localmente em release/v6 e o Cloud correspondente foi publicado em 29/10/2026. Inclui os anexos/clipboard unificados, drop de arquivos, menu completo das conversas, tokens especificados e seleção de escopo sem IA até Atualizar memória. Auditoria e teste do payload com perfil temporário passaram. Consulte os checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
 
 ## Aplicativo Windows
 
-1. Obtenha o `Cyro-IA-Setup-6.2.0.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
+1. Obtenha o `Cyro-IA-Setup-6.2.1.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
 2. Confira o SHA-256 do instalador com `Get-FileHash` e compare com o arquivo de verificação da mesma entrega. O instalador atual não tem assinatura Authenticode.
 3. Feche o Cyro IA antes de atualizar. Faça uma cópia externa dos dados locais com o aplicativo encerrado. Não apague o perfil nem use `Backup/` como origem automática.
 4. Execute o instalador Windows x64, escolha o destino e abra o Cyro IA. Python e Node são dependências de desenvolvimento/compilação, não do usuário instalado.

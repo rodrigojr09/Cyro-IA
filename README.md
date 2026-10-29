@@ -2,7 +2,7 @@
 
 Cyro IA é o novo nome do JARVIS, autorizado pelo proprietário em 27/10/2026. Repositório: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA). Perfis, sessões, IPC e identificadores internos existentes permanecem compatíveis.
 
-Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Destino de futuras compilações: `release/v6/Cyro-IA-Setup-6.2.1.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
+Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador local desta entrega: `release/v6/Cyro-IA-Setup-6.2.1.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
 
 O [Writer 6.1](docs/WRITER.md) usa um documento contínuo com chat lateral. A migração preserva os documentos e históricos existentes; sem atualização automática do aplicativo instalado.
 
@@ -10,9 +10,9 @@ A sidebar usa indentação limpa para conversas e projetos, destaque discreto do
 
 Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.2.1, sem substituir os módulos de produção; não se atualizam automaticamente. Para regenerar ambos com todos os componentes/páginas e CSSs atuais, execute `python -X utf8 tools/generate_ui_catalog.py` na raiz. O gerador confere a integridade das fontes incluídas e identifica cada origem por comentário. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
 
-Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas; o instalador publicado 6.1.2 permanece separado do desenvolvimento 6.2.1.
+Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas para a v6.2.1.
 
-A v6.2.1 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A versão publicada anteriormente continua 6.2.0 até autorização de uma nova entrega.
+A v6.2.1 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). O Cloud 6.2.1 foi publicado e o instalador local compilado em 29/10/2026; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
 
 # Base funcional v5
 
