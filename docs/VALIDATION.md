@@ -1,3 +1,13 @@
+# Recompilação 6.2.1 — correções de layout
+
+Em 29/10/2026, mediante autorização explícita, dcb411edc08a53c476f15de48544b776a6971ce5 foi enviado a master e à branch de desenvolvimento. Vercel success às 08:24:16 America/Sao_Paulo (11:24:16 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/7cGUxHJY5cKwZSA6CWTJYnRAdQQN . Login de produção respondeu 200 com marca Cyro; /api/provider-settings sem sessão respondeu 401. Nenhuma mudança de banco, credenciais ou permissões.
+
+O setup release/v6/Cyro-IA-Setup-6.2.1.exe foi recompilado com os novos layouts da sidebar, configurações da conversa e Quick Chat. 183637277 bytes; ProductVersion 6.2.1 e payload 6.2.1.0; Authenticode NotSigned. SHA256 `ddb3d5c7869f448142bdf2cb79e4b70aba79e15f7bf739f2683b606f4e3371c6`, conferido independentemente contra .exe.sha256. O instalador anterior, de SHA256 11098f0e0f43f0bc7552435ca22d04a535216eb6d79c6fb2d2749187972520ac, foi preservado em release/v6/previous/6.2.1-b9c88e5/ com checksum e blockmap.
+
+O renderer foi recompilado e as etapas oficiais de ícones/NSIS/auditoria executadas. Reutilizados os 146 testes Desktop e três cenários Electron aprovados, além da validação Cloud/Python anterior sem alterações. O backend congelado foi reutilizado somente após confirmar ausência de diferenças em backend, Cloud e dependências desde b9c88e5 e executar self-check. Auditoria de fontes/ASAR/runtime aprovada. O payload final iniciou com PATH sem Node/Python, autenticou localmente e preservou dados após reinício, usando exclusivamente perfil temporário. Sem instalação sobre o perfil pessoal, chamadas pagas, tag ou GitHub Release. Não equivale a Windows limpo.
+
+Evidências locais: build/v6/cyro-setup-6.2.1-layout.log, cyro-6.2.1-layout-selfcheck.log, cyro-6.2.1-layout-payload-smoke.log, layout-deployment-runtime.json, layout-deployment-latest.json e layout-production-check.json. A documentação final também foi enviada ao GitHub; o runtime permanece o mesmo validado. Backup/ preservado.
+
 # Ajustes de layout após a entrega 6.2.1
 
 Configurações da conversa organizadas em campos e rodapé: Salvar conversa separado das quatro ações secundárias, grid com gap de 8 px, margem de 24 px após os campos, redução controlada em janelas baixas e foco/cores preservados. Sidebar usa cabeçalhos de 44 px com coluna fixa de 32 px para adição, padding simétrico, fundo de grupo unificado e gutter de rolagem estável. Textos/ícones e ações dos projetos seguem as mesmas colunas.

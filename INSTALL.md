@@ -1,6 +1,6 @@
 # Instalação e atualização — Cyro IA 6.2.1 em desenvolvimento
 
-O setup 6.2.1 foi gerado localmente em release/v6 e o Cloud correspondente foi publicado em 29/10/2026. Inclui os anexos/clipboard unificados, drop de arquivos, menu completo das conversas, tokens especificados e seleção de escopo sem IA até Atualizar memória. Auditoria e teste do payload com perfil temporário passaram. Consulte os checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
+O setup 6.2.1 foi gerado localmente em release/v6 e o Cloud correspondente foi publicado em 29/10/2026. O setup foi recompilado na mesma data para incluir as correções de layout do modal, sidebar e espaço vazio do Quick Chat; use o checksum mais recente em docs/VALIDATION.md. Inclui os anexos/clipboard unificados, drop de arquivos, menu completo das conversas, tokens especificados e seleção de escopo sem IA até Atualizar memória. Auditoria e teste do payload com perfil temporário passaram. Consulte os checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
 
 ## Aplicativo Windows
 
