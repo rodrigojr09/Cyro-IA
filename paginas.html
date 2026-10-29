@@ -5,7 +5,7 @@
 <body class="cyro-source-catalog"><main>
 <!-- Referência estática: fontes completas escapadas para não executar scripts ou chamadas. -->
 <h1>Cyro IA — Páginas, componentes e estilos</h1>
-<p>Referência consolidada da v6.2.1. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
+<p>Referência consolidada da v6.2.2. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
 <p>Este catálogo mostra o código completo; não executa as telas React nem substitui o aplicativo. styles.css reúne as folhas de estilo, incluindo o realce de código compilado. As fontes de produção continuam separadas.</p>
 <p>3 HTMLs · 33 fontes React · 18 CSSs.</p>
 <p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>.</p>
@@ -21,7 +21,7 @@
       content=&quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; media-src &#x27;self&#x27; data:; img-src &#x27;self&#x27; data:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;
     /&gt;
     &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
-    &lt;title&gt;Cyro IA 6.2.1 — Cloud + Desktop&lt;/title&gt;
+    &lt;title&gt;Cyro IA 6.2.2 — Cloud + Desktop&lt;/title&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;app.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;clipboard.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;writer.css&quot; /&gt;
@@ -2848,6 +2848,7 @@ export function Composer({
 <details id="fonte-19"><summary>desktop/scripts/chat/Conversation.jsx — Componente / página React</summary>
 <pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
 import { Markdown } from &#x27;../ui/components&#x27;;
+import { Icon } from &#x27;../ui/Icon&#x27;;
 import { AttachmentList } from &#x27;../attachment/components&#x27;;
 import { WriterProposal } from &#x27;../writer/WriterPreview&#x27;;
 import { post } from &#x27;../shared/bridge&#x27;;
@@ -2964,6 +2965,8 @@ function MessageCopy({ text }) {
   return (
     &lt;button
       className=&quot;message-copy&quot;
+      type=&quot;button&quot;
+      aria-label={label}
       onClick={async () =&gt; {
         try {
           await window.jarvisWindow.copyCode(text);
@@ -2973,7 +2976,10 @@ function MessageCopy({ text }) {
         }
       }}
     &gt;
-      {label}
+      &lt;Icon name=&quot;copy&quot; /&gt;
+      &lt;span aria-live=&quot;polite&quot; aria-atomic=&quot;true&quot;&gt;
+        {label}
+      &lt;/span&gt;
     &lt;/button&gt;
   );
 }
@@ -4505,12 +4511,14 @@ import {
   Plus,
   ChevronRight,
   ChevronDown,
+  Copy,
 } from &#x27;lucide&#x27;;
 const nodes = {
   &#x27;panel-left&#x27;: PanelLeft,
   &#x27;folder-plus&#x27;: FolderPlus,
   search: Search,
   plus: Plus,
+  copy: Copy,
   &#x27;chevron-right&#x27;: ChevronRight,
   &#x27;chevron-down&#x27;: ChevronDown,
   &#x27;messages-square&#x27;: MessagesSquare,
@@ -4835,7 +4843,7 @@ export function Settings({
               {category === &#x27;Sobre&#x27; &amp;&amp; (
                 &lt;&gt;
                   &lt;h3&gt;Sobre o Cyro IA&lt;/h3&gt;
-                  &lt;p&gt;Versão 6.2.1&lt;/p&gt;
+                  &lt;p&gt;Versão 6.2.2&lt;/p&gt;
                   &lt;p&gt;
                     Desenvolvido por &lt;strong&gt;Rodrigo Junior&lt;/strong&gt;.
                   &lt;/p&gt;

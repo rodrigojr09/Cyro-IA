@@ -28,12 +28,14 @@ import {
   Plus,
   ChevronRight,
   ChevronDown,
+  Copy,
 } from 'lucide';
 const nodes = {
   'panel-left': PanelLeft,
   'folder-plus': FolderPlus,
   search: Search,
   plus: Plus,
+  copy: Copy,
   'chevron-right': ChevronRight,
   'chevron-down': ChevronDown,
   'messages-square': MessagesSquare,

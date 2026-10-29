@@ -294,7 +294,7 @@ app.whenReady().then(async () => {
     await waitFor(`document.getElementById('project-name').textContent==='iPet'`);
     await js(`document.querySelector('.chat-item[title="Investigando a autenticação"]').click()`);
     await waitFor(`document.getElementById('conversation-name').dataset.chatId==='${firstId}'`);
-    await enter('#input', 'Como melhorar o fluxo de login?');
+    await enter('#input', 'Oi');
     await js(`document.getElementById('send').click()`);
     await waitFor(`!!document.querySelector('.code-block button')`);
     assert.equal(submittedChat, firstId);
@@ -340,11 +340,31 @@ app.whenReady().then(async () => {
         `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
       );
       await waitFor(`!document.querySelector('.ui-action-menu')`);
+      const copyLayout = await js(`(() => {
+        const message=[...document.querySelectorAll('.message.user')].at(-1);
+        const button=message.querySelector('.message-copy');const label=button.querySelector('span');
+        const r=button.getBoundingClientRect();const s=getComputedStyle(button);const scroll=document.getElementById('conversation-scroll').getBoundingClientRect();
+        return {nowrap:s.whiteSpace,lines:label.getClientRects().length,width:r.width,inside:r.left>=scroll.left && r.right<=scroll.right,space:parseFloat(getComputedStyle(document.getElementById('messages')).gap),height:r.height};
+      })()`);
+      assert.equal(copyLayout.nowrap, 'nowrap');
+      assert.equal(copyLayout.lines, 1);
+      assert.ok(copyLayout.width >= 160);
+      assert.equal(copyLayout.inside, true);
+      assert.ok(copyLayout.space >= copyLayout.height + 8);
       await shot('cyro-v603-chat-' + width + '.png');
     }
     win.setSize(1366, 738);
     await frame();
     await shot('cyro-v603-chat.png');
+    await js(`document.querySelector('.message.user .message-copy').focus()`);
+    await shot('cyro-v622-copy-action.png');
+    const copyText = await js(`document.querySelector('.message.user p').textContent`);
+    await js(`document.querySelector('.message.user .message-copy').click()`);
+    await waitFor(
+      `document.querySelector('.message.user .message-copy span').textContent==='Copiado'`,
+    );
+    assert.equal(copied, copyText);
+
     await waitFor(`!document.getElementById('send').disabled`);
     await js(`document.querySelector('.chat-item[title="Melhorias no feed"]').click()`);
     await waitFor(

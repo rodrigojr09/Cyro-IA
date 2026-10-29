@@ -1,3 +1,13 @@
+# Validação 6.2.2 — controle flutuante Copiar mensagem
+
+Em 29/10/2026, check:v6 passou com 489 testes (146 Desktop, 214 backend Python, 92 Cloud, 35 iniciadores/empacotamento e 2 ferramentas Node), TypeScript/build Cloud e Desktop, sete cenários Electron e 56 verificações administrativas em Chromium. Prettier Desktop aprovado. Nenhuma dependência nova; npm ci da raiz já havia sido executado. cloud/next-env.d.ts restaurado byte a byte após a compilação.
+
+O controle Copiar mensagem usa ícone de cópia, min-width 160 px, width max-content e white-space nowrap tanto no botão quanto na legenda. A borda tem raio de 10 px e sombra suave; os estados de hover, foco, pressionado, Copiado e falha preservam o envio somente ao clipboard local. O espaçamento entre mensagens é 48 px e a margem inferior reserva lugar para a ação de 36 px, sem cobrir o próximo balão. Uma área transparente de 6 px mantém o hover ao cruzar o pequeno intervalo entre balão e botão.
+
+O cenário Electron usou a mensagem curta Oi e validou texto em uma linha, largura mínima, permanência dentro da área da conversa e espaço suficiente em 1366×738 e 800×600. Também acionou a cópia, conferiu o texto exato recebido pelo IPC e o retorno Copiado. A captura cyro-v622-copy-action.png foi conferida visualmente. O controle continua disponível no hover/foco e em superfícies sem hover. Copiar não envia conteúdo à IA.
+
+Evidências locais: build/v6/v622-check.log, v622-copy-electron.log e v622-format.log; captura no diretório temporário. As integrações Cloud/IA/OAuth dos cenários são sintéticas; não certificam OpenAI paga, áudio físico, Spotify real, Operations de produção ou Windows limpo. Sem migrations ou alterações em Backup/. Publicação/compilação da 6.2.2 autorizadas pelo proprietário; os resultados de entrega serão registrados separadamente. Referências paginas.html/styles.css regeneradas.
+
 # Recompilação 6.2.1 — correções de layout
 
 Em 29/10/2026, mediante autorização explícita, dcb411edc08a53c476f15de48544b776a6971ce5 foi enviado a master e à branch de desenvolvimento. Vercel success às 08:24:16 America/Sao_Paulo (11:24:16 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/7cGUxHJY5cKwZSA6CWTJYnRAdQQN . Login de produção respondeu 200 com marca Cyro; /api/provider-settings sem sessão respondeu 401. Nenhuma mudança de banco, credenciais ou permissões.

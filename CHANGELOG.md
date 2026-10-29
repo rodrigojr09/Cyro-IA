@@ -1,3 +1,8 @@
+# 6.2.2 — em desenvolvimento
+
+- Copiar mensagem em uma única linha, com ícone, largura estável de 160 px, padding consistente, contraste nos dois temas, borda arredondada e sombra suave.
+- Espaço entre mensagens e margem inferior ajustados para o controle flutuante não colidir com balões ou digitação; estados de hover/foco/pressionado e retorno da cópia preservados.
+
 # 6.2.1 — em desenvolvimento
 
 - Ajuste posterior de layout: ações da conversa separadas dos campos, cabeçalhos da sidebar com colunas simétricas e Quick Chat com altura baseada no conteúdo e painéis sem intervalo vazio.

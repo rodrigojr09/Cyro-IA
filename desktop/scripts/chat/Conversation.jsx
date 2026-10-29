@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Markdown } from '../ui/components';
+import { Icon } from '../ui/Icon';
 import { AttachmentList } from '../attachment/components';
 import { WriterProposal } from '../writer/WriterPreview';
 import { post } from '../shared/bridge';
@@ -116,6 +117,8 @@ function MessageCopy({ text }) {
   return (
     <button
       className="message-copy"
+      type="button"
+      aria-label={label}
       onClick={async () => {
         try {
           await window.jarvisWindow.copyCode(text);
@@ -125,7 +128,10 @@ function MessageCopy({ text }) {
         }
       }}
     >
-      {label}
+      <Icon name="copy" />
+      <span aria-live="polite" aria-atomic="true">
+        {label}
+      </span>
     </button>
   );
 }

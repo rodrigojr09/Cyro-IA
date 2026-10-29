@@ -1,4 +1,4 @@
-# Cyro IA Desktop 6.2.1
+# Cyro IA Desktop 6.2.2
 
 A interface principal, o login e os três painéis do Quick Chat usam React.js. Electron e os preloads continuam em CommonJS com IPC restrito; React não recebe acesso a Node, banco ou credenciais Cloud.
 
@@ -30,7 +30,7 @@ Use tokens.css para espaçamentos/raios, ui.css para superfícies e foco e sideb
 
 Os blocos de código mantêm fundo escuro nos dois temas; textos secundários são controlados por tokens. A folha clara do Writer preserva a aparência de documento.
 
-## Fluxos 6.2.1
+## Fluxos 6.2.2
 
 AttachmentCard é a única apresentação de anexos e clipboard; importações locais por clipe/colagem/drop não chamam IA. A análise só acontece no envio explícito. Salvar cópia do monitor exporta texto ou a prévia reduzida, com diálogo nativo e verificação de posse. As oito categorias permanecem sem Computador/Conta. O menu dos três pontos agora compartilha as cinco ações da sidebar.
 

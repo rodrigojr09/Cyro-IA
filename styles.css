@@ -1,4 +1,4 @@
-/* Cyro IA 6.2.1 — todos os estilos de interface para consulta.
+/* Cyro IA 6.2.2 — todos os estilos de interface para consulta.
 Cada bloco identifica sua origem; importações locais incorporadas.
 Desktop e Cloud têm contextos globais distintos. Não é uma entrada de produção. */
 
@@ -1606,8 +1606,8 @@ textarea {
   --chat-secondary: #485c73;
 }
 #messages {
-  gap: 38px;
-  padding-bottom: 32px;
+  gap: 48px;
+  padding-bottom: 48px;
 }
 .message {
   min-width: 0;
@@ -1641,14 +1641,55 @@ textarea {
 .message-copy {
   position: absolute;
   right: 0;
-  bottom: -28px;
+  bottom: -40px;
   margin: 0;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: var(--chat-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: max-content;
+  min-width: 160px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px #0002;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 150ms ease;
+  transition:
+    opacity 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+/* Keep hover continuous while crossing the small gap below the bubble. */
+.message-copy::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: -6px;
+  height: 6px;
+}
+.message-copy:hover {
+  background: color-mix(in srgb, var(--text) 7%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.message-copy:active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.message-copy svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.message-copy span {
+  white-space: nowrap;
 }
 .message.assistant > .message-copy {
   right: auto;
