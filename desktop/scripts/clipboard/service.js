@@ -117,6 +117,29 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
     if (role(event) !== 'main') throw Error('Solicitação não autorizada.');
     manager.discardPending();
   });
+  electron.ipcMain.handle('clipboard:save-copy', async (event, id) => {
+    const kind = role(event);
+    if (!['main', 'composer'].includes(kind) || typeof id !== 'string' || id.length > 64)
+      throw Error('Solicitação não autorizada.');
+    const owner = kind === 'main' ? 'main' : 'quick';
+    const item = manager.content(owner, id);
+    if (!item) throw Error('Cópia indisponível ou expirada.');
+    const selected = await electron.dialog.showSaveDialog(windows()[kind], {
+      title: 'Salvar cópia local',
+      defaultPath:
+        item.contentType === 'image' ? 'Imagem copiada (prévia).png' : 'Texto copiado.txt',
+      buttonLabel: 'Salvar cópia',
+    });
+    if (selected.canceled || !selected.filePath) return { canceled: true };
+    if (!authenticated() || !manager.content(owner, id))
+      throw Error('Cópia indisponível ou expirada.');
+    const raw =
+      item.contentType === 'image'
+        ? Buffer.from(item.imageData.split(',')[1], 'base64')
+        : Buffer.from(item.text, 'utf8');
+    fs.writeFileSync(selected.filePath, raw);
+    return { ok: true };
+  });
   electron.ipcMain.handle('clipboard:open-link', async (event, id) => {
     const kind = role(event);
     if (!['main', 'composer'].includes(kind)) throw Error('Solicitação não autorizada.');

@@ -75,6 +75,31 @@ function createAttachments({ dialog, window, backend }) {
         JSON.stringify({ data: value.data }),
       );
     },
+    async dropFile(value) {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        Array.isArray(value) ||
+        Object.keys(value).some((key) => !['name', 'data'].includes(key)) ||
+        typeof value.name !== 'string' ||
+        !value.name ||
+        value.name.length > 200 ||
+        /[\\/:\x00-\x1f]/.test(value.name) ||
+        !EXTENSIONS.includes(path.extname(value.name).slice(1).toLowerCase()) ||
+        typeof value.data !== 'string' ||
+        value.data.length > Math.ceil(MAX_BYTES / 3) * 4 ||
+        !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data)
+      )
+        throw Error('Anexo inválido ou acima de 5 MB.');
+      const raw = Buffer.from(value.data, 'base64');
+      if (!raw.length || raw.length > MAX_BYTES || raw.toString('base64') !== value.data)
+        throw Error('Anexo inválido ou acima de 5 MB.');
+      return backend(
+        '/desktop/attachments/import-data',
+        'POST',
+        JSON.stringify({ name: value.name, data: value.data }),
+      );
+    },
     async info(id) {
       if (typeof id !== 'string' || !/^[a-f\d-]{36}$/i.test(id)) throw Error('Anexo inválido.');
       return backend('/desktop/attachments/info', 'POST', JSON.stringify({ id }));

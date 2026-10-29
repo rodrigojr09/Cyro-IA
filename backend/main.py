@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="6.2.0" if CLOUD else "2.0.1-dev.0",
+    version="6.2.1" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -247,6 +247,21 @@ async def paste_image(req: PasteImage):
     async with chat_lock:
         files=await asyncio.to_thread(attachment_store.import_image,raw,attachment_account())
         return {"files":files}
+
+class DropAttachment(PasteImage):
+    name: str = Field(min_length=1, max_length=200)
+
+@app.post("/desktop/attachments/import-data")
+async def import_attachment_data(req: DropAttachment):
+    if chat_lock.locked():
+        raise HTTPException(409, "Aguarde a operação em andamento.")
+    try:
+        raw = base64.b64decode(req.data, validate=True)
+    except ValueError:
+        raise ReadError("Anexo inválido.") from None
+    async with chat_lock:
+        files = await asyncio.to_thread(attachment_store.import_data, req.name, raw, attachment_account())
+        return {"files": files}
 
 @app.post("/desktop/attachments/info")
 def attachment_info(req: AttachmentId):
@@ -423,8 +438,6 @@ async def save_project_selection(req: ScopeRequest):
     result = await asyncio.to_thread(
         store.set_scope, req.project_id, req.include, req.exclude
     )
-    if result["selection_changed"]:
-        indexer.enqueue(req.project_id)
     return {
         **store.project(req.project_id),
         "selection_changed": result["selection_changed"],
@@ -539,7 +552,7 @@ async def workspace_view(req: WorkspaceViewRequest):
         project
         and project["scope_confirmed"]
         and previous_project != req.project_id
-        and project["state"] not in {"partial", "indexing", "queued"}
+        and project["state"] not in {"partial", "indexing", "queued", "selecting"}
     ):
         indexer.enqueue(project["id"], debounce=True)
     if (

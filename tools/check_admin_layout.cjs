@@ -225,6 +225,20 @@ async function render() {
           )
             throw Error("Falha na proteção do formulário de credenciais");
         }
+        if ([390,1440].includes(width)) {
+          const light = await window.webContents.executeJavaScript(`(() => {
+            document.documentElement.dataset.theme='light';
+            const s=getComputedStyle(document.documentElement);
+            return {bg:s.getPropertyValue('--bg').trim(),text:s.getPropertyValue('--text').trim(),overflow:document.documentElement.scrollWidth>innerWidth+1};
+          })()`);
+          if (light.bg!=='#f7f9fc' || light.text!=='#172033' || light.overflow) throw Error(`Light theme failed in ${section} at ${width}px`);
+          if (section==='usage' && width===1440) {
+            await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+            await fs.writeFile(path.join(output,'usage-light-1440.png'),(await window.webContents.capturePage()).toPNG());
+          }
+          await window.webContents.executeJavaScript("delete document.documentElement.dataset.theme");
+          checks++;
+        }
         checks++;
       }
     }

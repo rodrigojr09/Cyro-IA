@@ -1,3 +1,10 @@
+# 6.2.1 — em desenvolvimento
+
+- Anexos de clipe, colagem, arrastar arquivos e monitor de clipboard reutilizam AttachmentCard e os estilos especificados; prévia e cópia locais, aviso de privacidade e envio explícito.
+- Menu ancorado completo em conversas e três pontos: edição, mensagens anteriores, arquivar/restaurar, limpar e excluir com confirmação nativa.
+- Oito categorias de configurações preservadas, alerta de armazenamento e títulos arquivados em itálico; Sobre identifica a versão real e o repositório.
+- Tokens Desktop e Cloud alinhados à especificação. Salvar/reabrir seleção não enfileira IA; a reindexação começa em Atualizar memória, mantendo o escopo e o aceite de análise parcial.
+
 # 6.2.0 — em desenvolvimento
 
 - Refinamento visual global do Desktop, Cloud, login, Quick Chat, Writer e configurações com variáveis de espaçamento/raio, foco limpo e contraste reforçado.

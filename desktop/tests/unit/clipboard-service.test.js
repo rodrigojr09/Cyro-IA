@@ -42,7 +42,10 @@ test('IPC autentica conta, frame e ambiente; persiste apenas preferências; indi
       ipcMain: { handle: (name, fn) => handlers.set(name, fn) },
       nativeImage: { createFromBitmap: () => 'red-dot' },
       clipboard: { availableFormats: () => [], readText: () => text },
-      dialog: { showMessageBox: async () => ({ response: permitLink ? 1 : 0 }) },
+      dialog: {
+        showMessageBox: async () => ({ response: permitLink ? 1 : 0 }),
+        showSaveDialog: async () => ({ filePath: path.join(directory, 'copia.txt') }),
+      },
       shell: { openExternal: async (url) => opened.push(url) },
     },
     dataDir: directory,
@@ -73,6 +76,12 @@ test('IPC autentica conta, frame e ambiente; persiste apenas preferências; indi
     focused = false;
     assert.equal(handlers.get('clipboard:claim')(event(main)).reason, 'QUICK_CHAT_OPEN');
     assert.equal(handlers.get('clipboard:claim')(event(composer)).ok, true);
+    const owned = manager.state().owned.quick;
+    await assert.rejects(handlers.get('clipboard:save-copy')(event(orb), owned), /autorizada/);
+    await assert.rejects(handlers.get('clipboard:save-copy')(event(main), owned), /indisponível/);
+    assert.equal((await handlers.get('clipboard:save-copy')(event(composer), owned)).ok, true);
+    assert.equal(fs.readFileSync(path.join(directory, 'copia.txt'), 'utf8'), text);
+
     focused = true;
     if (process.platform === 'win32') assert.equal(overlays.at(-1)[0], null);
     assert.equal(handlers.get('clipboard:claim')(event(main)).ok, false);

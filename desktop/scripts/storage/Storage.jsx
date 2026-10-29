@@ -6,6 +6,11 @@ export function Storage({ snapshot, busy, onClear }) {
     <section>
       <h3>Armazenamento</h3>
       <p>Chats gerais ficam na nuvem. Projetos, seus chats e anexos ficam neste computador.</p>
+      {snapshot?.cloud?.blocked && (
+        <p className="storage-blocked" role="alert">
+          Limite de armazenamento na nuvem atingido. Apague chats para liberar espaço.
+        </p>
+      )}
       <div id="storage-usage">
         {['local', 'cloud'].map((scope) => {
           const usage = snapshot?.[scope];
@@ -22,7 +27,11 @@ export function Storage({ snapshot, busy, onClear }) {
                 <progress
                   max={usage.limitBytes}
                   value={usage.usedBytes}
-                  aria-label="Armazenamento na nuvem utilizado"
+                  aria-label={
+                    scope === 'local'
+                      ? 'Armazenamento local utilizado'
+                      : 'Armazenamento na nuvem utilizado'
+                  }
                 />
               )}
               {usage && (

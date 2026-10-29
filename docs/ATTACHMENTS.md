@@ -1,3 +1,9 @@
+# Anexos 6.2.1 — componente único
+
+O chat principal usa o mesmo AttachmentCard para clipe, drop e Ctrl+V de imagem. O monitor também reutiliza o componente para textos/imagens, com ações locais e revisão humana. A raiz usa border 1px var(--border), raio 10px, padding/gap 8px e var(--surface); imagens usam 64×64, contain e raio 6px. Salvar cópia, Ver prévia e remover permanecem juntos ao arquivo. Documentos mostram extração local limitada a 4.000 caracteres ao pedir prévia; indisponibilidade da prévia não remove dados antigos.
+
+Drop recebe bytes e nome simples, não caminhos de leitura/escrita fornecidos pelo renderer. O IPC dedicado e o serviço local recusam nomes com separadores, drives, campos extras, formatos inválidos e arquivos acima de 5 MB. As validações existentes de imagem/documento continuam no backend; o limite de cinco por mensagem é compartilhado com o clipe. Conteúdo só é enviado à IA no envio explícito da mensagem. Não há nova API Cloud nem nova conversa para importar arquivos.
+
 # Anexos locais nos chats
 
 O compositor principal aceita até cinco anexos por mensagem, com até 5 MiB

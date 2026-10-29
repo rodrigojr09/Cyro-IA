@@ -274,7 +274,16 @@ app.whenReady().then(async () => {
     await composer.webContents.executeJavaScript(
       "document.getElementById('clipboard-title').click();void 0;",
     );
-    assert.ok(composer.getBounds().height < 340, 'As opções devem manter o Quick Chat compacto.');
+    assert.ok(
+      composer.getBounds().height <= 480,
+      'O cartão compartilhado deve respeitar o limite do painel.',
+    );
+    const shared = await composer.webContents.executeJavaScript(
+      `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
+    );
+    assert.equal(shared.radius, '10px');
+    assert.equal(shared.padding, '8px');
+    assert.equal(shared.overflow, false);
     fs.writeFileSync(
       path.join(directory, 'clipboard-options.png'),
       (await composer.webContents.capturePage()).toPNG(),

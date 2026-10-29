@@ -101,6 +101,9 @@ export function ScopeDialog({ project, onClose, onSaved }) {
       <div id="scope-location">
         {project?.name} / {state.path}
       </div>
+      <p>
+        Salvar a seleção não chama a IA. Use Atualizar memória no projeto para iniciar a análise.
+      </p>
       <div className="scope-actions">
         <button
           id="scope-up"
@@ -201,7 +204,7 @@ export function ScopeDialog({ project, onClose, onSaved }) {
             }
           }}
         >
-          Salvar seleção e analisar
+          Salvar seleção
         </button>
       </div>
     </Dialog>

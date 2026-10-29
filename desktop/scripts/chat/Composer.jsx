@@ -27,8 +27,45 @@ export function Composer({
         context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
         canClaim={state.ready && !busy && !settings && !library}
         onSend={onSend}
+        onAttachImage={
+          !isWriter
+            ? async (dataURL) => {
+                const match = /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(
+                  dataURL,
+                );
+                if (!match) return false;
+                const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0));
+                return attachments.paste(
+                  [new window.File([bytes], 'Imagem copiada.png', { type: match[1] })],
+                  !canSend ? 'Aguarde o chat ficar disponível para anexar.' : '',
+                );
+              }
+            : undefined
+        }
       />
-      <div className="composer">
+      <div
+        className="composer"
+        onDragOver={(event) => {
+          if ([...(event.dataTransfer?.types || [])].includes('Files')) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = canSend && !isWriter ? 'copy' : 'none';
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          const files = [...(event.dataTransfer?.files || [])];
+          if (!files.length) return;
+          void attachments.paste(
+            files,
+            isWriter
+              ? 'Anexe arquivos nas conversas comuns.'
+              : !canSend
+                ? 'Aguarde o chat ficar disponível para anexar.'
+                : '',
+            'drop',
+          );
+        }}
+      >
         <textarea
           id="input"
           ref={inputRef}

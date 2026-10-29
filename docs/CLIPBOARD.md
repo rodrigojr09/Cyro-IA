@@ -1,3 +1,11 @@
+# Clipboard e anexos unificados — 6.2.1
+
+O monitor e os anexos do chat usam AttachmentCard e attachment-card, com o mesmo fundo, borda, padding e miniaturas 64×64. Textos copiados continuam permitindo revisão antes de confirmar; imagens monitoradas podem ser adicionadas ao chat principal pelo botão explícito Adicionar ao chat, sem enviar a mensagem. A imagem monitorada é uma prévia PNG reduzida, identificada como tal; para usar o arquivo original, anexe pelo clipe ou arraste-o. Ctrl+V de imagem também produz o cartão de anexo com aviso de privacidade local.
+
+Salvar cópia abre o diálogo nativo e revalida a posse da cópia após escolher o destino. O monitor continua sem gravar conteúdo automaticamente; a gravação só acontece por Salvar cópia ou Adicionar ao chat. Os anexos importados são protegidos por conta no armazenamento local existente. Clipe, colagem e drop respeitam cinco arquivos de até 5 MB, validam conteúdo real e não chamam IA durante a importação. Texto comum colado na digitação continua texto.
+
+Quick Chat usa o mesmo cartão para texto/imagem e permite salvar cópia local; o envio de anexos de imagem continua no chat principal. No monitor, os originais não são retidos. TTL, deduplicação, exclusividade entre janelas e ausência de captura antiga permanecem. Nenhuma cópia é enviada automaticamente. As seções abaixo registram o histórico anterior e não substituem este comportamento 6.2.1.
+
 # Área de transferência — atualização 6.1.1
 
 As configurações agora ocupam uma página inteira. A exceção ao abrir a categoria foi corrigida e falhas de renderização ficam limitadas à seção, preservando a navegação e o chat.

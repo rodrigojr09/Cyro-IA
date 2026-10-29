@@ -235,12 +235,18 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     const trigger = event.currentTarget;
     const row = trigger.closest('.project-row,.navigation-heading') || trigger;
     const bounds = row.getBoundingClientRect();
-    const sidebar = trigger.closest('#sidebar').getBoundingClientRect();
+    const sidebar = trigger.closest('#sidebar')?.getBoundingClientRect();
     setMenu({
       kind,
       item,
       trigger,
-      anchor: { left: sidebar.left, right: sidebar.right, top: bounds.top, bottom: bounds.bottom },
+      placement: sidebar ? undefined : 'below-end',
+      anchor: {
+        left: sidebar?.left ?? bounds.left,
+        right: sidebar?.right ?? bounds.right,
+        top: bounds.top,
+        bottom: bounds.bottom,
+      },
     });
   }
   return (
@@ -351,9 +357,11 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
             </button>
             <button
               id="manage-open"
-              aria-label="Configurações da conversa"
+              aria-label="Opções da conversa"
               disabled={!state.chat || busy}
-              onClick={openManage}
+              aria-haspopup="menu"
+              aria-expanded={menu?.kind === 'chat'}
+              onClick={(event) => openSidebarMenu('chat', state.chat, event)}
             >
               <Icon name="ellipsis" />
             </button>
@@ -476,7 +484,10 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
                 role="menuitem"
                 onClick={() =>
                   run(async () => {
-                    await navigate(menu.item.project_id || '', menu.item.id);
+                    const chat = menu.item;
+                    if (workspace.get().chat?.id !== chat.id)
+                      await navigate(chat.project_id || '', chat.id);
+                    setMenu(null);
                     openManage();
                   })
                 }
@@ -485,24 +496,67 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               </button>
               <button
                 role="menuitem"
-                disabled={!!menu.item.slot}
+                disabled={!!menu.item.writer_document_id}
                 onClick={() =>
                   run(async () => {
-                    const result = await window.jarvisWindow.manageChat(menu.item.id, 'archive');
-                    if (result?.ok === false) throw Error(result.data?.detail);
+                    const chat = menu.item;
+                    if (workspace.get().chat?.id !== chat.id)
+                      await navigate(chat.project_id || '', chat.id);
                     setMenu(null);
-                    await workspace.catalog(state.project?.id || '', null);
+                    await workspace.older();
                   })
                 }
               >
-                Arquivar
+                Mensagens anteriores
               </button>
               <button
                 role="menuitem"
                 disabled={!!menu.item.slot}
                 onClick={() =>
                   run(async () => {
-                    const result = await window.jarvisWindow.manageChat(menu.item.id, 'delete');
+                    const chat = menu.item;
+                    const result = await window.jarvisWindow.manageChat(
+                      chat.id,
+                      chat.archived ? 'restore' : 'archive',
+                    );
+                    if (result?.canceled) return;
+                    if (result?.ok === false) throw Error(result.data?.detail);
+                    setMenu(null);
+                    await workspace.catalog(state.project?.id || '', null);
+                  })
+                }
+              >
+                {menu.item.archived ? 'Restaurar conversa' : 'Arquivar'}
+              </button>
+              <button
+                role="menuitem"
+                disabled={!!menu.item.writer_document_id}
+                onClick={() =>
+                  run(async () => {
+                    const chat = menu.item;
+                    const result = await window.jarvisWindow.manageChat(chat.id, 'clear');
+                    if (result?.canceled) return;
+                    if (result?.ok === false) throw Error(result.data?.detail);
+                    await writer.leave();
+                    speaker.stop();
+                    attachments.clear();
+                    setInput('');
+                    await workspace.openById(chat.id);
+                    setMenu(null);
+                  })
+                }
+              >
+                Limpar mensagens
+              </button>
+              <button
+                role="menuitem"
+                className="danger"
+                disabled={!!menu.item.slot}
+                onClick={() =>
+                  run(async () => {
+                    const chat = menu.item;
+                    const result = await window.jarvisWindow.manageChat(chat.id, 'delete');
+                    if (result?.canceled) return;
                     if (result?.ok === false) throw Error(result.data?.detail);
                     setMenu(null);
                     await workspace.catalog(state.project?.id || '', null);
@@ -638,6 +692,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         </button>
         <button
           id="delete-chat"
+          className="danger"
           disabled={!!state.chat?.slot}
           onClick={() =>
             run(async () => {

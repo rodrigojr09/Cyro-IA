@@ -411,6 +411,10 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       return attachments.pasteImage(value);
     });
+    ipcMain.handle('jarvis:attachments-drop-file', async (event, value) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.dropFile(value);
+    });
     ipcMain.handle('jarvis:attachments-info', async (event, id) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       return attachments.info(id);

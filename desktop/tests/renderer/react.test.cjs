@@ -448,3 +448,127 @@ test('paste rejects unsupported images and discards a late response after contex
     await env.dispose();
   }
 });
+
+test('clipboard uses the shared card and attaches only after explicit local action', async () => {
+  const env = environment(),
+    f = fixture(env);
+  let attached = 0,
+    sent = 0;
+  try {
+    await env.mount(env.Clipboard, {
+      context: 'first',
+      onSend: async () => {
+        sent++;
+      },
+      onAttachImage: async () => {
+        attached++;
+        return true;
+      },
+    });
+    await act(async () =>
+      f.clipboard(
+        { pending: true, owned: { main: 'image-621' }, notification: { id: 'image-621' } },
+        { id: 'image-621', contentType: 'image', imageData: 'data:image/png;base64,AQID' },
+      ),
+    );
+    await settle();
+    const card = document.querySelector('#clipboard-card .attachment-card');
+    assert.ok(card);
+    assert.match(card.textContent, /Salvar cópia/);
+    assert.match(card.textContent, /Ver prévia/);
+    assert.match(card.textContent, /Nada é enviado automaticamente/);
+    assert.equal(attached, 0);
+    assert.equal(sent, 0);
+    const add = [...card.querySelectorAll('button')].find(
+      (x) => x.textContent === 'Adicionar ao chat',
+    );
+    await act(async () => add.click());
+    assert.equal(attached, 1);
+    assert.equal(sent, 0);
+    assert.equal(document.querySelector('#clipboard-card'), null);
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('dropped text file uses shared attachments, respects count and never sends a chat', async () => {
+  const env = environment(),
+    f = fixture(env);
+  let attachments,
+    imports = 0;
+  window.jarvisWindow.dropFile = async ({ name, data }) => {
+    imports++;
+    assert.equal(name, 'notas.txt');
+    return {
+      ok: true,
+      data: { files: [{ id: 'drop-621', name, kind: 'document', size: 5, textPreview: 'Notas' }] },
+    };
+  };
+  function Harness() {
+    attachments = env.useAttachments();
+    return React.createElement(env.AttachmentList, {
+      files: attachments.files,
+      onRemove: attachments.remove,
+    });
+  }
+  try {
+    await env.mount(Harness);
+    await act(async () =>
+      attachments.paste(
+        [new window.File(['Notas'], 'notas.txt', { type: 'text/plain' })],
+        '',
+        'drop',
+      ),
+    );
+    assert.equal(imports, 1);
+    assert.equal(attachments.files.length, 1);
+    assert.ok(document.querySelector('.attachment-card'));
+    assert.equal(f.calls.filter((x) => x.route === '/chat').length, 0);
+    await act(async () =>
+      attachments.paste(Array(5).fill(new window.File(['x'], 'notas.txt')), '', 'drop'),
+    );
+    assert.match(attachments.error, /5 arquivos/);
+    assert.equal(imports, 1);
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('top chat menu offers all actions and canceled deletion preserves the chat', async () => {
+  const env = environment(),
+    f = fixture(env),
+    workspace = env.createWorkspace({ api: f.transport, post: f.post });
+  let attempts = 0;
+  window.jarvisWindow.manageChat = async () => {
+    attempts++;
+    return { canceled: true };
+  };
+  try {
+    await env.mount(env.App, { workspace });
+    await act(async () => workspace.view('project-a', 'first'));
+    await input('#input', 'Rascunho preservado');
+    await click('#manage-open');
+    const menu = document.querySelector('.workspace-action-menu');
+    assert.ok(menu);
+    for (const text of [
+      'Editar conversa',
+      'Mensagens anteriores',
+      'Arquivar',
+      'Limpar mensagens',
+      'Excluir',
+    ])
+      assert.ok([...menu.querySelectorAll('button')].some((x) => x.textContent.trim() === text));
+    await act(async () =>
+      [...menu.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Excluir').click(),
+    );
+    assert.equal(attempts, 1);
+    assert.equal(workspace.get().chat.id, 'first');
+    assert.equal(document.getElementById('input').value, 'Rascunho preservado');
+    await act(async () => document.querySelector('.workspace-action-menu button').click());
+    assert.equal(document.getElementById('manage-dialog').open, true);
+    assert.equal(document.getElementById('chat-title').value, 'Login');
+    assert.equal(document.getElementById('input').value, 'Rascunho preservado');
+  } finally {
+    await env.dispose();
+  }
+});

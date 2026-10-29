@@ -22,7 +22,6 @@ dialog {
   padding: var(--space-5);
 }
 .suggestions button,
-.attachment-card,
 .storage-blocked,
 .continuous-writer .writer-recovery {
   border-radius: var(--radius-panel);

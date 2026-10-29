@@ -67,6 +67,25 @@ ipcMain.handle('jarvis:attachments-paste-image', (_event, value) => {
     },
   };
 });
+let dropRequests = 0;
+ipcMain.handle('jarvis:attachments-drop-file', (_, value) => {
+  dropRequests++;
+  assert.equal(value.name, 'notas.txt');
+  assert.equal(Buffer.from(value.data, 'base64').toString(), 'Notas locais');
+  return {
+    ok: true,
+    data: {
+      files: [
+        {
+          id: '88888888-8888-4888-8888-888888888888',
+          name: value.name,
+          kind: 'document',
+          size: 12,
+        },
+      ],
+    },
+  };
+});
 ipcMain.handle('jarvis:attachments-discard', () => ({ ok: true }));
 ipcMain.handle('jarvis:voice-preference', () => {});
 ipcMain.handle('jarvis:audio-claim', () => {});
@@ -339,10 +358,41 @@ app.whenReady().then(async () => {
     await waitFor(`!!document.querySelector('#attachment-list .attachment-card img')`);
     await waitFor(`document.querySelector('#attachment-list img')?.naturalWidth>0`);
     assert.equal(pasteRequests, 1);
+    assert.match(
+      await js(`document.querySelector('#attachment-list .attachment-privacy').textContent`),
+      /Prévia local/,
+    );
     assert.equal(submittedChat, chatBeforePaste);
     await js(`document.querySelector('#attachment-list button[aria-label^="Remover"]').click()`);
     await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
 
+    await js(
+      `(() => {const data=new DataTransfer();data.items.add(new File(['Notas locais'],'notas.txt',{type:'text/plain'}));document.querySelector('.composer').dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));})()`,
+    );
+    await waitFor(`!!document.querySelector('#attachment-list .attachment-card')`);
+    assert.equal(dropRequests, 1);
+    assert.equal(submittedChat, chatBeforePaste);
+    const attachmentStyle = await js(
+      `(() => {const c=document.querySelector('#attachment-list .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,background:s.backgroundColor,surface:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),save:c.textContent.includes('Salvar cópia'),preview:c.textContent.includes('Ver prévia')};})()`,
+    );
+    assert.equal(attachmentStyle.radius, '10px');
+    assert.equal(attachmentStyle.padding, '8px');
+    assert.equal(attachmentStyle.save, true);
+    assert.equal(attachmentStyle.preview, true);
+    await shot('cyro-v621-attachment.png');
+    await js(`document.querySelector('#attachment-list button[aria-label^="Remover"]').click()`);
+    await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
+    await js(`document.getElementById('manage-open').click()`);
+    await waitFor(`!!document.querySelector('.workspace-action-menu')`);
+    assert.equal(
+      await js(
+        `document.querySelector('.workspace-action-menu').textContent.includes('Mensagens anteriores') && document.querySelector('.workspace-action-menu').textContent.includes('Limpar mensagens')`,
+      ),
+      true,
+    );
+    await js(`document.querySelector('.workspace-action-menu button').click()`);
+    await waitFor(`document.getElementById('manage-dialog').open`);
+    await js(`document.querySelector('#manage-dialog .dialog-header button').click()`);
     await js(`document.getElementById('project-name').click()`);
     await waitFor(`document.getElementById('project-settings-dialog').open`);
     await js(`document.getElementById('project-select-sources').click()`);

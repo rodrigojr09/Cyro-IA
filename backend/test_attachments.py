@@ -53,6 +53,17 @@ class AttachmentStoreTests(unittest.TestCase):
         with self.assertRaises(AttachmentLimitError):self.store.import_image(b"x"*(MAX_BYTES+1),"owner-a")
         with self.assertRaises(ReadError):self.store.import_image(raw.getvalue(),"")
 
+    def test_dropped_bytes_preserve_data_preview_and_owner_without_path_access(self):
+        files = self.store.import_data("relatório.txt", "Texto para prévia".encode(), "a")
+        self.assertEqual(files[0]["textPreview"], "Texto para prévia")
+        self.assertEqual(self.store.content(files[0]["id"], "a")[1], "Texto para prévia".encode())
+        with self.assertRaises(ReadError): self.store.content(files[0]["id"], "b")
+        for name in ["../secreto.txt", "C:secreto.txt", "arquivo.exe", "pasta/nota.txt"]:
+            with self.assertRaises(ReadError): self.store.import_data(name, b"texto", "a")
+        with self.assertRaises(ReadError): self.store.import_data("nota.txt", b"texto", "")
+        with self.assertRaises(ReadError): self.store.import_data("foto.png", b"nao e imagem", "a")
+        with self.assertRaises(AttachmentLimitError): self.store.import_data("nota.txt", b"x"*(MAX_BYTES+1), "a")
+
     def test_five_files_and_exact_five_mb_are_accepted_but_overages_fail_atomically(
         self,
     ):
@@ -353,6 +364,16 @@ class AttachmentApiTests(unittest.TestCase):
                     ).status_code,
                     400,
                 )
+
+    def test_drop_import_is_local_and_validates_payload_before_explicit_send(self):
+        with patch.object(main.client.chat.completions, "create", AsyncMock()) as create:
+            result = self.client.post("/desktop/attachments/import-data", json={"name":"notas.txt", "data":base64.b64encode(b"Notas locais").decode()})
+            self.assertEqual(result.status_code, 200, result.text)
+            self.assertEqual(result.json()["files"][0]["textPreview"], "Notas locais")
+            create.assert_not_called()
+            self.assertEqual(self.client.post("/desktop/attachments/import-data", json={"name":"../notas.txt","data":"Tm90YXM="}).status_code,400)
+            self.assertEqual(self.client.post("/desktop/attachments/import-data", json={"name":"notas.txt","data":"???="}).status_code,400)
+            self.assertEqual(self.client.post("/desktop/attachments/import-data", json={"name":"notas.txt","data":"Tm90YXM=","path":"C:/private"}).status_code,422)
 
     def test_project_attachment_keeps_account_identity_with_project_context(self):
         folder = Path(self.temp.name) / "project"

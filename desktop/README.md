@@ -1,4 +1,4 @@
-# Cyro IA Desktop 6.2.0
+# Cyro IA Desktop 6.2.1
 
 A interface principal, o login e os três painéis do Quick Chat usam React.js. Electron e os preloads continuam em CommonJS com IPC restrito; React não recebe acesso a Node, banco ou credenciais Cloud.
 
@@ -29,3 +29,9 @@ O Writer 6.1 utiliza TipTap 3.32.0 como único editor. A formatação e o histó
 Use tokens.css para espaçamentos/raios, ui.css para superfícies e foco e sidebar.css para a navegação. AnchoredMenu.jsx renderiza popovers por portal, mede a janela, protege bordas e oferece Escape/setas/Home/End. A sidebar ancora o menu lateralmente; o Writer usa abaixo do botão, com inversão quando necessário. Rolagem só fecha o menu se mover sua âncora. Não reintroduzir menus absolutos dentro de painéis com overflow nem hover específico por símbolo Unicode.
 
 Os blocos de código mantêm fundo escuro nos dois temas; textos secundários são controlados por tokens. A folha clara do Writer preserva a aparência de documento.
+
+## Fluxos 6.2.1
+
+AttachmentCard é a única apresentação de anexos e clipboard; importações locais por clipe/colagem/drop não chamam IA. A análise só acontece no envio explícito. Salvar cópia do monitor exporta texto ou a prévia reduzida, com diálogo nativo e verificação de posse. As oito categorias permanecem sem Computador/Conta. O menu dos três pontos agora compartilha as cinco ações da sidebar.
+
+ScopeDialog salva apenas seleção local; Atualizar memória inicia indexação. Reabrir um projeto com seleção nova não inicia IA automaticamente. Atualize a mensagem de interface junto ao contrato do endpoint se esse fluxo mudar.

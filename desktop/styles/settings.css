@@ -167,3 +167,7 @@
 :root[data-theme='light'] .settings-page-header p {
   color: var(--accent);
 }
+
+.archived-chat-title {
+  font-style: italic;
+}

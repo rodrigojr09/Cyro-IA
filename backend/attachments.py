@@ -279,6 +279,12 @@ class AttachmentStore:
                 "data:image/jpeg;base64,"
                 + base64.b64encode(image_bytes(raw, True)).decode()
             )
+        elif preview:
+            _, raw = self.content(file_id, owner)
+            try:
+                result["textPreview"] = document_text(raw, Path(row["name"]).suffix.lower())[0][:4000]
+            except ReadError:
+                result["previewNotice"] = "Prévia indisponível; você pode salvar uma cópia."
         return result
 
     def import_files(self, paths, owner):
@@ -340,6 +346,24 @@ class AttachmentStore:
                 _, partial = document_text(raw, extension)
             prepared.append((path.name, raw, kind, partial))
         return self._store_prepared(prepared, owner)
+
+    def import_data(self, name, raw, owner):
+        if not owner:
+            raise ReadError("Entre com sua conta antes de anexar arquivos.")
+        if not isinstance(name, str) or not name or len(name) > 200 or any(c in name for c in "/\\:\x00") or any(ord(c) < 32 for c in name):
+            raise ReadError("Nome de anexo inválido.")
+        extension = Path(name).suffix.lower()
+        if extension not in SUPPORTED:
+            raise ReadError("Formato de anexo não suportado.")
+        if not raw or len(raw) > MAX_BYTES:
+            raise AttachmentLimitError("Cada anexo deve ter entre 1 byte e 5 MB.")
+        kind = "image" if extension in IMAGE_EXTENSIONS else "document"
+        if kind == "image":
+            image_bytes(raw)
+            partial = False
+        else:
+            _, partial = document_text(raw, extension)
+        return self._store_prepared([(name, raw, kind, partial)], owner)
 
     def import_image(self, raw, owner):
         if not owner: raise ReadError("Entre com sua conta antes de colar imagens.")

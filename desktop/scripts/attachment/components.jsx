@@ -1,18 +1,39 @@
 import React, { useRef, useState } from 'react';
-export function AttachmentCard({ file, onRemove }) {
+export function AttachmentCard({
+  file,
+  onRemove,
+  onSave,
+  onPreview,
+  previewSource,
+  imageId,
+  previewProps,
+  removeId,
+  heading,
+  privacy,
+  children,
+}) {
   const [preview, setPreview] = useState(file.preview || null),
+    [textPreview, setTextPreview] = useState(null),
     [error, setError] = useState('');
+  const image = previewSource === undefined ? preview : previewSource;
   return (
     <div className="attachment-card">
-      <strong>{file.name}</strong>
+      <strong>{heading || file.name}</strong>
       <small>
-        {file.type || file.kind} · {Math.ceil(file.size / 1024)} KB
+        {file.type ||
+          { image: 'Imagem', document: 'Documento', text: 'Texto', code: 'Código', link: 'Link' }[
+            file.kind
+          ] ||
+          file.kind}{' '}
+        · {Math.ceil((file.size || 0) / 1024)} KB
       </small>
       <button
         type="button"
         onClick={async () => {
           try {
-            const result = await window.jarvisWindow.saveAttachment(file.id);
+            const result = onSave
+              ? await onSave()
+              : await window.jarvisWindow.saveAttachment(file.id);
             if (result && !result.ok && !result.canceled)
               throw Error(result.data?.detail || 'Falha ao salvar anexo');
           } catch (error) {
@@ -22,27 +43,35 @@ export function AttachmentCard({ file, onRemove }) {
       >
         Salvar cópia
       </button>
-      {(file.kind === 'image' || file.type?.startsWith('image')) && (
-        <button
-          onClick={async () => {
-            try {
-              const result = await window.jarvisWindow.attachmentInfo(file.id);
-              if (!result.ok) throw Error(result.data?.detail);
-              setPreview(result.data.preview);
-            } catch (error) {
-              setError(error.message);
+      <button
+        {...previewProps}
+        type="button"
+        onClick={async () => {
+          try {
+            if (onPreview) {
+              await onPreview();
+              return;
             }
-          }}
-        >
-          Ver prévia
-        </button>
-      )}
+            const result = await window.jarvisWindow.attachmentInfo(file.id);
+            if (!result.ok) throw Error(result.data?.detail || 'Não foi possível obter a prévia.');
+            setPreview(result.data.preview || null);
+            setTextPreview(result.data.textPreview || result.data.previewNotice || null);
+          } catch (error) {
+            setError(error.message);
+          }
+        }}
+      >
+        Ver prévia
+      </button>
       {onRemove && (
-        <button aria-label={'Remover ' + file.name} onClick={onRemove}>
+        <button id={removeId} type="button" aria-label={'Remover ' + file.name} onClick={onRemove}>
           ×
         </button>
       )}
-      {preview && <img src={preview} alt={'Prévia de ' + file.name} />}
+      {image && <img id={imageId} src={image} alt={'Prévia de ' + file.name} />}
+      {textPreview && <pre className="attachment-details">{textPreview}</pre>}
+      {privacy && <p className="attachment-privacy">{privacy}</p>}
+      {children && <div className="attachment-details">{children}</div>}
       <span role="status">{error}</span>
     </div>
   );
@@ -55,6 +84,11 @@ export function AttachmentList({ files = [], unavailable = false, onRemove }) {
           key={file.id}
           file={file}
           onRemove={onRemove ? () => onRemove(file.id) : undefined}
+          privacy={
+            file.clipboard
+              ? 'Prévia local. Imagens podem conter dados sensíveis. Só serão enviadas à IA ao enviar a mensagem.'
+              : undefined
+          }
         />
       ))}
       {unavailable && (
@@ -89,7 +123,7 @@ export function useAttachments() {
       setFiles(next);
       discard(id);
     },
-    async paste(images, unavailable = '') {
+    async paste(images, unavailable = '', source = 'clipboard') {
       if (unavailable) {
         setError(unavailable);
         return;
@@ -106,13 +140,18 @@ export function useAttachments() {
       if (
         images.some(
           (file) =>
-            !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) ||
+            (source !== 'drop' &&
+              !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) ||
             !Number.isFinite(file.size) ||
             file.size <= 0 ||
             file.size > 5242880,
         )
       ) {
-        setError('Use imagens PNG, JPEG, WebP ou GIF estático de até 5 MB.');
+        setError(
+          source === 'drop'
+            ? 'Use arquivos compatíveis de até 5 MB.'
+            : 'Use imagens PNG, JPEG, WebP ou GIF estático de até 5 MB.',
+        );
         return;
       }
       selecting.current = true;
@@ -129,10 +168,15 @@ export function useAttachments() {
             reader.readAsDataURL(file);
           });
           if (generation !== epoch.current) break;
-          const result = await window.jarvisWindow.pasteImage({ data, type: file.type });
+          const result =
+            source === 'drop'
+              ? await window.jarvisWindow.dropFile({ data, name: file.name })
+              : await window.jarvisWindow.pasteImage({ data, type: file.type });
           if (!result?.ok || !Array.isArray(result.data?.files))
             throw Error(result?.data?.detail || 'Não foi possível colar a imagem.');
-          created.push(...result.data.files);
+          created.push(
+            ...result.data.files.map((item) => ({ ...item, clipboard: source === 'clipboard' })),
+          );
         }
         if (generation !== epoch.current) {
           created.forEach((file) => discard(file.id));
@@ -141,6 +185,7 @@ export function useAttachments() {
         const next = [...filesRef.current, ...created];
         filesRef.current = next;
         setFiles(next);
+        return true;
       } catch (error) {
         created.forEach((file) => discard(file.id));
         setError(error.message);

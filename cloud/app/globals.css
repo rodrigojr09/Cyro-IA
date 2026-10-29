@@ -1,11 +1,14 @@
 :root {
   color-scheme: dark;
-  --bg: #0a0e14;
-  --panel: #111821;
-  --border: #24303d;
-  --text: #e6eef6;
+  --bg: #0d1117;
+  --side: #111827;
+  --surface: #1b2432;
+  --reading: 780px;
+  --panel: var(--side);
+  --border: #293241;
+  --text: #f3f4f6;
   --muted: #a6afbd;
-  --accent: #7dd3fc;
+  --accent: #38bdf8;
   --radius-control: 8px;
   --radius-panel: 12px;
   --space-2: 8px;
@@ -217,8 +220,8 @@ input,
 select {
   display: block;
   width: 100%;
-  background: #0b1119;
-  border: 1px solid #304151;
+  background: var(--bg);
+  border: 1px solid var(--border);
   color: var(--text);
   padding: 12px;
   border-radius: 7px;
@@ -237,7 +240,7 @@ a:focus-visible {
   outline-offset: 3px;
 }
 label {
-  color: #adbac8;
+  color: var(--muted);
   font-size: 12px;
   display: block;
 }
@@ -282,7 +285,7 @@ b {
   flex-direction: column;
   position: fixed;
   inset: 0 auto 0 0;
-  background: #0d131c;
+  background: var(--side);
   overflow-y: auto;
 }
 .brand {
@@ -294,7 +297,7 @@ b {
   letter-spacing: -2px;
 }
 .brand span {
-  color: #e6eef6;
+  color: var(--text);
   font-size: 20px;
   letter-spacing: 3px;
 }
@@ -309,7 +312,7 @@ b {
   margin: 4px 0 0 10px;
 }
 .nav-label {
-  color: #617286;
+  color: var(--muted);
   font-size: 10px;
   letter-spacing: 1.8px;
   margin: 54px 14px 18px;
@@ -322,13 +325,13 @@ nav a {
   border: 1px solid transparent;
   padding: 13px 14px;
   border-radius: 7px;
-  color: #93a5b6;
+  color: var(--muted);
   display: flex;
   align-items: center;
   gap: 12px;
 }
 nav a:hover {
-  background: #17232f;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   color: var(--text);
 }
 nav a span {
@@ -336,7 +339,7 @@ nav a span {
   width: 22px;
 }
 nav a[aria-current] {
-  background: #15302f;
+  background: color-mix(in srgb, var(--accent) 12%, var(--side));
   color: var(--accent);
   border-left: 2px solid var(--accent);
 }
@@ -418,7 +421,7 @@ header b {
 }
 .card {
   min-width: 0;
-  background: linear-gradient(140deg, #131c27, #0f1720);
+  background: var(--side);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 26px;
@@ -632,7 +635,7 @@ tbody tr:hover {
 footer {
   display: flex;
   justify-content: space-between;
-  color: #667788;
+  color: var(--muted);
   border-top: 1px solid var(--border);
   padding: 25px 0;
   margin-top: 25px;
@@ -907,3 +910,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .muted, small, label { line-height: 1.5; }
 .usage-stats strong { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f9fc; --side: #eef2f7; --surface: #e3eaf3; --border: #c5cfdd;
+  --accent: #0369a1; --text: #172033; --muted: #4c5b70;
+}
+:root[data-theme='light'] .sidebar,
+:root[data-theme='light'] .card,
+:root[data-theme='light'] .login-card,
+:root[data-theme='light'] .usage-chart,
+:root[data-theme='light'] .usage-user { background: var(--side); }
+:root[data-theme='light'] input,
+:root[data-theme='light'] select,
+:root[data-theme='light'] th { background: var(--bg); color: var(--text); }
+:root[data-theme='light'] label,
+:root[data-theme='light'] header b { color: var(--muted); }
+:root[data-theme='light'] button { color: white; }
+:root[data-theme='light'] button.secondary,
+:root[data-theme='light'] button.ghost { color: var(--text); background: var(--surface); }

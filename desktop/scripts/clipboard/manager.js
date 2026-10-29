@@ -406,6 +406,18 @@ function createClipboardManager({
       publish();
       return true;
     },
+    content(owner, id) {
+      expire();
+      if (
+        !active ||
+        !preferences.enabled ||
+        preferences.paused ||
+        !['main', 'quick'].includes(owner)
+      )
+        return null;
+      const item = claims.get(owner);
+      return item?.id === id ? { ...item } : null;
+    },
     link(owner, id) {
       const item = claims.get(owner);
       return item?.id === id && item.contentType === 'link' ? safeURL(item.text) : null;

@@ -180,7 +180,7 @@ export function Settings({
                       .filter((item) => item.archived)
                       .map((item) => (
                         <div className="archived-chat-row" key={item.id}>
-                          <span>{item.title}</span>
+                          <span className="archived-chat-title">{item.title}</span>
                           <button
                             disabled={state.busy}
                             onClick={() =>
@@ -272,7 +272,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 6.2.0</p>
+                  <p>Versão 6.2.1</p>
                   <p>
                     Desenvolvido por <strong>Rodrigo Junior</strong>.
                   </p>
@@ -280,10 +280,12 @@ export function Settings({
                   <button
                     id="about-github"
                     onClick={() =>
-                      perform(() => window.jarvisWindow.openLink('https://github.com/rodrigojr09'))
+                      perform(() =>
+                        window.jarvisWindow.openLink('https://github.com/rodrigojr09/Cyro-IA'),
+                      )
                     }
                   >
-                    GitHub: rodrigojr09
+                    GitHub: Cyro-IA
                   </button>
                   <p>© 2026 Rodrigo Junior.</p>
                 </>

@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   workspaceReady: () => ipcRenderer.invoke('jarvis:workspace-ready'),
   permitMicrophone: () => ipcRenderer.invoke('jarvis:voice-input-permission'),
   chooseAttachments: (remaining) => ipcRenderer.invoke('jarvis:attachments-choose', remaining),
+  dropFile: (value) => ipcRenderer.invoke('jarvis:attachments-drop-file', value),
   pasteImage: (value) => ipcRenderer.invoke('jarvis:attachments-paste-image', value),
   attachmentInfo: (id) => ipcRenderer.invoke('jarvis:attachments-info', id),
   saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
@@ -79,6 +80,7 @@ contextBridge.exposeInMainWorld('jarvisClipboard', {
   dismiss: (id) => ipcRenderer.invoke('clipboard:dismiss', id),
   discard: () => ipcRenderer.invoke('clipboard:discard'),
   openLink: (id) => ipcRenderer.invoke('clipboard:open-link', id),
+  saveCopy: (id) => ipcRenderer.invoke('clipboard:save-copy', id),
   onState: (callback) => listen('clipboard:state', callback),
   onSound: (callback) => listen('clipboard:sound', callback),
 });

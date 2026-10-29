@@ -192,6 +192,7 @@ test('anexos exigem janela principal autenticada e rotas privadas não entram na
   for (const name of [
     'jarvis:attachments-choose',
     'jarvis:attachments-paste-image',
+    'jarvis:attachments-drop-file',
     'jarvis:attachments-info',
     'jarvis:attachments-save',
     'jarvis:attachments-discard',
@@ -209,6 +210,10 @@ test('anexos exigem janela principal autenticada e rotas privadas não entram na
   );
   await assert.rejects(
     f.invoke(f.event, '/desktop/attachments/paste-image', { method: 'POST', body: '{}' }),
+    /autorizada/,
+  );
+  await assert.rejects(
+    f.invoke(f.event, '/desktop/attachments/import-data', { method: 'POST', body: '{}' }),
     /autorizada/,
   );
   assert.equal(f.requests.length, 0);

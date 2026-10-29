@@ -498,7 +498,7 @@ class ProjectAPITests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(before, snapshot(self.original))
 
-    def test_registration_waits_for_selection_then_background_analysis_uses_cache(self):
+    def test_selection_and_reopening_use_no_ai_until_explicit_memory_refresh(self):
         source = make_project(self.root / "new-project")
         fake = fake_client()
         main.indexer.client = fake
@@ -514,6 +514,13 @@ class ProjectAPITests(unittest.TestCase):
             ).status_code,
             200,
         )
+        self.assertFalse(fake.chat.completions.create.await_count)
+        self.assertFalse(main.indexer.pending)
+        self.assertEqual(main.store.project(project_id)["state"], "selecting")
+        self.assertEqual(self.client.post("/workspace/view", json={"project_id":project_id}).status_code, 200)
+        self.assertFalse(fake.chat.completions.create.await_count)
+        self.assertFalse(main.indexer.pending)
+        self.assertEqual(self.client.post("/projects/refresh", json={"project_id":project_id}).status_code, 200)
         self.client.portal.call(main.indexer.queue.join)
         self.assertTrue(main.store.project(project_id)["ready"])
         calls = fake.chat.completions.create.await_count

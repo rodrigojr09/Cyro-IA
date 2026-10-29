@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('jarvisClipboard', {
   dismiss: (id) => ipcRenderer.invoke('clipboard:dismiss', id),
   discard: () => ipcRenderer.invoke('clipboard:discard'),
   openLink: (id) => ipcRenderer.invoke('clipboard:open-link', id),
+  saveCopy: (id) => ipcRenderer.invoke('clipboard:save-copy', id),
   onState: (callback) => listen('clipboard:state', callback),
   onSound: (callback) => listen('clipboard:sound', callback),
 });

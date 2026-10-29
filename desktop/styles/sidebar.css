@@ -185,3 +185,10 @@
 .workspace-action-menu button:hover:not(:disabled) {
   background: color-mix(in srgb, var(--text) 7%, transparent);
 }
+
+.workspace-action-menu button:hover:not(:disabled),
+.workspace-action-menu button:focus-visible {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
