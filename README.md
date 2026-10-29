@@ -12,7 +12,7 @@ Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs 
 
 Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas para a v6.2.2.
 
-A v6.2.2 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A entrega publicada anterior é 6.2.1; a v6.2.2 está em validação para publicar o acabamento do controle Copiar mensagem; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
+A v6.2.2 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A entrega 6.2.2 foi publicada no Cloud e o instalador Windows foi compilado com o acabamento do controle Copiar mensagem; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
 
 A v6.2.2 mantém Copiar mensagem em uma única linha, com ícone, largura estável e aparência flutuante. O espaçamento reserva lugar para a ação sem cobrir outras mensagens.
 

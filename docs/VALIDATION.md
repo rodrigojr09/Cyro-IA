@@ -1,3 +1,13 @@
+# Entrega 6.2.2 — Cloud e instalador Windows
+
+Em 29/10/2026, por autorização explícita do proprietário, o runtime 9914b0f3999ad51a2b61418b4e91f4524e24c000 foi enviado a origin/master e origin/codex/jarvis-v6-architecture. Vercel success às 10:57:49 America/Sao_Paulo (13:57:49 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/FR4BmCciwK2XZBtXWm4bxCaf2QAz . Produção https://cronosjarvis.vercel.app/login respondeu 200 com marca Cyro; /api/provider-settings sem sessão retornou 401. A documentação final também é enviada, sem alterar o runtime validado. Sem migrations ou alterações de credenciais.
+
+Instalador: release/v6/Cyro-IA-Setup-6.2.2.exe, 183639810 bytes, ProductVersion 6.2.2 e payload 6.2.2.0. SHA256 `cc322cbe5ec7c289573b2262de391d952006b8cac3079afc1057ecf5137d9fe9`, conferido independentemente contra .exe.sha256. Authenticode NotSigned. PyInstaller, NSIS e auditoria de fontes/ASAR/runtime aprovados. O empacotamento reutilizou os 489 testes, sete cenários Electron e 56 verificações de layout já aprovados na mesma revisão, sem repeti-los.
+
+Self-check congelado aprovado. O payload final iniciou sem Python/Node no PATH, autenticou localmente e preservou dados após reiniciar com perfil temporário. Não certifica instalação/atualização em Windows limpo, login manual de produção, áudio físico, Spotify real ou IA paga. Nenhum perfil pessoal ou Backup/ foi alterado. Instaladores anteriores preservados; sem tag ou GitHub Release.
+
+Evidências locais: build/v6/cyro-setup-6.2.2.log, cyro-6.2.2-frozen-selfcheck.log, cyro-6.2.2-payload-smoke.log, v622-deployment-runtime.json, v622-deployment-latest.json e v622-production-check.json.
+
 # Validação 6.2.2 — controle flutuante Copiar mensagem
 
 Em 29/10/2026, check:v6 passou com 489 testes (146 Desktop, 214 backend Python, 92 Cloud, 35 iniciadores/empacotamento e 2 ferramentas Node), TypeScript/build Cloud e Desktop, sete cenários Electron e 56 verificações administrativas em Chromium. Prettier Desktop aprovado. Nenhuma dependência nova; npm ci da raiz já havia sido executado. cloud/next-env.d.ts restaurado byte a byte após a compilação.
