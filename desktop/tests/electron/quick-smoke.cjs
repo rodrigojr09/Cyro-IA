@@ -153,9 +153,24 @@ app.whenReady().then(async () => {
       await response.webContents.executeJavaScript(`document.getElementById('answer').textContent`),
       /sessão expirada/,
     );
+    await delay(120);
     const bounds = response.getBounds(),
       input = composer.getBounds();
-    assert.ok(bounds.y + bounds.height < input.y);
+    assert.equal(bounds.y + bounds.height, input.y);
+    assert.ok(
+      bounds.height <= 200,
+      'Resposta curta deve usar altura do conteúdo, sem espaço inflado.',
+    );
+    const compactHeight = bounds.height;
+    await delay(100);
+    assert.ok(
+      response.getBounds().height <= compactHeight + 1,
+      'Recalcular layout não deve acumular altura vazia.',
+    );
+    fs.writeFileSync(
+      path.join(app.getPath('temp'), 'cyro-quick-compact-response.png'),
+      (await response.webContents.capturePage()).toPNG(),
+    );
     await response.webContents.executeJavaScript(`window.quick.pause('hover',true)`);
     await delay(220);
     assert.match(

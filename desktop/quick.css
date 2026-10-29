@@ -317,3 +317,12 @@ header button:hover,
 #remaining {
   color: #b3c1d3;
 }
+
+.quick-answer-content {
+  display: block;
+  min-height: 0;
+}
+#response > header,
+#response > .tools {
+  flex-shrink: 0;
+}

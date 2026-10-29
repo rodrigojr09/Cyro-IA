@@ -1,3 +1,13 @@
+# Ajustes de layout após a entrega 6.2.1
+
+Configurações da conversa organizadas em campos e rodapé: Salvar conversa separado das quatro ações secundárias, grid com gap de 8 px, margem de 24 px após os campos, redução controlada em janelas baixas e foco/cores preservados. Sidebar usa cabeçalhos de 44 px com coluna fixa de 32 px para adição, padding simétrico, fundo de grupo unificado e gutter de rolagem estável. Textos/ícones e ações dos projetos seguem as mesmas colunas.
+
+Quick Chat media scrollHeight da área flexível, acumulando altura que não pertencia ao texto. Agora mede um bloco interno de conteúdo mais o cabeçalho/rodapé/padding reais, com ResizeObserver e deduplicação. O intervalo fixo de 8 px entre as janelas foi removido, e a geometria limita os dois painéis à área útil em telas baixas. Opacidade, leitura, áudio e fixação foram preservados.
+
+Validação executada: TypeScript/build Desktop, 146 testes Desktop e cenários Electron principal, Quick Chat e clipboard aprovados. A geometria confirmou ações de adição alinhadas, nenhum botão sobreposto no modal, 24 px de separação dos campos, resposta curta abaixo de 200 px e janelas adjacentes sem faixa vazia. Também verificou monitores com coordenadas negativas e painel de clipboard grande em área útil de 600 px. Capturas cyro-manage-dialog-layout.png e cyro-quick-compact-response.png conferidas visualmente. Logs build/v6/layout-desktop.log, layout-main-final.log, layout-quick-final.log e layout-clipboard-final.log. Um teste que forçava resize nativo fora da UI foi substituído por uma verificação da estabilidade do layout realmente exposto ao usuário.
+
+Nenhuma alteração Cloud/Python, dependência, permissão, dado de usuário ou Backup/. Serviços externos dos cenários são sintéticos. Sem novo instalador, push, tag ou deploy; a entrega publicada 6.2.1 anterior não inclui este ajuste. Referências paginas.html/styles.css regeneradas.
+
 # Entrega 6.2.1 — publicação Cloud e instalador Windows
 
 Em 29/10/2026, por autorização explícita do proprietário, o runtime b9c88e58aad776e0100cd551ee24cd1d72a958a2 foi enviado a origin/master e origin/codex/jarvis-v6-architecture. Vercel success às 07:49:31 America/Sao_Paulo (10:49:31 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/9aZ9jV7ASkxYEECsRkAnWn4eCq3j . Produção https://cronosjarvis.vercel.app/login respondeu 200 e o CSS confirmou os tokens --accent:#38bdf8 e --surface:#1b2432; /api/provider-settings sem sessão retornou 401. Sem migrations, alteração de banco/segredos ou chamadas pagas. A documentação final de entrega também foi enviada, sem alterar o runtime validado.

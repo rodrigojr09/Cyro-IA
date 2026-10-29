@@ -69,21 +69,21 @@
     const leftSpace = point.x - area.x - 18,
       rightSpace = area.x + area.width - point.x - ICON_SIZE - 18;
     const width = Math.max(180, Math.min(360, area.width - 16, Math.max(leftSpace, rightSpace))),
-      inputHeight = Math.min(composerHeight, area.height - 16);
+      inputHeight = Math.min(composerHeight, Math.max(90, area.height - 106));
     const preferred = leftSpace >= width ? point.x - width - 10 : point.x + ICON_SIZE + 10;
     const x = Math.round(
       Math.max(area.x + 8, Math.min(preferred, area.x + area.width - width - 8)),
     );
-    const responseHeight = Math.max(90, Math.min(height, 320, area.height - inputHeight - 32));
+    const responseHeight = Math.max(90, Math.min(height, 320, area.height - inputHeight - 16));
     const y = Math.round(
       Math.max(
-        area.y + responseHeight + 16,
+        area.y + responseHeight + 8,
         Math.min(point.y - 25, area.y + area.height - inputHeight - 8),
       ),
     );
     return {
       input: { x, y, width, height: inputHeight },
-      response: { x, y: y - responseHeight - 8, width, height: responseHeight },
+      response: { x, y: y - responseHeight, width, height: responseHeight },
     };
   }
   function circle(size = ICON_SIZE) {

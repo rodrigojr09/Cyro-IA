@@ -609,103 +609,113 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         open={manage}
         onClose={() => setManage(false)}
       >
-        <label>
-          Título
-          <input
-            id="chat-title"
-            value={draftSettings.title || ''}
-            maxLength={120}
-            onChange={(event) => setDraftSettings({ ...draftSettings, title: event.target.value })}
-          />
-        </label>
-        <label>
-          Instruções da conversa
-          <textarea
-            id="chat-instructions"
-            value={draftSettings.instructions || ''}
-            maxLength={4000}
-            onChange={(event) =>
-              setDraftSettings({ ...draftSettings, instructions: event.target.value })
-            }
-          />
-        </label>
-        <button
-          id="rename-chat"
-          onClick={() =>
-            run(async () => {
-              await post('/chats/settings', {
-                chat_id: state.chat.id,
-                title: draftSettings.title,
-                instructions: draftSettings.instructions,
-              });
-              setManage(false);
-              await workspace.catalog();
-            })
-          }
-        >
-          Salvar conversa
-        </button>
-        <button
-          id="older-messages"
-          disabled={isWriter}
-          onClick={() =>
-            run(async () => {
-              await workspace.older();
-              setManage(false);
-            })
-          }
-        >
-          Mensagens anteriores
-        </button>
-        <button
-          id="archive-chat"
-          disabled={!!state.chat?.slot}
-          onClick={() =>
-            run(async () => {
-              await window.jarvisWindow.manageChat(
-                state.chat.id,
-                state.chat.archived ? 'restore' : 'archive',
-              );
-              setManage(false);
-              await workspace.catalog(state.project?.id || '', null);
-            })
-          }
-        >
-          {state.chat?.archived ? 'Restaurar' : 'Arquivar'}
-        </button>
-        <button
-          id="clear-chat"
-          disabled={isWriter || busy}
-          onClick={() =>
-            run(async () => {
-              const id = state.chat.id;
-              const result = await window.jarvisWindow.manageChat(id, 'clear');
-              if (result?.canceled) return;
-              if (result?.ok === false)
-                throw Error(result.data?.detail || 'Não foi possível limpar a conversa.');
-              setManage(false);
-              await workspace.openById(id);
-            })
-          }
-        >
-          Limpar mensagens
-        </button>
-        <button
-          id="delete-chat"
-          className="danger"
-          disabled={!!state.chat?.slot}
-          onClick={() =>
-            run(async () => {
-              const result = await window.jarvisWindow.manageChat(state.chat.id, 'delete');
-              if (result?.ok === false) throw Error(result.data?.detail);
-              if (result?.canceled) return;
-              setManage(false);
-              await workspace.catalog(state.project?.id || '', null);
-            })
-          }
-        >
-          Excluir
-        </button>
+        <div className="manage-fields">
+          <label>
+            Título
+            <input
+              id="chat-title"
+              value={draftSettings.title || ''}
+              maxLength={120}
+              onChange={(event) =>
+                setDraftSettings({ ...draftSettings, title: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Instruções da conversa
+            <textarea
+              id="chat-instructions"
+              value={draftSettings.instructions || ''}
+              maxLength={4000}
+              onChange={(event) =>
+                setDraftSettings({ ...draftSettings, instructions: event.target.value })
+              }
+            />
+          </label>
+        </div>
+        <footer className="manage-dialog-actions">
+          <div className="manage-primary-actions">
+            <button
+              id="rename-chat"
+              onClick={() =>
+                run(async () => {
+                  await post('/chats/settings', {
+                    chat_id: state.chat.id,
+                    title: draftSettings.title,
+                    instructions: draftSettings.instructions,
+                  });
+                  setManage(false);
+                  await workspace.catalog();
+                })
+              }
+            >
+              Salvar conversa
+            </button>
+          </div>
+          <div className="manage-secondary-actions" role="group" aria-label="Ações da conversa">
+            <button
+              id="older-messages"
+              disabled={isWriter}
+              onClick={() =>
+                run(async () => {
+                  await workspace.older();
+                  setManage(false);
+                })
+              }
+            >
+              Mensagens anteriores
+            </button>
+            <button
+              id="archive-chat"
+              disabled={!!state.chat?.slot}
+              onClick={() =>
+                run(async () => {
+                  await window.jarvisWindow.manageChat(
+                    state.chat.id,
+                    state.chat.archived ? 'restore' : 'archive',
+                  );
+                  setManage(false);
+                  await workspace.catalog(state.project?.id || '', null);
+                })
+              }
+            >
+              {state.chat?.archived ? 'Restaurar' : 'Arquivar'}
+            </button>
+            <button
+              id="clear-chat"
+              disabled={isWriter || busy}
+              onClick={() =>
+                run(async () => {
+                  const id = state.chat.id;
+                  const result = await window.jarvisWindow.manageChat(id, 'clear');
+                  if (result?.canceled) return;
+                  if (result?.ok === false)
+                    throw Error(result.data?.detail || 'Não foi possível limpar a conversa.');
+                  setManage(false);
+                  await workspace.openById(id);
+                })
+              }
+            >
+              Limpar mensagens
+            </button>
+            <button
+              id="delete-chat"
+              className="danger"
+              disabled={!!state.chat?.slot}
+              onClick={() =>
+                run(async () => {
+                  const result = await window.jarvisWindow.manageChat(state.chat.id, 'delete');
+                  if (result?.ok === false) throw Error(result.data?.detail);
+                  if (result?.canceled) return;
+                  setManage(false);
+                  await workspace.catalog(state.project?.id || '', null);
+                })
+              }
+            >
+              Excluir
+            </button>
+          </div>
+        </footer>
       </Dialog>
       <Dialog
         id="project-settings-dialog"

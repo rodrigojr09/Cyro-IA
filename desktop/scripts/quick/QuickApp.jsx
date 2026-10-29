@@ -98,8 +98,44 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
     };
   }, [panel]);
   useEffect(() => {
-    if (panel === 'response' && answer.current)
-      ignore(window.quick.resize(Math.max(130, Math.min(400, answer.current.scrollHeight + 110))));
+    if (panel !== 'response' || !answer.current) return;
+    const content = answer.current;
+    const response = content.closest('#response');
+    const header = response.querySelector('header');
+    const footer = response.querySelector('.tools');
+    let frame, lastHeight;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const css = getComputedStyle(response);
+        const px = (value) => parseFloat(value) || 0;
+        const chrome =
+          header.getBoundingClientRect().height +
+          footer.getBoundingClientRect().height +
+          px(css.paddingTop) +
+          px(css.paddingBottom) +
+          px(css.borderTopWidth) +
+          px(css.borderBottomWidth) +
+          2 * px(css.rowGap);
+        const height = Math.max(
+          90,
+          Math.min(400, Math.ceil(content.getBoundingClientRect().height + chrome)),
+        );
+        if (height !== lastHeight) {
+          lastHeight = height;
+          ignore(window.quick.resize(height));
+        }
+      });
+    };
+    const observer = window.ResizeObserver ? new window.ResizeObserver(measure) : null;
+    for (const node of [content, header, footer]) observer?.observe(node);
+    window.addEventListener('resize', measure);
+    measure();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
   }, [panel, state?.answer, state?.error, state?.busy]);
   useEffect(() => {
     document.body.classList.toggle('clipboard-composer', panel === 'composer');
@@ -298,8 +334,10 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
           ×
         </button>
       </header>
-      <article id="answer" ref={answer} tabIndex={0}>
-        {value.busy ? 'Preparando uma resposta curta...' : value.answer || value.error}
+      <article id="answer" tabIndex={0}>
+        <div ref={answer} className="quick-answer-content">
+          {value.busy ? 'Preparando uma resposta curta...' : value.answer || value.error}
+        </div>
       </article>
       <div className="tools">
         <span id="result-status" role="status" title={value.error || ''}>

@@ -2160,103 +2160,113 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         open={manage}
         onClose={() =&gt; setManage(false)}
       &gt;
-        &lt;label&gt;
-          Título
-          &lt;input
-            id=&quot;chat-title&quot;
-            value={draftSettings.title || &#x27;&#x27;}
-            maxLength={120}
-            onChange={(event) =&gt; setDraftSettings({ ...draftSettings, title: event.target.value })}
-          /&gt;
-        &lt;/label&gt;
-        &lt;label&gt;
-          Instruções da conversa
-          &lt;textarea
-            id=&quot;chat-instructions&quot;
-            value={draftSettings.instructions || &#x27;&#x27;}
-            maxLength={4000}
-            onChange={(event) =&gt;
-              setDraftSettings({ ...draftSettings, instructions: event.target.value })
-            }
-          /&gt;
-        &lt;/label&gt;
-        &lt;button
-          id=&quot;rename-chat&quot;
-          onClick={() =&gt;
-            run(async () =&gt; {
-              await post(&#x27;/chats/settings&#x27;, {
-                chat_id: state.chat.id,
-                title: draftSettings.title,
-                instructions: draftSettings.instructions,
-              });
-              setManage(false);
-              await workspace.catalog();
-            })
-          }
-        &gt;
-          Salvar conversa
-        &lt;/button&gt;
-        &lt;button
-          id=&quot;older-messages&quot;
-          disabled={isWriter}
-          onClick={() =&gt;
-            run(async () =&gt; {
-              await workspace.older();
-              setManage(false);
-            })
-          }
-        &gt;
-          Mensagens anteriores
-        &lt;/button&gt;
-        &lt;button
-          id=&quot;archive-chat&quot;
-          disabled={!!state.chat?.slot}
-          onClick={() =&gt;
-            run(async () =&gt; {
-              await window.jarvisWindow.manageChat(
-                state.chat.id,
-                state.chat.archived ? &#x27;restore&#x27; : &#x27;archive&#x27;,
-              );
-              setManage(false);
-              await workspace.catalog(state.project?.id || &#x27;&#x27;, null);
-            })
-          }
-        &gt;
-          {state.chat?.archived ? &#x27;Restaurar&#x27; : &#x27;Arquivar&#x27;}
-        &lt;/button&gt;
-        &lt;button
-          id=&quot;clear-chat&quot;
-          disabled={isWriter || busy}
-          onClick={() =&gt;
-            run(async () =&gt; {
-              const id = state.chat.id;
-              const result = await window.jarvisWindow.manageChat(id, &#x27;clear&#x27;);
-              if (result?.canceled) return;
-              if (result?.ok === false)
-                throw Error(result.data?.detail || &#x27;Não foi possível limpar a conversa.&#x27;);
-              setManage(false);
-              await workspace.openById(id);
-            })
-          }
-        &gt;
-          Limpar mensagens
-        &lt;/button&gt;
-        &lt;button
-          id=&quot;delete-chat&quot;
-          className=&quot;danger&quot;
-          disabled={!!state.chat?.slot}
-          onClick={() =&gt;
-            run(async () =&gt; {
-              const result = await window.jarvisWindow.manageChat(state.chat.id, &#x27;delete&#x27;);
-              if (result?.ok === false) throw Error(result.data?.detail);
-              if (result?.canceled) return;
-              setManage(false);
-              await workspace.catalog(state.project?.id || &#x27;&#x27;, null);
-            })
-          }
-        &gt;
-          Excluir
-        &lt;/button&gt;
+        &lt;div className=&quot;manage-fields&quot;&gt;
+          &lt;label&gt;
+            Título
+            &lt;input
+              id=&quot;chat-title&quot;
+              value={draftSettings.title || &#x27;&#x27;}
+              maxLength={120}
+              onChange={(event) =&gt;
+                setDraftSettings({ ...draftSettings, title: event.target.value })
+              }
+            /&gt;
+          &lt;/label&gt;
+          &lt;label&gt;
+            Instruções da conversa
+            &lt;textarea
+              id=&quot;chat-instructions&quot;
+              value={draftSettings.instructions || &#x27;&#x27;}
+              maxLength={4000}
+              onChange={(event) =&gt;
+                setDraftSettings({ ...draftSettings, instructions: event.target.value })
+              }
+            /&gt;
+          &lt;/label&gt;
+        &lt;/div&gt;
+        &lt;footer className=&quot;manage-dialog-actions&quot;&gt;
+          &lt;div className=&quot;manage-primary-actions&quot;&gt;
+            &lt;button
+              id=&quot;rename-chat&quot;
+              onClick={() =&gt;
+                run(async () =&gt; {
+                  await post(&#x27;/chats/settings&#x27;, {
+                    chat_id: state.chat.id,
+                    title: draftSettings.title,
+                    instructions: draftSettings.instructions,
+                  });
+                  setManage(false);
+                  await workspace.catalog();
+                })
+              }
+            &gt;
+              Salvar conversa
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div className=&quot;manage-secondary-actions&quot; role=&quot;group&quot; aria-label=&quot;Ações da conversa&quot;&gt;
+            &lt;button
+              id=&quot;older-messages&quot;
+              disabled={isWriter}
+              onClick={() =&gt;
+                run(async () =&gt; {
+                  await workspace.older();
+                  setManage(false);
+                })
+              }
+            &gt;
+              Mensagens anteriores
+            &lt;/button&gt;
+            &lt;button
+              id=&quot;archive-chat&quot;
+              disabled={!!state.chat?.slot}
+              onClick={() =&gt;
+                run(async () =&gt; {
+                  await window.jarvisWindow.manageChat(
+                    state.chat.id,
+                    state.chat.archived ? &#x27;restore&#x27; : &#x27;archive&#x27;,
+                  );
+                  setManage(false);
+                  await workspace.catalog(state.project?.id || &#x27;&#x27;, null);
+                })
+              }
+            &gt;
+              {state.chat?.archived ? &#x27;Restaurar&#x27; : &#x27;Arquivar&#x27;}
+            &lt;/button&gt;
+            &lt;button
+              id=&quot;clear-chat&quot;
+              disabled={isWriter || busy}
+              onClick={() =&gt;
+                run(async () =&gt; {
+                  const id = state.chat.id;
+                  const result = await window.jarvisWindow.manageChat(id, &#x27;clear&#x27;);
+                  if (result?.canceled) return;
+                  if (result?.ok === false)
+                    throw Error(result.data?.detail || &#x27;Não foi possível limpar a conversa.&#x27;);
+                  setManage(false);
+                  await workspace.openById(id);
+                })
+              }
+            &gt;
+              Limpar mensagens
+            &lt;/button&gt;
+            &lt;button
+              id=&quot;delete-chat&quot;
+              className=&quot;danger&quot;
+              disabled={!!state.chat?.slot}
+              onClick={() =&gt;
+                run(async () =&gt; {
+                  const result = await window.jarvisWindow.manageChat(state.chat.id, &#x27;delete&#x27;);
+                  if (result?.ok === false) throw Error(result.data?.detail);
+                  if (result?.canceled) return;
+                  setManage(false);
+                  await workspace.catalog(state.project?.id || &#x27;&#x27;, null);
+                })
+              }
+            &gt;
+              Excluir
+            &lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/footer&gt;
       &lt;/Dialog&gt;
       &lt;Dialog
         id=&quot;project-settings-dialog&quot;
@@ -3904,8 +3914,44 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get(&#x2
     };
   }, [panel]);
   useEffect(() =&gt; {
-    if (panel === &#x27;response&#x27; &amp;&amp; answer.current)
-      ignore(window.quick.resize(Math.max(130, Math.min(400, answer.current.scrollHeight + 110))));
+    if (panel !== &#x27;response&#x27; || !answer.current) return;
+    const content = answer.current;
+    const response = content.closest(&#x27;#response&#x27;);
+    const header = response.querySelector(&#x27;header&#x27;);
+    const footer = response.querySelector(&#x27;.tools&#x27;);
+    let frame, lastHeight;
+    const measure = () =&gt; {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() =&gt; {
+        const css = getComputedStyle(response);
+        const px = (value) =&gt; parseFloat(value) || 0;
+        const chrome =
+          header.getBoundingClientRect().height +
+          footer.getBoundingClientRect().height +
+          px(css.paddingTop) +
+          px(css.paddingBottom) +
+          px(css.borderTopWidth) +
+          px(css.borderBottomWidth) +
+          2 * px(css.rowGap);
+        const height = Math.max(
+          90,
+          Math.min(400, Math.ceil(content.getBoundingClientRect().height + chrome)),
+        );
+        if (height !== lastHeight) {
+          lastHeight = height;
+          ignore(window.quick.resize(height));
+        }
+      });
+    };
+    const observer = window.ResizeObserver ? new window.ResizeObserver(measure) : null;
+    for (const node of [content, header, footer]) observer?.observe(node);
+    window.addEventListener(&#x27;resize&#x27;, measure);
+    measure();
+    return () =&gt; {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener(&#x27;resize&#x27;, measure);
+    };
   }, [panel, state?.answer, state?.error, state?.busy]);
   useEffect(() =&gt; {
     document.body.classList.toggle(&#x27;clipboard-composer&#x27;, panel === &#x27;composer&#x27;);
@@ -4104,8 +4150,10 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get(&#x2
           ×
         &lt;/button&gt;
       &lt;/header&gt;
-      &lt;article id=&quot;answer&quot; ref={answer} tabIndex={0}&gt;
-        {value.busy ? &#x27;Preparando uma resposta curta...&#x27; : value.answer || value.error}
+      &lt;article id=&quot;answer&quot; tabIndex={0}&gt;
+        &lt;div ref={answer} className=&quot;quick-answer-content&quot;&gt;
+          {value.busy ? &#x27;Preparando uma resposta curta...&#x27; : value.answer || value.error}
+        &lt;/div&gt;
       &lt;/article&gt;
       &lt;div className=&quot;tools&quot;&gt;
         &lt;span id=&quot;result-status&quot; role=&quot;status&quot; title={value.error || &#x27;&#x27;}&gt;
@@ -5290,15 +5338,15 @@ export function Sidebar({
         /&gt;
       &lt;/label&gt;
       &lt;nav id=&quot;navigation&quot; aria-label=&quot;Navegação&quot;&gt;
-        &lt;div className=&quot;navigation-heading&quot;&gt;
+        &lt;div className={&#x27;navigation-heading&#x27; + (!state.project ? &#x27; current-group&#x27; : &#x27;&#x27;)}&gt;
           &lt;button
             id=&quot;general-nav&quot;
-            className={&#x27;nav-item&#x27; + (!state.project ? &#x27; current-group&#x27; : &#x27;&#x27;)}
+            className=&quot;nav-item&quot;
             disabled={busy || !state.ready}
             onClick={() =&gt; onView(&#x27;&#x27;)}
           &gt;
             &lt;Icon name=&quot;messages-square&quot; /&gt;
-            Conversas
+            &lt;span className=&quot;nav-title&quot;&gt;Conversas&lt;/span&gt;
           &lt;/button&gt;
           &lt;button
             id=&quot;new-general-chat&quot;
@@ -5325,7 +5373,11 @@ export function Sidebar({
             )
             .map((project) =&gt; (
               &lt;div key={project.id}&gt;
-                &lt;div className=&quot;project-row&quot;&gt;
+                &lt;div
+                  className={
+                    &#x27;project-row&#x27; + (state.project?.id === project.id ? &#x27; current-group&#x27; : &#x27;&#x27;)
+                  }
+                &gt;
                   &lt;button
                     className=&quot;project-toggle&quot;
                     aria-expanded={expanded.has(project.id)}
@@ -5335,9 +5387,7 @@ export function Sidebar({
                     &lt;Icon name={expanded.has(project.id) ? &#x27;chevron-down&#x27; : &#x27;chevron-right&#x27;} /&gt;
                   &lt;/button&gt;
                   &lt;button
-                    className={
-                      &#x27;project-item&#x27; + (state.project?.id === project.id ? &#x27; current-group&#x27; : &#x27;&#x27;)
-                    }
+                    className=&quot;project-item&quot;
                     disabled={busy || !state.ready}
                     onClick={() =&gt; onView(project.id)}
                   &gt;

@@ -392,6 +392,14 @@ app.whenReady().then(async () => {
     );
     await js(`document.querySelector('.workspace-action-menu button').click()`);
     await waitFor(`document.getElementById('manage-dialog').open`);
+    const manageLayout = await js(
+      `(() => { const field=document.getElementById('chat-instructions').getBoundingClientRect();const footer=document.querySelector('.manage-dialog-actions').getBoundingClientRect();const actions=[...document.querySelectorAll('.manage-secondary-actions button')].map(x=>x.getBoundingClientRect());return {gap:footer.top-field.bottom,overlap:actions.some((a,i)=>actions.some((b,j)=>i!==j && a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top)),overflow:document.getElementById('manage-dialog').scrollWidth>document.getElementById('manage-dialog').clientWidth};})()`,
+    );
+    assert.ok(manageLayout.gap >= 23);
+    assert.equal(manageLayout.overlap, false);
+    assert.equal(manageLayout.overflow, false);
+    await shot('cyro-manage-dialog-layout.png');
+
     await js(`document.querySelector('#manage-dialog .dialog-header button').click()`);
     await js(`document.getElementById('project-name').click()`);
     await waitFor(`document.getElementById('project-settings-dialog').open`);

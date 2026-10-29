@@ -1,5 +1,7 @@
 # 6.2.1 — em desenvolvimento
 
+- Ajuste posterior de layout: ações da conversa separadas dos campos, cabeçalhos da sidebar com colunas simétricas e Quick Chat com altura baseada no conteúdo e painéis sem intervalo vazio.
+
 - Anexos de clipe, colagem, arrastar arquivos e monitor de clipboard reutilizam AttachmentCard e os estilos especificados; prévia e cópia locais, aviso de privacidade e envio explícito.
 - Menu ancorado completo em conversas e três pontos: edição, mensagens anteriores, arquivar/restaurar, limpar e excluir com confirmação nativa.
 - Oito categorias de configurações preservadas, alerta de armazenamento e títulos arquivados em itálico; Sobre identifica a versão real e o repositório.

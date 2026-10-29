@@ -63,15 +63,15 @@ export function Sidebar({
         />
       </label>
       <nav id="navigation" aria-label="Navegação">
-        <div className="navigation-heading">
+        <div className={'navigation-heading' + (!state.project ? ' current-group' : '')}>
           <button
             id="general-nav"
-            className={'nav-item' + (!state.project ? ' current-group' : '')}
+            className="nav-item"
             disabled={busy || !state.ready}
             onClick={() => onView('')}
           >
             <Icon name="messages-square" />
-            Conversas
+            <span className="nav-title">Conversas</span>
           </button>
           <button
             id="new-general-chat"
@@ -98,7 +98,11 @@ export function Sidebar({
             )
             .map((project) => (
               <div key={project.id}>
-                <div className="project-row">
+                <div
+                  className={
+                    'project-row' + (state.project?.id === project.id ? ' current-group' : '')
+                  }
+                >
                   <button
                     className="project-toggle"
                     aria-expanded={expanded.has(project.id)}
@@ -108,9 +112,7 @@ export function Sidebar({
                     <Icon name={expanded.has(project.id) ? 'chevron-down' : 'chevron-right'} />
                   </button>
                   <button
-                    className={
-                      'project-item' + (state.project?.id === project.id ? ' current-group' : '')
-                    }
+                    className="project-item"
                     disabled={busy || !state.ready}
                     onClick={() => onView(project.id)}
                   >

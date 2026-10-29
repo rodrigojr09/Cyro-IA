@@ -208,12 +208,21 @@ test('geometria considera monitores negativos, bordas e resposta acima do campo'
   ]) {
     const b = core.panels(point, area, 320);
     assert.ok(b.response.y >= area.y);
-    assert.ok(b.response.y + b.response.height < b.input.y);
+    assert.equal(b.response.y + b.response.height, b.input.y);
     assert.ok(b.input.x >= area.x);
     assert.ok(b.input.x + b.input.width <= area.x + area.width);
     assert.ok(b.input.y + b.input.height <= area.y + area.height);
     assert.ok(b.input.x + b.input.width <= point.x || b.input.x >= point.x + core.ICON_SIZE);
   }
+  const compact = core.panels(
+    { x: 800, y: 570 },
+    { x: 0, y: 0, width: 1000, height: 600 },
+    320,
+    480,
+  );
+  assert.ok(compact.response.y >= 8);
+  assert.ok(compact.input.y + compact.input.height <= 592);
+  assert.equal(compact.response.y + compact.response.height, compact.input.y);
   const shape = core.circle();
   assert.equal(shape.length, 42);
   assert.ok(shape[0].x > 0);

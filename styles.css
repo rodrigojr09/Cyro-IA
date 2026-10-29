@@ -1114,6 +1114,83 @@ hr {
   width: min(900px, 94vw);
 }
 
+/* Conversation settings: fields and actions occupy separate, predictable rows. */
+#manage-dialog .dialog-header {
+  gap: 16px;
+  margin-bottom: 24px;
+}
+#manage-dialog .dialog-header button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+}
+#manage-dialog .manage-fields {
+  display: grid;
+  gap: 20px;
+}
+#manage-dialog .manage-fields label {
+  margin: 0;
+  gap: 8px;
+  min-width: 0;
+}
+#manage-dialog #chat-instructions {
+  min-height: 128px;
+  margin: 0;
+}
+.manage-dialog-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.manage-primary-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.manage-secondary-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 8px;
+}
+#manage-dialog .manage-dialog-actions button {
+  font-size: 13px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+#manage-dialog #rename-chat {
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+@media (max-width: 600px) {
+  .manage-secondary-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .manage-primary-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-height: 650px) {
+  #manage-dialog .dialog-header {
+    margin-bottom: 20px;
+  }
+  #manage-dialog .manage-fields {
+    gap: 16px;
+  }
+  #manage-dialog #chat-instructions {
+    min-height: 112px;
+  }
+  #manage-dialog .manage-dialog-actions {
+    margin-top: 20px;
+  }
+}
+
 /* ===== FIM: desktop/styles/dialogs.css ===== */
 
 
@@ -1883,12 +1960,16 @@ textarea {
   min-height: 40px;
 }
 #sidebar #navigation {
-  padding: 2px;
+  padding: 0;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 #sidebar .navigation-heading,
 #sidebar .project-row {
   gap: 4px;
+  min-height: 44px;
+  padding: 2px 0;
+  border-radius: var(--nav-radius);
 }
 #sidebar .nav-item,
 #sidebar .project-item,
@@ -1908,8 +1989,8 @@ textarea {
   background: var(--nav-hover);
   color: var(--text);
 }
-#sidebar .nav-item.current-group,
-#sidebar .project-item.current-group {
+#sidebar .navigation-heading.current-group,
+#sidebar .project-row.current-group {
   color: var(--text);
   background: color-mix(in srgb, var(--surface) 45%, transparent);
 }
@@ -1917,7 +1998,7 @@ textarea {
   display: grid;
   gap: 4px;
   margin: 6px 0 12px;
-  padding-left: 16px;
+  padding-left: 28px;
   border: 0;
 }
 #sidebar .chat-item {
@@ -2060,6 +2141,46 @@ textarea {
   background: color-mix(in srgb, var(--text) 7%, transparent);
   outline: 1px solid var(--accent);
   outline-offset: -1px;
+}
+
+#sidebar .navigation-heading .nav-item {
+  min-height: 36px;
+  padding: 8px 12px;
+  background: transparent;
+  box-shadow: none;
+}
+#sidebar .navigation-heading:hover {
+  background: var(--nav-hover);
+}
+#sidebar .navigation-heading .nav-item:hover:not(:disabled) {
+  background: transparent;
+}
+#sidebar .project-item {
+  width: 100%;
+}
+#sidebar .brand {
+  padding-inline: 12px;
+}
+
+#sidebar .project-row .project-item {
+  min-height: 36px;
+  padding: 8px 12px;
+  background: transparent;
+}
+#sidebar .project-row:hover {
+  background: var(--nav-hover);
+}
+#sidebar .project-row .project-item:hover:not(:disabled) {
+  background: transparent;
+}
+@media (max-width: 1000px) {
+  #sidebar .brand-caption {
+    display: none;
+  }
+}
+
+#sidebar button:focus-visible {
+  outline-offset: -2px;
 }
 
 /* ===== FIM: desktop/styles/sidebar.css ===== */
@@ -2769,6 +2890,15 @@ header button:hover,
 .caption span,
 #remaining {
   color: #b3c1d3;
+}
+
+.quick-answer-content {
+  display: block;
+  min-height: 0;
+}
+#response > header,
+#response > .tools {
+  flex-shrink: 0;
 }
 
 /* ===== FIM: desktop/quick.css ===== */
