@@ -1,3 +1,13 @@
+# Recompilação 6.2.2 — campo compacto e sugestão de clipboard
+
+Em 29/10/2026, runtime 7f3b27a22a82b37289b82c2a7bcdb349771cbf47 enviado a master e codex/jarvis-v6-architecture. Vercel success às 14:54:44 America/Sao_Paulo (17:54:44 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/SbffKnbQ4qJ9ksevp4cgLFxjdNN2 . Login de produção HTTP 200; API de configurações sem sessão HTTP 401. Autorização contínua de envio/compilação registrada no AGENTS.md, conforme pedido do proprietário.
+
+Setup release/v6/Cyro-IA-Setup-6.2.2.exe: 183637089 bytes, ProductVersion 6.2.2, SHA256 `d149cb9360ad79a9e8e9d27e5ac89a7c7adee2a0ec312189b056f3b43d541d1c` conferido independentemente com .sha256; Authenticode NotSigned. PyInstaller, NSIS, auditoria de fontes/ASAR/runtime e self-check congelado aprovados. O empacotamento reutilizou a validação completa de 490 testes, sete cenários Electron e 56 verificações de layout, já aprovada na mesma revisão. Uma leitura inicial de log falhou por codificação antes de compilar; a leitura foi corrigida sem mudar fontes.
+
+O payload final iniciou sem Python/Node no PATH, autenticou localmente e preservou dados após reiniciar com perfil temporário. Não equivale a instalar/atualizar em Windows limpo nem valida IA paga, áudio físico ou Spotify real. Versão anterior preservada em release/v6/previous/6.2.2-9914b0f/. Sem migrations, segredos publicados, alterações em Backup/, tag ou GitHub Release. cloud/next-env.d.ts local preservado e excluído dos commits.
+
+Evidências: build/v6/compact-setup-6.2.2.log, compact-frozen-selfcheck.log, compact-payload-smoke.log, compact-deployment-runtime.json, compact-production-check.json e compact-verified-check.log. A documentação final é enviada sem alterar o runtime validado.
+
 # Ajuste 6.2.2 — campo compacto, clipboard e menu de mensagem
 
 Em 29/10/2026, o campo foi reduzido a uma linha inicial de 36 px, crescendo até 140 px. Anexos compactos ficam acima, com prévias de 40 px. Clipe à esquerda e áudio/envio alternados à direita; removido o rótulo Somente leitura da digitação, sem alterar permissões de arquivos. Copiar mensagem só aparece no menu do botão direito, com navegação e fechamento do AnchoredMenu existente.

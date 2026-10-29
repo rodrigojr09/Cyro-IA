@@ -1,6 +1,6 @@
 # Instalação e atualização — Cyro IA 6.2.2 em desenvolvimento
 
-O setup 6.2.2 foi gerado e auditado localmente em release/v6, e o Cloud correspondente foi publicado em 29/10/2026. Inclui o acabamento do controle Copiar mensagem em uma linha, além das correções anteriores de layout, anexos e clipboard. O payload abriu e preservou dados após reiniciar com perfil temporário. Consulte checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
+O setup 6.2.2 foi gerado e auditado localmente em release/v6, e o Cloud correspondente foi publicado em 29/10/2026. Recompilado em 29/10/2026 com campo compacto, anexos acima da digitação, áudio/envio alternados, sugestão Usar do clipboard e cópia de mensagem somente pelo botão direito. O payload abriu e preservou dados após reiniciar com perfil temporário. Consulte checksums e limites reais em docs/VALIDATION.md. Feche o Cyro antes de atualizar.
 
 ## Aplicativo Windows
 
