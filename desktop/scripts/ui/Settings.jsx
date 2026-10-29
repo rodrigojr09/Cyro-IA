@@ -272,7 +272,24 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 6.2.2</p>
+                  <p>Versão 6.3.0</p>
+                  <button
+                    onClick={() =>
+                      perform(async () => {
+                        const result = await window.cyroUpdates?.check();
+                        setStatus(
+                          result?.phase === 'disabled'
+                            ? 'Atualizações desativadas em desenvolvimento.'
+                            : result?.error ||
+                                (result?.release
+                                  ? 'Atualização disponível na janela principal.'
+                                  : 'Nenhuma atualização disponível.'),
+                        );
+                      })
+                    }
+                  >
+                    Verificar atualizações
+                  </button>
                   <p>
                     Desenvolvido por <strong>Rodrigo Junior</strong>.
                   </p>

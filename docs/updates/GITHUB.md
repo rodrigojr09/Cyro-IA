@@ -1,0 +1,15 @@
+# GitHub e serviço externo
+
+Repositório fixo: rodrigojr09/Cyro-IA, privado. Nenhum campo permite repositório arbitrário. APIs oficiais: [tags](https://docs.github.com/en/rest/repos/repos#list-repository-tags), [releases](https://docs.github.com/en/rest/releases/releases), [assets](https://docs.github.com/en/rest/releases/assets). Listagem paginada de 100 itens; ordenação SemVer. IDs não são convertidos para inteiros de banco de 32 bits.
+
+O proprietário informou que tornará o repositório público. A integração conserva as informações/links e consulta a visibilidade real na publicação; não presume a mudança antecipadamente. Quando público, o link do Setup.exe é o asset oficial direto. O fallback autenticado permanece compatível com publicações privadas anteriores.
+
+Cloud: CYRO_GITHUB_TOKEN (leitura de tags/metadados do repositório), CYRO_PUBLISHER_ORIGIN (origem HTTPS do serviço), CYRO_PUBLISHER_SECRET (segredo aleatório de pelo menos 64 caracteres). Credenciais em variáveis protegidas, não no banco/frontend. Preferir GitHub App instalada apenas neste repositório; obtenha/renove installation token fora deste código. Alternativa inicial: fine-grained PAT restrito ao repositório, com Contents read no Cloud e Contents write no publisher. O serviço não chama endpoints de mutação de refs/tags.
+
+Serviço externo: clone a mesma revisão validada, Node >=22.12, npm ci na raiz. Configure APP_ORIGIN com a origem exata do Cloud, CYRO_PUBLISHER_SECRET igual ao Cloud, CYRO_GITHUB_TOKEN com permissões para releases/assets, CYRO_UPLOAD_DIR como caminho absoluto em disco privado fora do checkout e de Backup/, com espaço para pelo menos dois setups, PORT opcional. Execute npm run publisher:start -w @jarvis/cloud. O processo escuta somente em 127.0.0.1, atrás de um proxy HTTPS confiável que permita upload de até 1 GB e timeout de duas horas. Não executar em Vercel Function. Use um supervisor de processos e reinício controlado; não interromper publicações em andamento.
+
+Não há serviço externo provisionado nesta entrega por decisão do proprietário. Não há senha padrão, token embutido, conta de armazenamento ou endpoint fictício ativo. Configure as variáveis antes de habilitar o painel.
+
+Proxy: limitar tamanho/taxa e conexões, preservar Content-Length, permitir PUT/GET/OPTIONS, não armazenar cache, não registrar Authorization nem query ticket, não fazer redirect para outras origens, habilitar TLS. CORS aceita somente APP_ORIGIN. Tickets de upload valem duas horas e ficam associados a UUID/tentativa/tamanho/tag/SHA; tickets de download privado valem dois minutos para iniciar a transferência.
+
+Staging é privado e removido ao terminar/falhar. Um crash pode deixar pastas UUID-tentativa: remova apenas órfãos expirados após confirmar que não há processo usando-os. Não apontar CYRO_UPLOAD_DIR para Backup/, perfis ou projetos. Credencial GitHub nunca é enviada ao navegador/Desktop, inclusive em redirects para CDN. A distribuição consulta o asset confirmado da mesma release; não transforma o repositório inteiro em público.

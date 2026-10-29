@@ -80,6 +80,56 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     openBackupsOnExit = false,
     backendStopped = false,
     stateStorage = null;
+  let updatePending = true;
+  ipcMain.on('cyro:updates-pending', (event, value) => {
+    if (trusted(event) && typeof value === 'boolean') updatePending = value;
+  });
+  app.on('cyro:install-update', async (file, done) => {
+    if (
+      !win ||
+      updatePending ||
+      writerController?.isDirty() ||
+      (quickController && !quickController.safeToUpdate())
+    ) {
+      done(false);
+      return;
+    }
+    const answer = await dialog.showMessageBox(win, {
+      type: 'question',
+      message: 'Instalar a atualização do Cyro?',
+      detail:
+        'O Cyro será encerrado com segurança. O instalador Windows será aberto para concluir a atualização; os dados do usuário serão preservados.',
+      buttons: ['Cancelar', 'Instalar e encerrar'],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (
+      answer.response !== 1 ||
+      updatePending ||
+      writerController?.isDirty() ||
+      (quickController && !quickController.safeToUpdate())
+    ) {
+      done(false);
+      return;
+    }
+    app.once('will-quit', () => {
+      const child = require('node:child_process').spawn(file, [], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: false,
+        shell: false,
+      });
+      child.on('error', () =>
+        dialog.showErrorBox(
+          'Cyro IA',
+          'Não foi possível iniciar o instalador. Abra o Cyro e use Link para Baixar.',
+        ),
+      );
+      child.unref();
+    });
+    done(true);
+    quitJarvis();
+  });
   app.on('second-instance', () => {
     if (win) {
       if (win.isMinimized()) win.restore();

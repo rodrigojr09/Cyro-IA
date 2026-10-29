@@ -1,4 +1,17 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('cyroUpdates', {
+  state: () => ipcRenderer.invoke('cyro:updates-state'),
+  check: () => ipcRenderer.invoke('cyro:updates-check'),
+  download: () => ipcRenderer.invoke('cyro:updates-download'),
+  install: () => ipcRenderer.invoke('cyro:updates-install'),
+  manual: () => ipcRenderer.invoke('cyro:updates-manual'),
+  setPending: (value) => ipcRenderer.send('cyro:updates-pending', value),
+  onState: (callback) => {
+    const listener = (_event, value) => callback(value);
+    ipcRenderer.on('cyro:updates-state', listener);
+    return () => ipcRenderer.removeListener('cyro:updates-state', listener);
+  },
+});
 const listen = (channel, callback) => {
   const listener = (_event, value) => callback(value);
   ipcRenderer.on(channel, listener);

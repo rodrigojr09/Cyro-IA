@@ -34,5 +34,9 @@
   "electron/cloud-config.json",
   "assets/spotify-white.svg",
   "assets/spotify-black.svg",
-  "dist/highlight.css"
+  "dist/highlight.css",
+  "scripts/updates/protocol.js",
+  "scripts/updates/installer.js",
+  "scripts/updates/client.js",
+  "scripts/updates/ipc.js"
 ]

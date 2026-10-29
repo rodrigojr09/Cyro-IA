@@ -1,6 +1,6 @@
 {
   "name": "@jarvis/cloud",
-  "version": "6.2.2",
+  "version": "6.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "db:validate": "prisma validate",
     "db:seed": "tsx prisma/seed.ts",
     "admin:bootstrap": "prisma generate && tsx scripts/bootstrap-admin.ts",
-    "db:reset-users": "prisma generate && tsx scripts/reset-cloud.ts"
+    "db:reset-users": "prisma generate && tsx scripts/reset-cloud.ts",
+    "publisher:start": "tsx scripts/publisher-server.ts"
   },
   "dependencies": {
     "@jarvis/shared": "*",

@@ -506,6 +506,7 @@ function createQuick({
   });
   persist();
   return {
+    safeToUpdate: () => !busy,
     windows,
     refreshReady: publish,
     getSettings: () => ({ ...config }),

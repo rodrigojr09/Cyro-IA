@@ -235,3 +235,29 @@ textarea {
   background: var(--accent);
   color: var(--bg);
 }
+
+.update-notice {
+  position: fixed;
+  z-index: 1050;
+  right: 24px;
+  top: 84px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--side);
+  box-shadow: 0 8px 24px #0003;
+  font-size: 13px;
+}
+.update-notice p {
+  margin: 8px 0;
+  color: var(--muted);
+}
+.update-notice > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.update-notice progress {
+  width: 100%;
+}

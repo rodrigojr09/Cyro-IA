@@ -3,6 +3,7 @@ import Link from "next/link";
 import { version } from "../../package.json";
 import Management from "./management";
 import Credentials from "./credentials";
+import Releases from "./releases";
 import UsagePanel from "./usage-panel";
 import type { UsageReport } from "../lib/usage-report";
 import { useState } from "react";
@@ -61,6 +62,7 @@ const links = [
   ["devices", "▣", "Dispositivos"],
   ["settings", "⚙", "Configurações"],
   ["credentials", "⌁", "Credenciais"],
+  ["versions", "↥", "Sistema · Versões"],
   ["usage", "▥", "Consumo"],
   ["audit", "≡", "Auditoria"],
 ];
@@ -133,12 +135,13 @@ export default function Dashboard({
           {links
             .filter(
               ([id]) =>
-                id !== "credentials" || data?.actor.role === "SUPER_ADMIN",
+                !["credentials", "versions"].includes(id) ||
+                data?.actor.role === "SUPER_ADMIN",
             )
             .map(([id, icon, label]) => (
               <Link
                 key={id}
-                href={`/${id}`}
+                href={id === "versions" ? "/system/versions" : `/${id}`}
                 aria-current={section === id ? "page" : undefined}
               >
                 <span>{icon}</span>
@@ -495,6 +498,9 @@ export default function Dashboard({
               </section>
             )}
             {section === "settings" && <Management section={section} />}
+            {section === "versions" && data.actor.role === "SUPER_ADMIN" && (
+              <Releases />
+            )}
             {section === "credentials" && data.actor.role === "SUPER_ADMIN" && (
               <Credentials />
             )}

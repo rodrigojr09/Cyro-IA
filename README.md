@@ -1,20 +1,22 @@
-# Cyro IA v6.2.2 — em desenvolvimento
+# Cyro IA v6.3.0 — em desenvolvimento
 
 Cyro IA é o novo nome do JARVIS, autorizado pelo proprietário em 27/10/2026. Repositório: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA). Perfis, sessões, IPC e identificadores internos existentes permanecem compatíveis.
 
-Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador local desta entrega: `release/v6/Cyro-IA-Setup-6.2.2.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
+Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador da última entrega publicada: `release/v6/Cyro-IA-Setup-6.2.2.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
+
+A v6.3 prepara o sistema de versões em **Sistema → Versões** e o servidor externo de publicação de Setup.exe. O Cloud consulta tags reais e não cria tags. O proprietário disponibilizará a infraestrutura externa posteriormente; publicação e atualização instalada ainda precisam de homologação real. O atualizador é ignorado em desenvolvimento. O repositório e seus links permanecem visíveis, com download direto quando público e autenticado quando privado. Veja [arquitetura](docs/updates/ARCHITECTURE.md), [publicação](docs/updates/PUBLISHING.md) e [resultados reais](docs/updates/TEST_RESULTS.md).
 
 O [Writer 6.1](docs/WRITER.md) usa um documento contínuo com chat lateral. A migração preserva os documentos e históricos existentes; sem atualização automática do aplicativo instalado.
 
 A sidebar usa indentação limpa para conversas e projetos, destaque discreto do chat ativo e rodapé separado. Estilos em `desktop/styles/sidebar.css` e componente em `desktop/scripts/workspace/Sidebar.jsx`.
 
-Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.2.2, sem substituir os módulos de produção; não se atualizam automaticamente. Para regenerar ambos com todos os componentes/páginas e CSSs atuais, execute `python -X utf8 tools/generate_ui_catalog.py` na raiz. O gerador confere a integridade das fontes incluídas e identifica cada origem por comentário. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
+Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.3.0, sem substituir os módulos de produção; não se atualizam automaticamente. Para regenerar ambos com todos os componentes/páginas e CSSs atuais, execute `python -X utf8 tools/generate_ui_catalog.py` na raiz. O gerador confere a integridade das fontes incluídas e identifica cada origem por comentário. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
 
-Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas para a v6.2.2.
+Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas para a v6.3.0.
 
 A v6.2.2 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A entrega 6.2.2 foi publicada no Cloud e o instalador Windows foi compilado com o acabamento do controle Copiar mensagem; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
 
-O ajuste posterior da v6.2.2 move Copiar mensagem para o menu do botão direito e compacta o campo com anexos acima, clipe à esquerda e áudio/envio alternados à direita. O clipboard oferece Usar para preencher o rascunho ou anexar uma imagem no chat principal, sem envio automático. Este ajuste ainda não integra o instalador publicado anteriormente.
+O ajuste posterior da v6.2.2 move Copiar mensagem para o menu do botão direito e compacta o campo com anexos acima, clipe à esquerda e áudio/envio alternados à direita. O clipboard oferece Usar sem envio automático; o setup 6.2.2 recompilado inclui esse ajuste.
 
 # Base funcional v5
 
@@ -65,7 +67,7 @@ Depois de configurar, `start.bat` inicia o Cloud local, aguarda o login e abre o
 npm run check:v6
 ```
 
-O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v6/Cyro-IA-Setup-6.2.2.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
+O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v6/Cyro-IA-Setup-6.3.0.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
 
 ## Documentação e autoria
 

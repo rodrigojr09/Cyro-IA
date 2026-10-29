@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 const config: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingRoot: path.resolve(process.cwd(), ".."),
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
   async headers() {
     return [
@@ -15,6 +17,12 @@ const config: NextConfig = {
             value: "camera=(), microphone=(), geolocation=()",
           },
           { key: "Cache-Control", value: "no-store" },
+        ],
+      },
+      {
+        source: "/api/updates/latest",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=60, s-maxage=60" },
         ],
       },
     ];

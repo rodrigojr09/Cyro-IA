@@ -40,3 +40,12 @@ Cyro IA é o novo nome do JARVIS; os registros históricos mantêm a marca anter
 - [Arquivo histórico de versões e planos](history/README.md)
 
 `Backup/` pertence ao proprietário, é somente leitura e não faz parte desta documentação de runtime. Segredos, perfis, bancos e artefatos locais não são versionados.
+
+## Atualizações 6.3
+
+- [Arquitetura e auditoria](updates/ARCHITECTURE.md)
+- [Publicação](updates/PUBLISHING.md)
+- [GitHub e servidor externo](updates/GITHUB.md)
+- [Atualizador Desktop](updates/DESKTOP_UPDATER.md)
+- [Segurança](updates/SECURITY.md)
+- [Resultados e pendências](updates/TEST_RESULTS.md)

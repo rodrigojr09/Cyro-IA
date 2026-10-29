@@ -16,12 +16,13 @@ export default async function Page({
       "devices",
       "settings",
       "credentials",
+      "versions",
       "usage",
       "audit",
     ].includes(section)
   )
     notFound();
-  if (section === "credentials" && (await admin()).role !== "SUPER_ADMIN")
+  if (["credentials", "versions"].includes(section) && (await admin()).role !== "SUPER_ADMIN")
     notFound();
   const query = new URLSearchParams();
   if (section === "usage") {

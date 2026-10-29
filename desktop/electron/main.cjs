@@ -4,6 +4,7 @@ delete process.env.JARVIS_AUTHENTICATED;
 delete process.env.JARVIS_PORTABLE;
 for (const key of Object.keys(process.env))
   if (key.startsWith('OPENAI_') || key.startsWith('SPOTIFY_')) delete process.env[key];
+for(const key of ['DATABASE_URL','DIRECT_URL','CYRO_GITHUB_TOKEN','CYRO_PUBLISHER_SECRET'])delete process.env[key];
 const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
@@ -160,6 +161,7 @@ app
       ).origin;
     if (!origin) throw Error('Configure JARVIS_CLOUD_ORIGIN antes de iniciar.');
     service = cloud.createCloud({ safeStorage, dataDir, origin, packaged: app.isPackaged });
+    require('../scripts/updates/ipc').installUpdateIPC({electron:require('electron'),service:()=>service,origin,dataDir});
     const monitor = setInterval(
       () => {
         queue = queue

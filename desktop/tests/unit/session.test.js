@@ -20,6 +20,7 @@ async function setup({ saved = false, corrupt = false, failUnlock = false } = {}
     tokenFiles = [];
   let cloudOptions;
   const app = new EventEmitter();
+  app.getVersion = () => require('../../package.json').version;
   app.getPath = () => require('node:os').tmpdir();
   app.whenReady = () => Promise.resolve();
   app.on('jarvis:session-changed', (value) => events.push(value));

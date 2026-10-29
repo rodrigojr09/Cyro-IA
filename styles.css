@@ -1,4 +1,4 @@
-/* Cyro IA 6.2.2 — todos os estilos de interface para consulta.
+/* Cyro IA 6.3.0 — todos os estilos de interface para consulta.
 Cada bloco identifica sua origem; importações locais incorporadas.
 Desktop e Cloud têm contextos globais distintos. Não é uma entrada de produção. */
 
@@ -1823,6 +1823,32 @@ textarea {
   padding: 5px 14px;
   background: var(--accent);
   color: var(--bg);
+}
+
+.update-notice {
+  position: fixed;
+  z-index: 1050;
+  right: 24px;
+  top: 84px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--side);
+  box-shadow: 0 8px 24px #0003;
+  font-size: 13px;
+}
+.update-notice p {
+  margin: 8px 0;
+  color: var(--muted);
+}
+.update-notice > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.update-notice progress {
+  width: 100%;
 }
 
 /* ===== FIM: desktop/styles/conversation.css ===== */
@@ -4287,39 +4313,136 @@ footer {
 }
 
 /* Shared visual rhythm with the Desktop; semantic success/error colors stay distinct. */
-button, input, select { border-radius: var(--radius-control); }
-button { transition: background-color 150ms ease, color 150ms ease; }
-button:hover { filter: none; }
-button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, white); }
-button.secondary:hover:not(:disabled), button.ghost:hover:not(:disabled) {
+button,
+input,
+select {
+  border-radius: var(--radius-control);
+}
+button {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+button:hover {
+  filter: none;
+}
+button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+button.secondary:hover:not(:disabled),
+button.ghost:hover:not(:disabled) {
   background: color-mix(in srgb, var(--text) 7%, var(--panel));
 }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
-.table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: none; }
-.card, .usage-chart, .usage-user, .usage-stats > div { border-radius: var(--radius-panel); }
-.card-title, .usage-chart h3 { line-height: 1.4; }
-.muted, small, label { line-height: 1.5; }
-.usage-stats strong { font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { button { transition: none; } }
-
-:root[data-theme='light'] {
-  color-scheme: light;
-  --bg: #f7f9fc; --side: #eef2f7; --surface: #e3eaf3; --border: #c5cfdd;
-  --accent: #0369a1; --text: #172033; --muted: #4c5b70;
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
 }
-:root[data-theme='light'] .sidebar,
-:root[data-theme='light'] .card,
-:root[data-theme='light'] .login-card,
-:root[data-theme='light'] .usage-chart,
-:root[data-theme='light'] .usage-user { background: var(--side); }
-:root[data-theme='light'] input,
-:root[data-theme='light'] select,
-:root[data-theme='light'] th { background: var(--bg); color: var(--text); }
-:root[data-theme='light'] label,
-:root[data-theme='light'] header b { color: var(--muted); }
-:root[data-theme='light'] button { color: white; }
-:root[data-theme='light'] button.secondary,
-:root[data-theme='light'] button.ghost { color: var(--text); background: var(--surface); }
+.card,
+.usage-chart,
+.usage-user,
+.usage-stats > div {
+  border-radius: var(--radius-panel);
+}
+.card-title,
+.usage-chart h3 {
+  line-height: 1.4;
+}
+.muted,
+small,
+label {
+  line-height: 1.5;
+}
+.usage-stats strong {
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f9fc;
+  --side: #eef2f7;
+  --surface: #e3eaf3;
+  --border: #c5cfdd;
+  --accent: #0369a1;
+  --text: #172033;
+  --muted: #4c5b70;
+}
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .card,
+:root[data-theme="light"] .login-card,
+:root[data-theme="light"] .usage-chart,
+:root[data-theme="light"] .usage-user {
+  background: var(--side);
+}
+:root[data-theme="light"] input,
+:root[data-theme="light"] select,
+:root[data-theme="light"] th {
+  background: var(--bg);
+  color: var(--text);
+}
+:root[data-theme="light"] label,
+:root[data-theme="light"] header b {
+  color: var(--muted);
+}
+:root[data-theme="light"] button {
+  color: white;
+}
+:root[data-theme="light"] button.secondary,
+:root[data-theme="light"] button.ghost {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.release-summary,
+.release-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.release-summary > div {
+  flex: 1;
+  min-width: 200px;
+}
+.release-form {
+  display: grid;
+  gap: 16px;
+  max-width: 780px;
+}
+.release-form label {
+  display: grid;
+  gap: 8px;
+}
+.release-form input,
+.release-form select,
+.release-form textarea {
+  width: 100%;
+  min-width: 0;
+}
+.release-form textarea {
+  min-height: 100px;
+}
+.release-history {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.release-checksum {
+  overflow-wrap: anywhere;
+  font: 12px/1.5 monospace;
+}
+.release-form progress {
+  width: 100%;
+}
 
 /* ===== FIM: cloud/app/globals.css ===== */
 

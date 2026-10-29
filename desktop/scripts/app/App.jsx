@@ -15,6 +15,7 @@ import { AnchoredMenu } from '../ui/AnchoredMenu';
 import { Welcome } from '../workspace/Welcome';
 import { Conversation } from '../chat/Conversation';
 import { Composer } from '../chat/Composer';
+import { UpdateNotice } from '../updates/UpdateNotice';
 import { Icon } from '../ui/Icon';
 
 export function App({ workspace: providedWorkspace, writer: providedWriter }) {
@@ -48,6 +49,11 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     sending = useRef(false);
   const isWriter = !!state.chat?.writer_document_id;
   const busy = state.busy || state.loading || writerState.busy || writerState.loading;
+  useEffect(() => {
+    window.cyroUpdates?.setPending(
+      !!(busy || submitting || input.trim() || attachments.files.length || attachments.choosing),
+    );
+  }, [busy, submitting, input, attachments.files.length, attachments.choosing]);
   const canSend =
     !submitting &&
     workspace.canSend() &&
@@ -191,7 +197,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = Math.min(180, inputRef.current.scrollHeight) + 'px';
+      inputRef.current.style.height =
+        Math.min(140, Math.max(36, inputRef.current.scrollHeight)) + 'px';
     }
   }, [input]);
   function openManage() {
@@ -256,6 +263,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         if (menu && !event.target.closest('.context-menu,.project-create-menu')) setMenu(null);
       }}
     >
+      <UpdateNotice />
       <Sidebar
         state={state}
         busy={busy}

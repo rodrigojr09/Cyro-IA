@@ -1,3 +1,7 @@
+# Validação 6.3.0 — versões e atualizações
+
+Em 29/10/2026, 505 testes, TypeScript/build Cloud/Desktop, sete cenários Electron e 63 verificações administrativas em Chromium passaram. Detalhes, execuções iniciais corrigidas e limitações em [resultados de atualizações](updates/TEST_RESULTS.md). A migration aditiva de CyroRelease foi aplicada ao banco configurado sem apagar dados. Upload/publicação GitHub foram testados com transportes sintéticos; consulta real apenas leu repositório/tags. O proprietário pediu preparar o servidor externo para instalação posterior. Não existe publicação real de Setup.exe ou tag v6.3.0 criada por esta implementação. Atualização de uma instalação Windows para outra permanece pendente de homologação.
+
 # Recompilação 6.2.2 — campo compacto e sugestão de clipboard
 
 Em 29/10/2026, runtime 7f3b27a22a82b37289b82c2a7bcdb349771cbf47 enviado a master e codex/jarvis-v6-architecture. Vercel success às 14:54:44 America/Sao_Paulo (17:54:44 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/SbffKnbQ4qJ9ksevp4cgLFxjdNN2 . Login de produção HTTP 200; API de configurações sem sessão HTTP 401. Autorização contínua de envio/compilação registrada no AGENTS.md, conforme pedido do proprietário.

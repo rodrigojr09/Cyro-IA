@@ -5,6 +5,31 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Pending attempts are never exposed by the update endpoint. No executable data.
+model CyroRelease {
+  id String @id @default(uuid()) @db.Uuid
+  version String @unique @db.VarChar(100)
+  githubTag String @unique @db.VarChar(101)
+  tagSha String @db.VarChar(64)
+  githubReleaseId String? @unique @db.VarChar(32)
+  githubAssetId String? @unique @db.VarChar(32)
+  setupUrl String?
+  checksum String? @db.VarChar(64)
+  fileSize Int
+  changelog String @default("")
+  status String @default("UPLOADING") @db.VarChar(20)
+  stable Boolean @default(true)
+  repositoryPrivate Boolean @default(true)
+  attempt String @db.Uuid
+  recovery Boolean @default(false)
+  leaseUntil DateTime?
+  error String?
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, stable])
+}
 enum Role {
   SUPER_ADMIN
   ADMIN
