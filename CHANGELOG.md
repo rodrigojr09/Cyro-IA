@@ -1,5 +1,7 @@
 # 6.3.0 — em desenvolvimento
 
+- Data/hora confiáveis do servidor em cada chamada de IA, com fuso de São Paulo, reserva de tokens e orientação para não simular consultas de atualidades.
+
 - Proteção final: janela desabilitada durante o encerramento para instalação, evitando novas edições enquanto o serviço local fecha.
 
 - Sistema → Versões no Cloud: consulta paginada de tags SemVer, reserva de publicação, histórico, upload direto e recuperação sem substituir Setup.exe.

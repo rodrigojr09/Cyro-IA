@@ -1,4 +1,5 @@
-import { writerAccountContext } from '@/lib/writer-context';
+import { withCurrentTime } from "@/lib/current-time";
+import { writerAccountContext } from "@/lib/writer-context";
 import OpenAI from "openai";
 import { chatSchema, inputReservation } from "@jarvis/shared/schemas";
 import { deviceAuth } from "@/lib/auth";
@@ -37,13 +38,17 @@ export const POST = endpoint(async (request) => {
   if (!provider.allowedModels.includes(input.model))
     throw new HttpError(403, "Modelo não autorizado.");
   if (!provider.apiKey) throw new HttpError(503, "Provedor não configurado.");
-  if (input.tools?.some(tool=>tool.function.name==='writer_editorial')) {
-    const context=await writerAccountContext(device.userId, query=>db.conversation.findUnique(query));
-    if(context) input.messages.splice(1,0,{role:'user',content:context});
+  if (input.tools?.some((tool) => tool.function.name === "writer_editorial")) {
+    const context = await writerAccountContext(device.userId, (query) =>
+      db.conversation.findUnique(query),
+    );
+    if (context)
+      input.messages.splice(1, 0, { role: "user", content: context });
   }
+  const messages = withCurrentTime(input.messages);
   const reservation = await reserve(
     device.userId,
-    inputReservation(input.messages, input.model) +
+    inputReservation(messages, input.model) +
       Buffer.byteLength(JSON.stringify(input.tools ?? [])) +
       input.max_completion_tokens +
       1024,
@@ -56,8 +61,7 @@ export const POST = endpoint(async (request) => {
   const signal = AbortSignal.any([request.signal, AbortSignal.timeout(95000)]);
   const options = {
     model: input.model,
-    messages:
-      input.messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    messages: messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
     tools: input.tools as
       OpenAI.Chat.Completions.ChatCompletionTool[] | undefined,
     max_completion_tokens: input.max_completion_tokens,

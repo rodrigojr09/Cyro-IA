@@ -74,3 +74,5 @@ O comando reúne consistência do repositório, testes Cloud/Desktop/Python, Typ
 O [índice documental](docs/README.md) separa guias atuais de [histórico](docs/history/README.md). Mudanças estão no [CHANGELOG](CHANGELOG.md). Guias antigos não descrevem a instalação vigente.
 
 Desenvolvido por **Rodrigo Junior** · [GitHub](https://github.com/rodrigojr09) · [E-mail](mailto:rodrigo.macia019@gmail.com). © 2026.
+
+O [relógio contextual](docs/CURRENT_TIME.md) fornece a data atual à IA a cada requisição no Cloud. Notícias e cotações continuam exigindo uma consulta real; esta correção não habilita pesquisa web.
