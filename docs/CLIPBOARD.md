@@ -1,3 +1,7 @@
+# Sugestões de imagem 6.3.1
+
+A miniatura usa exatamente o mesmo quadrado 64px do anexo, sem textos ou ícones. Apenas a sugestão recebe opacidade de 70% e borda tracejada destacada. Clique continua aplicando ao rascunho, respeitando cinco anexos; texto sugerido continua sublinhado. Nenhum aviso fixo é exibido no cartão. Consentimento do monitor, TTL, isolamento e envio explícito mantidos. Quick Chat continua recebendo texto; imagem é anexada no chat principal. Histórico abaixo.
+
 # Cartão compartilhado — refinamento 6.3.0
 
 Sugestões usam AttachmentCard compacto com borda tracejada. Imagem mostra miniatura local de 36px; clicar no cartão importa para os anexos do chat principal. Texto/código/link mostram conteúdo sublinhado com fundo sutil; clicar acrescenta o texto completo entre parênteses e uma nova linha ao rascunho. Não há mais Usar separado nem expansão de prévia. Falha ou limite mantém a sugestão com erro; controles bloqueiam durante importação. Quick Chat continua recebendo texto, enquanto anexos de imagem são usados no chat principal. Consentimento, exclusividade, TTL e ausência de envio automático preservados. As seções abaixo registram comportamentos anteriores.

@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   dropFile: (value) => ipcRenderer.invoke('jarvis:attachments-drop-file', value),
   pasteImage: (value) => ipcRenderer.invoke('jarvis:attachments-paste-image', value),
   attachmentInfo: (id) => ipcRenderer.invoke('jarvis:attachments-info', id),
+  downloadAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-download', id),
   saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
   discardAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-discard', id),
   onWorkspaceChanged: (callback) => {

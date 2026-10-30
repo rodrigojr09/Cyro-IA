@@ -1,3 +1,11 @@
+# Validação 6.3.1 — miniaturas de imagem unificadas, 30/10/2026
+
+Regressão completa npm run check:v6 aprovada: 514 testes (159 Desktop, 104 Cloud, 214 backend Python, 35 ferramentas Python e 2 ferramentas Node), TypeScript/build Cloud/Desktop, sete cenários Electron e 63 verificações administrativas em Chromium. Prettier e checagem do repositório aprovados. Logs locais: build/v6/v631-check.log, v631-desktop.log e v631-format-final.log. Não foram feitas chamadas pagas ou certificada instalação em Windows limpo.
+
+Anexo e sugestão de imagem usam a mesma miniatura quadrada 64px, sem nome/tipo/tamanho, aviso ou ícones. Sugestão difere apenas por opacity 0.7 e borda tracejada de 2px; clique aplica ao rascunho. Anexo baixa diretamente em Downloads por IPC autorizado, com nome único reservado sem sobrescrever dados. Testes verificaram destino local, conteúdo preservado e limpeza na falha. Delete no cartão focado remove o anexo sem controles visuais. Mantidos cinco arquivos e envio explícito.
+
+Capturas cyro-v631-image-tile.png e clipboard-image.png em jarvis-clipboard-smoke-mJODN8 conferidas visualmente. As expectativas dos cenários foram atualizadas para o contrato novo (ausência de aviso/fechar/metadados e sugestão quadrada translúcida). Formatação inicial dos metadados de versão corrigida e checada novamente. Catálogos paginas.html/styles.css regenerados. cloud/next-env.d.ts do proprietário restaurado byte a byte após build; Backup/ e dados preservados. Nenhuma migração, tag ou GitHub Release criada.
+
 # Anexos compactos e sugestões clicáveis — 30/10/2026
 
 Entrega: runtime 3e51f8dfd17e3093ea3d1dbfa1ce70b98ec2e0ae enviado a master e codex/jarvis-v6-architecture; deploy Vercel success em 30/10/2026 às 09:17:18 America/Sao_Paulo (12:17:18 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/F7Ni94FA451kF5PpqNRuzLAJUcRK . Produção: login 200, última versão 200 e API administrativa sem sessão 401.

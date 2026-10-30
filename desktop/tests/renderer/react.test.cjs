@@ -526,7 +526,9 @@ test('clipboard uses the shared card and attaches only after explicit local acti
     assert.ok(card.classList.contains('attachment-suggestion'));
     assert.ok(card.querySelector('img'));
     assert.match(card.querySelector('#clipboard-use').getAttribute('aria-label'), /Usar/);
-    assert.match(card.textContent, /Nada é enviado automaticamente/);
+    assert.equal(card.querySelector('.attachment-privacy'), null);
+    assert.equal(card.querySelector('.attachment-info'), null);
+    assert.equal(card.querySelector('.attachment-remove'), null);
     assert.equal(attached, 0);
     assert.equal(sent, 0);
     const add = card.querySelector('#clipboard-use');
@@ -657,12 +659,12 @@ test('clipboard Use locks actions while importing and never sends a chat message
   }
 });
 
-test('compact attachment click saves locally and removal is a separate action', async () => {
+test('image-only tile downloads locally without metadata or icons; Delete removes the draft attachment', async () => {
   const env = environment();
   fixture(env);
   let saved = [],
     removed = [];
-  window.jarvisWindow.saveAttachment = async (id) => {
+  window.jarvisWindow.downloadAttachment = async (id) => {
     saved.push(id);
     return { ok: true };
   };
@@ -682,7 +684,12 @@ test('compact attachment click saves locally and removal is a separate action', 
     await click('button[aria-label="Baixar foto.png"]');
     assert.deepEqual(saved, ['compact']);
     assert.deepEqual(removed, []);
-    await click('button[aria-label="Remover foto.png"]');
+    assert.equal(document.querySelector('button[aria-label="Remover foto.png"]'), null);
+    await act(async () =>
+      document
+        .querySelector('.attachment-open')
+        .dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Delete', bubbles: true })),
+    );
     assert.deepEqual(saved, ['compact']);
     assert.deepEqual(removed, ['compact']);
   } finally {

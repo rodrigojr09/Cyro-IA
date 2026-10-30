@@ -202,6 +202,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     }
   }
   const attachments = require('../attachment/main').createAttachments({
+    downloads: () => app.getPath('downloads'),
     dialog,
     window: () => win,
     backend,
@@ -469,6 +470,10 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ipcMain.handle('jarvis:attachments-info', async (event, id) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       return attachments.info(id);
+    });
+    ipcMain.handle('jarvis:attachments-download', async (event, id) => {
+      if (!trusted(event)) throw Error('Solicitação não autorizada.');
+      return attachments.download(id);
     });
     ipcMain.handle('jarvis:attachments-save', async (event, id) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');

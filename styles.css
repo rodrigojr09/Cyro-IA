@@ -1,4 +1,4 @@
-/* Cyro IA 6.3.0 — todos os estilos de interface para consulta.
+/* Cyro IA 6.3.1 — todos os estilos de interface para consulta.
 Cada bloco identifica sua origem; importações locais incorporadas.
 Desktop e Cloud têm contextos globais distintos. Não é uma entrada de produção. */
 
@@ -1021,21 +1021,6 @@ body {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
-.attachment-card .attachment-privacy {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.4;
-}
-.attachment-privacy > .lucide {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
 .attachment-feedback {
   display: block;
   color: var(--muted);
@@ -1078,6 +1063,45 @@ body {
   .attachment-card {
     transition: none;
   }
+}
+
+/* Image-only tiles: 4:4 (square), independent of the file/text layout. */
+.attachment-card.attachment-image-card {
+  width: 64px;
+  height: 64px;
+  aspect-ratio: 4 / 4;
+  flex: 0 0 64px;
+  padding: 4px;
+  position: relative;
+}
+.attachment-image-card .attachment-main,
+.attachment-image-card .attachment-open {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+.attachment-image-card .attachment-thumbnail {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  background: transparent;
+}
+.attachment-image-card.attachment-suggestion {
+  opacity: 0.7;
+  border: 2px dashed var(--accent);
+}
+.attachment-image-card .attachment-feedback:not(:empty) {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  width: 240px;
+  max-width: 70vw;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--side);
 }
 
 /* ===== FIM: desktop/styles/attachments.css ===== */

@@ -1,3 +1,7 @@
+# Imagens 6.3.1 — miniatura única
+
+Anexos e sugestões de imagem usam o mesmo AttachmentCard quadrado 64×64 (proporção 4:4), miniatura contain centralizada, sem metadados, aviso ou botões de download/fechar. A sugestão difere somente pela opacidade de 0.7 e borda tracejada de 2px var(--accent). Clique no anexo baixa diretamente em Downloads, com nome único reservado exclusivamente para impedir sobrescrita; falhas limpam o arquivo reservado. O destino é definido no processo principal, nunca pelo renderer. Clique na sugestão importa para o rascunho, sem envio automático. Delete no cartão focado remove o anexo pendente, sem botão visual. Foco acessível e estado ocupado preservados. Falhas aparecem como status; não há aviso fixo no rodapé. Documentos e textos continuam nos formatos anteriores. As seções abaixo são históricas.
+
 # Anexos 6.3.0 — componente único
 
 Anexos do clipe, drop e Ctrl+V usam AttachmentCard compacto: miniatura/ícone de 36px, padding 8px, raio 10px e nome com tamanho. Clique no cartão abre o salvamento local pelo diálogo nativo; remover é uma ação separada. Não há rodapé de ações nem botão de prévia. A sugestão usa o mesmo componente com borda tracejada e clique para importar. Texto sugerido aparece sublinhado, em até duas linhas, acima do campo. O texto completo é aplicado ao rascunho; o corte visual não trunca os dados. Aviso de privacidade local preservado. A lista quebra linhas, adapta-se em telas estreitas e pode rolar sem esconder a digitação. Limite compartilhado: cinco arquivos de até 5 MB.

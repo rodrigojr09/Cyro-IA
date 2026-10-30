@@ -99,3 +99,47 @@ test('dropped file imports only bounded bytes and a plain supported name, never 
     await assert.rejects(service.dropFile(value));
   assert.equal(calls.length, 1);
 });
+
+test('automatic download reserves a unique Downloads file without dialog or overwriting existing data', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cyro-download-'));
+  const existing = path.join(directory, 'imagem.png');
+  fs.writeFileSync(existing, 'preservar');
+  let exported;
+  const service = createAttachments({
+    downloads: () => directory,
+    backend: async (route, method, payload) => {
+      if (route.endsWith('/info')) return { ok: true, data: { name: 'imagem.png' } };
+      exported = JSON.parse(payload);
+      assert.equal(fs.readFileSync(exported.path).length, 0);
+      fs.writeFileSync(exported.path, 'imagem');
+      return { ok: true };
+    },
+  });
+  try {
+    await service.download('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+    assert.equal(path.dirname(exported.path), fs.realpathSync(directory));
+    assert.notEqual(exported.path, existing);
+    assert.equal(fs.readFileSync(existing, 'utf8'), 'preservar');
+    assert.equal(fs.readFileSync(exported.path, 'utf8'), 'imagem');
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('automatic download failure removes its reserved file and preserves other downloads', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cyro-download-fail-'));
+  const service = createAttachments({
+    downloads: () => directory,
+    backend: async (route) =>
+      route.endsWith('/info')
+        ? { ok: true, data: { name: 'imagem.png' } }
+        : { ok: false, data: { detail: 'Offline' } },
+  });
+  try {
+    const result = await service.download('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+    assert.equal(result.ok, false);
+    assert.deepEqual(fs.readdirSync(directory), []);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

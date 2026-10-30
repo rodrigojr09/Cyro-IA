@@ -186,7 +186,6 @@ export function Clipboard({
                 setSending(false);
               }
             }}
-            privacy="Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente."
           />
         </div>
       )}

@@ -28,7 +28,7 @@ const EXTENSIONS = [
   'py',
   'sql',
 ];
-function createAttachments({ dialog, window, backend }) {
+function createAttachments({ dialog, window, backend, downloads }) {
   return {
     async choose(remaining = 5) {
       if (!Number.isInteger(remaining) || remaining < 1 || remaining > 5)
@@ -107,6 +107,39 @@ function createAttachments({ dialog, window, backend }) {
     async discard(id) {
       if (typeof id !== 'string' || !/^[a-f\d-]{36}$/i.test(id)) throw Error('Anexo inválido.');
       return backend('/desktop/attachments/discard', 'POST', JSON.stringify({ id }));
+    },
+    async download(id) {
+      const meta = await this.info(id);
+      if (!meta.ok) return meta;
+      const directory = await fs.realpath(downloads());
+      const original = path.basename(meta.data.name || 'Imagem.png');
+      const extension = path.extname(original);
+      const safeName =
+        path
+          .basename(original, extension)
+          .replace(/[^\p{L}\p{N} ._-]/gu, '_')
+          .slice(0, 80) || 'Imagem';
+      const destination = path.join(
+        directory,
+        safeName + '-' + require('node:crypto').randomUUID() + extension,
+      );
+      const reserved = await fs.open(destination, 'wx');
+      await reserved.close();
+      try {
+        const result = await backend(
+          '/desktop/attachments/export',
+          'POST',
+          JSON.stringify({ id, path: destination }),
+        );
+        if (!result?.ok) {
+          await fs.unlink(destination);
+          return result;
+        }
+        return result;
+      } catch (error) {
+        await fs.unlink(destination).catch(() => {});
+        throw error;
+      }
     },
     async save(id) {
       const meta = await this.info(id);

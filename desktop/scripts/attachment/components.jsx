@@ -9,7 +9,6 @@ export function AttachmentCard({
   imageId,
   removeId,
   heading,
-  privacy,
   busy = false,
   suggestion = false,
   text,
@@ -17,6 +16,7 @@ export function AttachmentCard({
   const [error, setError] = useState(''),
     [working, setWorking] = useState(false);
   const image = previewSource === undefined ? file.preview : previewSource;
+  const imageOnly = text === undefined && (file.kind === 'image' || !!image);
   async function activate() {
     if (working || busy) return;
     setWorking(true);
@@ -26,7 +26,9 @@ export function AttachmentCard({
         ? await onUse()
         : onSave
           ? await onSave()
-          : await window.jarvisWindow.saveAttachment(file.id);
+          : imageOnly
+            ? await window.jarvisWindow.downloadAttachment(file.id)
+            : await window.jarvisWindow.saveAttachment(file.id);
       if (result && !result.ok && !result.canceled)
         throw Error(result.data?.detail || 'Falha ao salvar anexo');
     } catch (error) {
@@ -40,7 +42,8 @@ export function AttachmentCard({
       className={
         'attachment-card' +
         (suggestion ? ' attachment-suggestion' : '') +
-        (text !== undefined ? ' attachment-text-suggestion' : '')
+        (text !== undefined ? ' attachment-text-suggestion' : '') +
+        (imageOnly ? ' attachment-image-card' : '')
       }
       aria-busy={working || busy}
     >
@@ -52,6 +55,12 @@ export function AttachmentCard({
           disabled={working || busy}
           onClick={() => void activate()}
           aria-label={(suggestion ? 'Usar ' : 'Baixar ') + file.name}
+          onKeyDown={(event) => {
+            if (imageOnly && onRemove && !working && !busy && event.key === 'Delete') {
+              event.preventDefault();
+              onRemove();
+            }
+          }}
           title={
             suggestion
               ? 'Clique para usar no rascunho. Nada é enviado automaticamente.'
@@ -62,33 +71,35 @@ export function AttachmentCard({
             <span className="attachment-thumbnail">
               {image ? (
                 <img id={imageId} src={image} alt="" />
+              ) : !imageOnly ? (
+                <Icon name="text" />
+              ) : null}
+            </span>
+          )}
+          {!imageOnly && (
+            <span className="attachment-info">
+              <strong>{heading || file.name}</strong>
+              {text !== undefined ? (
+                <span className="attachment-suggested-text">{text}</span>
               ) : (
-                <Icon name={file.kind === 'image' ? 'image' : 'text'} />
+                <small>
+                  {file.type ||
+                    {
+                      image: 'Imagem',
+                      document: 'Documento',
+                      text: 'Texto',
+                      code: 'Código',
+                      link: 'Link',
+                    }[file.kind] ||
+                    file.kind}{' '}
+                  · {Math.ceil((file.size || 0) / 1024)} KB
+                </small>
               )}
             </span>
           )}
-          <span className="attachment-info">
-            <strong>{heading || file.name}</strong>
-            {text !== undefined ? (
-              <span className="attachment-suggested-text">{text}</span>
-            ) : (
-              <small>
-                {file.type ||
-                  {
-                    image: 'Imagem',
-                    document: 'Documento',
-                    text: 'Texto',
-                    code: 'Código',
-                    link: 'Link',
-                  }[file.kind] ||
-                  file.kind}{' '}
-                · {Math.ceil((file.size || 0) / 1024)} KB
-              </small>
-            )}
-          </span>
-          <Icon name={suggestion ? 'plus' : 'save'} />
+          {!imageOnly && <Icon name={suggestion ? 'plus' : 'save'} />}
         </button>
-        {onRemove && (
+        {onRemove && !imageOnly && (
           <button
             id={removeId}
             className="attachment-remove"
@@ -101,12 +112,6 @@ export function AttachmentCard({
           </button>
         )}
       </div>
-      {privacy && (
-        <p className="attachment-privacy">
-          <Icon name="shield" />
-          <span>{privacy}</span>
-        </p>
-      )}
       <span className="attachment-feedback" role="status">
         {error}
       </span>
@@ -121,11 +126,6 @@ export function AttachmentList({ files = [], unavailable = false, onRemove }) {
           key={file.id}
           file={file}
           onRemove={onRemove ? () => onRemove(file.id) : undefined}
-          privacy={
-            file.clipboard
-              ? 'Prévia local. Imagens podem conter dados sensíveis. Só serão enviadas à IA ao enviar a mensagem.'
-              : undefined
-          }
         />
       ))}
       {unavailable && (

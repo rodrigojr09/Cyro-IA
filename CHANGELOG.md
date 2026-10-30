@@ -1,3 +1,9 @@
+# 6.3.1 — em desenvolvimento
+
+- Imagens anexadas e sugestões compartilham cartão quadrado 4:4 (64px), apenas com miniatura centralizada, sem nome, tipo, tamanho, aviso ou botões visuais.
+- Sugestões usam opacidade 70% e borda tracejada de 2px na cor de destaque. Clique aplica ao rascunho; anexos já adicionados baixam direto em Downloads com nome único, sem sobrescrever arquivos. Delete remove anexo pendente com foco no cartão.
+- Preservados o limite de cinco arquivos, validação local e envio explícito para a IA. Documentos e sugestões de texto mantêm seus layouts próprios.
+
 # 6.3.0 — em desenvolvimento
 
 - Anexos compactos com miniatura de 36px, clique para salvar e remoção independente. Sugestões tracejadas aplicam imagem ou texto sublinhado ao clicar, sem envio automático; preservado o limite de cinco arquivos.

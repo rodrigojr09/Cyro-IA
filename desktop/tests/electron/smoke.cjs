@@ -390,12 +390,19 @@ app.whenReady().then(async () => {
     await waitFor(`!!document.querySelector('#attachment-list .attachment-card img')`);
     await waitFor(`document.querySelector('#attachment-list img')?.naturalWidth>0`);
     assert.equal(pasteRequests, 1);
-    assert.match(
-      await js(`document.querySelector('#attachment-list .attachment-privacy').textContent`),
-      /Prévia local/,
+    const tile = await js(
+      `(() => { const c=document.querySelector('#attachment-list .attachment-card');const s=getComputedStyle(c);return {width:c.offsetWidth,height:c.offsetHeight,info:!!c.querySelector('.attachment-info'),icons:c.querySelectorAll('.lucide').length,privacy:!!c.querySelector('.attachment-privacy')};})()`,
     );
+    assert.equal(tile.width, 64);
+    assert.equal(tile.height, 64);
+    assert.equal(tile.info, false);
+    assert.equal(tile.icons, 0);
+    assert.equal(tile.privacy, false);
     assert.equal(submittedChat, chatBeforePaste);
-    await js(`document.querySelector('#attachment-list button[aria-label^="Remover"]').click()`);
+    await shot('cyro-v631-image-tile.png');
+    await js(
+      `document.querySelector('#attachment-list .attachment-open').dispatchEvent(new KeyboardEvent('keydown',{key:'Delete',bubbles:true}))`,
+    );
     await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
 
     await js(

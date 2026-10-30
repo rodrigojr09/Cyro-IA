@@ -1,8 +1,8 @@
-# Cyro IA v6.3.0 — em desenvolvimento
+# Cyro IA v6.3.1 — em desenvolvimento
 
 Cyro IA é o novo nome do JARVIS, autorizado pelo proprietário em 27/10/2026. Repositório: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA). Perfis, sessões, IPC e identificadores internos existentes permanecem compatíveis.
 
-Anexos compactos permitem salvar pelo clique; sugestões tracejadas adicionam imagens ou aplicam textos sublinhados ao rascunho, mantendo cinco arquivos por mensagem e envio explícito.
+Imagens anexadas e sugeridas usam a mesma miniatura quadrada de 64px, sem metadados, aviso ou botões. Sugestões diferem apenas por opacidade de 70% e borda tracejada em destaque. Clique baixa a imagem anexada em Downloads sem diálogo, ou aplica a sugestão ao rascunho. Com foco no cartão, Delete remove o anexo pendente. Limite de cinco arquivos e envio explícito preservados.
 
 Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador local desta entrega: `release/v6/Cyro-IA-Setup-6.3.0.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
 

@@ -5,7 +5,7 @@
 <body class="cyro-source-catalog"><main>
 <!-- Referência estática: fontes completas escapadas para não executar scripts ou chamadas. -->
 <h1>Cyro IA — Páginas, componentes e estilos</h1>
-<p>Referência consolidada da v6.3.0. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
+<p>Referência consolidada da v6.3.1. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
 <p>Este catálogo mostra o código completo; não executa as telas React nem substitui o aplicativo. styles.css reúne as folhas de estilo, incluindo o realce de código compilado. As fontes de produção continuam separadas.</p>
 <p>3 HTMLs · 36 fontes React · 18 CSSs.</p>
 <p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>.</p>
@@ -21,7 +21,7 @@
       content=&quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; media-src &#x27;self&#x27; data:; img-src &#x27;self&#x27; data:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;
     /&gt;
     &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
-    &lt;title&gt;Cyro IA 6.3.0 — Cloud + Desktop&lt;/title&gt;
+    &lt;title&gt;Cyro IA 6.3.1 — Cloud + Desktop&lt;/title&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;app.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;clipboard.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;writer.css&quot; /&gt;
@@ -2827,7 +2827,6 @@ export function AttachmentCard({
   imageId,
   removeId,
   heading,
-  privacy,
   busy = false,
   suggestion = false,
   text,
@@ -2835,6 +2834,7 @@ export function AttachmentCard({
   const [error, setError] = useState(&#x27;&#x27;),
     [working, setWorking] = useState(false);
   const image = previewSource === undefined ? file.preview : previewSource;
+  const imageOnly = text === undefined &amp;&amp; (file.kind === &#x27;image&#x27; || !!image);
   async function activate() {
     if (working || busy) return;
     setWorking(true);
@@ -2844,7 +2844,9 @@ export function AttachmentCard({
         ? await onUse()
         : onSave
           ? await onSave()
-          : await window.jarvisWindow.saveAttachment(file.id);
+          : imageOnly
+            ? await window.jarvisWindow.downloadAttachment(file.id)
+            : await window.jarvisWindow.saveAttachment(file.id);
       if (result &amp;&amp; !result.ok &amp;&amp; !result.canceled)
         throw Error(result.data?.detail || &#x27;Falha ao salvar anexo&#x27;);
     } catch (error) {
@@ -2858,7 +2860,8 @@ export function AttachmentCard({
       className={
         &#x27;attachment-card&#x27; +
         (suggestion ? &#x27; attachment-suggestion&#x27; : &#x27;&#x27;) +
-        (text !== undefined ? &#x27; attachment-text-suggestion&#x27; : &#x27;&#x27;)
+        (text !== undefined ? &#x27; attachment-text-suggestion&#x27; : &#x27;&#x27;) +
+        (imageOnly ? &#x27; attachment-image-card&#x27; : &#x27;&#x27;)
       }
       aria-busy={working || busy}
     &gt;
@@ -2870,6 +2873,12 @@ export function AttachmentCard({
           disabled={working || busy}
           onClick={() =&gt; void activate()}
           aria-label={(suggestion ? &#x27;Usar &#x27; : &#x27;Baixar &#x27;) + file.name}
+          onKeyDown={(event) =&gt; {
+            if (imageOnly &amp;&amp; onRemove &amp;&amp; !working &amp;&amp; !busy &amp;&amp; event.key === &#x27;Delete&#x27;) {
+              event.preventDefault();
+              onRemove();
+            }
+          }}
           title={
             suggestion
               ? &#x27;Clique para usar no rascunho. Nada é enviado automaticamente.&#x27;
@@ -2880,33 +2889,35 @@ export function AttachmentCard({
             &lt;span className=&quot;attachment-thumbnail&quot;&gt;
               {image ? (
                 &lt;img id={imageId} src={image} alt=&quot;&quot; /&gt;
+              ) : !imageOnly ? (
+                &lt;Icon name=&quot;text&quot; /&gt;
+              ) : null}
+            &lt;/span&gt;
+          )}
+          {!imageOnly &amp;&amp; (
+            &lt;span className=&quot;attachment-info&quot;&gt;
+              &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
+              {text !== undefined ? (
+                &lt;span className=&quot;attachment-suggested-text&quot;&gt;{text}&lt;/span&gt;
               ) : (
-                &lt;Icon name={file.kind === &#x27;image&#x27; ? &#x27;image&#x27; : &#x27;text&#x27;} /&gt;
+                &lt;small&gt;
+                  {file.type ||
+                    {
+                      image: &#x27;Imagem&#x27;,
+                      document: &#x27;Documento&#x27;,
+                      text: &#x27;Texto&#x27;,
+                      code: &#x27;Código&#x27;,
+                      link: &#x27;Link&#x27;,
+                    }[file.kind] ||
+                    file.kind}{&#x27; &#x27;}
+                  · {Math.ceil((file.size || 0) / 1024)} KB
+                &lt;/small&gt;
               )}
             &lt;/span&gt;
           )}
-          &lt;span className=&quot;attachment-info&quot;&gt;
-            &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
-            {text !== undefined ? (
-              &lt;span className=&quot;attachment-suggested-text&quot;&gt;{text}&lt;/span&gt;
-            ) : (
-              &lt;small&gt;
-                {file.type ||
-                  {
-                    image: &#x27;Imagem&#x27;,
-                    document: &#x27;Documento&#x27;,
-                    text: &#x27;Texto&#x27;,
-                    code: &#x27;Código&#x27;,
-                    link: &#x27;Link&#x27;,
-                  }[file.kind] ||
-                  file.kind}{&#x27; &#x27;}
-                · {Math.ceil((file.size || 0) / 1024)} KB
-              &lt;/small&gt;
-            )}
-          &lt;/span&gt;
-          &lt;Icon name={suggestion ? &#x27;plus&#x27; : &#x27;save&#x27;} /&gt;
+          {!imageOnly &amp;&amp; &lt;Icon name={suggestion ? &#x27;plus&#x27; : &#x27;save&#x27;} /&gt;}
         &lt;/button&gt;
-        {onRemove &amp;&amp; (
+        {onRemove &amp;&amp; !imageOnly &amp;&amp; (
           &lt;button
             id={removeId}
             className=&quot;attachment-remove&quot;
@@ -2919,12 +2930,6 @@ export function AttachmentCard({
           &lt;/button&gt;
         )}
       &lt;/div&gt;
-      {privacy &amp;&amp; (
-        &lt;p className=&quot;attachment-privacy&quot;&gt;
-          &lt;Icon name=&quot;shield&quot; /&gt;
-          &lt;span&gt;{privacy}&lt;/span&gt;
-        &lt;/p&gt;
-      )}
       &lt;span className=&quot;attachment-feedback&quot; role=&quot;status&quot;&gt;
         {error}
       &lt;/span&gt;
@@ -2939,11 +2944,6 @@ export function AttachmentList({ files = [], unavailable = false, onRemove }) {
           key={file.id}
           file={file}
           onRemove={onRemove ? () =&gt; onRemove(file.id) : undefined}
-          privacy={
-            file.clipboard
-              ? &#x27;Prévia local. Imagens podem conter dados sensíveis. Só serão enviadas à IA ao enviar a mensagem.&#x27;
-              : undefined
-          }
         /&gt;
       ))}
       {unavailable &amp;&amp; (
@@ -3689,7 +3689,6 @@ export function Clipboard({
                 setSending(false);
               }
             }}
-            privacy=&quot;Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente.&quot;
           /&gt;
         &lt;/div&gt;
       )}
@@ -5213,7 +5212,7 @@ export function Settings({
               {category === &#x27;Sobre&#x27; &amp;&amp; (
                 &lt;&gt;
                   &lt;h3&gt;Sobre o Cyro IA&lt;/h3&gt;
-                  &lt;p&gt;Versão 6.3.0&lt;/p&gt;
+                  &lt;p&gt;Versão 6.3.1&lt;/p&gt;
                   &lt;button
                     onClick={() =&gt;
                       perform(async () =&gt; {

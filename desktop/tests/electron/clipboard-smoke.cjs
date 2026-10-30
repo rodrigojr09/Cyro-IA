@@ -382,9 +382,9 @@ app.whenReady().then(async () => {
     await delay(100);
     assert.equal(
       await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-label').textContent",
+        "document.getElementById('clipboard-use').getAttribute('aria-label')",
       ),
-      'Imagem copiada',
+      'Usar Imagem copiada (prévia)',
     );
     for (
       let i = 0;
@@ -403,9 +403,21 @@ app.whenReady().then(async () => {
     );
     assert.equal(
       await composer.webContents.executeJavaScript(
-        "getComputedStyle(document.querySelector('.attachment-thumbnail')).width",
+        "getComputedStyle(document.querySelector('.attachment-image-card')).width",
       ),
-      '36px',
+      '64px',
+    );
+    assert.equal(
+      await composer.webContents.executeJavaScript(
+        "getComputedStyle(document.querySelector('.attachment-image-card')).opacity",
+      ),
+      '0.7',
+    );
+    assert.equal(
+      await composer.webContents.executeJavaScript(
+        "getComputedStyle(document.querySelector('.attachment-image-card')).borderTopWidth",
+      ),
+      '2px',
     );
     fs.writeFileSync(
       path.join(directory, 'clipboard-image.png'),
@@ -413,7 +425,7 @@ app.whenReady().then(async () => {
     );
     assert.equal(sends, 0);
     await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-ignore').click()",
+      "document.getElementById('clipboard-use').dispatchEvent(new KeyboardEvent('keydown',{key:'Delete',bubbles:true}));void 0;",
     );
     assert.equal(
       await composer.webContents.executeJavaScript(

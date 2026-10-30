@@ -1,10 +1,10 @@
-# Instalação e atualização — Cyro IA 6.3.0 em desenvolvimento
+# Instalação e atualização — Cyro IA 6.3.1 em desenvolvimento
 
-O setup 6.3.0 foi recompilado e auditado em 30/10/2026 com anexos compactos, sugestões clicáveis e a proteção de encerramento; o Cloud correspondente está publicado com contexto temporal atualizado por requisição. O checksum vigente está no primeiro registro de docs/VALIDATION.md. Inclui o painel Sistema → Versões e o atualizador do aplicativo instalado, ignorado em desenvolvimento. A publicação de instaladores permanece indisponível até configurar o servidor externo preparado nesta entrega. Consulte [o guia de publicação](docs/updates/PUBLISHING.md). A primeira adoção da 6.3 requer este instalador manual. Feche o Cyro antes de atualizar. Checksums e limites reais em docs/VALIDATION.md.
+A v6.3.1 usa miniaturas quadradas de imagem, sem metadados ou botões; sugestões diferem por opacidade e tracejado. O download da imagem anexada vai direto para Downloads com nome único. O checksum da entrega fica no primeiro registro de docs/VALIDATION.md. A publicação de versões no painel permanece aguardando o servidor externo preparado. Feche o Cyro antes de atualizar. Consulte [o guia de publicação](docs/updates/PUBLISHING.md).
 
 ## Aplicativo Windows
 
-1. Obtenha o `Cyro-IA-Setup-6.3.0.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
+1. Obtenha o `Cyro-IA-Setup-6.3.1.exe` e seu arquivo `.sha256` da entrega autorizada pelo proprietário. Os artefatos locais ficam em `release/v6/`; não são publicados automaticamente no GitHub.
 2. Confira o SHA-256 do instalador com `Get-FileHash` e compare com o arquivo de verificação da mesma entrega. O instalador atual não tem assinatura Authenticode.
 3. Feche o Cyro IA antes de atualizar. Faça uma cópia externa dos dados locais com o aplicativo encerrado. Não apague o perfil nem use `Backup/` como origem automática.
 4. Execute o instalador Windows x64, escolha o destino e abra o Cyro IA. Python e Node são dependências de desenvolvimento/compilação, não do usuário instalado.
