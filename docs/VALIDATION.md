@@ -1,3 +1,15 @@
+# Recompilação 6.3.0 — proteção final de encerramento, 30/10/2026
+
+Runtime f212a0a6f02c8646f8f1df957762288abbd57795 enviado a master e codex/jarvis-v6-architecture. Deploy Vercel success em 30/10/2026 às 07:10:06 America/Sao_Paulo (10:10:06 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/BmSTKjkGD2xSbQioqsSoqcWvQ4EG . Login HTTP 200, latest HTTP 200/release:null e versões administrativas sem sessão HTTP 401. Não há atualização fictícia anunciada.
+
+Instalador atual em release/v6/Cyro-IA-Setup-6.3.0.exe: 183643045 bytes, ProductVersion 6.3.0, payload 6.3.0.0, SHA256 `ffdc9bf469800f60fabe3b489fc2e4161bbb391e82cea73b1ef8502ea4fd9876`, conferido com .sha256. Authenticode NotSigned. O setup anterior 204dc3f e seus arquivos auxiliares foram preservados em release/v6/previous/6.3.0-204dc3f/.
+
+A janela é desabilitada depois da confirmação e antes do encerramento seguro, evitando novas edições durante a parada do serviço. Os 155 testes Desktop e sete cenários Electron passaram novamente; o conjunto validado soma 506 testes com as verificações anteriores inalteradas de Cloud/Python/ferramentas, além das 63 verificações administrativas. TypeScript foi conferido novamente após a pasta local mudar para C:/Users/user/Desktop/Cyro e os três links de workspaces serem reparados. Fontes Python e empacotador inalterados desde 204dc3f; o serviço congelado já validado foi reutilizado após novo self-check. NSIS e auditoria de fontes/ASAR/runtime aprovados. O novo payload iniciou sem Python/Node no PATH, autenticou localmente e preservou dados após reinício com perfil temporário.
+
+Isso não executou o instalador sobre uma instalação anterior nem homologa Windows limpo. Servidor externo ainda aguardando configuração; nenhuma tag/release real criada. Backup/ e alteração local prévia de cloud/next-env.d.ts preservados. Documentação final enviada sem nova mudança de runtime.
+
+Evidências: build/v6/v630-close-guard-tests.log, v630-close-guard-electron.log, v630-renamed-workspace-typecheck.log, v630-close-guard-setup.log, v630-close-guard-payload.log, v630-close-guard-deployment-runtime.json e v630-close-guard-production.json.
+
 # Entrega 6.3.0 — Cloud e instalador preparado para atualizações
 
 Em 29/10/2026, por autorização contínua do proprietário, runtime 204dc3f899bca47dd03e10425d811f86684f70d9 enviado a master e codex/jarvis-v6-architecture. Vercel success às 17:11:41 America/Sao_Paulo (20:11:41 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/4WgWSHLDYHBA5Xm3TMkRRLWWfGqZ . Login de produção HTTP 200, /api/releases sem sessão HTTP 401, /api/updates/latest HTTP 200 com release:null (sem versão fictícia anunciada). Duas consultas posteriores retornaram x-vercel-cache:HIT, Age 35 e Cache-Control public,max-age=60. Isso comprova resposta do cache HTTP, não uma medição de Operations faturadas.
