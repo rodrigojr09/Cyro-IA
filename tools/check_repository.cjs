@@ -8,7 +8,7 @@ const version = read("VERSION").trim();
 const errors = [];
 for (const [file, marker] of [
   ["backend/main.py", `version="${version}" if CLOUD`],
-  ["desktop/index.html", `<title>Cyro IA ${version} — Cloud + Desktop</title>`],
+  ["desktop/index.html", `<title>Cyro IA ${version} — Desktop</title>`],
   ["desktop/scripts/ui/Settings.jsx", `Versão ${version}`],
 ]) {
   if (!read(file).includes(marker))

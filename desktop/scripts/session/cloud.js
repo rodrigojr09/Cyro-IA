@@ -12,7 +12,7 @@ function cloudOrigin(value, packaged = true) {
     url.hash ||
     url.pathname !== '/'
   )
-    throw Error('Configure uma origem Cloud HTTPS válida.');
+    throw Error('Configure uma origem HTTPS válida da API do Cyro.');
   return url.origin;
 }
 function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = fetch }) {
@@ -62,10 +62,10 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
           if (retry > 0) error.retryAfter = retry;
           throw error;
         }
-        throw Error('Cloud indisponível.');
+        throw Error('Serviço do Cyro indisponível.');
       }
       const responsePayload = await response.json();
-      state = { status: 'active', message: 'Conectado ao Cyro Cloud.' };
+      state = { status: 'active', message: 'Conectado ao Cyro.' };
       return responsePayload;
     } catch (error) {
       if (state.status !== 'revoked' && !error.spotify)
@@ -115,7 +115,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         !/^[\w-]{36}$/.test(session.deviceId))
     ) {
       session = null;
-      throw Error('Sessão incompatível com este Cloud.');
+      throw Error('Sessão incompatível com esta API do Cyro.');
     }
     return session;
   }
@@ -149,7 +149,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
       throw Error('Resposta de login inválida.');
     session = { origin: base, credential: value.credential, deviceId, expiresAt: value.expiresAt };
     await persist();
-    state = { status: 'active', message: 'Conectado ao Cyro Cloud.' };
+    state = { status: 'active', message: 'Conectado ao Cyro.' };
     return session;
   }
   async function logout() {

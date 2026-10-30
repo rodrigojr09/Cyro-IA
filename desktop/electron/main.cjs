@@ -4,7 +4,22 @@ delete process.env.JARVIS_AUTHENTICATED;
 delete process.env.JARVIS_PORTABLE;
 for (const key of Object.keys(process.env))
   if (key.startsWith('OPENAI_') || key.startsWith('SPOTIFY_')) delete process.env[key];
-for(const key of ['DATABASE_URL','DIRECT_URL','CYRO_GITHUB_TOKEN','CYRO_PUBLISHER_SECRET'])delete process.env[key];
+for (const key of Object.keys(process.env))
+  if (
+    [
+      'DATABASE_URL',
+      'DIRECT_URL',
+      'AUTH_SECRET',
+      'REDIS_URL',
+      'SERVICE_AUTH_SECRET',
+      'SERVICE_CONTEXT_SECRET',
+      'SIGNED_URL_SECRET',
+    ].includes(key) ||
+    key.startsWith('CYRO_FILES_') ||
+    key.startsWith('CYRO_GITHUB_') ||
+    key.startsWith('CYRO_PUBLISHER_')
+  )
+    delete process.env[key];
 const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
@@ -154,14 +169,22 @@ async function publish(session) {
 app
   .whenReady()
   .then(async () => {
-    let origin = process.env.JARVIS_CLOUD_ORIGIN;
+    let origin = process.env.CYRO_BACKEND_ORIGIN || process.env.JARVIS_CLOUD_ORIGIN;
     if (app.isPackaged)
       origin = JSON.parse(
         await fs.readFile(path.join(__dirname, 'cloud-config.json'), 'utf8'),
       ).origin;
-    if (!origin) throw Error('Configure JARVIS_CLOUD_ORIGIN antes de iniciar.');
+    if (!origin)
+      origin = JSON.parse(
+        await fs.readFile(path.join(__dirname, 'backend-config.json'), 'utf8'),
+      ).origin;
     service = cloud.createCloud({ safeStorage, dataDir, origin, packaged: app.isPackaged });
-    require('../scripts/updates/ipc').installUpdateIPC({electron:require('electron'),service:()=>service,origin,dataDir});
+    require('../scripts/updates/ipc').installUpdateIPC({
+      electron: require('electron'),
+      service: () => service,
+      origin,
+      dataDir,
+    });
     const monitor = setInterval(
       () => {
         queue = queue

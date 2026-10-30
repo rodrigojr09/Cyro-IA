@@ -24,7 +24,7 @@ def run(args, cwd=ROOT):
 def main():
     if os.name != "nt" or sys.maxsize <= 2**32:
         raise SystemExit("Build exige Windows x64.")
-    origin = os.environ.get("JARVIS_CLOUD_ORIGIN", "")
+    origin = os.environ.get("CYRO_BACKEND_ORIGIN") or os.environ.get("JARVIS_CLOUD_ORIGIN") or json.loads((ROOT / "desktop/electron/backend-config.json").read_text())["origin"]
     parsed = urlparse(origin)
     if (
         parsed.scheme != "https"

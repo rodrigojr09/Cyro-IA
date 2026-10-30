@@ -73,7 +73,7 @@ class CloudBuildTests(unittest.TestCase):
             ("backend/main.py", f'version="{version}" if CLOUD'),
             (
                 "desktop/index.html",
-                f"<title>Cyro IA {version} — Cloud + Desktop</title>",
+                f"<title>Cyro IA {version} — Desktop</title>",
             ),
             ("desktop/scripts/ui/Settings.jsx", f"Versão {version}"),
         ]:

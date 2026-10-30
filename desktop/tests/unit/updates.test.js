@@ -68,8 +68,10 @@ function updateFixture(dir, version = '6.2.2', mutate = {}) {
     checksum,
     fileSize: bytes.length,
     private: true,
+    transport: 'backend',
     ...mutate,
   };
+  const backend = row.transport === 'backend';
   let opened = '',
     installed = '',
     downloads = 0;
@@ -78,8 +80,10 @@ function updateFixture(dir, version = '6.2.2', mutate = {}) {
     origin: 'https://cloud.example.test',
     directory: dir,
     authorize: async () => ({
-      url: 'https://publisher.example.test/download?ticket=short',
-      origin: 'https://publisher.example.test',
+      url: backend
+        ? 'https://cloud.example.test/api/updates/file?ticket=short'
+        : 'https://publisher.example.test/download?ticket=short',
+      origin: backend ? 'https://cloud.example.test' : 'https://publisher.example.test',
       metadata: row,
     }),
     request: async (url) =>
@@ -116,7 +120,7 @@ test('updater discovers a newer version, manual uses scoped link, auto verifies 
     const f = updateFixture(dir);
     assert.equal((await f.updater.check()).phase, 'available');
     await f.updater.manual();
-    assert.match(f.opened, /publisher/);
+    assert.match(f.opened, /cloud\.example\.test\/api\/updates\/file/);
     await f.updater.download();
     assert.equal(f.updater.state().phase, 'ready');
     assert.equal(f.installed, '');
@@ -202,4 +206,36 @@ test('an interrupted installation is reported on restart; successful version cle
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
+});
+
+test('Files-backed updates use the configured API even for a public GitHub repository', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cyro-files-update-'));
+  try {
+    const f = updateFixture(dir, '6.2.2', { transport: 'backend', private: false });
+    await f.updater.check();
+    await f.updater.manual();
+    assert.match(f.opened, /cloud\.example\.test\/api\/updates\/file/);
+    await f.updater.download();
+    assert.equal(f.updater.state().phase, 'ready');
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('automatic checks retry a temporary failure after five minutes instead of waiting six hours', async () => {
+  const originalFetch=global.fetch,originalNow=Date.now,originalInterval=global.setInterval,originalClear=global.clearInterval;
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'cyro-update-retry-'));
+  let now=100_000_000,reads=0,tick;
+  const app=new EventEmitter();app.isPackaged=true;app.getVersion=()=> '6.4.0';
+  try{
+    Date.now=()=>now;
+    global.fetch=async()=>{reads++;return reads===1?new Response(null,{status:503}):Response.json({release:null});};
+    global.setInterval=(callback)=>{tick=callback;return {unref(){}};};global.clearInterval=()=>{};
+    require('../../scripts/updates/ipc').installUpdateIPC({electron:{app,ipcMain:{handle(){}},BrowserWindow:{getAllWindows:()=>[]},shell:{}},service:()=>({current:()=>({})}),origin:'https://api.example.test',dataDir:directory});
+    await new Promise(setImmediate);assert.equal(reads,1);
+    await tick();assert.equal(reads,1);
+    now+=5*60_000;await tick();assert.equal(reads,2);
+    now+=5*60_000;await tick();assert.equal(reads,2);
+    app.emit('before-quit');
+  }finally{global.fetch=originalFetch;Date.now=originalNow;global.setInterval=originalInterval;global.clearInterval=originalClear;await fs.rm(directory,{recursive:true,force:true});}
 });

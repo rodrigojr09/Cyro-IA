@@ -39,7 +39,7 @@ function installUpdateIPC({ electron, service, origin, dataDir }) {
     version: app.getVersion(),
     origin,
     directory: path.join(dataDir, 'updates'),
-    authorize: (id) => service().request('/api/updates/download', 'POST', { id }),
+    authorize: (id) => service().request('/api/updates/download', 'POST', { id, transport: 'backend' }),
     verifySignature: signature,
     notify: (value) => {
       for (const window of BrowserWindow.getAllWindows())
@@ -67,17 +67,35 @@ function installUpdateIPC({ electron, service, origin, dataDir }) {
         return { ...updater.state(), error: error.message };
       }
     });
-  let checkedAt = 0;
-  const check = () => {
-    if (app.isPackaged && service()?.current() && Date.now() - checkedAt >= 6 * 3600_000) {
-      checkedAt = Date.now();
-      void updater.check();
+  let checkedAt = 0,
+    retryAt = 0,
+    checking = false;
+  const check = async () => {
+    const now = Date.now();
+    if (
+      !app.isPackaged ||
+      !service()?.current() ||
+      checking ||
+      now < retryAt ||
+      now - checkedAt < 6 * 3600_000
+    )
+      return;
+    checking = true;
+    try {
+      const result = await updater.check();
+      if (result.phase === 'error') retryAt = Date.now() + 5 * 60_000;
+      else {
+        checkedAt = Date.now();
+        retryAt = 0;
+      }
+    } finally {
+      checking = false;
     }
   };
   app.on('jarvis:session-changed', (active) => {
     if (active) check();
   });
-  const timer = setInterval(check, 6 * 3600_000);
+  const timer = setInterval(check, 5 * 60_000);
   timer.unref();
   app.on('before-quit', () => clearInterval(timer));
   check();

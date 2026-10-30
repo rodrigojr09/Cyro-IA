@@ -38,5 +38,6 @@
   "scripts/updates/protocol.js",
   "scripts/updates/installer.js",
   "scripts/updates/client.js",
-  "scripts/updates/ipc.js"
+  "scripts/updates/ipc.js",
+  "electron/backend-config.json"
 ]

@@ -105,14 +105,9 @@ function createUpdater({
     )
       throw Error('A publicação mudou. Verifique novamente.');
     const url = new URL(info.url);
-    if (
-      url.protocol !== 'https:' ||
-      url.username ||
-      url.password ||
-      url.origin !== info.origin ||
-      (!verified.private && !officialSetup(url.href, verified.tag))
-    )
-      throw Error('Destino de atualização inválido.');
+    if (verified.transport !== 'backend' || url.protocol !== 'https:' || url.username || url.password || url.origin !== new URL(origin).origin || url.origin !== info.origin || url.pathname !== '/api/updates/file')
+      throw Error('Destino de atualização inválido. O instalador deve ser entregue pela API do Cyro.');
+    available = {...available, transport: 'backend'};
     return url;
   }
   async function download() {
@@ -140,7 +135,7 @@ function createUpdater({
           if (![301, 302, 303, 307, 308].includes(response.status)) break;
           const next = new URL(response.headers.get('location'), url);
           if (
-            available.private ||
+            available.private || available.transport === 'backend' ||
             next.protocol !== 'https:' ||
             ![
               'github.com',
@@ -199,6 +194,7 @@ function createUpdater({
   async function runInstall() {
     if (installing || state.phase !== 'ready' || !file) throw Error('Instalador não está pronto.');
     installing = true;
+    let verified = false;
     try {
       // Recheck against changes between download and the install click.
       const hash = require('node:crypto').createHash('sha256');
@@ -208,6 +204,7 @@ function createUpdater({
       await inspect(file, available.version);
       if (!['Valid', 'NotSigned'].includes(await verifySignature(file)))
         throw Error('Assinatura Windows inválida.');
+      verified = true;
       await fs.writeFile(journal, JSON.stringify({ version: available.version }), { mode: 0o600 });
       if ((await install(file)) !== true) {
         await fs.rm(journal, { force: true });
@@ -215,6 +212,26 @@ function createUpdater({
       }
       publish({ phase: 'installing' });
       return state;
+    } catch (error) {
+      if (verified) {
+        publish({ phase: 'ready', error: 'Salve suas alterações e tente instalar novamente.' });
+        throw error;
+      }
+      // A tampered or invalid package must not leave the updater stuck in ready.
+      if (file) {
+        const folder = path.resolve(path.dirname(file));
+        if (
+          folder.startsWith(path.resolve(directory) + path.sep) &&
+          path.basename(folder).startsWith('package-')
+        )
+          await fs.rm(folder, { recursive: true, force: true });
+      }
+      file = null;
+      publish({
+        phase: 'error',
+        error: 'O instalador não pôde ser executado. Baixe novamente ou use o link para baixar.',
+      });
+      throw error;
     } finally {
       installing = false;
     }
