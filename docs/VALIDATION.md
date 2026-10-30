@@ -1,3 +1,13 @@
+# Entrega dos cartões e contexto temporal — 30/10/2026
+
+Runtime a011c3b42f5219b1fc34408b32aa51e9d911c11b enviado a master e codex/jarvis-v6-architecture. Deploy Vercel success às 08:17:36 America/Sao_Paulo (11:17:36 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/CkvG3yyjiT4qgDQsmLsKbbXYWpih . O contexto temporal usa o relógio confiável por requisição; não foi acrescentada pesquisa web nem certificada resposta de IA paga.
+
+Setup 6.3.0 recompilado: 183645883 bytes, ProductVersion 6.3.0, payload 6.3.0.0, SHA256 `177f78130faf7c6f4715c94616dc1e40f51498723a106f20003e0ee304d4716f`, conferido contra .sha256. Authenticode NotSigned. Validador PE/NSIS/versão aprovado. Auditoria de fontes/ASAR/runtime e novo self-check congelado aprovados. Backend e empacotador inalterados desde f212a0a; serviço congelado reutilizado. Instalador anterior e auxiliares preservados em release/v6/previous/6.3.0-f212a0a/.
+
+104 testes Cloud, 156 Desktop, TypeScript/build Cloud, sete cenários Electron e repetição dos dois cenários afetados aprovados, conforme registro abaixo. O smoke final de abertura/reinício deste payload foi bloqueado antes de iniciar: porta 8765 ocupada pelo aplicativo existente. Nenhum processo externo foi encerrado. A porta é fixa no runtime; não se declara aprovado esse teste nem instalação/atualização real em Windows.
+
+Evidências: build/v6/v630-time-cards-setup.log, v630-time-cards-payload.log e v630-time-cards-deployment-runtime.json. Backup/, dados e alteração prévia de cloud/next-env.d.ts preservados. Nenhuma tag, release ou migração criada nesta correção.
+
 # Data atual e cartões — 30/10/2026
 
 104 testes Cloud, 156 Desktop e TypeScript/build Cloud aprovados. Quatro testes novos validam o contexto temporal por requisição, virada UTC/São Paulo, fuso inválido, histórico imutável e mensagens de ferramenta sem texto. Não foi feita chamada paga para certificar a resposta final do modelo; o contexto confiável foi verificado diretamente.

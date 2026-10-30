@@ -1,6 +1,6 @@
 # Instalação e atualização — Cyro IA 6.3.0 em desenvolvimento
 
-O setup 6.3.0 foi recompilado e auditado em 30/10/2026 com a proteção final de encerramento; o Cloud correspondente está publicado. O checksum vigente está no primeiro registro de docs/VALIDATION.md. Inclui o painel Sistema → Versões e o atualizador do aplicativo instalado, ignorado em desenvolvimento. A publicação de instaladores permanece indisponível até configurar o servidor externo preparado nesta entrega. Consulte [o guia de publicação](docs/updates/PUBLISHING.md). A primeira adoção da 6.3 requer este instalador manual. Feche o Cyro antes de atualizar. Checksums e limites reais em docs/VALIDATION.md.
+O setup 6.3.0 foi recompilado e auditado em 30/10/2026 com os cartões de anexos/clipboard modernizados e a proteção de encerramento; o Cloud correspondente está publicado com contexto temporal atualizado por requisição. O checksum vigente está no primeiro registro de docs/VALIDATION.md. Inclui o painel Sistema → Versões e o atualizador do aplicativo instalado, ignorado em desenvolvimento. A publicação de instaladores permanece indisponível até configurar o servidor externo preparado nesta entrega. Consulte [o guia de publicação](docs/updates/PUBLISHING.md). A primeira adoção da 6.3 requer este instalador manual. Feche o Cyro antes de atualizar. Checksums e limites reais em docs/VALIDATION.md.
 
 ## Aplicativo Windows
 
