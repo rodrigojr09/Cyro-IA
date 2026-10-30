@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # Desenvolvimento, Vercel e Prisma Postgres
 
 ## Configuração externa necessária

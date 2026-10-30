@@ -12,9 +12,9 @@ IMPORT = re.compile(r"@import\s+url\(['\"]([^'\"]+)['\"]\)\s*;")
 def generate():
     listed = subprocess.check_output(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--",
-         "desktop", "cloud", "packages"], cwd=ROOT, text=True, encoding="utf-8"
+         "desktop"], cwd=ROOT, text=True, encoding="utf-8"
     ).splitlines()
-    files = sorted(set(listed))
+    files = sorted({p for p in listed if p.startswith("desktop/") and (ROOT / p).is_file()})
     pages = [p for p in files if p.startswith("desktop/") and p.endswith(".html")
              and "/tests/" not in p]
     components = [p for p in files if

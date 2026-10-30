@@ -5,11 +5,11 @@
 <body class="cyro-source-catalog"><main>
 <!-- Referência estática: fontes completas escapadas para não executar scripts ou chamadas. -->
 <h1>Cyro IA — Páginas, componentes e estilos</h1>
-<p>Referência consolidada da v6.3.1. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
+<p>Referência consolidada da v6.4.0. Todos os arquivos próprios de interface Desktop e Cloud estão abaixo, incluindo páginas, layouts, estados de carregamento, entradas e componentes compartilhados. O componente legado Computador é identificado separadamente.</p>
 <p>Este catálogo mostra o código completo; não executa as telas React nem substitui o aplicativo. styles.css reúne as folhas de estilo, incluindo o realce de código compilado. As fontes de produção continuam separadas.</p>
-<p>3 HTMLs · 36 fontes React · 18 CSSs.</p>
+<p>3 HTMLs · 23 fontes React · 17 CSSs.</p>
 <p>Identidade: <a href="backend/jarvis_identity.py">backend/jarvis_identity.py</a>. Visão geral: <a href="README.md">README.md</a>. Estado atual: <a href="docs/VALIDATION.md">docs/VALIDATION.md</a>.</p>
-<details><summary>Índice completo de arquivos</summary><ul><li><a href="#fonte-1">desktop/index.html</a></li><li><a href="#fonte-2">desktop/login.html</a></li><li><a href="#fonte-3">desktop/quick.html</a></li><li><a href="#fonte-4">cloud/app/(admin)/[section]/page.tsx</a></li><li><a href="#fonte-5">cloud/app/(admin)/layout.tsx</a></li><li><a href="#fonte-6">cloud/app/(admin)/loading.tsx</a></li><li><a href="#fonte-7">cloud/app/(admin)/page.tsx</a></li><li><a href="#fonte-8">cloud/app/(admin)/system/versions/page.tsx</a></li><li><a href="#fonte-9">cloud/app/layout.tsx</a></li><li><a href="#fonte-10">cloud/app/login/page.tsx</a></li><li><a href="#fonte-11">cloud/components/credentials.tsx</a></li><li><a href="#fonte-12">cloud/components/dashboard-data.tsx</a></li><li><a href="#fonte-13">cloud/components/dashboard.tsx</a></li><li><a href="#fonte-14">cloud/components/management.tsx</a></li><li><a href="#fonte-15">cloud/components/releases.tsx</a></li><li><a href="#fonte-16">cloud/components/usage-panel.tsx</a></li><li><a href="#fonte-17">desktop/scripts/app/App.jsx</a></li><li><a href="#fonte-18">desktop/scripts/app/main-entry.jsx</a></li><li><a href="#fonte-19">desktop/scripts/attachment/components.jsx</a></li><li><a href="#fonte-20">desktop/scripts/chat/Composer.jsx</a></li><li><a href="#fonte-21">desktop/scripts/chat/Conversation.jsx</a></li><li><a href="#fonte-22">desktop/scripts/clipboard/Clipboard.jsx</a></li><li><a href="#fonte-23">desktop/scripts/computer/Computer.jsx</a></li><li><a href="#fonte-24">desktop/scripts/integrations/Integrations.jsx</a></li><li><a href="#fonte-25">desktop/scripts/quick/QuickApp.jsx</a></li><li><a href="#fonte-26">desktop/scripts/quick/quick-entry.jsx</a></li><li><a href="#fonte-27">desktop/scripts/session/Login.jsx</a></li><li><a href="#fonte-28">desktop/scripts/session/login-entry.jsx</a></li><li><a href="#fonte-29">desktop/scripts/storage/Storage.jsx</a></li><li><a href="#fonte-30">desktop/scripts/ui/AnchoredMenu.jsx</a></li><li><a href="#fonte-31">desktop/scripts/ui/Icon.jsx</a></li><li><a href="#fonte-32">desktop/scripts/ui/Settings.jsx</a></li><li><a href="#fonte-33">desktop/scripts/ui/components.jsx</a></li><li><a href="#fonte-34">desktop/scripts/updates/UpdateNotice.jsx</a></li><li><a href="#fonte-35">desktop/scripts/workspace/ScopeDialog.jsx</a></li><li><a href="#fonte-36">desktop/scripts/workspace/Sidebar.jsx</a></li><li><a href="#fonte-37">desktop/scripts/workspace/Welcome.jsx</a></li><li><a href="#fonte-38">desktop/scripts/writer/WriterLibrary.jsx</a></li><li><a href="#fonte-39">desktop/scripts/writer/WriterPreview.jsx</a></li></ul></details>
+<details><summary>Índice completo de arquivos</summary><ul><li><a href="#fonte-1">desktop/index.html</a></li><li><a href="#fonte-2">desktop/login.html</a></li><li><a href="#fonte-3">desktop/quick.html</a></li><li><a href="#fonte-4">desktop/scripts/app/App.jsx</a></li><li><a href="#fonte-5">desktop/scripts/app/main-entry.jsx</a></li><li><a href="#fonte-6">desktop/scripts/attachment/components.jsx</a></li><li><a href="#fonte-7">desktop/scripts/chat/Composer.jsx</a></li><li><a href="#fonte-8">desktop/scripts/chat/Conversation.jsx</a></li><li><a href="#fonte-9">desktop/scripts/clipboard/Clipboard.jsx</a></li><li><a href="#fonte-10">desktop/scripts/computer/Computer.jsx</a></li><li><a href="#fonte-11">desktop/scripts/integrations/Integrations.jsx</a></li><li><a href="#fonte-12">desktop/scripts/quick/QuickApp.jsx</a></li><li><a href="#fonte-13">desktop/scripts/quick/quick-entry.jsx</a></li><li><a href="#fonte-14">desktop/scripts/session/Login.jsx</a></li><li><a href="#fonte-15">desktop/scripts/session/login-entry.jsx</a></li><li><a href="#fonte-16">desktop/scripts/storage/Storage.jsx</a></li><li><a href="#fonte-17">desktop/scripts/ui/AnchoredMenu.jsx</a></li><li><a href="#fonte-18">desktop/scripts/ui/Icon.jsx</a></li><li><a href="#fonte-19">desktop/scripts/ui/Settings.jsx</a></li><li><a href="#fonte-20">desktop/scripts/ui/components.jsx</a></li><li><a href="#fonte-21">desktop/scripts/updates/UpdateNotice.jsx</a></li><li><a href="#fonte-22">desktop/scripts/workspace/ScopeDialog.jsx</a></li><li><a href="#fonte-23">desktop/scripts/workspace/Sidebar.jsx</a></li><li><a href="#fonte-24">desktop/scripts/workspace/Welcome.jsx</a></li><li><a href="#fonte-25">desktop/scripts/writer/WriterLibrary.jsx</a></li><li><a href="#fonte-26">desktop/scripts/writer/WriterPreview.jsx</a></li></ul></details>
 <!-- ===== INÍCIO: desktop/index.html — Página HTML ===== -->
 <details id="fonte-1"><summary>desktop/index.html — Página HTML</summary>
 <pre><code>&lt;!doctype html&gt;
@@ -21,7 +21,7 @@
       content=&quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; media-src &#x27;self&#x27; data:; img-src &#x27;self&#x27; data:; connect-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;
     /&gt;
     &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
-    &lt;title&gt;Cyro IA 6.3.1 — Cloud + Desktop&lt;/title&gt;
+    &lt;title&gt;Cyro IA 6.4.0 — Cloud + Desktop&lt;/title&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;app.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;clipboard.css&quot; /&gt;
     &lt;link rel=&quot;stylesheet&quot; href=&quot;writer.css&quot; /&gt;
@@ -78,1868 +78,8 @@
 &lt;/html&gt;
 </code></pre></details>
 <!-- ===== FIM: desktop/quick.html ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/[section]/page.tsx — Componente / página React ===== -->
-<details id="fonte-4"><summary>cloud/app/(admin)/[section]/page.tsx — Componente / página React</summary>
-<pre><code>import { notFound } from &quot;next/navigation&quot;;
-import { admin } from &quot;@/lib/auth&quot;;
-import Dashboard from &quot;@/components/dashboard&quot;;
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: Promise&lt;{ section: string }&gt;;
-  searchParams: Promise&lt;Record&lt;string, string | string[] | undefined&gt;&gt;;
-}) {
-  const { section } = await params;
-  if (
-    ![
-      &quot;dashboard&quot;,
-      &quot;clients&quot;,
-      &quot;devices&quot;,
-      &quot;settings&quot;,
-      &quot;credentials&quot;,
-      &quot;versions&quot;,
-      &quot;usage&quot;,
-      &quot;audit&quot;,
-    ].includes(section)
-  )
-    notFound();
-  if ([&quot;credentials&quot;, &quot;versions&quot;].includes(section) &amp;&amp; (await admin()).role !== &quot;SUPER_ADMIN&quot;)
-    notFound();
-  const query = new URLSearchParams();
-  if (section === &quot;usage&quot;) {
-    query.set(&quot;usage&quot;, &quot;1&quot;);
-    const filters = await searchParams;
-    for (const key of [&quot;from&quot;, &quot;to&quot;, &quot;clientId&quot;, &quot;perUser&quot;, &quot;usagePage&quot;]) {
-      if (typeof filters[key] === &quot;string&quot; &amp;&amp; filters[key])
-        query.set(key, filters[key]);
-    }
-  }
-  return (
-    &lt;Dashboard
-      section={section}
-      query={query.size ? &quot;?&quot; + query.toString() : &quot;&quot;}
-    /&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/(admin)/[section]/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/layout.tsx — Componente / página React ===== -->
-<details id="fonte-5"><summary>cloud/app/(admin)/layout.tsx — Componente / página React</summary>
-<pre><code>import { DashboardDataProvider } from &quot;@/components/dashboard-data&quot;;
-import { admin } from &quot;@/lib/auth&quot;;
-import { HttpError } from &quot;@/lib/http&quot;;
-import { redirect } from &quot;next/navigation&quot;;
-export const dynamic = &quot;force-dynamic&quot;;
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  try {
-    await admin();
-  } catch (error) {
-    if (error instanceof HttpError &amp;&amp; error.status === 401) redirect(&quot;/login&quot;);
-    throw error;
-  }
-  return &lt;DashboardDataProvider&gt;{children}&lt;/DashboardDataProvider&gt;;
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/(admin)/layout.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/loading.tsx — Componente / página React ===== -->
-<details id="fonte-6"><summary>cloud/app/(admin)/loading.tsx — Componente / página React</summary>
-<pre><code>import { DashboardLoading } from &quot;@/components/dashboard-data&quot;;
-export default function Loading() {
-  return &lt;DashboardLoading /&gt;;
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/(admin)/loading.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/page.tsx — Componente / página React ===== -->
-<details id="fonte-7"><summary>cloud/app/(admin)/page.tsx — Componente / página React</summary>
-<pre><code>import { redirect } from &quot;next/navigation&quot;;
-export default function Home() {
-  redirect(&quot;/dashboard&quot;);
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/(admin)/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/(admin)/system/versions/page.tsx — Componente / página React ===== -->
-<details id="fonte-8"><summary>cloud/app/(admin)/system/versions/page.tsx — Componente / página React</summary>
-<pre><code>import { notFound } from &#x27;next/navigation&#x27;;
-import { admin } from &#x27;@/lib/auth&#x27;;
-import Dashboard from &#x27;@/components/dashboard&#x27;;
-export default async function VersionsPage() {
-  if((await admin()).role!==&#x27;SUPER_ADMIN&#x27;)notFound();
-  return &lt;Dashboard section=&quot;versions&quot;/&gt;;
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/(admin)/system/versions/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/layout.tsx — Componente / página React ===== -->
-<details id="fonte-9"><summary>cloud/app/layout.tsx — Componente / página React</summary>
-<pre><code>import &quot;./globals.css&quot;;
-export const metadata = {
-  title: &quot;Cyro IA · Administração&quot;,
-  description: &quot;Central de acesso, dispositivos e inteligência artificial&quot;,
-};
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    &lt;html lang=&quot;pt-BR&quot;&gt;
-      &lt;body&gt;{children}&lt;/body&gt;
-    &lt;/html&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/layout.tsx ===== -->
-<!-- ===== INÍCIO: cloud/app/login/page.tsx — Componente / página React ===== -->
-<details id="fonte-10"><summary>cloud/app/login/page.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import { useState } from &quot;react&quot;;
-export default function Login() {
-  const [error, setError] = useState(&quot;&quot;);
-  const [busy, setBusy] = useState(false);
-  return (
-    &lt;main className=&quot;login&quot;&gt;
-      &lt;section className=&quot;login-card&quot;&gt;
-        &lt;div className=&quot;brand&quot;&gt;
-          C&lt;span&gt;YRO IA&lt;/span&gt;
-          &lt;i&gt;CLOUD&lt;/i&gt;
-        &lt;/div&gt;
-        &lt;p className=&quot;eyebrow&quot;&gt;CENTRAL ADMINISTRATIVA&lt;/p&gt;
-        &lt;h1&gt;
-          Seu sistema.
-          &lt;br /&gt;
-          Sob controle.
-        &lt;/h1&gt;
-        &lt;p className=&quot;muted&quot;&gt;
-          Gerencie pessoas, instalações e o acesso à inteligência artificial.
-        &lt;/p&gt;
-        &lt;form
-          onSubmit={async (event) =&gt; {
-            event.preventDefault();
-            setBusy(true);
-            setError(&quot;&quot;);
-            const form = new FormData(event.currentTarget);
-            try {
-              const result = await fetch(&quot;/api/auth/login&quot;, {
-                method: &quot;POST&quot;,
-                headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
-                body: JSON.stringify({
-                  email: form.get(&quot;email&quot;),
-                  password: form.get(&quot;password&quot;),
-                }),
-              });
-              if (!result.ok) throw Error((await result.json()).error);
-              location.assign(&quot;/dashboard&quot;);
-            } catch (e) {
-              setError(
-                e instanceof Error ? e.message : &quot;Não foi possível entrar.&quot;,
-              );
-            } finally {
-              setBusy(false);
-            }
-          }}
-        &gt;
-          &lt;label&gt;
-            E-mail
-            &lt;input
-              name=&quot;email&quot;
-              type=&quot;email&quot;
-              autoComplete=&quot;username&quot;
-              required
-              maxLength={254}
-            /&gt;
-          &lt;/label&gt;
-          &lt;label&gt;
-            Senha
-            &lt;input
-              name=&quot;password&quot;
-              type=&quot;password&quot;
-              autoComplete=&quot;current-password&quot;
-              required
-              minLength={12}
-              maxLength={256}
-            /&gt;
-          &lt;/label&gt;
-          {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}
-          &lt;button disabled={busy}&gt;
-            {busy ? &quot;Entrando…&quot; : &quot;Acessar painel →&quot;}
-          &lt;/button&gt;
-        &lt;/form&gt;
-        &lt;small&gt;Acesso exclusivo para administradores autorizados.&lt;/small&gt;
-      &lt;/section&gt;
-      &lt;div className=&quot;login-orbit&quot; aria-hidden=&quot;true&quot;&gt;
-        &lt;b&gt;C&lt;/b&gt;
-      &lt;/div&gt;
-    &lt;/main&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/app/login/page.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/credentials.tsx — Componente / página React ===== -->
-<details id="fonte-11"><summary>cloud/components/credentials.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import { useDashboardData } from &quot;./dashboard-data&quot;;
-import { useState } from &quot;react&quot;;
-type ProviderState = {
-  revision: number;
-  source: string;
-  enabled: boolean;
-  hasApiKey?: boolean;
-  hasClientSecret?: boolean;
-  allowedModels?: string[];
-  voiceEnabled?: boolean;
-  clientId?: string;
-  redirectUri?: string;
-};
-type State = { openai: ProviderState; spotify: ProviderState };
-export default function Credentials() {
-  const {
-    data,
-    error: loadError,
-    reload: load,
-  } = useDashboardData&lt;State&gt;(&quot;/api/provider-settings&quot;);
-  const [error, setError] = useState(&quot;&quot;);
-  const [notice, setNotice] = useState(&quot;&quot;);
-  const [busy, setBusy] = useState&lt;string | null&gt;(null);
-  async function save(
-    event: React.FormEvent&lt;HTMLFormElement&gt;,
-    provider: &quot;openai&quot; | &quot;spotify&quot;,
-  ) {
-    event.preventDefault();
-    if (busy || !data) return;
-    const form = event.currentTarget,
-      values = new FormData(form);
-    const secret = String(values.get(&quot;secret&quot;) || &quot;&quot;).trim();
-    form.querySelector&lt;HTMLInputElement&gt;(&quot;input[type=password]&quot;)!.value = &quot;&quot;;
-    const shared = {
-      provider,
-      revision: data[provider].revision,
-      enabled: values.get(&quot;enabled&quot;) === &quot;yes&quot;,
-    };
-    const payload =
-      provider === &quot;openai&quot;
-        ? {
-            ...shared,
-            ...(secret ? { apiKey: secret } : {}),
-            allowedModels: String(values.get(&quot;models&quot;))
-              .split(&quot;,&quot;)
-              .map((x) =&gt; x.trim())
-              .filter(Boolean),
-            voiceEnabled: values.get(&quot;voice&quot;) === &quot;yes&quot;,
-          }
-        : {
-            ...shared,
-            ...(secret ? { clientSecret: secret } : {}),
-            clientId: String(values.get(&quot;clientId&quot;)).trim(),
-            redirectUri: String(values.get(&quot;redirectUri&quot;)).trim(),
-          };
-    setBusy(provider);
-    setError(&quot;&quot;);
-    setNotice(&quot;&quot;);
-    try {
-      const response = await fetch(&quot;/api/provider-settings&quot;, {
-        method: &quot;POST&quot;,
-        headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json();
-      if (!response.ok) throw Error(result.error || &quot;Não foi possível salvar.&quot;);
-      await load();
-      setNotice(
-        &quot;Credenciais salvas com proteção no servidor. As próximas solicitações usarão esta configuração. A conexão com o provedor não foi testada.&quot;,
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  }
-  return (
-    &lt;section className=&quot;credentials-page&quot;&gt;
-      &lt;div className=&quot;card&quot;&gt;
-        &lt;h2&gt;Credenciais dos serviços&lt;/h2&gt;
-        &lt;p className=&quot;muted&quot;&gt;
-          Configure os serviços utilizados pelo Cyro. Estas configurações são
-          globais e exclusivas do SUPER_ADMIN.
-        &lt;/p&gt;
-        &lt;p&gt;
-          Os segredos são criptografados no Cloud e não são exibidos novamente.
-          Deixe o campo de segredo vazio para manter o valor atual.
-        &lt;/p&gt;
-      &lt;/div&gt;
-      {(error || loadError) &amp;&amp; (
-        &lt;p className=&quot;alert&quot; role=&quot;alert&quot;&gt;
-          {error || loadError}
-        &lt;/p&gt;
-      )}
-      {notice &amp;&amp; (
-        &lt;p className=&quot;notice&quot; role=&quot;status&quot;&gt;
-          {notice}
-        &lt;/p&gt;
-      )}
-      {!data ? (
-        &lt;p&gt;Carregando configurações…&lt;/p&gt;
-      ) : (
-        &lt;div className=&quot;credentials-grid&quot;&gt;
-          &lt;section className=&quot;card&quot;&gt;
-            &lt;h2&gt;OpenAI&lt;/h2&gt;
-            &lt;p className=&quot;muted&quot;&gt;
-              Chat e voz utilizam a mesma chave, respeitando as cotas e os
-              limites existentes.
-            &lt;/p&gt;
-            &lt;p className=&quot;credential-state&quot;&gt;
-              {data.openai.hasApiKey
-                ? &quot;Chave configurada&quot;
-                : &quot;Chave não configurada&quot;}{&quot; &quot;}
-              ·{&quot; &quot;}
-              {data.openai.source === &quot;dashboard&quot;
-                ? &quot;Salva pela dashboard&quot;
-                : &quot;Configuração do ambiente&quot;}
-            &lt;/p&gt;
-            &lt;form
-              key={&quot;openai-&quot; + data.openai.revision}
-              className=&quot;form-grid&quot;
-              autoComplete=&quot;off&quot;
-              onSubmit={(e) =&gt; void save(e, &quot;openai&quot;)}
-            &gt;
-              &lt;label&gt;
-                Serviço
-                &lt;select
-                  name=&quot;enabled&quot;
-                  defaultValue={data.openai.enabled ? &quot;yes&quot; : &quot;no&quot;}
-                &gt;
-                  &lt;option value=&quot;yes&quot;&gt;Habilitado&lt;/option&gt;
-                  &lt;option value=&quot;no&quot;&gt;Desativado&lt;/option&gt;
-                &lt;/select&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Chave da API
-                &lt;input
-                  name=&quot;secret&quot;
-                  type=&quot;password&quot;
-                  autoComplete=&quot;new-password&quot;
-                  maxLength={512}
-                  spellCheck={false}
-                  placeholder={
-                    data.openai.hasApiKey
-                      ? &quot;Chave protegida — deixe vazio para manter&quot;
-                      : &quot;Cole sua chave OpenAI&quot;
-                  }
-                /&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Modelos permitidos
-                &lt;input
-                  name=&quot;models&quot;
-                  defaultValue={data.openai.allowedModels?.join(&quot;, &quot;)}
-                  maxLength={2400}
-                  required
-                  aria-describedby=&quot;models-help&quot;
-                /&gt;
-                &lt;small id=&quot;models-help&quot;&gt;
-                  Separe por vírgulas. Preserve o modelo utilizado pelo Desktop.
-                &lt;/small&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Voz
-                &lt;select
-                  name=&quot;voice&quot;
-                  defaultValue={data.openai.voiceEnabled ? &quot;yes&quot; : &quot;no&quot;}
-                &gt;
-                  &lt;option value=&quot;no&quot;&gt;Desativada&lt;/option&gt;
-                  &lt;option value=&quot;yes&quot;&gt;Habilitada — pode gerar cobrança&lt;/option&gt;
-                &lt;/select&gt;
-              &lt;/label&gt;
-              &lt;button disabled={!!busy}&gt;
-                {busy === &quot;openai&quot; ? &quot;Salvando…&quot; : &quot;Salvar OpenAI&quot;}
-              &lt;/button&gt;
-            &lt;/form&gt;
-          &lt;/section&gt;
-          &lt;section className=&quot;card&quot;&gt;
-            &lt;h2&gt;Spotify&lt;/h2&gt;
-            &lt;p className=&quot;muted&quot;&gt;
-              Configure o aplicativo criado no Spotify Developer Dashboard. Cada
-              cliente continuará conectando sua própria conta pelo Desktop.
-            &lt;/p&gt;
-            &lt;p className=&quot;credential-state&quot;&gt;
-              {data.spotify.hasClientSecret
-                ? &quot;Client Secret configurado&quot;
-                : &quot;Client Secret não configurado&quot;}{&quot; &quot;}
-              ·{&quot; &quot;}
-              {data.spotify.source === &quot;dashboard&quot;
-                ? &quot;Salvo pela dashboard&quot;
-                : &quot;Configuração do ambiente&quot;}
-            &lt;/p&gt;
-            &lt;form
-              key={&quot;spotify-&quot; + data.spotify.revision}
-              className=&quot;form-grid&quot;
-              autoComplete=&quot;off&quot;
-              onSubmit={(e) =&gt; void save(e, &quot;spotify&quot;)}
-            &gt;
-              &lt;label&gt;
-                Integração
-                &lt;select
-                  name=&quot;enabled&quot;
-                  defaultValue={data.spotify.enabled ? &quot;yes&quot; : &quot;no&quot;}
-                &gt;
-                  &lt;option value=&quot;yes&quot;&gt;Habilitada&lt;/option&gt;
-                  &lt;option value=&quot;no&quot;&gt;Desativada&lt;/option&gt;
-                &lt;/select&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Client ID
-                &lt;input
-                  name=&quot;clientId&quot;
-                  defaultValue={data.spotify.clientId}
-                  maxLength={32}
-                  required
-                  spellCheck={false}
-                /&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Client Secret
-                &lt;input
-                  name=&quot;secret&quot;
-                  type=&quot;password&quot;
-                  autoComplete=&quot;new-password&quot;
-                  maxLength={512}
-                  spellCheck={false}
-                  placeholder={
-                    data.spotify.hasClientSecret
-                      ? &quot;Segredo protegido — deixe vazio para manter&quot;
-                      : &quot;Cole o Client Secret do Spotify&quot;
-                  }
-                /&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Redirect URI
-                &lt;input
-                  name=&quot;redirectUri&quot;
-                  type=&quot;url&quot;
-                  defaultValue={data.spotify.redirectUri}
-                  maxLength={2048}
-                  required
-                  aria-describedby=&quot;redirect-help&quot;
-                /&gt;
-                &lt;small id=&quot;redirect-help&quot;&gt;
-                  Use o callback HTTPS exato deste Cloud e cadastre o mesmo
-                  endereço no Spotify.
-                &lt;/small&gt;
-              &lt;/label&gt;
-              &lt;button disabled={!!busy}&gt;
-                {busy === &quot;spotify&quot; ? &quot;Salvando…&quot; : &quot;Salvar Spotify&quot;}
-              &lt;/button&gt;
-            &lt;/form&gt;
-          &lt;/section&gt;
-        &lt;/div&gt;
-      )}
-    &lt;/section&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/credentials.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/dashboard-data.tsx — Componente / página React ===== -->
-<details id="fonte-12"><summary>cloud/components/dashboard-data.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import {
-  createContext,
-  useContext,
-  useState,
-  useSyncExternalStore,
-  useEffect,
-  useCallback,
-} from &quot;react&quot;;
-import { createDashboardStore } from &quot;../lib/dashboard-store&quot;;
-const Context = createContext&lt;ReturnType&lt;typeof createDashboardStore&gt; | null&gt;(
-  null,
-);
-export function DashboardDataProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [store] = useState(() =&gt; createDashboardStore());
-  return &lt;Context.Provider value={store}&gt;{children}&lt;/Context.Provider&gt;;
-}
-export function useDashboardData&lt;T&gt;(key: string | null) {
-  const store = useContext(Context);
-  if (!store) throw Error(&quot;DashboardDataProvider ausente.&quot;);
-  const resource = key || &quot;/api/admin&quot;;
-  const subscribe = useCallback(
-    (listener: () =&gt; void) =&gt; store.subscribe(resource, listener),
-    [store, resource],
-  );
-  const snapshot = useCallback(
-    () =&gt; store.snapshot(resource),
-    [store, resource],
-  );
-  const state = useSyncExternalStore(subscribe, snapshot, snapshot);
-  useEffect(() =&gt; {
-    if (key) void store.load(key);
-  }, [store, key]);
-  const reload = useCallback(
-    () =&gt; (key ? store.load(key, true) : Promise.resolve()),
-    [store, key],
-  );
-  return {
-    data: key ? (state.data as T | null) : null,
-    error: key ? state.error : &quot;&quot;,
-    loading: !!key &amp;&amp; (state.loading || (!state.data &amp;&amp; !state.error)),
-    reload,
-  };
-}
-export function DashboardLoading({
-  error,
-  retry,
-}: {
-  error?: string;
-  retry?: () =&gt; void;
-}) {
-  return (
-    &lt;div
-      className=&quot;dashboard-loading&quot;
-      role={error ? &quot;alert&quot; : &quot;status&quot;}
-      aria-live=&quot;polite&quot;
-    &gt;
-      &lt;div&gt;
-        {!error &amp;&amp; &lt;span className=&quot;loading-spinner&quot; aria-hidden=&quot;true&quot; /&gt;}
-        &lt;p&gt;{error || &quot;Carregando sua dashboard…&quot;}&lt;/p&gt;
-        {error &amp;&amp; &lt;button onClick={retry}&gt;Tentar novamente&lt;/button&gt;}
-      &lt;/div&gt;
-    &lt;/div&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/dashboard-data.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/dashboard.tsx — Componente / página React ===== -->
-<details id="fonte-13"><summary>cloud/components/dashboard.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import Link from &quot;next/link&quot;;
-import { version } from &quot;../../package.json&quot;;
-import Management from &quot;./management&quot;;
-import Credentials from &quot;./credentials&quot;;
-import Releases from &quot;./releases&quot;;
-import UsagePanel from &quot;./usage-panel&quot;;
-import type { UsageReport } from &quot;../lib/usage-report&quot;;
-import { useState } from &quot;react&quot;;
-import { DashboardLoading, useDashboardData } from &quot;./dashboard-data&quot;;
-type Employee = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  monthlyTokenLimit: number;
-  cloudStorageLimitBytes: number;
-};
-type Device = {
-  id: string;
-  name: string;
-  userId: string;
-  user: { name: string };
-  lastSeenAt: string;
-  revokedAt: string | null;
-};
-type Usage = {
-  id: string;
-  userId: string;
-  user: { name: string };
-  model: string;
-  inputTokens: number;
-  outputTokens: number;
-  estimatedCost: string | null;
-  createdAt: string;
-};
-type Audit = {
-  id: string;
-  action: string;
-  targetType: string;
-  createdAt: string;
-};
-type Data = {
-  actor: { name: string; role: string };
-  employees: Employee[];
-  devices: Device[];
-  usage: Usage[];
-  usageReport?: UsageReport;
-  audit: Audit[];
-  metrics?: {
-    employees: number;
-    active: number;
-    devices: number;
-    tokens: number;
-    cost: string | null;
-  };
-};
-const links = [
-  [&quot;dashboard&quot;, &quot;◈&quot;, &quot;Visão geral&quot;],
-  [&quot;clients&quot;, &quot;♙&quot;, &quot;Usuários&quot;],
-  [&quot;devices&quot;, &quot;▣&quot;, &quot;Dispositivos&quot;],
-  [&quot;settings&quot;, &quot;⚙&quot;, &quot;Configurações&quot;],
-  [&quot;credentials&quot;, &quot;⌁&quot;, &quot;Credenciais&quot;],
-  [&quot;versions&quot;, &quot;↥&quot;, &quot;Sistema · Versões&quot;],
-  [&quot;usage&quot;, &quot;▥&quot;, &quot;Consumo&quot;],
-  [&quot;audit&quot;, &quot;≡&quot;, &quot;Auditoria&quot;],
-];
-const date = (value: string) =&gt; new Date(value).toLocaleString(&quot;pt-BR&quot;);
-const number = (value: number) =&gt; value.toLocaleString(&quot;pt-BR&quot;);
-export default function Dashboard({
-  section,
-  query = &quot;&quot;,
-}: {
-  section: string;
-  query?: string;
-}) {
-  const {
-    data,
-    error: loadError,
-    reload: load,
-  } = useDashboardData&lt;Data&gt;(&quot;/api/admin&quot; + query);
-  const extraKey =
-    section === &quot;credentials&quot; &amp;&amp; data?.actor.role === &quot;SUPER_ADMIN&quot;
-      ? &quot;/api/provider-settings&quot;
-      : section === &quot;settings&quot;
-        ? &quot;/api/management&quot;
-        : null;
-  const extra = useDashboardData&lt;unknown&gt;(extraKey);
-  const [error, setError] = useState(&quot;&quot;);
-  const [notice, setNotice] = useState(&quot;&quot;);
-  const [busy, setBusy] = useState(false);
-  async function command(value: unknown) {
-    setBusy(true);
-    setError(&quot;&quot;);
-    setNotice(&quot;&quot;);
-    try {
-      const result = await fetch(&quot;/api/admin&quot;, {
-        method: &quot;POST&quot;,
-        headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
-        body: JSON.stringify(value),
-      });
-      const response = await result.json();
-      if (!result.ok) throw Error(response.error);
-      setNotice(&quot;Operação concluída.&quot;);
-      await load();
-      return true;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : &quot;Operação não concluída.&quot;);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (!data || (extraKey &amp;&amp; !extra.data))
-    return (
-      &lt;DashboardLoading
-        error={loadError || extra.error}
-        retry={() =&gt; {
-          void load();
-          void extra.reload();
-        }}
-      /&gt;
-    );
-  const title = links.find((l) =&gt; l[0] === section)?.[2];
-  return (
-    &lt;div className=&quot;shell&quot;&gt;
-      &lt;aside&gt;
-        &lt;Link className=&quot;brand&quot; href=&quot;/dashboard&quot;&gt;
-          C&lt;span&gt;YRO IA&lt;/span&gt;
-          &lt;i&gt;CLOUD&lt;/i&gt;
-        &lt;/Link&gt;
-        &lt;p className=&quot;nav-label&quot;&gt;WORKSPACE&lt;/p&gt;
-        &lt;nav aria-label=&quot;Navegação administrativa&quot;&gt;
-          {links
-            .filter(
-              ([id]) =&gt;
-                ![&quot;credentials&quot;, &quot;versions&quot;].includes(id) ||
-                data?.actor.role === &quot;SUPER_ADMIN&quot;,
-            )
-            .map(([id, icon, label]) =&gt; (
-              &lt;Link
-                key={id}
-                href={id === &quot;versions&quot; ? &quot;/system/versions&quot; : `/${id}`}
-                aria-current={section === id ? &quot;page&quot; : undefined}
-              &gt;
-                &lt;span&gt;{icon}&lt;/span&gt;
-                {label}
-              &lt;/Link&gt;
-            ))}
-        &lt;/nav&gt;
-        &lt;div className=&quot;sidebar-bottom&quot;&gt;
-          &lt;span className=&quot;avatar&quot;&gt;{data?.actor.name.slice(0, 1) || &quot;J&quot;}&lt;/span&gt;
-          &lt;div&gt;
-            {data?.actor.name || &quot;Administração&quot;}
-            &lt;small&gt;{data?.actor.role || &quot;Conectando…&quot;}&lt;/small&gt;
-          &lt;/div&gt;
-          &lt;button
-            className=&quot;ghost&quot;
-            aria-label=&quot;Sair&quot;
-            onClick={async () =&gt; {
-              const result = await fetch(&quot;/api/auth/logout&quot;, {
-                method: &quot;POST&quot;,
-              });
-              if (result.ok) location.assign(&quot;/login&quot;);
-              else setError(&quot;Não foi possível encerrar a sessão.&quot;);
-            }}
-          &gt;
-            ↗
-          &lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/aside&gt;
-      &lt;main className=&quot;content&quot;&gt;
-        &lt;header&gt;
-          &lt;span&gt;
-            Administração &lt;b&gt;/ {title}&lt;/b&gt;
-          &lt;/span&gt;
-          &lt;span className=&quot;environment&quot;&gt;
-            &lt;i /&gt;
-            Cyro Cloud
-          &lt;/span&gt;
-        &lt;/header&gt;
-        &lt;div className=&quot;page-heading&quot;&gt;
-          &lt;div&gt;
-            &lt;p className=&quot;eyebrow&quot;&gt;CENTRAL DE CONTROLE&lt;/p&gt;
-            &lt;h1&gt;{title}&lt;/h1&gt;
-            &lt;p className=&quot;muted&quot;&gt;
-              {section === &quot;dashboard&quot;
-                ? &quot;Pessoas conectadas. Inteligência sob controle.&quot;
-                : &quot;Gerencie o acesso com segurança e acompanhe cada alteração.&quot;}
-            &lt;/p&gt;
-          &lt;/div&gt;
-          &lt;button
-            className=&quot;secondary&quot;
-            onClick={() =&gt; {
-              setError(&quot;&quot;);
-              void load();
-              void extra.reload();
-            }}
-          &gt;
-            ↻ Atualizar
-          &lt;/button&gt;
-        &lt;/div&gt;
-        {(error || loadError) &amp;&amp; (
-          &lt;div className=&quot;alert&quot; role=&quot;alert&quot;&gt;
-            {error || loadError}
-          &lt;/div&gt;
-        )}
-        {notice &amp;&amp; (
-          &lt;p role=&quot;status&quot; className=&quot;notice&quot;&gt;
-            {notice}
-          &lt;/p&gt;
-        )}
-        {!data ? (
-          &lt;section className=&quot;card&quot;&gt;
-            &lt;p&gt;
-              {error
-                ? &quot;Dados indisponíveis. Configure a conexão e tente novamente.&quot;
-                : &quot;Consultando os dados do sistema…&quot;}
-            &lt;/p&gt;
-          &lt;/section&gt;
-        ) : (
-          &lt;&gt;
-            {section === &quot;dashboard&quot; &amp;&amp; (
-              &lt;&gt;
-                &lt;div className=&quot;metrics&quot;&gt;
-                  {[
-                    [
-                      &quot;Clientes&quot;,
-                      data.metrics?.employees ??
-                        data.employees.filter((e) =&gt; e.role === &quot;EMPLOYEE&quot;)
-                          .length,
-                      &quot;Cadastrados no seu escopo&quot;,
-                    ],
-                    [
-                      &quot;Clientes ativos&quot;,
-                      data.metrics?.active ??
-                        data.employees.filter((e) =&gt; e.status === &quot;ACTIVE&quot;)
-                          .length,
-                      &quot;Acesso autorizado&quot;,
-                    ],
-                    [
-                      &quot;Instalações&quot;,
-                      data.metrics?.devices ??
-                        data.devices.filter((d) =&gt; !d.revokedAt).length,
-                      &quot;Dispositivos autorizados&quot;,
-                    ],
-                  ].map(([label, value, detail]) =&gt; (
-                    &lt;article className=&quot;card metric&quot; key={String(label)}&gt;
-                      &lt;p&gt;{label}&lt;/p&gt;
-                      &lt;strong&gt;{number(Number(value))}&lt;/strong&gt;
-                      &lt;small&gt;{detail}&lt;/small&gt;
-                    &lt;/article&gt;
-                  ))}
-                &lt;/div&gt;
-                &lt;div className=&quot;dashboard-grid&quot;&gt;
-                  &lt;section className=&quot;card&quot;&gt;
-                    &lt;h2&gt;Acesso por login&lt;/h2&gt;
-                    &lt;p&gt;
-                      Cadastre usuários com e-mail e senha e controle o acesso
-                      ao Desktop.
-                    &lt;/p&gt;
-                    &lt;Link href=&quot;/clients&quot;&gt;Gerenciar usuários →&lt;/Link&gt;
-                  &lt;/section&gt;
-                  &lt;section className=&quot;card consumption&quot;&gt;
-                    &lt;span className=&quot;eyebrow&quot;&gt;INTELIGÊNCIA ARTIFICIAL&lt;/span&gt;
-                    &lt;h2&gt;Consumo do mês&lt;/h2&gt;
-                    &lt;strong&gt;
-                      {number(data.metrics?.tokens ?? 0)}
-                      &lt;small&gt; tokens&lt;/small&gt;
-                    &lt;/strong&gt;
-                    &lt;p className=&quot;muted&quot;&gt;Consumo retornado pelo provedor.&lt;/p&gt;
-                    &lt;Link href=&quot;/usage&quot;&gt;Consultar uso e limites →&lt;/Link&gt;
-                    &lt;div className=&quot;divider&quot; /&gt;
-                    &lt;h3&gt;Alertas administrativos&lt;/h3&gt;
-                    &lt;p className=&quot;muted&quot;&gt;
-                      O Desktop verifica a sessão a cada cinco minutos.
-                    &lt;/p&gt;
-                    &lt;p className=&quot;muted&quot;&gt;
-                      Custos sem preço configurado aparecem como indisponíveis.
-                    &lt;/p&gt;
-                  &lt;/section&gt;
-                &lt;/div&gt;
-              &lt;/&gt;
-            )}
-            {section === &quot;clients&quot; &amp;&amp; (
-              &lt;&gt;
-                &lt;section className=&quot;card&quot;&gt;
-                  &lt;h2&gt;
-                    Cadastrar usuário{&quot; &quot;}
-                    {data.actor.role === &quot;SUPER_ADMIN&quot; &amp;&amp; &quot;ou administrador&quot;}
-                  &lt;/h2&gt;
-                  &lt;form
-                    className=&quot;form-grid&quot;
-                    onSubmit={async (event) =&gt; {
-                      event.preventDefault();
-                      const form = event.currentTarget;
-                      const values = new FormData(form);
-                      if (
-                        await command({
-                          action: &quot;client.create&quot;,
-                          data: {
-                            name: values.get(&quot;name&quot;),
-                            email: values.get(&quot;email&quot;),
-                            role: values.get(&quot;role&quot;) || &quot;EMPLOYEE&quot;,
-                            monthlyTokenLimit: Number(values.get(&quot;limit&quot;)),
-                            ...(values.get(&quot;password&quot;)
-                              ? { password: values.get(&quot;password&quot;) }
-                              : {}),
-                          },
-                        })
-                      )
-                        form.reset();
-                    }}
-                  &gt;
-                    &lt;label&gt;
-                      Nome
-                      &lt;input name=&quot;name&quot; required maxLength={100} /&gt;
-                    &lt;/label&gt;
-                    &lt;label&gt;
-                      E-mail
-                      &lt;input name=&quot;email&quot; type=&quot;email&quot; required /&gt;
-                    &lt;/label&gt;
-                    &lt;label&gt;
-                      Limite mensal de tokens
-                      &lt;input
-                        name=&quot;limit&quot;
-                        type=&quot;number&quot;
-                        min={0}
-                        max={100000000}
-                        defaultValue={100000}
-                        required
-                      /&gt;
-                    &lt;/label&gt;
-                    {data.actor.role === &quot;SUPER_ADMIN&quot; &amp;&amp; (
-                      &lt;&gt;
-                        &lt;label&gt;
-                          Papel
-                          &lt;select name=&quot;role&quot;&gt;
-                            &lt;option value=&quot;EMPLOYEE&quot;&gt;Cliente&lt;/option&gt;
-                            &lt;option value=&quot;ADMIN&quot;&gt;Administrador&lt;/option&gt;
-                          &lt;/select&gt;
-                        &lt;/label&gt;
-                      &lt;/&gt;
-                    )}
-                    &lt;label&gt;
-                      Senha inicial
-                      &lt;input
-                        name=&quot;password&quot;
-                        type=&quot;password&quot;
-                        required
-                        minLength={12}
-                        maxLength={256}
-                        autoComplete=&quot;new-password&quot;
-                      /&gt;
-                    &lt;/label&gt;
-                    &lt;button disabled={busy}&gt;Cadastrar&lt;/button&gt;
-                  &lt;/form&gt;
-                &lt;/section&gt;
-                &lt;section className=&quot;card&quot;&gt;
-                  &lt;h2&gt;Pessoas no seu escopo&lt;/h2&gt;
-                  &lt;p className=&quot;muted&quot;&gt;
-                    Até 100 cadastros recentes. Dispositivos e consumo estão nas
-                    páginas correspondentes.
-                  &lt;/p&gt;
-                  {data.employees.map((e) =&gt; (
-                    &lt;form
-                      className=&quot;employee-row&quot;
-                      key={e.id}
-                      onSubmit={(event) =&gt; {
-                        event.preventDefault();
-                        const values = new FormData(event.currentTarget);
-                        void command({
-                          action: &quot;client.update&quot;,
-                          id: e.id,
-                          name: values.get(&quot;name&quot;),
-                          status: values.get(&quot;status&quot;),
-                          monthlyTokenLimit: Number(values.get(&quot;limit&quot;)),
-                          cloudStorageLimitBytes:
-                            Number(values.get(&quot;storageLimit&quot;)) * 1048576,
-                          ...(values.get(&quot;password&quot;)
-                            ? { password: values.get(&quot;password&quot;) }
-                            : {}),
-                        });
-                      }}
-                    &gt;
-                      &lt;label&gt;
-                        Nome
-                        &lt;input name=&quot;name&quot; defaultValue={e.name} required /&gt;
-                      &lt;/label&gt;
-                      &lt;div&gt;
-                        {e.email}
-                        &lt;small&gt;{e.role}&lt;/small&gt;
-                      &lt;/div&gt;
-                      &lt;label&gt;
-                        Tokens/mês
-                        &lt;input
-                          name=&quot;limit&quot;
-                          type=&quot;number&quot;
-                          min={0}
-                          max={100000000}
-                          defaultValue={e.monthlyTokenLimit}
-                        /&gt;
-                      &lt;/label&gt;
-                      &lt;label&gt;
-                        Armazenamento na nuvem (MB)
-                        &lt;input
-                          name=&quot;storageLimit&quot;
-                          type=&quot;number&quot;
-                          min={1}
-                          max={1024}
-                          defaultValue={
-                            (e.cloudStorageLimitBytes || 52428800) / 1048576
-                          }
-                          required
-                        /&gt;
-                      &lt;/label&gt;
-                      &lt;label&gt;
-                        Estado
-                        &lt;select name=&quot;status&quot; defaultValue={e.status}&gt;
-                          &lt;option value=&quot;ACTIVE&quot;&gt;Ativo&lt;/option&gt;
-                          &lt;option value=&quot;DISABLED&quot;&gt;Desativado&lt;/option&gt;
-                        &lt;/select&gt;
-                      &lt;/label&gt;
-                      &lt;label&gt;
-                        Nova senha (opcional)
-                        &lt;input
-                          name=&quot;password&quot;
-                          type=&quot;password&quot;
-                          minLength={12}
-                          maxLength={256}
-                          autoComplete=&quot;new-password&quot;
-                        /&gt;
-                      &lt;/label&gt;
-                      &lt;button
-                        disabled={busy || e.role === &quot;SUPER_ADMIN&quot;}
-                        className=&quot;secondary&quot;
-                      &gt;
-                        Salvar
-                      &lt;/button&gt;
-                    &lt;/form&gt;
-                  ))}
-                &lt;/section&gt;
-              &lt;/&gt;
-            )}
-            {section === &quot;devices&quot; &amp;&amp; (
-              &lt;section className=&quot;card&quot;&gt;
-                &lt;h2&gt;Instalações autorizadas&lt;/h2&gt;
-                &lt;Table
-                  heads={[
-                    &quot;Dispositivo&quot;,
-                    &quot;Cliente&quot;,
-                    &quot;Último acesso&quot;,
-                    &quot;Licença&quot;,
-                    &quot;Ação&quot;,
-                  ]}
-                  rows={data.devices.map((d) =&gt; [
-                    d.name,
-                    d.user.name,
-                    date(d.lastSeenAt),
-                    d.revokedAt ? &quot;Revogada&quot; : &quot;Ativa&quot;,
-                    &lt;button
-                      key={d.id}
-                      className=&quot;ghost danger&quot;
-                      disabled={busy || !!d.revokedAt}
-                      onClick={() =&gt; {
-                        if (
-                          confirm(
-                            &quot;Bloquear este dispositivo e encerrar suas sessões?&quot;,
-                          )
-                        )
-                          void command({ action: &quot;device.revoke&quot;, id: d.id });
-                      }}
-                    &gt;
-                      Revogar
-                    &lt;/button&gt;,
-                  ])}
-                /&gt;
-              &lt;/section&gt;
-            )}
-            {section === &quot;usage&quot; &amp;&amp; (
-              &lt;section className=&quot;usage-section&quot;&gt;
-                &lt;UsagePanel
-                  key={query}
-                  report={data.usageReport}
-                  employees={data.employees}
-                  query={query}
-                /&gt;
-                &lt;section className=&quot;card&quot;&gt;
-                  &lt;h3&gt;Limites mensais&lt;/h3&gt;
-                  &lt;Table
-                    heads={[&quot;Cliente&quot;, &quot;Tokens por mês&quot;]}
-                    rows={data.employees
-                      .filter((e) =&gt; e.role === &quot;EMPLOYEE&quot;)
-                      .map((e) =&gt; [e.name, number(e.monthlyTokenLimit)])}
-                  /&gt;
-                &lt;/section&gt;
-              &lt;/section&gt;
-            )}
-            {section === &quot;settings&quot; &amp;&amp; &lt;Management section={section} /&gt;}
-            {section === &quot;versions&quot; &amp;&amp; data.actor.role === &quot;SUPER_ADMIN&quot; &amp;&amp; (
-              &lt;Releases /&gt;
-            )}
-            {section === &quot;credentials&quot; &amp;&amp; data.actor.role === &quot;SUPER_ADMIN&quot; &amp;&amp; (
-              &lt;Credentials /&gt;
-            )}
-            {section === &quot;audit&quot; &amp;&amp; (
-              &lt;section className=&quot;card&quot;&gt;
-                &lt;h2&gt;Registro de auditoria&lt;/h2&gt;
-                &lt;p className=&quot;muted&quot;&gt;
-                  Até 100 eventos recentes no escopo autorizado.
-                &lt;/p&gt;
-                &lt;Table
-                  heads={[&quot;Data&quot;, &quot;Ação&quot;, &quot;Tipo&quot;]}
-                  rows={data.audit.map((a) =&gt; [
-                    date(a.createdAt),
-                    a.action,
-                    a.targetType,
-                  ])}
-                /&gt;
-              &lt;/section&gt;
-            )}
-          &lt;/&gt;
-        )}
-        &lt;footer&gt;
-          &lt;span&gt;Cyro · v{version} · © 2026 Rodrigo Junior&lt;/span&gt;
-          &lt;span&gt;
-            &lt;a href=&quot;mailto:rodrigo.macia019@gmail.com&quot;&gt;Contato&lt;/a&gt;
-            {&quot; · &quot;}
-            &lt;a
-              href=&quot;https://github.com/rodrigojr09&quot;
-              target=&quot;_blank&quot;
-              rel=&quot;noopener noreferrer&quot;
-            &gt;
-              GitHub
-            &lt;/a&gt;
-          &lt;/span&gt;
-        &lt;/footer&gt;
-      &lt;/main&gt;
-    &lt;/div&gt;
-  );
-}
-function Empty({ text }: { text: string }) {
-  return (
-    &lt;div className=&quot;empty&quot;&gt;
-      &lt;span&gt;⌁&lt;/span&gt;
-      &lt;p&gt;{text}&lt;/p&gt;
-    &lt;/div&gt;
-  );
-}
-function Table({
-  heads,
-  rows,
-}: {
-  heads: string[];
-  rows: React.ReactNode[][];
-}) {
-  return rows.length ? (
-    &lt;div
-      className=&quot;table-wrap&quot;
-      role=&quot;region&quot;
-      aria-label={heads.join(&quot;, &quot;)}
-      tabIndex={0}
-    &gt;
-      &lt;table&gt;
-        &lt;thead&gt;
-          &lt;tr&gt;
-            {heads.map((h) =&gt; (
-              &lt;th scope=&quot;col&quot; key={h}&gt;
-                {h}
-              &lt;/th&gt;
-            ))}
-          &lt;/tr&gt;
-        &lt;/thead&gt;
-        &lt;tbody&gt;
-          {rows.map((row, i) =&gt; (
-            &lt;tr key={i}&gt;
-              {row.map((cell, j) =&gt; (
-                &lt;td key={j}&gt;{cell}&lt;/td&gt;
-              ))}
-            &lt;/tr&gt;
-          ))}
-        &lt;/tbody&gt;
-      &lt;/table&gt;
-    &lt;/div&gt;
-  ) : (
-    &lt;Empty text=&quot;Nenhum registro encontrado.&quot; /&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/dashboard.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/management.tsx — Componente / página React ===== -->
-<details id="fonte-14"><summary>cloud/components/management.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import { useDashboardData } from &quot;./dashboard-data&quot;;
-import Link from &quot;next/link&quot;;
-import { useState } from &quot;react&quot;;
-type State = {
-  settings: { intelligenceEnabled: boolean; maxOutputTokens: number };
-  canConfigure: boolean;
-};
-export default function Management({ section }: { section: string }) {
-  const {
-    data,
-    error: loadError,
-    reload: load,
-  } = useDashboardData&lt;State&gt;(&quot;/api/management&quot;);
-  const [error, setError] = useState(&quot;&quot;);
-  const [busy, setBusy] = useState&lt;boolean&gt;(false);
-  async function save(input: unknown) {
-    setBusy(true);
-    setError(&quot;&quot;);
-    try {
-      const response = await fetch(&quot;/api/management&quot;, {
-        method: &quot;POST&quot;,
-        headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) throw Error((await response.json()).error);
-      await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    &lt;section className=&quot;card&quot;&gt;
-      {(error || loadError) &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error || loadError}&lt;/p&gt;}
-      {!data ? (
-        &lt;p&gt;Carregando…&lt;/p&gt;
-      ) : (
-        &lt;&gt;
-          {data.canConfigure &amp;&amp; (
-            &lt;&gt;
-              &lt;div className=&quot;divider&quot; /&gt;
-              &lt;h2&gt;Configurações globais&lt;/h2&gt;
-              &lt;p&gt;
-                &lt;Link href=&quot;/credentials&quot;&gt;
-                  Configurar credenciais Spotify e OpenAI →
-                &lt;/Link&gt;
-              &lt;/p&gt;
-              &lt;form
-                className=&quot;form-grid&quot;
-                onSubmit={(event) =&gt; {
-                  event.preventDefault();
-                  const values = new FormData(event.currentTarget);
-                  void save({
-                    action: &quot;settings.update&quot;,
-                    intelligenceEnabled: values.get(&quot;enabled&quot;) === &quot;yes&quot;,
-                    maxOutputTokens: Number(values.get(&quot;tokens&quot;)),
-                  });
-                }}
-              &gt;
-                &lt;label&gt;
-                  Inteligência artificial
-                  &lt;select
-                    name=&quot;enabled&quot;
-                    defaultValue={
-                      data.settings.intelligenceEnabled ? &quot;yes&quot; : &quot;no&quot;
-                    }
-                  &gt;
-                    &lt;option value=&quot;yes&quot;&gt;Habilitada&lt;/option&gt;
-                    &lt;option value=&quot;no&quot;&gt;Suspensa&lt;/option&gt;
-                  &lt;/select&gt;
-                &lt;/label&gt;
-                &lt;label&gt;
-                  Máximo de tokens por resposta
-                  &lt;input
-                    name=&quot;tokens&quot;
-                    type=&quot;number&quot;
-                    min={100}
-                    max={3500}
-                    defaultValue={data.settings.maxOutputTokens}
-                  /&gt;
-                &lt;/label&gt;
-                &lt;button disabled={busy}&gt;Salvar configuração&lt;/button&gt;
-              &lt;/form&gt;
-            &lt;/&gt;
-          )}
-        &lt;/&gt;
-      )}
-    &lt;/section&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/management.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/releases.tsx — Componente / página React ===== -->
-<details id="fonte-15"><summary>cloud/components/releases.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import { useEffect, useState } from &quot;react&quot;;
-import { useDashboardData } from &quot;./dashboard-data&quot;;
-import { compare, semver } from &quot;../../desktop/scripts/updates/protocol.js&quot;;
-type Row = {
-  repositoryPrivate: boolean;
-  id: string;
-  version: string;
-  githubTag: string;
-  status: string;
-  setupUrl: string | null;
-  githubReleaseId: string | null;
-  publishedAt: string | null;
-  fileSize: number;
-  checksum: string | null;
-  changelog: string;
-  error: string | null;
-  leaseUntil: string | null;
-};
-type Catalog = {
-  configured: boolean;
-  warning: string;
-  history: Row[];
-  tags: { name: string; version: string; used: boolean }[];
-};
-export default function Releases() {
-  const { data, error, reload } = useDashboardData&lt;Catalog&gt;(&quot;/api/releases&quot;);
-  const [open, setOpen] = useState(false),
-    [tag, setTag] = useState(&quot;&quot;),
-    [search, setSearch] = useState(&quot;&quot;),
-    [file, setFile] = useState&lt;File | null&gt;(null),
-    [notes, setNotes] = useState(&quot;&quot;),
-    [busy, setBusy] = useState(false),
-    [progress, setProgress] = useState(0),
-    [notice, setNotice] = useState(&quot;&quot;),
-    [recover, setRecover] = useState&lt;Row | null&gt;(null),
-    [refreshing, setRefreshing] = useState(false);
-  useEffect(() =&gt; {
-    if (
-      !data?.history.some(
-        (x) =&gt;
-          [&quot;UPLOADING&quot;, &quot;PROCESSING&quot;].includes(x.status) &amp;&amp;
-          x.leaseUntil &amp;&amp;
-          Date.parse(x.leaseUntil) &gt; Date.now(),
-      )
-    )
-      return;
-    const timer = setInterval(() =&gt; void reload(), 15_000);
-    return () =&gt; clearInterval(timer);
-  }, [data, reload]);
-  async function freshTags() {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      const response = await fetch(&quot;/api/releases?fresh=1&quot;, {
-          cache: &quot;no-store&quot;,
-        }),
-        result = await response.json();
-      if (!response.ok)
-        throw Error(result.error || &quot;Não foi possível consultar as tags.&quot;);
-      setNotice(result.warning || &quot;Tags atualizadas do GitHub.&quot;);
-      await reload();
-    } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : &quot;GitHub indisponível.&quot;,
-      );
-    } finally {
-      setRefreshing(false);
-    }
-  }
-  async function publish(event: React.FormEvent) {
-    event.preventDefault();
-    if (!file || busy) return;
-    setBusy(true);
-    setProgress(0);
-    setNotice(&quot;Preparando upload direto…&quot;);
-    try {
-      const response = await fetch(&quot;/api/releases&quot;, {
-        method: &quot;POST&quot;,
-        headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
-        body: JSON.stringify(
-          recover
-            ? { action: &quot;recover&quot;, id: recover.id, size: file.size }
-            : {
-                action: &quot;create&quot;,
-                tag,
-                name: file.name,
-                size: file.size,
-                changelog: notes,
-              },
-        ),
-      });
-      const attempt = await response.json();
-      if (!response.ok) throw Error(attempt.error);
-      const destination = new URL(attempt.url);
-      if (destination.protocol !== &quot;https:&quot;)
-        throw Error(&quot;Servidor externo inválido.&quot;);
-      await new Promise&lt;void&gt;((resolve, reject) =&gt; {
-        const xhr = new XMLHttpRequest();
-        xhr.open(&quot;PUT&quot;, destination.href);
-        xhr.setRequestHeader(&quot;Authorization&quot;, &quot;Bearer &quot; + attempt.ticket);
-        xhr.setRequestHeader(
-          &quot;Content-Type&quot;,
-          &quot;application/vnd.microsoft.portable-executable&quot;,
-        );
-        xhr.timeout = 2 * 3600_000;
-        xhr.upload.onprogress = (e) =&gt; {
-          if (e.lengthComputable)
-            setProgress(Math.round((e.loaded / e.total) * 100));
-        };
-        xhr.onerror = () =&gt;
-          reject(
-            Error(&quot;Upload interrompido. Consulte o histórico e use Recuperar.&quot;),
-          );
-        xhr.ontimeout = xhr.onerror;
-        xhr.onload = () =&gt;
-          xhr.status === 202
-            ? resolve()
-            : reject(
-                Error(
-                  &quot;Servidor externo recusou o upload. Consulte o histórico.&quot;,
-                ),
-              );
-        xhr.send(file);
-      });
-      setNotice(
-        &quot;Upload recebido. O servidor está verificando e publicando o Setup.exe no GitHub.&quot;,
-      );
-      setOpen(false);
-      setFile(null);
-      setRecover(null);
-      await reload();
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : &quot;Publicação interrompida.&quot;);
-      await reload();
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (!data)
-    return (
-      &lt;section className=&quot;panel&quot;&gt;
-        &lt;h2&gt;Sistema · Versões&lt;/h2&gt;
-        &lt;p role=&quot;status&quot;&gt;{error || &quot;Consultando versões…&quot;}&lt;/p&gt;
-        &lt;button onClick={() =&gt; void reload()}&gt;Tentar novamente&lt;/button&gt;
-      &lt;/section&gt;
-    );
-  const published = data.history
-    .filter(
-      (x) =&gt; x.status === &quot;PUBLISHED&quot; &amp;&amp; semver(x.version)?.pre.length === 0,
-    )
-    .sort((a, b) =&gt; compare(b.version, a.version));
-  return (
-    &lt;section className=&quot;release-manager&quot; aria-label=&quot;Sistema — Versões&quot;&gt;
-      &lt;p&gt;
-        Repositório:{&quot; &quot;}
-        &lt;a
-          href=&quot;https://github.com/rodrigojr09/Cyro-IA&quot;
-          target=&quot;_blank&quot;
-          rel=&quot;noreferrer&quot;
-        &gt;
-          rodrigojr09/Cyro-IA
-        &lt;/a&gt;{&quot; &quot;}
-        ·{&quot; &quot;}
-        &lt;a
-          href=&quot;https://github.com/rodrigojr09/Cyro-IA/tags&quot;
-          target=&quot;_blank&quot;
-          rel=&quot;noreferrer&quot;
-        &gt;
-          Tags
-        &lt;/a&gt;{&quot; &quot;}
-        ·{&quot; &quot;}
-        &lt;a
-          href=&quot;https://github.com/rodrigojr09/Cyro-IA/releases&quot;
-          target=&quot;_blank&quot;
-          rel=&quot;noreferrer&quot;
-        &gt;
-          Releases e instaladores
-        &lt;/a&gt;
-      &lt;/p&gt;
-      &lt;div className=&quot;panel release-summary&quot;&gt;
-        &lt;div&gt;
-          &lt;h2&gt;Sistema · Versões&lt;/h2&gt;
-          &lt;p&gt;
-            Última estável:{&quot; &quot;}
-            &lt;strong&gt;{published[0]?.version || &quot;Nenhuma&quot;}&lt;/strong&gt; ·{&quot; &quot;}
-            {data.history.length} versões cadastradas
-          &lt;/p&gt;
-        &lt;/div&gt;
-        &lt;button
-          disabled={!data.configured || busy || refreshing}
-          onClick={() =&gt; {
-            setRecover(null);
-            setTag(&quot;&quot;);
-            setOpen(true);
-            void freshTags();
-          }}
-        &gt;
-          Nova versão
-        &lt;/button&gt;
-        &lt;button disabled={busy || refreshing} onClick={() =&gt; void freshTags()}&gt;
-          Atualizar histórico
-        &lt;/button&gt;
-      &lt;/div&gt;
-      {!data.configured &amp;&amp; (
-        &lt;p className=&quot;panel&quot; role=&quot;status&quot;&gt;
-          Publicação indisponível. Configure o servidor externo de upload e o
-          segredo compartilhado. Nenhum instalador passa pela Vercel.
-        &lt;/p&gt;
-      )}
-      {data.warning &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{data.warning}&lt;/p&gt;}
-      {notice &amp;&amp; &lt;p role=&quot;status&quot;&gt;{notice}&lt;/p&gt;}
-      {open &amp;&amp; (
-        &lt;form className=&quot;panel release-form&quot; onSubmit={publish}&gt;
-          &lt;h3&gt;
-            {recover
-              ? &quot;Recuperar publicação &quot; + recover.githubTag
-              : &quot;Nova versão&quot;}
-          &lt;/h3&gt;
-          {!recover &amp;&amp; (
-            &lt;&gt;
-              &lt;label&gt;
-                Pesquisar tags
-                &lt;input
-                  value={search}
-                  onChange={(e) =&gt; setSearch(e.target.value)}
-                /&gt;
-              &lt;/label&gt;
-              &lt;label&gt;
-                Tag do GitHub
-                &lt;select
-                  required
-                  value={tag}
-                  disabled={busy}
-                  onChange={(e) =&gt; setTag(e.target.value)}
-                &gt;
-                  &lt;option value=&quot;&quot;&gt;Selecione uma tag existente&lt;/option&gt;
-                  {data.tags
-                    .filter((t) =&gt;
-                      t.name.toLowerCase().includes(search.toLowerCase()),
-                    )
-                    .map((t) =&gt; (
-                      &lt;option key={t.name} value={t.name} disabled={t.used}&gt;
-                        {t.name}
-                        {t.used ? &quot; · utilizada&quot; : &quot;&quot;}
-                      &lt;/option&gt;
-                    ))}
-                &lt;/select&gt;
-              &lt;/label&gt;
-            &lt;/&gt;
-          )}
-          {recover &amp;&amp; (
-            &lt;p&gt;
-              Envie o mesmo instalador. Um Setup.exe existente só será adotado
-              após conferir tamanho e SHA-256; nunca será substituído.
-            &lt;/p&gt;
-          )}
-          &lt;label&gt;
-            Arquivo instalador (.exe, até 1 GB)
-            &lt;input
-              required
-              type=&quot;file&quot;
-              accept=&quot;.exe&quot;
-              disabled={busy}
-              onChange={(e) =&gt; setFile(e.target.files?.[0] || null)}
-            /&gt;
-          &lt;/label&gt;
-          {!recover &amp;&amp; (
-            &lt;label&gt;
-              Descrição / notas da versão (até 4.000 bytes)
-              &lt;textarea
-                maxLength={4000}
-                value={notes}
-                onChange={(e) =&gt; setNotes(e.target.value)}
-                disabled={busy}
-              /&gt;
-            &lt;/label&gt;
-          )}
-          {busy &amp;&amp; (
-            &lt;label&gt;
-              Upload: {progress}%&lt;progress max={100} value={progress} /&gt;
-            &lt;/label&gt;
-          )}
-          &lt;div className=&quot;release-actions&quot;&gt;
-            &lt;button
-              disabled={busy || !file || (!recover &amp;&amp; !tag)}
-              type=&quot;submit&quot;
-            &gt;
-              {busy ? &quot;Enviando…&quot; : &quot;Publicar versão&quot;}
-            &lt;/button&gt;
-            &lt;button
-              type=&quot;button&quot;
-              disabled={busy}
-              onClick={() =&gt; setOpen(false)}
-            &gt;
-              Cancelar
-            &lt;/button&gt;
-          &lt;/div&gt;
-        &lt;/form&gt;
-      )}
-      &lt;div className=&quot;release-history&quot;&gt;
-        {data.history.map((row) =&gt; (
-          &lt;article className=&quot;panel&quot; key={row.id}&gt;
-            &lt;h3&gt;
-              {row.githubTag}{&quot; &quot;}
-              &lt;small&gt;
-                {(
-                  {
-                    UPLOADING: &quot;Aguardando envio&quot;,
-                    PROCESSING: &quot;Verificando e publicando&quot;,
-                    FAILED: &quot;Falha&quot;,
-                    PUBLISHED: &quot;Publicada&quot;,
-                  } as Record&lt;string, string&gt;
-                )[row.status] || &quot;Indisponível&quot;}
-              &lt;/small&gt;
-            &lt;/h3&gt;
-            &lt;p&gt;
-              {row.publishedAt
-                ? new Date(row.publishedAt).toLocaleString(&quot;pt-BR&quot;)
-                : &quot;Ainda não publicada&quot;}{&quot; &quot;}
-              · {(row.fileSize / 1048576).toFixed(1)} MB
-            &lt;/p&gt;
-            &lt;p&gt;{row.changelog || &quot;Sem notas.&quot;}&lt;/p&gt;
-            {row.checksum &amp;&amp; (
-              &lt;p className=&quot;release-checksum&quot;&gt;SHA-256: {row.checksum}&lt;/p&gt;
-            )}
-            {row.error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{row.error}&lt;/p&gt;}
-            &lt;div className=&quot;release-actions&quot;&gt;
-              {row.setupUrl &amp;&amp; (
-                &lt;a href={row.setupUrl} target=&quot;_blank&quot; rel=&quot;noreferrer&quot;&gt;
-                  {row.repositoryPrivate
-                    ? &quot;Setup.exe no GitHub (requer acesso)&quot;
-                    : &quot;Setup.exe no GitHub&quot;}
-                &lt;/a&gt;
-              )}
-              {row.githubReleaseId &amp;&amp; (
-                &lt;a
-                  href={
-                    &quot;https://github.com/rodrigojr09/Cyro-IA/releases/tag/&quot; +
-                    encodeURIComponent(row.githubTag)
-                  }
-                  target=&quot;_blank&quot;
-                  rel=&quot;noreferrer&quot;
-                &gt;
-                  Abrir release
-                &lt;/a&gt;
-              )}
-              {row.status !== &quot;PUBLISHED&quot; &amp;&amp;
-                ([&quot;FAILED&quot;, &quot;UPLOADING&quot;].includes(row.status) ||
-                  !row.leaseUntil ||
-                  Date.parse(row.leaseUntil) &lt; Date.now()) &amp;&amp; (
-                  &lt;button
-                    disabled={busy || !data.configured}
-                    onClick={() =&gt; {
-                      setRecover(row);
-                      setOpen(true);
-                      setFile(null);
-                    }}
-                  &gt;
-                    Recuperar com conferência
-                  &lt;/button&gt;
-                )}
-            &lt;/div&gt;
-          &lt;/article&gt;
-        ))}
-      &lt;/div&gt;
-    &lt;/section&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/releases.tsx ===== -->
-<!-- ===== INÍCIO: cloud/components/usage-panel.tsx — Componente / página React ===== -->
-<details id="fonte-16"><summary>cloud/components/usage-panel.tsx — Componente / página React</summary>
-<pre><code>&quot;use client&quot;;
-import Link from &quot;next/link&quot;;
-import type { UsageReport } from &quot;../lib/usage-report&quot;;
-
-const number = (value: number) =&gt; value.toLocaleString(&quot;pt-BR&quot;);
-const money = (value: string | null) =&gt;
-  value === null
-    ? &quot;Indisponível&quot;
-    : Number(value).toLocaleString(&quot;pt-BR&quot;, {
-        style: &quot;currency&quot;,
-        currency: &quot;USD&quot;,
-        maximumFractionDigits: 6,
-      });
-export default function UsagePanel({
-  report,
-  employees,
-  query,
-}: {
-  report?: UsageReport;
-  employees: { id: string; name: string; role: string }[];
-  query: string;
-}) {
-  const filters = new URLSearchParams(query);
-  const pageLink = (page: number) =&gt; {
-    const next = new URLSearchParams(filters);
-    next.delete(&quot;usage&quot;);
-    next.set(&quot;usagePage&quot;, String(page));
-    return &quot;/usage?&quot; + next.toString();
-  };
-  const max = Math.max(1, ...(report?.users.map((user) =&gt; user.tokens) ?? []));
-  const total = report?.total;
-  return (
-    &lt;section className=&quot;card usage-panel&quot;&gt;
-      &lt;h2&gt;Consumo de OpenAI&lt;/h2&gt;
-      &lt;p className=&quot;muted&quot;&gt;
-        Acompanhe o consumo geral e por usuário. Os gráficos somam todas as
-        chamadas do período; a lista mostra apenas as mais recentes de cada
-        usuário.
-      &lt;/p&gt;
-      &lt;form className=&quot;form-grid&quot; method=&quot;get&quot; action=&quot;/usage&quot;&gt;
-        &lt;label&gt;
-          De (UTC)
-          &lt;input
-            name=&quot;from&quot;
-            type=&quot;date&quot;
-            defaultValue={filters.get(&quot;from&quot;) || &quot;&quot;}
-          /&gt;
-        &lt;/label&gt;
-        &lt;label&gt;
-          Até (UTC)
-          &lt;input name=&quot;to&quot; type=&quot;date&quot; defaultValue={filters.get(&quot;to&quot;) || &quot;&quot;} /&gt;
-        &lt;/label&gt;
-        &lt;label&gt;
-          Usuário
-          &lt;select name=&quot;clientId&quot; defaultValue={filters.get(&quot;clientId&quot;) || &quot;&quot;}&gt;
-            &lt;option value=&quot;&quot;&gt;Todos do meu escopo&lt;/option&gt;
-            {employees.map((user) =&gt; (
-              &lt;option key={user.id} value={user.id}&gt;
-                {user.name}
-              &lt;/option&gt;
-            ))}
-          &lt;/select&gt;
-        &lt;/label&gt;
-        &lt;label&gt;
-          Chamadas por usuário
-          &lt;select name=&quot;perUser&quot; defaultValue={String(report?.perUser ?? 5)}&gt;
-            {[5, 10, 20].map((limit) =&gt; (
-              &lt;option key={limit} value={limit}&gt;
-                {limit} mais recentes
-              &lt;/option&gt;
-            ))}
-          &lt;/select&gt;
-        &lt;/label&gt;
-        &lt;button&gt;Aplicar filtros&lt;/button&gt;
-        &lt;Link href=&quot;/usage&quot;&gt;Limpar filtros&lt;/Link&gt;
-      &lt;/form&gt;
-      {!report ? (
-        &lt;p role=&quot;status&quot;&gt;Carregando consumo…&lt;/p&gt;
-      ) : (
-        &lt;&gt;
-          &lt;div className=&quot;usage-stats&quot; aria-label=&quot;Resumo do período&quot;&gt;
-            &lt;div&gt;
-              &lt;span&gt;Tokens no período&lt;/span&gt;
-              &lt;strong&gt;{number(report.total.tokens)}&lt;/strong&gt;
-            &lt;/div&gt;
-            &lt;div&gt;
-              &lt;span&gt;Chamadas&lt;/span&gt;
-              &lt;strong&gt;{number(report.total.calls)}&lt;/strong&gt;
-            &lt;/div&gt;
-            &lt;div&gt;
-              &lt;span&gt;Usuários com consumo&lt;/span&gt;
-              &lt;strong&gt;{number(report.userCount)}&lt;/strong&gt;
-            &lt;/div&gt;
-          &lt;/div&gt;
-          {report.total.calls === 0 ? (
-            &lt;p className=&quot;empty&quot;&gt;
-              Nenhum consumo registrado para os filtros selecionados.
-            &lt;/p&gt;
-          ) : (
-            &lt;&gt;
-              &lt;div className=&quot;usage-charts&quot;&gt;
-                &lt;section
-                  className=&quot;usage-chart&quot;
-                  aria-label=&quot;Gráfico de consumo geral&quot;
-                &gt;
-                  &lt;h3&gt;Consumo geral&lt;/h3&gt;
-                  &lt;p className=&quot;muted&quot;&gt;
-                    Distribuição de tokens no período filtrado
-                  &lt;/p&gt;
-                  &lt;div
-                    className=&quot;usage-stack&quot;
-                    role=&quot;img&quot;
-                    aria-label={`${number(total!.inputTokens)} tokens de entrada e ${number(total!.outputTokens)} tokens de saída`}
-                  &gt;
-                    &lt;span
-                      className=&quot;usage-input&quot;
-                      style={{
-                        width: `${total!.tokens ? (total!.inputTokens / total!.tokens) * 100 : 0}%`,
-                      }}
-                    /&gt;
-                    &lt;span
-                      className=&quot;usage-output&quot;
-                      style={{
-                        width: `${total!.tokens ? (total!.outputTokens / total!.tokens) * 100 : 0}%`,
-                      }}
-                    /&gt;
-                  &lt;/div&gt;
-                  &lt;div className=&quot;usage-legend&quot;&gt;
-                    &lt;span&gt;
-                      &lt;i className=&quot;usage-input&quot; /&gt;
-                      Entrada &lt;b&gt;{number(total!.inputTokens)}&lt;/b&gt;
-                    &lt;/span&gt;
-                    &lt;span&gt;
-                      &lt;i className=&quot;usage-output&quot; /&gt;
-                      Saída &lt;b&gt;{number(total!.outputTokens)}&lt;/b&gt;
-                    &lt;/span&gt;
-                  &lt;/div&gt;
-                &lt;/section&gt;
-                &lt;section
-                  className=&quot;usage-chart&quot;
-                  aria-label=&quot;Gráfico de consumo por usuário&quot;
-                &gt;
-                  &lt;h3&gt;Consumo por usuário&lt;/h3&gt;
-                  &lt;p className=&quot;muted&quot;&gt;
-                    Tokens totais · usuários desta página, ordenados por consumo
-                  &lt;/p&gt;
-                  &lt;div className=&quot;usage-bars&quot;&gt;
-                    {report.users.map((user) =&gt; (
-                      &lt;div className=&quot;usage-bar-row&quot; key={user.userId}&gt;
-                        &lt;div&gt;
-                          &lt;span&gt;{user.name}&lt;/span&gt;
-                          &lt;b&gt;{number(user.tokens)}&lt;/b&gt;
-                        &lt;/div&gt;
-                        &lt;div
-                          className=&quot;usage-track&quot;
-                          role=&quot;img&quot;
-                          aria-label={`${user.name}: ${number(user.tokens)} tokens`}
-                        &gt;
-                          &lt;span
-                            style={{ width: `${(user.tokens / max) * 100}%` }}
-                          /&gt;
-                        &lt;/div&gt;
-                      &lt;/div&gt;
-                    ))}
-                  &lt;/div&gt;
-                &lt;/section&gt;
-              &lt;/div&gt;
-              &lt;div className=&quot;usage-list-heading&quot;&gt;
-                &lt;h3&gt;Chamadas recentes por usuário&lt;/h3&gt;
-                &lt;span className=&quot;muted&quot;&gt;
-                  Até {report.perUser} chamadas por usuário · 10 usuários por
-                  página
-                &lt;/span&gt;
-              &lt;/div&gt;
-              &lt;p className=&quot;muted&quot;&gt;
-                Custos em USD são estimativas, não a fatura do provedor. Áudio e
-                reservas sem uso confirmado não compõem estes tokens
-                registrados, mas continuam sujeitos aos seus próprios limites.
-              &lt;/p&gt;
-              {report.users.map((user) =&gt; (
-                &lt;section
-                  className=&quot;usage-user&quot;
-                  key={user.userId}
-                  aria-label={`Consumo de ${user.name}`}
-                &gt;
-                  &lt;header&gt;
-                    &lt;h4&gt;{user.name}&lt;/h4&gt;
-                    &lt;span&gt;
-                      {number(user.tokens)} tokens · {number(user.calls)}{&quot; &quot;}
-                      chamadas no período
-                    &lt;/span&gt;
-                  &lt;/header&gt;
-                  &lt;p className=&quot;muted&quot;&gt;
-                    Custo estimado registrado: {money(user.cost)}
-                    {user.unpricedCalls &gt; 0
-                      ? ` · ${number(user.unpricedCalls)} chamada(s) sem estimativa de custo`
-                      : &quot;&quot;}
-                  &lt;/p&gt;
-                  &lt;div
-                    className=&quot;table-wrap&quot;
-                    role=&quot;region&quot;
-                    aria-label={`Chamadas recentes de ${user.name}`}
-                    tabIndex={0}
-                  &gt;
-                    &lt;table&gt;
-                      &lt;thead&gt;
-                        &lt;tr&gt;
-                          {[
-                            &quot;Data&quot;,
-                            &quot;Modelo&quot;,
-                            &quot;Entrada&quot;,
-                            &quot;Saída&quot;,
-                            &quot;Custo estimado&quot;,
-                          ].map((label) =&gt; (
-                            &lt;th scope=&quot;col&quot; key={label}&gt;
-                              {label}
-                            &lt;/th&gt;
-                          ))}
-                        &lt;/tr&gt;
-                      &lt;/thead&gt;
-                      &lt;tbody&gt;
-                        {user.recent.map((row) =&gt; (
-                          &lt;tr key={row.id}&gt;
-                            &lt;td&gt;
-                              {new Date(row.createdAt).toLocaleString(&quot;pt-BR&quot;)}
-                            &lt;/td&gt;
-                            &lt;td&gt;{row.model}&lt;/td&gt;
-                            &lt;td&gt;{number(row.inputTokens)}&lt;/td&gt;
-                            &lt;td&gt;{number(row.outputTokens)}&lt;/td&gt;
-                            &lt;td&gt;{money(row.estimatedCost)}&lt;/td&gt;
-                          &lt;/tr&gt;
-                        ))}
-                      &lt;/tbody&gt;
-                    &lt;/table&gt;
-                  &lt;/div&gt;
-                  &lt;small className=&quot;muted&quot;&gt;
-                    Mostrando {user.recent.length} de {number(user.calls)}{&quot; &quot;}
-                    chamadas.
-                  &lt;/small&gt;
-                &lt;/section&gt;
-              ))}
-              &lt;nav
-                className=&quot;usage-pagination&quot;
-                aria-label=&quot;Páginas de usuários&quot;
-              &gt;
-                {report.page &gt; 1 &amp;&amp; (
-                  &lt;Link href={pageLink(report.page - 1)}&gt;← Anterior&lt;/Link&gt;
-                )}
-                &lt;span&gt;
-                  Página {report.page} de {report.pages}
-                &lt;/span&gt;
-                {report.page &lt; report.pages &amp;&amp; (
-                  &lt;Link href={pageLink(report.page + 1)}&gt;Próxima →&lt;/Link&gt;
-                )}
-              &lt;/nav&gt;
-            &lt;/&gt;
-          )}
-        &lt;/&gt;
-      )}
-    &lt;/section&gt;
-  );
-}
-</code></pre></details>
-<!-- ===== FIM: cloud/components/usage-panel.tsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/app/App.jsx — Componente / página React ===== -->
-<details id="fonte-17"><summary>desktop/scripts/app/App.jsx — Componente / página React</summary>
+<details id="fonte-4"><summary>desktop/scripts/app/App.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState, useSyncExternalStore } from &#x27;react&#x27;;
 import { createWorkspace } from &#x27;../workspace/store&#x27;;
 import { createWriter } from &#x27;../writer/store&#x27;;
@@ -2807,7 +947,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/app/App.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/app/main-entry.jsx — Componente / página React ===== -->
-<details id="fonte-18"><summary>desktop/scripts/app/main-entry.jsx — Componente / página React</summary>
+<details id="fonte-5"><summary>desktop/scripts/app/main-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { App } from &#x27;./App&#x27;;
@@ -2815,7 +955,7 @@ createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;App /&gt;);
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/app/main-entry.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/attachment/components.jsx — Componente / página React ===== -->
-<details id="fonte-19"><summary>desktop/scripts/attachment/components.jsx — Componente / página React</summary>
+<details id="fonte-6"><summary>desktop/scripts/attachment/components.jsx — Componente / página React</summary>
 <pre><code>import React, { useRef, useState } from &#x27;react&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
 export function AttachmentCard({
@@ -3086,7 +1226,7 @@ export function useAttachments() {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/attachment/components.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/chat/Composer.jsx — Componente / página React ===== -->
-<details id="fonte-20"><summary>desktop/scripts/chat/Composer.jsx — Componente / página React</summary>
+<details id="fonte-7"><summary>desktop/scripts/chat/Composer.jsx — Componente / página React</summary>
 <pre><code>import React, { useLayoutEffect } from &#x27;react&#x27;;
 import { AttachmentList } from &#x27;../attachment/components&#x27;;
 import { Clipboard } from &#x27;../clipboard/Clipboard&#x27;;
@@ -3284,7 +1424,7 @@ export function Composer({
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/chat/Composer.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/chat/Conversation.jsx — Componente / página React ===== -->
-<details id="fonte-21"><summary>desktop/scripts/chat/Conversation.jsx — Componente / página React</summary>
+<details id="fonte-8"><summary>desktop/scripts/chat/Conversation.jsx — Componente / página React</summary>
 <pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
 import { Markdown } from &#x27;../ui/components&#x27;;
 import { AnchoredMenu } from &#x27;../ui/AnchoredMenu&#x27;;
@@ -3500,7 +1640,7 @@ function MessageTime({ value }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/chat/Conversation.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/clipboard/Clipboard.jsx — Componente / página React ===== -->
-<details id="fonte-22"><summary>desktop/scripts/clipboard/Clipboard.jsx — Componente / página React</summary>
+<details id="fonte-9"><summary>desktop/scripts/clipboard/Clipboard.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { ignoreOwnSelection } from &#x27;../shared/bridge&#x27;;
 import { AttachmentCard } from &#x27;../attachment/components&#x27;;
@@ -3794,7 +1934,7 @@ export function ClipboardSettings() {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/clipboard/Clipboard.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/computer/Computer.jsx — Componente / página React legado (seção removida das configurações) ===== -->
-<details id="fonte-23"><summary>desktop/scripts/computer/Computer.jsx — Componente / página React legado (seção removida das configurações)</summary>
+<details id="fonte-10"><summary>desktop/scripts/computer/Computer.jsx — Componente / página React legado (seção removida das configurações)</summary>
 <pre><code>import React, { useState } from &#x27;react&#x27;;
 import { api, post } from &#x27;../shared/bridge&#x27;;
 import { ActionConfirmation } from &#x27;../chat/Conversation&#x27;;
@@ -3877,7 +2017,7 @@ export function Computer() {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/computer/Computer.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/integrations/Integrations.jsx — Componente / página React ===== -->
-<details id="fonte-24"><summary>desktop/scripts/integrations/Integrations.jsx — Componente / página React</summary>
+<details id="fonte-11"><summary>desktop/scripts/integrations/Integrations.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { integrationCatalog, integrationStatusLabels, filterIntegrations } from &#x27;./catalog&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
@@ -4174,7 +2314,7 @@ export function SpotifySettings({ onChanged }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/integrations/Integrations.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/quick/QuickApp.jsx — Componente / página React ===== -->
-<details id="fonte-25"><summary>desktop/scripts/quick/QuickApp.jsx — Componente / página React</summary>
+<details id="fonte-12"><summary>desktop/scripts/quick/QuickApp.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { Clipboard } from &#x27;../clipboard/Clipboard&#x27;;
 import { preferenceStorage, ignoreOwnSelection } from &#x27;../shared/bridge&#x27;;
@@ -4564,7 +2704,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get(&#x2
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/quick/QuickApp.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/quick/quick-entry.jsx — Componente / página React ===== -->
-<details id="fonte-26"><summary>desktop/scripts/quick/quick-entry.jsx — Componente / página React</summary>
+<details id="fonte-13"><summary>desktop/scripts/quick/quick-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { QuickApp } from &#x27;./QuickApp&#x27;;
@@ -4572,7 +2712,7 @@ createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;QuickApp /&gt;)
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/quick/quick-entry.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/session/Login.jsx — Componente / página React ===== -->
-<details id="fonte-27"><summary>desktop/scripts/session/Login.jsx — Componente / página React</summary>
+<details id="fonte-14"><summary>desktop/scripts/session/Login.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 export function Login() {
   const [busy, setBusy] = useState(false),
@@ -4680,7 +2820,7 @@ export function Login() {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/session/Login.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/session/login-entry.jsx — Componente / página React ===== -->
-<details id="fonte-28"><summary>desktop/scripts/session/login-entry.jsx — Componente / página React</summary>
+<details id="fonte-15"><summary>desktop/scripts/session/login-entry.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { createRoot } from &#x27;react-dom/client&#x27;;
 import { Login } from &#x27;./Login&#x27;;
@@ -4688,7 +2828,7 @@ createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;Login /&gt;);
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/session/login-entry.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/storage/Storage.jsx — Componente / página React ===== -->
-<details id="fonte-29"><summary>desktop/scripts/storage/Storage.jsx — Componente / página React</summary>
+<details id="fonte-16"><summary>desktop/scripts/storage/Storage.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 export function Storage({ snapshot, busy, onClear }) {
   const format = (bytes) =&gt;
@@ -4744,7 +2884,7 @@ export function Storage({ snapshot, busy, onClear }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/storage/Storage.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/ui/AnchoredMenu.jsx — Componente / página React ===== -->
-<details id="fonte-30"><summary>desktop/scripts/ui/AnchoredMenu.jsx — Componente / página React</summary>
+<details id="fonte-17"><summary>desktop/scripts/ui/AnchoredMenu.jsx — Componente / página React</summary>
 <pre><code>import React, { useLayoutEffect, useRef, useState } from &#x27;react&#x27;;
 import { createPortal } from &#x27;react-dom&#x27;;
 
@@ -4841,7 +2981,7 @@ export function AnchoredMenu({ menu, onClose, children }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/AnchoredMenu.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/ui/Icon.jsx — Componente / página React ===== -->
-<details id="fonte-31"><summary>desktop/scripts/ui/Icon.jsx — Componente / página React</summary>
+<details id="fonte-18"><summary>desktop/scripts/ui/Icon.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import {
   PanelLeft,
@@ -4937,7 +3077,7 @@ export function Icon({ name, className = &#x27;&#x27; }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/Icon.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/ui/Settings.jsx — Componente / página React ===== -->
-<details id="fonte-32"><summary>desktop/scripts/ui/Settings.jsx — Componente / página React</summary>
+<details id="fonte-19"><summary>desktop/scripts/ui/Settings.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState } from &#x27;react&#x27;;
 import { ClipboardSettings } from &#x27;../clipboard/Clipboard&#x27;;
 import { Integrations } from &#x27;../integrations/Integrations&#x27;;
@@ -5212,7 +3352,7 @@ export function Settings({
               {category === &#x27;Sobre&#x27; &amp;&amp; (
                 &lt;&gt;
                   &lt;h3&gt;Sobre o Cyro IA&lt;/h3&gt;
-                  &lt;p&gt;Versão 6.3.1&lt;/p&gt;
+                  &lt;p&gt;Versão 6.4.0&lt;/p&gt;
                   &lt;button
                     onClick={() =&gt;
                       perform(async () =&gt; {
@@ -5279,7 +3419,7 @@ export class SettingsSectionBoundary extends React.Component {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/Settings.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/ui/components.jsx — Componente / página React ===== -->
-<details id="fonte-33"><summary>desktop/scripts/ui/components.jsx — Componente / página React</summary>
+<details id="fonte-20"><summary>desktop/scripts/ui/components.jsx — Componente / página React</summary>
 <pre><code>import React, { useMemo } from &#x27;react&#x27;;
 import { marked } from &#x27;marked&#x27;;
 import DOMPurify from &#x27;dompurify&#x27;;
@@ -5450,7 +3590,7 @@ export function Status({ children, error }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/ui/components.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/updates/UpdateNotice.jsx — Componente / página React ===== -->
-<details id="fonte-34"><summary>desktop/scripts/updates/UpdateNotice.jsx — Componente / página React</summary>
+<details id="fonte-21"><summary>desktop/scripts/updates/UpdateNotice.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 export function UpdateNotice() {
   const bridge = window.cyroUpdates;
@@ -5519,7 +3659,7 @@ export function UpdateNotice() {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/updates/UpdateNotice.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/workspace/ScopeDialog.jsx — Componente / página React ===== -->
-<details id="fonte-35"><summary>desktop/scripts/workspace/ScopeDialog.jsx — Componente / página React</summary>
+<details id="fonte-22"><summary>desktop/scripts/workspace/ScopeDialog.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { api, post } from &#x27;../shared/bridge&#x27;;
 import { Dialog } from &#x27;../ui/components&#x27;;
@@ -5735,7 +3875,7 @@ export function ScopeDialog({ project, onClose, onSaved }) {
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/ScopeDialog.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/workspace/Sidebar.jsx — Componente / página React ===== -->
-<details id="fonte-36"><summary>desktop/scripts/workspace/Sidebar.jsx — Componente / página React</summary>
+<details id="fonte-23"><summary>desktop/scripts/workspace/Sidebar.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
 export function Sidebar({
@@ -5901,7 +4041,7 @@ export function Sidebar({
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/Sidebar.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/workspace/Welcome.jsx — Componente / página React ===== -->
-<details id="fonte-37"><summary>desktop/scripts/workspace/Welcome.jsx — Componente / página React</summary>
+<details id="fonte-24"><summary>desktop/scripts/workspace/Welcome.jsx — Componente / página React</summary>
 <pre><code>import React from &#x27;react&#x27;;
 import { Icon } from &#x27;../ui/Icon&#x27;;
 export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }) {
@@ -5970,7 +4110,7 @@ export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/workspace/Welcome.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/writer/WriterLibrary.jsx — Componente / página React ===== -->
-<details id="fonte-38"><summary>desktop/scripts/writer/WriterLibrary.jsx — Componente / página React</summary>
+<details id="fonte-25"><summary>desktop/scripts/writer/WriterLibrary.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useState } from &#x27;react&#x27;;
 import { Dialog } from &#x27;../ui/components&#x27;;
 export function WriterLibrary({ project, writer, onClose, onSelect, onCreate, onOpenFile, onRun }) {
@@ -6110,7 +4250,7 @@ export function WriterLibrary({ project, writer, onClose, onSelect, onCreate, on
 </code></pre></details>
 <!-- ===== FIM: desktop/scripts/writer/WriterLibrary.jsx ===== -->
 <!-- ===== INÍCIO: desktop/scripts/writer/WriterPreview.jsx — Componente / página React ===== -->
-<details id="fonte-39"><summary>desktop/scripts/writer/WriterPreview.jsx — Componente / página React</summary>
+<details id="fonte-26"><summary>desktop/scripts/writer/WriterPreview.jsx — Componente / página React</summary>
 <pre><code>import React, { useEffect, useRef, useState, useSyncExternalStore } from &#x27;react&#x27;;
 import { useEditor, EditorContent } from &#x27;@tiptap/react&#x27;;
 import { extensions, toDocument, editorBlocks, connectEditor, nodeText } from &#x27;./editor&#x27;;

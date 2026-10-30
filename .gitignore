@@ -51,3 +51,7 @@ desktop/quick-spotify.js
 
 # Desktop React bundles are rebuilt from scripts/.
 /desktop/dist/
+
+# Local remnants of extracted projects (owner env/caches preserved, never runtime).
+/cloud/
+/packages/

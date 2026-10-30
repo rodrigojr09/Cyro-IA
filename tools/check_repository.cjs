@@ -16,9 +16,7 @@ for (const [file, marker] of [
 }
 for (const file of [
   "package.json",
-  "cloud/package.json",
   "desktop/package.json",
-  "packages/shared/package.json",
 ]) {
   if (JSON.parse(read(file)).version !== version)
     errors.push(`Versão divergente: ${file}`);

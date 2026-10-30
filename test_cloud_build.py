@@ -80,9 +80,7 @@ class CloudBuildTests(unittest.TestCase):
             self.assertIn(marker, (ROOT / name).read_text(encoding="utf-8"))
         paths = [
             "package.json",
-            "cloud/package.json",
             "desktop/package.json",
-            "packages/shared/package.json",
         ]
         versions = {json.loads((ROOT / name).read_text())["version"] for name in paths}
         self.assertEqual(versions, {(ROOT / "VERSION").read_text().strip()})

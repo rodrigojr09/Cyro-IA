@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # O que enviar à Vercel
 
 Importe o repositório Git do projeto na Vercel. O código necessário ao Cloud é:

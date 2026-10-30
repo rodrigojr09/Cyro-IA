@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # Publicação e distribuição — Cyro IA v6.1.0 em desenvolvimento
 
 O código está em `rodrigojr09/Cyro-IA`, branch `master`, com Cloud em `https://cronosjarvis.vercel.app`. O envio de código depende de autorização do proprietário; o envio ao GitHub pode acionar a implantação Vercel configurada. Verifique o status do mesmo commit antes de declarar o deploy concluído.

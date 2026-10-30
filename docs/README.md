@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # Documentação do Cyro IA 6.0.1
 
 Cyro IA é o novo nome do JARVIS; os registros históricos mantêm a marca anterior. Os arquivos abaixo descrevem a implementação vigente. Registros antigos ficam em `history/` e preservam o contexto de suas datas, sem substituir os guias atuais.

@@ -1,80 +1,29 @@
-# Cyro IA v6.3.1 — em desenvolvimento
+# Cyro IA — Desktop
 
-Cyro IA é o novo nome do JARVIS, autorizado pelo proprietário em 27/10/2026. Repositório: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA). Perfis, sessões, IPC e identificadores internos existentes permanecem compatíveis.
+Este é o repositório original Cyro-IA, preservado como Desktop. Histórico Git, appId, executável JARVIS, perfis, sessões e IPC permanecem compatíveis. Backend e painel Cloud passam a projetos independentes em `C:/Users/user/Desktop/cyro-backend` e `C:/Users/user/Desktop/cyro-cloud`; não são workspaces deste repositório.
 
-Imagens anexadas e sugeridas usam a mesma miniatura quadrada de 64px, sem metadados, aviso ou botões. Sugestões diferem apenas por opacidade de 70% e borda tracejada em destaque. Clique baixa a imagem anexada em Downloads sem diálogo, ou aplica a sugestão ao rascunho. Com foco no cartão, Delete remove o anexo pendente. Limite de cinco arquivos e envio explícito preservados.
-
-Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador local desta entrega: `release/v6/Cyro-IA-Setup-6.3.1.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
-
-A v6.3 prepara o sistema de versões em **Sistema → Versões** e o servidor externo de publicação de Setup.exe. O Cloud consulta tags reais e não cria tags. O proprietário disponibilizará a infraestrutura externa posteriormente; publicação e atualização instalada ainda precisam de homologação real. O atualizador é ignorado em desenvolvimento. O repositório e seus links permanecem visíveis, com download direto quando público e autenticado quando privado. Veja [arquitetura](docs/updates/ARCHITECTURE.md), [publicação](docs/updates/PUBLISHING.md) e [resultados reais](docs/updates/TEST_RESULTS.md).
-
-O [Writer 6.1](docs/WRITER.md) usa um documento contínuo com chat lateral. A migração preserva os documentos e históricos existentes; sem atualização automática do aplicativo instalado.
-
-A sidebar usa indentação limpa para conversas e projetos, destaque discreto do chat ativo e rodapé separado. Estilos em `desktop/styles/sidebar.css` e componente em `desktop/scripts/workspace/Sidebar.jsx`.
-
-Consulta consolidada da interface: [paginas.html](paginas.html) reúne os HTMLs e fontes React, e [styles.css](styles.css) reúne os estilos com comentários de origem. São cópias de referência da v6.3.1, sem substituir os módulos de produção; não se atualizam automaticamente. Para regenerar ambos com todos os componentes/páginas e CSSs atuais, execute `python -X utf8 tools/generate_ui_catalog.py` na raiz. O gerador confere a integridade das fontes incluídas e identifica cada origem por comentário. Identidade do assistente em `backend/jarvis_identity.py`; estado da entrega em `docs/VALIDATION.md`.
-
-Refinamento visual 6.2: raios e espaçamentos em `desktop/styles/tokens.css`, superfícies e foco em `desktop/styles/ui.css`, sidebar em `desktop/styles/sidebar.css`, menus compartilhados em `desktop/scripts/ui/AnchoredMenu.jsx` e tema Cloud em `cloud/app/globals.css`. As referências consolidadas foram atualizadas para a v6.3.1.
-
-A v6.2.2 unifica cartões de anexos e clipboard, adiciona drop de arquivos e completa o menu das conversas. Configurações mantêm oito categorias e o banner de projeto separa seleção local de reindexação. Consulte [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md). A entrega 6.2.2 foi publicada no Cloud e o instalador Windows foi compilado com o acabamento do controle Copiar mensagem; consulte [instalação](INSTALL.md) e [validação](docs/VALIDATION.md).
-
-O ajuste posterior da v6.2.2 move Copiar mensagem para o menu do botão direito e compacta o campo com anexos acima, clipe à esquerda e áudio/envio alternados à direita. O clipboard oferece Usar sem envio automático; o setup 6.2.2 recompilado inclui esse ajuste.
-
-# Base funcional v5
-
-Assistente Windows com chat principal, Quick Chat, projetos locais, JARVIS Writer e comandos Spotify pelo chat. Versão **5.1.0**.
-
-A implementação v5 está consolidada. A homologação externa de OAuth completo, áudio pago, microfone físico e instalação/atualização em Windows limpo permanece separada das verificações automatizadas. Não há tag de release homologada. Veja o [estado da v5](docs/V5.md) e as [evidências de validação](docs/VALIDATION.md).
-
-## Começar
-
-- **Usuário:** [instalar, atualizar e entrar no aplicativo](INSTALL.md).
-- **Administrador:** [implantação Cloud](docs/DEPLOYMENT.md), [configuração Vercel](docs/VERCEL.md) e [credenciais OpenAI/Spotify](docs/CREDENTIALS.md).
-- **Desktop React:** [organização dos módulos e testes](desktop/README.md).
-- **Desenvolvedor:** [arquitetura e mapa do código](docs/ARCHITECTURE.md), [validação](docs/VALIDATION.md) e [índice de documentação](docs/README.md).
-
-## O que a v5 reúne
-
-| Área | Comportamento |
-| --- | --- |
-| Chats e Quick Chat | Conversas gerais no Cloud, isoladas por conta, com Quick Chat fixo e streaming/cancelamento. |
-| Projetos | Chats, memória e fontes locais, com seleção autorizada e até 5 MB de arquivos por análise. |
-| Clipboard | Opt-in, aviso sonoro e dois indicadores sincronizados; um único chat recebe as ações, com revisão antes de enviar. |
-| Writer | Chat padrão dedicado a um arquivo, prévia lateral, alterações em azul e aprovação antes de aplicar revisões. |
-| Integrações | Catálogo pesquisável. Spotify com OAuth individual; outros cinco serviços em breve. |
-| Spotify | Comandos no chat e voz, interpretação no Cloud e escolha de dispositivo em diálogo. Sem painel de reprodução. |
-| Administração | Usuários, dispositivos, limites, credenciais SUPER_ADMIN, cache compartilhado e gráficos de consumo. |
-
-OpenAI, PostgreSQL e segredos dos provedores ficam no Cloud. O Desktop usa login individual e sessão protegida pelo Windows. O FastAPI local reaproveita projetos, memória e ferramentas autorizadas. Nenhuma cópia de clipboard é enviada automaticamente; detecção de possíveis credenciais não é infalível. `Backup/` é arquivo manual do proprietário: somente leitura e fora do runtime e da distribuição.
+Electron/React, Quick Chat, ícone flutuante, notificações, clipboard, voz, Writer, atualizador e ferramentas Windows permanecem aqui. `backend/` é o nome histórico do runtime Python local, responsável pelo acesso autorizado a arquivos/projetos e recursos Windows; não é o novo Backend central. Dados locais e instaladores anteriores são preservados. `Backup/` é somente leitura e não integra runtime ou distribuição.
 
 ## Desenvolvimento
 
-Requisitos: Node >=22.12, npm, Python compatível com os requisitos do backend e PostgreSQL Cloud configurado privadamente.
+Node >=22.12 e Python com dependências de `backend/requirements-dev.txt`. Execute `npm ci` na raiz e instale as dependências Python. Configure `JARVIS_CLOUD_ORIGIN` com a origem da API central (HTTPS em distribuição; localhost permitido em desenvolvimento). Inicie Backend e Cloud em seus próprios projetos; depois execute `start.bat` ou `npm run dev` para o Desktop. O Desktop não inicia serviços dos outros projetos e não recebe segredos de banco, Redis, Files, GitHub ou provedores.
 
-```powershell
-npm ci
-python -m pip install -r backend/requirements-dev.txt
-npm run db:generate
-npm run db:deploy -w @jarvis/cloud
-npm run admin:bootstrap -w @jarvis/cloud
-```
+Login, sessões e atualizações conservam os contratos `/api/device/*`, `/api/v1/*` e `/api/updates/*`. Nomes históricos da variável e dos arquivos de sessão continuam por compatibilidade. Não mudar URLs de produção antes da homologação dos três projetos.
 
-Crie `cloud/.env` a partir de `cloud/.env.example` somente se ele ainda não existir. Preencha os valores privadamente antes das operações de banco. O bootstrap exige `BOOTSTRAP_*` temporários, sem senha padrão; remova-os depois. Credenciais de provedor podem ser configuradas em **Dashboard → Credenciais** pelo SUPER_ADMIN.
+## Validação e distribuição
 
-Depois de configurar, `start.bat` inicia o Cloud local, aguarda o login e abre o Desktop. O iniciador não instala dependências nem aplica migrations, e encerra somente os processos que iniciou. Para usar o Cloud publicado em desenvolvimento, veja [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+`npm run check:v6` reúne consistência, testes Desktop/Python, TypeScript, build e smokes Electron. O nome permanece por compatibilidade com o pipeline. Backend e Cloud têm verificações e versões próprias. Para gerar Setup.exe, instale `backend/requirements-build.txt`, configure a origem HTTPS autorizada e execute `build.bat`; o pipeline valida antes de compilar e não publica automaticamente.
 
-## Validar e compilar
+Testes com serviços simulados não validam áudio pago, OAuth real, infraestrutura, Windows limpo ou atualização instalada. Resultados e limitações da separação devem constar no relatório de migração; não considerar a migração homologada antes dos fluxos críticos reais.
 
-```powershell
-npm run check:v6
-```
+## Documentação
 
-O comando reúne consistência do repositório, testes Cloud/Desktop/Python, TypeScript, builds, sete smokes Electron e layout administrativo. Os testes usam serviços externos simulados; não substituem homologação real. Para compilar o instalador Windows x64, instale também `backend/requirements-build.txt` e configure `JARVIS_CLOUD_ORIGIN` com a origem HTTPS autorizada. Execute `build.bat`; a saída é `release/v6/Cyro-IA-Setup-6.3.1.exe`. O pipeline valida antes de empacotar e não publica o binário. Detalhes em [publicação](docs/PUBLISH.md).
+- [Plano e auditoria da separação](docs/architecture/THREE_PROJECT_MIGRATION.md).
+- [Limites e configuração do Desktop](docs/architecture/DESKTOP_BOUNDARY.md).
+- [Registro da versão](versions/6.4.0.md).
+- [Interface e módulos locais](desktop/README.md), [Writer](docs/WRITER.md), [anexos](docs/ATTACHMENTS.md) e [clipboard](docs/CLIPBOARD.md).
+- [Histórico de validação anterior](docs/VALIDATION.md) e [índice documental](docs/README.md). Instruções antigas de workspace/Cloud embutido não devem ser usadas após a separação.
 
-## Documentação e autoria
+READMEs dos novos projetos documentam variáveis, deploy manual no Coolify/Vercel, criação dos repositórios privados após autorização e transição/rollback. Nenhuma publicação, push, tag, release ou alteração de produção nesta tarefa.
 
-O [índice documental](docs/README.md) separa guias atuais de [histórico](docs/history/README.md). Mudanças estão no [CHANGELOG](CHANGELOG.md). Guias antigos não descrevem a instalação vigente.
-
-Desenvolvido por **Rodrigo Junior** · [GitHub](https://github.com/rodrigojr09) · [E-mail](mailto:rodrigo.macia019@gmail.com). © 2026.
-
-O [relógio contextual](docs/CURRENT_TIME.md) fornece a data atual à IA a cada requisição no Cloud. Notícias e cotações continuam exigindo uma consulta real; esta correção não habilita pesquisa web.
+Desenvolvido por Rodrigo Junior. Repositório Desktop: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA).

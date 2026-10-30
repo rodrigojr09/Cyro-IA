@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # Cyro IA Desktop 6.3.0
 
 A interface principal, o login e os três painéis do Quick Chat usam React.js. Electron e os preloads continuam em CommonJS com IPC restrito; React não recebe acesso a Node, banco ou credenciais Cloud.

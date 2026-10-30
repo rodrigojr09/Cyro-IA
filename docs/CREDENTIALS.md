@@ -1,3 +1,5 @@
+> Após a separação 6.4.0, instruções de workspace/Cloud integrado abaixo são históricas. Consulte o README da raiz e os READMEs independentes de cyro-backend/cyro-cloud para configuração e deploy atuais.
+
 # Credenciais na dashboard — JARVIS v5
 
 Abra **Dashboard → Credenciais** (`/credentials`) com uma conta **SUPER_ADMIN**. Há também um atalho em Configurações. ADMIN e EMPLOYEE não podem ler nem alterar essas configurações globais.

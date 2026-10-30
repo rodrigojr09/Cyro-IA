@@ -1,3 +1,0 @@
-ALTER TABLE "User" ADD COLUMN "cloudStorageLimitBytes" INTEGER NOT NULL DEFAULT 52428800;
-ALTER TABLE "User" ADD CONSTRAINT "User_cloudStorageLimitBytes_check" CHECK ("cloudStorageLimitBytes" BETWEEN 1048576 AND 1073741824);
-ALTER TABLE "Conversation" ADD COLUMN instructions VARCHAR(4000) NOT NULL DEFAULT '';
