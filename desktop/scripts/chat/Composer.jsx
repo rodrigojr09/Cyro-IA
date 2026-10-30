@@ -29,37 +29,38 @@ export function Composer({
   }, [input, inputRef]);
   return (
     <footer className="composer-wrap">
-      <Clipboard
-        context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
-        canClaim={state.ready && !busy && !settings && !library}
-        onUseText={(text) => {
-          const next = (input ? input + '\n' : '') + '(' + text + ')\n';
-          if (next.length > 6000) return false;
-          onInput(next);
-          inputRef.current?.focus();
-          return true;
-        }}
-        onAttachImage={
-          !isWriter
-            ? async (dataURL) => {
-                const match = /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(
-                  dataURL,
-                );
-                if (!match) return false;
-                const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0));
-                return attachments.paste(
-                  [new window.File([bytes], 'Imagem copiada.png', { type: match[1] })],
-                  !canSend ? 'Aguarde o chat ficar disponível para anexar.' : '',
-                );
-              }
-            : undefined
-        }
-      />
-      <div id="attachment-list">
-        <AttachmentList
-          files={attachments.files}
-          onRemove={busy ? undefined : attachments.remove}
+      <div className="composer-attachments">
+        <Clipboard
+          context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
+          canClaim={state.ready && !busy && !settings && !library}
+          onUseText={(text) => {
+            const next = (input ? input + '\n' : '') + '(' + text + ')\n';
+            if (next.length > 6000) return false;
+            onInput(next);
+            inputRef.current?.focus();
+            return true;
+          }}
+          onAttachImage={
+            !isWriter
+              ? async (dataURL) => {
+                  const match =
+                    /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(dataURL);
+                  if (!match) return false;
+                  const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0));
+                  return attachments.paste(
+                    [new window.File([bytes], 'Imagem copiada.png', { type: match[1] })],
+                    !canSend ? 'Aguarde o chat ficar disponível para anexar.' : '',
+                  );
+                }
+              : undefined
+          }
         />
+        <div id="attachment-list">
+          <AttachmentList
+            files={attachments.files}
+            onRemove={busy ? undefined : attachments.remove}
+          />
+        </div>
       </div>
       <div
         className="composer"

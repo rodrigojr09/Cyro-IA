@@ -4,49 +4,185 @@
   gap: 8px;
 }
 .attachment-card {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font:
+    12px/1.5 system-ui,
+    'Segoe UI',
+    sans-serif;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+  animation: attachment-appear 160ms ease-out;
+}
+.attachment-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.attachment-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.attachment-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--accent);
+}
+.attachment-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.attachment-thumbnail > .lucide {
+  width: 24px;
+  height: 24px;
+}
+.attachment-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.attachment-info strong,
+.attachment-info strong > span {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.attachment-info small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.attachment-card button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font:
+    500 12px/1.4 system-ui,
+    sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+.attachment-card button > .lucide {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.attachment-card button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+.attachment-card button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.attachment-card button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.attachment-card button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.attachment-card .attachment-remove {
+  align-self: start;
+  width: 32px;
+  min-width: 32px;
+  padding: 7px;
+  border-color: transparent;
+  color: var(--muted);
+}
+.attachment-footer {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font:
-    12px/1.45 system-ui,
-    'Segoe UI',
-    sans-serif;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
-.attachment-card span {
-  overflow-wrap: anywhere;
+.attachment-secondary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.attachment-card .attachment-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--muted);
   font-size: 12px;
+  line-height: 1.5;
 }
-.attachment-card img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 6px;
+.attachment-privacy > .lucide {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
-.attachment-card button {
-  font:
-    11px/1.4 system-ui,
-    'Segoe UI',
-    sans-serif;
-  padding: 4px 8px;
-  min-height: 28px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
+.attachment-privacy > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
-.attachment-card button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
+.attachment-card .attachment-details {
+  min-width: 0;
+  margin: 0;
 }
-.attachment-card button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.attachment-card [hidden],
+.attachment-feedback:empty {
+  display: none;
+}
+.attachment-feedback {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+@keyframes attachment-appear {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .attachment-card {
+    animation: none;
+    transition: none;
+  }
+  .attachment-card button {
+    transition: none;
+  }
 }
 .attachment-caption {
   font-size: 11px;
@@ -67,18 +203,9 @@
   opacity: 0.8;
 }
 
-.attachment-card > strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.attachment-card .attachment-details {
-  flex-basis: 100%;
-  min-width: 0;
-}
-.attachment-card .attachment-privacy {
-  flex-basis: 100%;
-  margin: 0;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
+.composer-attachments {
+  max-height: min(38vh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
 }

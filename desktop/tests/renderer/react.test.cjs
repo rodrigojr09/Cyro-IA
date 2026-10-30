@@ -229,8 +229,13 @@ test('React composer switches microphone to send and Use inserts parenthesized t
       false,
     );
     assert.equal(
-      document.querySelector('#attachment-list').nextElementSibling.className,
-      'composer',
+      !!(
+        document
+          .querySelector('#attachment-list')
+          .compareDocumentPosition(document.querySelector('.composer')) &
+        window.Node.DOCUMENT_POSITION_FOLLOWING
+      ),
+      true,
     );
   } finally {
     await env.dispose();
@@ -608,6 +613,42 @@ test('top chat menu offers all actions and canceled deletion preserves the chat'
     assert.equal(document.getElementById('manage-dialog').open, true);
     assert.equal(document.getElementById('chat-title').value, 'Login');
     assert.equal(document.getElementById('input').value, 'Rascunho preservado');
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('clipboard Use locks actions while importing and never sends a chat message automatically', async () => {
+  const env = environment(),
+    f = fixture(env),
+    pending = deferred();
+  try {
+    await env.mount(env.Clipboard, { context: 'first', onAttachImage: () => pending.promise });
+    await act(async () =>
+      f.clipboard(
+        { pending: true, owned: { main: 'busy-image' }, notification: { id: 'busy-image' } },
+        { id: 'busy-image', contentType: 'image', imageData: 'data:image/png;base64,aA==' },
+      ),
+    );
+    await settle();
+    await click('#clipboard-use');
+    const card = document.querySelector('#clipboard-card .attachment-card');
+    assert.equal(card.getAttribute('aria-busy'), 'true');
+    assert.equal(
+      [...card.querySelectorAll('button')].every((button) => button.disabled),
+      true,
+    );
+    assert.equal(
+      f.calls.some((row) => row.dismiss),
+      false,
+    );
+    await act(async () => pending.resolve(true));
+    await settle();
+    assert.equal(document.querySelector('#clipboard-card'), null);
+    assert.equal(
+      f.calls.some((row) => row.route === '/chat'),
+      false,
+    );
   } finally {
     await env.dispose();
   }

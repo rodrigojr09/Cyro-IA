@@ -121,37 +121,27 @@ body.clipboard-composer #composer {
   background: var(--accent);
   color: var(--bg);
 }
+#clipboard-card {
+  padding: 0;
+}
+#clipboard-actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+}
+#clipboard-actions #clipboard-use {
+  min-height: 32px;
+  padding: 6px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 650;
+}
+#clipboard-actions #clipboard-use:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 84%, var(--text));
+  border-color: var(--accent);
+}
 #clipboard-card .attachment-card {
-  padding: 6px 8px;
-}
-
-/* A suggestion stays smaller than a second message composer. */
-#clipboard-card .attachment-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  gap: 4px 6px;
-}
-#clipboard-card .attachment-card > strong {
-  font-size: 11px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#clipboard-card .attachment-card > small,
-#clipboard-card .attachment-card > [role='status']:empty {
-  display: none;
-}
-#clipboard-card .attachment-card > .attachment-privacy,
-#clipboard-card .attachment-card > .attachment-details,
-#clipboard-card .attachment-card > [role='status'],
-#clipboard-card .attachment-card > img {
-  grid-column: 1 / -1;
-}
-#clipboard-card .attachment-card > button {
-  padding: 4px;
-  white-space: nowrap;
-}
-#clipboard-card .attachment-card > img {
-  width: 40px;
-  height: 40px;
+  width: 100%;
 }

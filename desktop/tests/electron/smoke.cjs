@@ -407,11 +407,17 @@ app.whenReady().then(async () => {
     const attachmentStyle = await js(
       `(() => {const c=document.querySelector('#attachment-list .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,background:s.backgroundColor,surface:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),save:c.textContent.includes('Salvar cópia'),preview:c.textContent.includes('Ver prévia')};})()`,
     );
-    assert.equal(attachmentStyle.radius, '10px');
-    assert.equal(attachmentStyle.padding, '6px 8px');
+    assert.equal(attachmentStyle.radius, '12px');
+    assert.equal(attachmentStyle.padding, '12px');
     assert.equal(attachmentStyle.save, true);
     assert.equal(attachmentStyle.preview, true);
     await shot('cyro-v621-attachment.png');
+    const multiLayout = await js(
+      `(()=>{const list=document.querySelector('#attachment-list .attachment-list'),card=list.firstElementChild,copies=[];for(let i=0;i<4;i++){const copy=card.cloneNode(true);list.append(copy);copies.push(copy);}const box=document.querySelector('.composer-attachments'),field=document.querySelector('#input').getBoundingClientRect();const result={scrolls:box.scrollHeight>box.clientHeight,fieldVisible:field.top>=0&&field.bottom<=innerHeight};copies.forEach(copy=>copy.remove());return result;})()`,
+    );
+    assert.equal(multiLayout.scrolls, true);
+    assert.equal(multiLayout.fieldVisible, true);
+
     await js(`document.querySelector('#attachment-list button[aria-label^="Remover"]').click()`);
     await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
     await js(`document.getElementById('manage-open').click()`);

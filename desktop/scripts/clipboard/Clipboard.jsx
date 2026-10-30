@@ -176,6 +176,41 @@ export function Clipboard({
             removeId="clipboard-ignore"
             imageId="clipboard-image"
             previewSource={expanded && owned.contentType === 'image' ? owned.imageData : null}
+            busy={sending}
+            detailsHidden={!expanded && !feedback}
+            primaryAction={
+              <div id="clipboard-actions">
+                <button
+                  id="clipboard-use"
+                  disabled={sending}
+                  onClick={async () => {
+                    if (!quick && ownedContext.current !== context) return;
+                    setSending(true);
+                    try {
+                      const result =
+                        owned.contentType === 'image'
+                          ? await onAttachImage?.(owned.imageData)
+                          : await onUseText?.(owned.text || '');
+                      if (result === true) {
+                        await bridge.dismiss(owned.id);
+                        clear();
+                      } else
+                        setFeedback(
+                          owned.contentType === 'image' && !onAttachImage
+                            ? 'Use a imagem no chat principal.'
+                            : 'Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.',
+                        );
+                    } catch (error) {
+                      setFeedback(error.message);
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                >
+                  Usar
+                </button>
+              </div>
+            }
             privacy="Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente."
           >
             <div id="clipboard-content" hidden={!expanded}>
@@ -188,37 +223,6 @@ export function Clipboard({
               ) : (
                 <pre id="clipboard-original">{owned.text}</pre>
               )}
-            </div>
-            <div id="clipboard-actions">
-              <button
-                id="clipboard-use"
-                disabled={sending}
-                onClick={async () => {
-                  if (!quick && ownedContext.current !== context) return;
-                  setSending(true);
-                  try {
-                    const result =
-                      owned.contentType === 'image'
-                        ? await onAttachImage?.(owned.imageData)
-                        : await onUseText?.(owned.text || '');
-                    if (result === true) {
-                      await bridge.dismiss(owned.id);
-                      clear();
-                    } else
-                      setFeedback(
-                        owned.contentType === 'image' && !onAttachImage
-                          ? 'Use a imagem no chat principal.'
-                          : 'Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.',
-                      );
-                  } catch (error) {
-                    setFeedback(error.message);
-                  } finally {
-                    setSending(false);
-                  }
-                }}
-              >
-                Usar
-              </button>
             </div>
             <p id="clipboard-feedback" role="status">
               {feedback}

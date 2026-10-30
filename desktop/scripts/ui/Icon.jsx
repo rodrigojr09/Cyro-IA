@@ -29,6 +29,10 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
+  Image,
+  X,
+  Download,
+  Eye,
 } from 'lucide';
 const nodes = {
   'panel-left': PanelLeft,
@@ -36,6 +40,10 @@ const nodes = {
   search: Search,
   plus: Plus,
   copy: Copy,
+  image: Image,
+  close: X,
+  save: Download,
+  eye: Eye,
   'chevron-right': ChevronRight,
   'chevron-down': ChevronDown,
   'messages-square': MessagesSquare,

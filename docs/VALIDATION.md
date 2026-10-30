@@ -1,3 +1,11 @@
+# Data atual e cartões — 30/10/2026
+
+104 testes Cloud, 156 Desktop e TypeScript/build Cloud aprovados. Quatro testes novos validam o contexto temporal por requisição, virada UTC/São Paulo, fuso inválido, histórico imutável e mensagens de ferramenta sem texto. Não foi feita chamada paga para certificar a resposta final do modelo; o contexto confiável foi verificado diretamente.
+
+Os sete cenários Electron passaram com o cartão novo; após adicionar estado ocupado e limitar a altura da área de anexos, os cenários principal e clipboard passaram novamente. Verificaram miniatura 56px, raio/padding 12px, aviso 12px, ações abaixo do cabeçalho, ausência de overflow e cinco cartões sem esconder a digitação. Capturas clipboard-image.png e cyro-v621-attachment.png conferidas visualmente com dados sintéticos. O teste React bloqueou botões durante Usar e confirmou que nenhuma mensagem foi enviada automaticamente. O teste antigo de irmãos diretos foi adaptado para verificar a ordem visual do anexo antes do campo, permitindo o contêiner de rolagem.
+
+Logs locais: v630-clock-cloud-final.log, v630-clock-typecheck.log, v630-clock-build.log, v630-cards-desktop-final.log, v630-cards-electron.log, v630-cards-main-final.log e v630-cards-clipboard-final.log. Backend Python, dados, permissões e Backup/ não foram alterados; cloud/next-env.d.ts local preservado. Pesquisa web não foi implementada nesta correção.
+
 # Recompilação 6.3.0 — proteção final de encerramento, 30/10/2026
 
 Runtime f212a0a6f02c8646f8f1df957762288abbd57795 enviado a master e codex/jarvis-v6-architecture. Deploy Vercel success em 30/10/2026 às 07:10:06 America/Sao_Paulo (10:10:06 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/BmSTKjkGD2xSbQioqsSoqcWvQ4EG . Login HTTP 200, latest HTTP 200/release:null e versões administrativas sem sessão HTTP 401. Não há atualização fictícia anunciada.

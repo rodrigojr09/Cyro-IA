@@ -279,11 +279,14 @@ app.whenReady().then(async () => {
       'O cartão compartilhado deve respeitar o limite do painel.',
     );
     const shared = await composer.webContents.executeJavaScript(
-      `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
+      `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,overflow:document.documentElement.scrollWidth>innerWidth,thumbnail:getComputedStyle(c.querySelector('.attachment-thumbnail')).width,actionsBelow:c.querySelector('.attachment-footer').getBoundingClientRect().top>=c.querySelector('.attachment-main').getBoundingClientRect().bottom,warningSize:getComputedStyle(c.querySelector('.attachment-privacy')).fontSize};})()`,
     );
-    assert.equal(shared.radius, '10px');
-    assert.equal(shared.padding, '6px 8px');
+    assert.equal(shared.radius, '12px');
+    assert.equal(shared.padding, '12px');
     assert.equal(shared.overflow, false);
+    assert.equal(shared.thumbnail, '56px');
+    assert.equal(shared.actionsBelow, true);
+    assert.equal(shared.warningSize, '12px');
     fs.writeFileSync(
       path.join(directory, 'clipboard-options.png'),
       (await composer.webContents.capturePage()).toPNG(),

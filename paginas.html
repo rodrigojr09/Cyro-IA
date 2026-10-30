@@ -2817,6 +2817,7 @@ createRoot(document.getElementById(&#x27;root&#x27;)).render(&lt;App /&gt;);
 <!-- ===== INÍCIO: desktop/scripts/attachment/components.jsx — Componente / página React ===== -->
 <details id="fonte-19"><summary>desktop/scripts/attachment/components.jsx — Componente / página React</summary>
 <pre><code>import React, { useRef, useState } from &#x27;react&#x27;;
+import { Icon } from &#x27;../ui/Icon&#x27;;
 export function AttachmentCard({
   file,
   onRemove,
@@ -2829,68 +2830,123 @@ export function AttachmentCard({
   heading,
   privacy,
   children,
+  primaryAction,
+  detailsHidden = false,
+  busy = false,
 }) {
   const [preview, setPreview] = useState(file.preview || null),
     [textPreview, setTextPreview] = useState(null),
-    [error, setError] = useState(&#x27;&#x27;);
+    [error, setError] = useState(&#x27;&#x27;),
+    [working, setWorking] = useState(false);
   const image = previewSource === undefined ? preview : previewSource;
+  async function action(callback) {
+    setWorking(true);
+    setError(&#x27;&#x27;);
+    try {
+      await callback();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setWorking(false);
+    }
+  }
   return (
-    &lt;div className=&quot;attachment-card&quot;&gt;
-      &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
-      &lt;small&gt;
-        {file.type ||
-          { image: &#x27;Imagem&#x27;, document: &#x27;Documento&#x27;, text: &#x27;Texto&#x27;, code: &#x27;Código&#x27;, link: &#x27;Link&#x27; }[
-            file.kind
-          ] ||
-          file.kind}{&#x27; &#x27;}
-        · {Math.ceil((file.size || 0) / 1024)} KB
-      &lt;/small&gt;
-      &lt;button
-        type=&quot;button&quot;
-        onClick={async () =&gt; {
-          try {
-            const result = onSave
-              ? await onSave()
-              : await window.jarvisWindow.saveAttachment(file.id);
-            if (result &amp;&amp; !result.ok &amp;&amp; !result.canceled)
-              throw Error(result.data?.detail || &#x27;Falha ao salvar anexo&#x27;);
-          } catch (error) {
-            setError(error.message);
-          }
-        }}
-      &gt;
-        Salvar cópia
-      &lt;/button&gt;
-      &lt;button
-        {...previewProps}
-        type=&quot;button&quot;
-        onClick={async () =&gt; {
-          try {
-            if (onPreview) {
-              await onPreview();
-              return;
-            }
-            const result = await window.jarvisWindow.attachmentInfo(file.id);
-            if (!result.ok) throw Error(result.data?.detail || &#x27;Não foi possível obter a prévia.&#x27;);
-            setPreview(result.data.preview || null);
-            setTextPreview(result.data.textPreview || result.data.previewNotice || null);
-          } catch (error) {
-            setError(error.message);
-          }
-        }}
-      &gt;
-        Ver prévia
-      &lt;/button&gt;
-      {onRemove &amp;&amp; (
-        &lt;button id={removeId} type=&quot;button&quot; aria-label={&#x27;Remover &#x27; + file.name} onClick={onRemove}&gt;
-          ×
-        &lt;/button&gt;
+    &lt;div className=&quot;attachment-card&quot; aria-busy={working || busy}&gt;
+      &lt;div className=&quot;attachment-main&quot;&gt;
+        &lt;div className=&quot;attachment-thumbnail&quot;&gt;
+          {image ? (
+            &lt;img id={imageId} src={image} alt={&#x27;Prévia de &#x27; + file.name} /&gt;
+          ) : (
+            &lt;Icon name={file.kind === &#x27;image&#x27; ? &#x27;image&#x27; : &#x27;text&#x27;} /&gt;
+          )}
+        &lt;/div&gt;
+        &lt;div className=&quot;attachment-info&quot;&gt;
+          &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
+          &lt;small&gt;
+            {file.type ||
+              {
+                image: &#x27;Imagem&#x27;,
+                document: &#x27;Documento&#x27;,
+                text: &#x27;Texto&#x27;,
+                code: &#x27;Código&#x27;,
+                link: &#x27;Link&#x27;,
+              }[file.kind] ||
+              file.kind}{&#x27; &#x27;}
+            · {Math.ceil((file.size || 0) / 1024)} KB
+          &lt;/small&gt;
+        &lt;/div&gt;
+        {onRemove &amp;&amp; (
+          &lt;button
+            id={removeId}
+            className=&quot;attachment-remove&quot;
+            type=&quot;button&quot;
+            aria-label={&#x27;Remover &#x27; + file.name}
+            disabled={working || busy}
+            onClick={onRemove}
+          &gt;
+            &lt;Icon name=&quot;close&quot; /&gt;
+          &lt;/button&gt;
+        )}
+      &lt;/div&gt;
+      {privacy &amp;&amp; (
+        &lt;p className=&quot;attachment-privacy&quot;&gt;
+          &lt;Icon name=&quot;shield&quot; /&gt;
+          &lt;span&gt;{privacy}&lt;/span&gt;
+        &lt;/p&gt;
       )}
-      {image &amp;&amp; &lt;img id={imageId} src={image} alt={&#x27;Prévia de &#x27; + file.name} /&gt;}
+      &lt;div className=&quot;attachment-footer&quot;&gt;
+        {primaryAction}
+        &lt;div className=&quot;attachment-secondary&quot;&gt;
+          &lt;button
+            type=&quot;button&quot;
+            className=&quot;attachment-action&quot;
+            disabled={working || busy}
+            onClick={() =&gt;
+              void action(async () =&gt; {
+                const result = onSave
+                  ? await onSave()
+                  : await window.jarvisWindow.saveAttachment(file.id);
+                if (result &amp;&amp; !result.ok &amp;&amp; !result.canceled)
+                  throw Error(result.data?.detail || &#x27;Falha ao salvar anexo&#x27;);
+              })
+            }
+          &gt;
+            &lt;Icon name=&quot;save&quot; /&gt;
+            &lt;span&gt;Salvar cópia&lt;/span&gt;
+          &lt;/button&gt;
+          &lt;button
+            {...previewProps}
+            type=&quot;button&quot;
+            className=&quot;attachment-action&quot;
+            disabled={working || busy}
+            onClick={() =&gt;
+              void action(async () =&gt; {
+                if (onPreview) {
+                  await onPreview();
+                  return;
+                }
+                const result = await window.jarvisWindow.attachmentInfo(file.id);
+                if (!result.ok)
+                  throw Error(result.data?.detail || &#x27;Não foi possível obter a prévia.&#x27;);
+                setPreview(result.data.preview || null);
+                setTextPreview(result.data.textPreview || result.data.previewNotice || null);
+              })
+            }
+          &gt;
+            &lt;Icon name=&quot;eye&quot; /&gt;
+            &lt;span&gt;Ver prévia&lt;/span&gt;
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
       {textPreview &amp;&amp; &lt;pre className=&quot;attachment-details&quot;&gt;{textPreview}&lt;/pre&gt;}
-      {privacy &amp;&amp; &lt;p className=&quot;attachment-privacy&quot;&gt;{privacy}&lt;/p&gt;}
-      {children &amp;&amp; &lt;div className=&quot;attachment-details&quot;&gt;{children}&lt;/div&gt;}
-      &lt;span role=&quot;status&quot;&gt;{error}&lt;/span&gt;
+      {children &amp;&amp; (
+        &lt;div className=&quot;attachment-details&quot; hidden={detailsHidden}&gt;
+          {children}
+        &lt;/div&gt;
+      )}
+      &lt;span className=&quot;attachment-feedback&quot; role=&quot;status&quot;&gt;
+        {error}
+      &lt;/span&gt;
     &lt;/div&gt;
   );
 }
@@ -3081,37 +3137,38 @@ export function Composer({
   }, [input, inputRef]);
   return (
     &lt;footer className=&quot;composer-wrap&quot;&gt;
-      &lt;Clipboard
-        context={state.chat?.id || &#x27;draft:&#x27; + (state.project?.id || &#x27;general&#x27;)}
-        canClaim={state.ready &amp;&amp; !busy &amp;&amp; !settings &amp;&amp; !library}
-        onUseText={(text) =&gt; {
-          const next = (input ? input + &#x27;\n&#x27; : &#x27;&#x27;) + &#x27;(&#x27; + text + &#x27;)\n&#x27;;
-          if (next.length &gt; 6000) return false;
-          onInput(next);
-          inputRef.current?.focus();
-          return true;
-        }}
-        onAttachImage={
-          !isWriter
-            ? async (dataURL) =&gt; {
-                const match = /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(
-                  dataURL,
-                );
-                if (!match) return false;
-                const bytes = Uint8Array.from(atob(match[2]), (char) =&gt; char.charCodeAt(0));
-                return attachments.paste(
-                  [new window.File([bytes], &#x27;Imagem copiada.png&#x27;, { type: match[1] })],
-                  !canSend ? &#x27;Aguarde o chat ficar disponível para anexar.&#x27; : &#x27;&#x27;,
-                );
-              }
-            : undefined
-        }
-      /&gt;
-      &lt;div id=&quot;attachment-list&quot;&gt;
-        &lt;AttachmentList
-          files={attachments.files}
-          onRemove={busy ? undefined : attachments.remove}
+      &lt;div className=&quot;composer-attachments&quot;&gt;
+        &lt;Clipboard
+          context={state.chat?.id || &#x27;draft:&#x27; + (state.project?.id || &#x27;general&#x27;)}
+          canClaim={state.ready &amp;&amp; !busy &amp;&amp; !settings &amp;&amp; !library}
+          onUseText={(text) =&gt; {
+            const next = (input ? input + &#x27;\n&#x27; : &#x27;&#x27;) + &#x27;(&#x27; + text + &#x27;)\n&#x27;;
+            if (next.length &gt; 6000) return false;
+            onInput(next);
+            inputRef.current?.focus();
+            return true;
+          }}
+          onAttachImage={
+            !isWriter
+              ? async (dataURL) =&gt; {
+                  const match =
+                    /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(dataURL);
+                  if (!match) return false;
+                  const bytes = Uint8Array.from(atob(match[2]), (char) =&gt; char.charCodeAt(0));
+                  return attachments.paste(
+                    [new window.File([bytes], &#x27;Imagem copiada.png&#x27;, { type: match[1] })],
+                    !canSend ? &#x27;Aguarde o chat ficar disponível para anexar.&#x27; : &#x27;&#x27;,
+                  );
+                }
+              : undefined
+          }
         /&gt;
+        &lt;div id=&quot;attachment-list&quot;&gt;
+          &lt;AttachmentList
+            files={attachments.files}
+            onRemove={busy ? undefined : attachments.remove}
+          /&gt;
+        &lt;/div&gt;
       &lt;/div&gt;
       &lt;div
         className=&quot;composer&quot;
@@ -3641,6 +3698,41 @@ export function Clipboard({
             removeId=&quot;clipboard-ignore&quot;
             imageId=&quot;clipboard-image&quot;
             previewSource={expanded &amp;&amp; owned.contentType === &#x27;image&#x27; ? owned.imageData : null}
+            busy={sending}
+            detailsHidden={!expanded &amp;&amp; !feedback}
+            primaryAction={
+              &lt;div id=&quot;clipboard-actions&quot;&gt;
+                &lt;button
+                  id=&quot;clipboard-use&quot;
+                  disabled={sending}
+                  onClick={async () =&gt; {
+                    if (!quick &amp;&amp; ownedContext.current !== context) return;
+                    setSending(true);
+                    try {
+                      const result =
+                        owned.contentType === &#x27;image&#x27;
+                          ? await onAttachImage?.(owned.imageData)
+                          : await onUseText?.(owned.text || &#x27;&#x27;);
+                      if (result === true) {
+                        await bridge.dismiss(owned.id);
+                        clear();
+                      } else
+                        setFeedback(
+                          owned.contentType === &#x27;image&#x27; &amp;&amp; !onAttachImage
+                            ? &#x27;Use a imagem no chat principal.&#x27;
+                            : &#x27;Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.&#x27;,
+                        );
+                    } catch (error) {
+                      setFeedback(error.message);
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                &gt;
+                  Usar
+                &lt;/button&gt;
+              &lt;/div&gt;
+            }
             privacy=&quot;Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente.&quot;
           &gt;
             &lt;div id=&quot;clipboard-content&quot; hidden={!expanded}&gt;
@@ -3653,37 +3745,6 @@ export function Clipboard({
               ) : (
                 &lt;pre id=&quot;clipboard-original&quot;&gt;{owned.text}&lt;/pre&gt;
               )}
-            &lt;/div&gt;
-            &lt;div id=&quot;clipboard-actions&quot;&gt;
-              &lt;button
-                id=&quot;clipboard-use&quot;
-                disabled={sending}
-                onClick={async () =&gt; {
-                  if (!quick &amp;&amp; ownedContext.current !== context) return;
-                  setSending(true);
-                  try {
-                    const result =
-                      owned.contentType === &#x27;image&#x27;
-                        ? await onAttachImage?.(owned.imageData)
-                        : await onUseText?.(owned.text || &#x27;&#x27;);
-                    if (result === true) {
-                      await bridge.dismiss(owned.id);
-                      clear();
-                    } else
-                      setFeedback(
-                        owned.contentType === &#x27;image&#x27; &amp;&amp; !onAttachImage
-                          ? &#x27;Use a imagem no chat principal.&#x27;
-                          : &#x27;Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.&#x27;,
-                      );
-                  } catch (error) {
-                    setFeedback(error.message);
-                  } finally {
-                    setSending(false);
-                  }
-                }}
-              &gt;
-                Usar
-              &lt;/button&gt;
             &lt;/div&gt;
             &lt;p id=&quot;clipboard-feedback&quot; role=&quot;status&quot;&gt;
               {feedback}
@@ -4872,6 +4933,10 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
+  Image,
+  X,
+  Download,
+  Eye,
 } from &#x27;lucide&#x27;;
 const nodes = {
   &#x27;panel-left&#x27;: PanelLeft,
@@ -4879,6 +4944,10 @@ const nodes = {
   search: Search,
   plus: Plus,
   copy: Copy,
+  image: Image,
+  close: X,
+  save: Download,
+  eye: Eye,
   &#x27;chevron-right&#x27;: ChevronRight,
   &#x27;chevron-down&#x27;: ChevronDown,
   &#x27;messages-square&#x27;: MessagesSquare,

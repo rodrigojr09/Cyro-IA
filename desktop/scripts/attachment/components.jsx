@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Icon } from '../ui/Icon';
 export function AttachmentCard({
   file,
   onRemove,
@@ -11,68 +12,123 @@ export function AttachmentCard({
   heading,
   privacy,
   children,
+  primaryAction,
+  detailsHidden = false,
+  busy = false,
 }) {
   const [preview, setPreview] = useState(file.preview || null),
     [textPreview, setTextPreview] = useState(null),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [working, setWorking] = useState(false);
   const image = previewSource === undefined ? preview : previewSource;
+  async function action(callback) {
+    setWorking(true);
+    setError('');
+    try {
+      await callback();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setWorking(false);
+    }
+  }
   return (
-    <div className="attachment-card">
-      <strong>{heading || file.name}</strong>
-      <small>
-        {file.type ||
-          { image: 'Imagem', document: 'Documento', text: 'Texto', code: 'Código', link: 'Link' }[
-            file.kind
-          ] ||
-          file.kind}{' '}
-        · {Math.ceil((file.size || 0) / 1024)} KB
-      </small>
-      <button
-        type="button"
-        onClick={async () => {
-          try {
-            const result = onSave
-              ? await onSave()
-              : await window.jarvisWindow.saveAttachment(file.id);
-            if (result && !result.ok && !result.canceled)
-              throw Error(result.data?.detail || 'Falha ao salvar anexo');
-          } catch (error) {
-            setError(error.message);
-          }
-        }}
-      >
-        Salvar cópia
-      </button>
-      <button
-        {...previewProps}
-        type="button"
-        onClick={async () => {
-          try {
-            if (onPreview) {
-              await onPreview();
-              return;
-            }
-            const result = await window.jarvisWindow.attachmentInfo(file.id);
-            if (!result.ok) throw Error(result.data?.detail || 'Não foi possível obter a prévia.');
-            setPreview(result.data.preview || null);
-            setTextPreview(result.data.textPreview || result.data.previewNotice || null);
-          } catch (error) {
-            setError(error.message);
-          }
-        }}
-      >
-        Ver prévia
-      </button>
-      {onRemove && (
-        <button id={removeId} type="button" aria-label={'Remover ' + file.name} onClick={onRemove}>
-          ×
-        </button>
+    <div className="attachment-card" aria-busy={working || busy}>
+      <div className="attachment-main">
+        <div className="attachment-thumbnail">
+          {image ? (
+            <img id={imageId} src={image} alt={'Prévia de ' + file.name} />
+          ) : (
+            <Icon name={file.kind === 'image' ? 'image' : 'text'} />
+          )}
+        </div>
+        <div className="attachment-info">
+          <strong>{heading || file.name}</strong>
+          <small>
+            {file.type ||
+              {
+                image: 'Imagem',
+                document: 'Documento',
+                text: 'Texto',
+                code: 'Código',
+                link: 'Link',
+              }[file.kind] ||
+              file.kind}{' '}
+            · {Math.ceil((file.size || 0) / 1024)} KB
+          </small>
+        </div>
+        {onRemove && (
+          <button
+            id={removeId}
+            className="attachment-remove"
+            type="button"
+            aria-label={'Remover ' + file.name}
+            disabled={working || busy}
+            onClick={onRemove}
+          >
+            <Icon name="close" />
+          </button>
+        )}
+      </div>
+      {privacy && (
+        <p className="attachment-privacy">
+          <Icon name="shield" />
+          <span>{privacy}</span>
+        </p>
       )}
-      {image && <img id={imageId} src={image} alt={'Prévia de ' + file.name} />}
+      <div className="attachment-footer">
+        {primaryAction}
+        <div className="attachment-secondary">
+          <button
+            type="button"
+            className="attachment-action"
+            disabled={working || busy}
+            onClick={() =>
+              void action(async () => {
+                const result = onSave
+                  ? await onSave()
+                  : await window.jarvisWindow.saveAttachment(file.id);
+                if (result && !result.ok && !result.canceled)
+                  throw Error(result.data?.detail || 'Falha ao salvar anexo');
+              })
+            }
+          >
+            <Icon name="save" />
+            <span>Salvar cópia</span>
+          </button>
+          <button
+            {...previewProps}
+            type="button"
+            className="attachment-action"
+            disabled={working || busy}
+            onClick={() =>
+              void action(async () => {
+                if (onPreview) {
+                  await onPreview();
+                  return;
+                }
+                const result = await window.jarvisWindow.attachmentInfo(file.id);
+                if (!result.ok)
+                  throw Error(result.data?.detail || 'Não foi possível obter a prévia.');
+                setPreview(result.data.preview || null);
+                setTextPreview(result.data.textPreview || result.data.previewNotice || null);
+              })
+            }
+          >
+            <Icon name="eye" />
+            <span>Ver prévia</span>
+          </button>
+        </div>
+      </div>
       {textPreview && <pre className="attachment-details">{textPreview}</pre>}
-      {privacy && <p className="attachment-privacy">{privacy}</p>}
-      {children && <div className="attachment-details">{children}</div>}
-      <span role="status">{error}</span>
+      {children && (
+        <div className="attachment-details" hidden={detailsHidden}>
+          {children}
+        </div>
+      )}
+      <span className="attachment-feedback" role="status">
+        {error}
+      </span>
     </div>
   );
 }

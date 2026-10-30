@@ -1,5 +1,7 @@
 # 6.3.0 — em desenvolvimento
 
+- Cartão único de anexos/clipboard modernizado: miniatura à esquerda, cabeçalho separado, botões com ícones no rodapé, aviso legível, estados acessíveis e rolagem para listas grandes sem esconder a digitação.
+
 - Data/hora confiáveis do servidor em cada chamada de IA, com fuso de São Paulo, reserva de tokens e orientação para não simular consultas de atualidades.
 
 - Proteção final: janela desabilitada durante o encerramento para instalação, evitando novas edições enquanto o serviço local fecha.

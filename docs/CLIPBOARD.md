@@ -1,3 +1,7 @@
+# Cartão compartilhado — refinamento 6.3.0
+
+Sugestão e anexo importado usam AttachmentCard com a mesma estrutura: miniatura/ícone à esquerda, título e tamanho, fechar no cabeçalho, aviso legível e ações no rodapé. Usar aparece só na sugestão. A imagem monitorada só é revelada ao pedir prévia; imagens já anexadas conservam sua miniatura local. Nenhum envio automático foi acrescentado. Ações ficam desabilitadas durante importação, com aria-busy, para evitar duplicatas. Textos continuam entrando entre parênteses e com nova linha.
+
 # Sugestão de clipboard — ajuste 6.2.2
 
 O conteúdo recém-copiado aparece como sugestão com um botão Usar abaixo. Usar não chama a IA nem envia mensagens: texto, código e links entram no rascunho entre parênteses, seguidos de uma quebra de linha. Um rascunho existente é preservado, com uma quebra antes do conteúdo adicionado. Se ultrapassar 6.000 caracteres, a sugestão permanece disponível e informa o limite, sem truncar.
