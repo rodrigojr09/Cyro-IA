@@ -18,6 +18,7 @@ Testes com serviços simulados não validam áudio pago, OAuth real, infraestrut
 
 ## Documentação
 
+- [Relatório e pendências da separação](docs/architecture/SEPARATION_REPORT.md).
 - [Plano e auditoria da separação](docs/architecture/THREE_PROJECT_MIGRATION.md).
 - [Limites e configuração do Desktop](docs/architecture/DESKTOP_BOUNDARY.md).
 - [Registro da versão](versions/6.4.0.md).

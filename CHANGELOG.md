@@ -1,5 +1,14 @@
 # 6.3.1 — em desenvolvimento
 
+## 6.4.0 — extração estrutural, 30/10/2026
+
+- Repositório original preservado como Desktop, sem workspaces Cloud/shared; Backend e Cloud extraídos para projetos Git independentes.
+- API/autenticação/administração/Prisma/IA/Spotify/versões no Backend; painel Next.js como cliente HTTP, sem segredos de serviços.
+- Preparação Coolify/Vercel, Redis, health/readiness, SDK oficial Files e migration aditiva FileBinding.
+- Testes/builds independentes e Setup 6.4.0 local gerado/auditado; sem publicação, tags, releases ou alteração de produção.
+- Centralização de projetos/memórias locais, legado de chave pessoal e homologação externa ainda pendentes. Detalhes em docs/architecture/SEPARATION_REPORT.md.
+
+
 - Imagens anexadas e sugestões compartilham cartão quadrado 4:4 (64px), apenas com miniatura centralizada, sem nome, tipo, tamanho, aviso ou botões visuais.
 - Sugestões usam opacidade 70% e borda tracejada de 2px na cor de destaque. Clique aplica ao rascunho; anexos já adicionados baixam direto em Downloads com nome único, sem sobrescrever arquivos. Delete remove anexo pendente com foco no cartão.
 - Preservados o limite de cinco arquivos, validação local e envio explícito para a IA. Documentos e sugestões de texto mantêm seus layouts próprios.

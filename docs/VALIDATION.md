@@ -1,3 +1,5 @@
+> 30/10/2026 — etapa estrutural 6.4.0: resultados atuais, instalador e pendências em [relatório da separação](architecture/SEPARATION_REPORT.md). Os registros abaixo descrevem entregas anteriores e não homologam a arquitetura integral nova.
+
 # Validação 6.3.1 — miniaturas de imagem unificadas, 30/10/2026
 
 Entrega: runtime df9e4e4c66241b8b10c9206cf1e8e4a95d10cb6f enviado a master e codex/jarvis-v6-architecture. Deploy Vercel success em 30/10/2026 às 10:04:02 America/Sao_Paulo (13:04:02 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/BGiZ1DADo5RtCcY6BXuFogTCag2V . Produção: login 200, endpoint de atualização 200 e API administrativa sem sessão 401.
