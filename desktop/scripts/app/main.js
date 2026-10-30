@@ -127,6 +127,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       );
       child.unref();
     });
+    win.setEnabled(false);
     done(true);
     quitJarvis();
   });

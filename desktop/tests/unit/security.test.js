@@ -9,6 +9,7 @@ const { pathToFileURL } = require('node:url');
 function setup({
   authorized = false,
   writerDirty = false,
+  quickBusy = false,
   canceled = false,
   ownsInstance = true,
   probe = false,
@@ -22,6 +23,7 @@ function setup({
   const dialogs = [];
   const exits = [];
   const appEvents = new Map();
+  const ipcEvents = new Map();
   const windowEvents = new Map(),
     external = [];
   let windowOptions,
@@ -29,7 +31,9 @@ function setup({
     fullscreen = false,
     hidden = false,
     quitCalls = 0,
-    destroyCalls = 0;
+    destroyCalls = 0,
+    enabled = true,
+    enabledWhenQuit = null;
   const frame = { url: pathToFileURL(path.join(DESKTOP_ROOT, 'index.html')).href };
   const contents = {
     mainFrame: frame,
@@ -49,6 +53,9 @@ function setup({
     }
     hide() {
       hidden = true;
+    }
+    setEnabled(value) {
+      enabled = value;
     }
     maximize() {
       maximized = true;
@@ -85,12 +92,19 @@ function setup({
       on(name, fn) {
         appEvents.set(name, fn);
       },
+      once(name, fn) {
+        appEvents.set(name, fn);
+      },
       quit() {
+        enabledWhenQuit = enabled;
         quitCalls++;
       },
     },
     BrowserWindow: Window,
-    ipcMain: { handle: (name, fn) => handlers.set(name, fn), on() {} },
+    ipcMain: {
+      handle: (name, fn) => handlers.set(name, fn),
+      on: (name, fn) => ipcEvents.set(name, fn),
+    },
   };
   vm.runInNewContext(fs.readFileSync(path.join(DESKTOP_ROOT, 'scripts/app/main.js'), 'utf8'), {
     __dirname: path.join(DESKTOP_ROOT, 'scripts/app'),
@@ -116,6 +130,7 @@ function setup({
               : name === '../quick/controller'
                 ? {
                     createQuick: () => ({
+                      safeToUpdate: () => !quickBusy,
                       getSettings: () => ({}),
                       setSettings: (v) => v,
                       setProject() {},
@@ -145,6 +160,13 @@ function setup({
     },
   });
   return {
+    ipcEvents,
+    get enabled() {
+      return enabled;
+    },
+    get enabledWhenQuit() {
+      return enabledWhenQuit;
+    },
     invoke: handlers.get('jarvis:api'),
     handlers,
     copies,
@@ -406,6 +428,36 @@ test('Writer pendente bloqueia encerramento até descarte explícito', async () 
   discard.windowEvents.get('close')({ preventDefault() {} });
   await Promise.resolve();
   assert.equal(discard.quitCalls, 1);
+});
+
+test('update install blocks pending edits and disables the window before graceful exit', async () => {
+  for (const options of [{}, { writerDirty: true }, { quickBusy: true }]) {
+    const f = setup({ ...options, authorized: true });
+    if (options.writerDirty || options.quickBusy)
+      f.ipcEvents.get('cyro:updates-pending')(f.event, false);
+    let allowed;
+    await f.appEvents.get('cyro:install-update')('C:\\fixture\\Setup.exe', (value) => {
+      allowed = value;
+    });
+    assert.equal(allowed, false);
+    assert.equal(f.quitCalls, 0);
+    assert.equal(f.enabled, true);
+  }
+  const canceled = setup();
+  canceled.ipcEvents.get('cyro:updates-pending')(canceled.event, false);
+  await canceled.appEvents.get('cyro:install-update')('C:\\fixture\\Setup.exe', () => {});
+  assert.equal(canceled.quitCalls, 0);
+  assert.equal(canceled.enabled, true);
+  const ready = setup({ authorized: true });
+  ready.ipcEvents.get('cyro:updates-pending')(ready.event, false);
+  let allowed;
+  await ready.appEvents.get('cyro:install-update')('C:\\fixture\\Setup.exe', (value) => {
+    allowed = value;
+  });
+  assert.equal(allowed, true);
+  assert.equal(ready.enabledWhenQuit, false);
+  assert.equal(ready.quitCalls, 1);
+  assert.equal(ready.appEvents.has('will-quit'), true);
 });
 
 test('workspace notification contains no payload and failure does not mask a successful write', async () => {

@@ -1,5 +1,7 @@
 # 6.3.0 — em desenvolvimento
 
+- Proteção final: janela desabilitada durante o encerramento para instalação, evitando novas edições enquanto o serviço local fecha.
+
 - Sistema → Versões no Cloud: consulta paginada de tags SemVer, reserva de publicação, histórico, upload direto e recuperação sem substituir Setup.exe.
 - Servidor externo preparado para PE/NSIS/ProductVersion, SHA-256, GitHub Releases/assets e callback assinado. O proprietário ainda não dispõe da infraestrutura externa; publicação indisponível até configurar.
 - Modelo Prisma aditivo e endpoint estável com cache/invalidação. Repositório fixo, permissões SUPER_ADMIN e distribuição pública ou autenticada conforme a visibilidade real.

@@ -15,3 +15,5 @@ Foi avaliado electron-updater: seu mecanismo NSIS exige metadados do mesmo build
 Link para Baixar abre o asset oficial se público. Se privado, o Cloud autentica o cliente e entrega um link temporário do publisher para o mesmo asset. Não distribui token GitHub privilegiado. Versões anteriores à 6.3 não possuem este mecanismo; a primeira adoção da 6.3 exige instalação manual.
 
 Uma tentativa de instalação deixa um marcador local contendo somente a versão pretendida. Se o aplicativo reiniciar na versão antiga, informa instalação anterior não concluída; ao iniciar na versão esperada ou superior, remove o marcador. Esse registro não toca sessões, documentos ou bancos.
+
+Após confirmar a instalação e validar que não há trabalho pendente, a janela é desabilitada antes do encerramento do serviço. Isso impede novas edições durante a espera pelo fechamento, sem forçar descarte de conteúdo.
