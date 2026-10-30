@@ -2822,28 +2822,31 @@ export function AttachmentCard({
   file,
   onRemove,
   onSave,
-  onPreview,
+  onUse,
   previewSource,
   imageId,
-  previewProps,
   removeId,
   heading,
   privacy,
-  children,
-  primaryAction,
-  detailsHidden = false,
   busy = false,
+  suggestion = false,
+  text,
 }) {
-  const [preview, setPreview] = useState(file.preview || null),
-    [textPreview, setTextPreview] = useState(null),
-    [error, setError] = useState(&#x27;&#x27;),
+  const [error, setError] = useState(&#x27;&#x27;),
     [working, setWorking] = useState(false);
-  const image = previewSource === undefined ? preview : previewSource;
-  async function action(callback) {
+  const image = previewSource === undefined ? file.preview : previewSource;
+  async function activate() {
+    if (working || busy) return;
     setWorking(true);
     setError(&#x27;&#x27;);
     try {
-      await callback();
+      const result = onUse
+        ? await onUse()
+        : onSave
+          ? await onSave()
+          : await window.jarvisWindow.saveAttachment(file.id);
+      if (result &amp;&amp; !result.ok &amp;&amp; !result.canceled)
+        throw Error(result.data?.detail || &#x27;Falha ao salvar anexo&#x27;);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -2851,30 +2854,58 @@ export function AttachmentCard({
     }
   }
   return (
-    &lt;div className=&quot;attachment-card&quot; aria-busy={working || busy}&gt;
+    &lt;div
+      className={
+        &#x27;attachment-card&#x27; +
+        (suggestion ? &#x27; attachment-suggestion&#x27; : &#x27;&#x27;) +
+        (text !== undefined ? &#x27; attachment-text-suggestion&#x27; : &#x27;&#x27;)
+      }
+      aria-busy={working || busy}
+    &gt;
       &lt;div className=&quot;attachment-main&quot;&gt;
-        &lt;div className=&quot;attachment-thumbnail&quot;&gt;
-          {image ? (
-            &lt;img id={imageId} src={image} alt={&#x27;Prévia de &#x27; + file.name} /&gt;
-          ) : (
-            &lt;Icon name={file.kind === &#x27;image&#x27; ? &#x27;image&#x27; : &#x27;text&#x27;} /&gt;
+        &lt;button
+          type=&quot;button&quot;
+          id={suggestion ? &#x27;clipboard-use&#x27; : undefined}
+          className=&quot;attachment-open&quot;
+          disabled={working || busy}
+          onClick={() =&gt; void activate()}
+          aria-label={(suggestion ? &#x27;Usar &#x27; : &#x27;Baixar &#x27;) + file.name}
+          title={
+            suggestion
+              ? &#x27;Clique para usar no rascunho. Nada é enviado automaticamente.&#x27;
+              : &#x27;Baixar &#x27; + file.name
+          }
+        &gt;
+          {text === undefined &amp;&amp; (
+            &lt;span className=&quot;attachment-thumbnail&quot;&gt;
+              {image ? (
+                &lt;img id={imageId} src={image} alt=&quot;&quot; /&gt;
+              ) : (
+                &lt;Icon name={file.kind === &#x27;image&#x27; ? &#x27;image&#x27; : &#x27;text&#x27;} /&gt;
+              )}
+            &lt;/span&gt;
           )}
-        &lt;/div&gt;
-        &lt;div className=&quot;attachment-info&quot;&gt;
-          &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
-          &lt;small&gt;
-            {file.type ||
-              {
-                image: &#x27;Imagem&#x27;,
-                document: &#x27;Documento&#x27;,
-                text: &#x27;Texto&#x27;,
-                code: &#x27;Código&#x27;,
-                link: &#x27;Link&#x27;,
-              }[file.kind] ||
-              file.kind}{&#x27; &#x27;}
-            · {Math.ceil((file.size || 0) / 1024)} KB
-          &lt;/small&gt;
-        &lt;/div&gt;
+          &lt;span className=&quot;attachment-info&quot;&gt;
+            &lt;strong&gt;{heading || file.name}&lt;/strong&gt;
+            {text !== undefined ? (
+              &lt;span className=&quot;attachment-suggested-text&quot;&gt;{text}&lt;/span&gt;
+            ) : (
+              &lt;small&gt;
+                {file.type ||
+                  {
+                    image: &#x27;Imagem&#x27;,
+                    document: &#x27;Documento&#x27;,
+                    text: &#x27;Texto&#x27;,
+                    code: &#x27;Código&#x27;,
+                    link: &#x27;Link&#x27;,
+                  }[file.kind] ||
+                  file.kind}{&#x27; &#x27;}
+                · {Math.ceil((file.size || 0) / 1024)} KB
+              &lt;/small&gt;
+            )}
+          &lt;/span&gt;
+          &lt;Icon name={suggestion ? &#x27;plus&#x27; : &#x27;save&#x27;} /&gt;
+        &lt;/button&gt;
         {onRemove &amp;&amp; (
           &lt;button
             id={removeId}
@@ -2893,56 +2924,6 @@ export function AttachmentCard({
           &lt;Icon name=&quot;shield&quot; /&gt;
           &lt;span&gt;{privacy}&lt;/span&gt;
         &lt;/p&gt;
-      )}
-      &lt;div className=&quot;attachment-footer&quot;&gt;
-        {primaryAction}
-        &lt;div className=&quot;attachment-secondary&quot;&gt;
-          &lt;button
-            type=&quot;button&quot;
-            className=&quot;attachment-action&quot;
-            disabled={working || busy}
-            onClick={() =&gt;
-              void action(async () =&gt; {
-                const result = onSave
-                  ? await onSave()
-                  : await window.jarvisWindow.saveAttachment(file.id);
-                if (result &amp;&amp; !result.ok &amp;&amp; !result.canceled)
-                  throw Error(result.data?.detail || &#x27;Falha ao salvar anexo&#x27;);
-              })
-            }
-          &gt;
-            &lt;Icon name=&quot;save&quot; /&gt;
-            &lt;span&gt;Salvar cópia&lt;/span&gt;
-          &lt;/button&gt;
-          &lt;button
-            {...previewProps}
-            type=&quot;button&quot;
-            className=&quot;attachment-action&quot;
-            disabled={working || busy}
-            onClick={() =&gt;
-              void action(async () =&gt; {
-                if (onPreview) {
-                  await onPreview();
-                  return;
-                }
-                const result = await window.jarvisWindow.attachmentInfo(file.id);
-                if (!result.ok)
-                  throw Error(result.data?.detail || &#x27;Não foi possível obter a prévia.&#x27;);
-                setPreview(result.data.preview || null);
-                setTextPreview(result.data.textPreview || result.data.previewNotice || null);
-              })
-            }
-          &gt;
-            &lt;Icon name=&quot;eye&quot; /&gt;
-            &lt;span&gt;Ver prévia&lt;/span&gt;
-          &lt;/button&gt;
-        &lt;/div&gt;
-      &lt;/div&gt;
-      {textPreview &amp;&amp; &lt;pre className=&quot;attachment-details&quot;&gt;{textPreview}&lt;/pre&gt;}
-      {children &amp;&amp; (
-        &lt;div className=&quot;attachment-details&quot; hidden={detailsHidden}&gt;
-          {children}
-        &lt;/div&gt;
       )}
       &lt;span className=&quot;attachment-feedback&quot; role=&quot;status&quot;&gt;
         {error}
@@ -3540,9 +3521,7 @@ export function Clipboard({
   const bridge = window.jarvisClipboard;
   const [snapshot, setSnapshot] = useState(null),
     [owned, setOwned] = useState(null),
-    [expanded, setExpanded] = useState(false),
-    [sending, setSending] = useState(false),
-    [feedback, setFeedback] = useState(&#x27;&#x27;);
+    [sending, setSending] = useState(false);
   const latest = useRef({ context, canClaim, owned, sending }),
     requesting = useRef(false),
     ownedContext = useRef(null),
@@ -3551,8 +3530,6 @@ export function Clipboard({
   latest.current = { context, canClaim, owned, sending };
   const clear = () =&gt; {
     setOwned(null);
-    setFeedback(&#x27;&#x27;);
-    setExpanded(false);
   };
   const claim = async (value) =&gt; {
     const current = latest.current;
@@ -3573,8 +3550,6 @@ export function Clipboard({
       if (result.ok) {
         ownedContext.current = latest.current.context;
         setOwned(result.notification);
-        setExpanded(false);
-        setFeedback(&#x27;&#x27;);
       }
     } finally {
       requesting.current = false;
@@ -3646,7 +3621,7 @@ export function Clipboard({
           ),
         )
         .catch(() =&gt; {});
-  }, [quick, owned, expanded, feedback, baseHeight]);
+  }, [quick, owned, baseHeight]);
   if (orb) return &lt;i id=&quot;clipboard-dot&quot; hidden={!snapshot?.pending} aria-hidden=&quot;true&quot; /&gt;;
   const same = quick || ownedContext.current === context;
   return (
@@ -3683,13 +3658,6 @@ export function Clipboard({
                 }
               &lt;/span&gt;
             }
-            previewProps={{
-              id: &#x27;clipboard-title&#x27;,
-              &#x27;aria-expanded&#x27;: expanded,
-              &#x27;aria-controls&#x27;: &#x27;clipboard-content&#x27;,
-            }}
-            onSave={() =&gt; bridge.saveCopy(owned.id)}
-            onPreview={() =&gt; setExpanded((value) =&gt; !value)}
             onRemove={async () =&gt; {
               if (sending) return;
               await bridge.dismiss(owned.id);
@@ -3697,59 +3665,32 @@ export function Clipboard({
             }}
             removeId=&quot;clipboard-ignore&quot;
             imageId=&quot;clipboard-image&quot;
-            previewSource={expanded &amp;&amp; owned.contentType === &#x27;image&#x27; ? owned.imageData : null}
+            previewSource={owned.contentType === &#x27;image&#x27; ? owned.imageData : null}
+            suggestion
+            text={owned.contentType === &#x27;image&#x27; ? undefined : owned.text || &#x27;&#x27;}
             busy={sending}
-            detailsHidden={!expanded &amp;&amp; !feedback}
-            primaryAction={
-              &lt;div id=&quot;clipboard-actions&quot;&gt;
-                &lt;button
-                  id=&quot;clipboard-use&quot;
-                  disabled={sending}
-                  onClick={async () =&gt; {
-                    if (!quick &amp;&amp; ownedContext.current !== context) return;
-                    setSending(true);
-                    try {
-                      const result =
-                        owned.contentType === &#x27;image&#x27;
-                          ? await onAttachImage?.(owned.imageData)
-                          : await onUseText?.(owned.text || &#x27;&#x27;);
-                      if (result === true) {
-                        await bridge.dismiss(owned.id);
-                        clear();
-                      } else
-                        setFeedback(
-                          owned.contentType === &#x27;image&#x27; &amp;&amp; !onAttachImage
-                            ? &#x27;Use a imagem no chat principal.&#x27;
-                            : &#x27;Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.&#x27;,
-                        );
-                    } catch (error) {
-                      setFeedback(error.message);
-                    } finally {
-                      setSending(false);
-                    }
-                  }}
-                &gt;
-                  Usar
-                &lt;/button&gt;
-              &lt;/div&gt;
-            }
+            onUse={async () =&gt; {
+              if (sending || (!quick &amp;&amp; ownedContext.current !== context)) return;
+              setSending(true);
+              try {
+                const result =
+                  owned.contentType === &#x27;image&#x27;
+                    ? await onAttachImage?.(owned.imageData)
+                    : await onUseText?.(owned.text || &#x27;&#x27;);
+                if (result !== true)
+                  throw Error(
+                    owned.contentType === &#x27;image&#x27; &amp;&amp; !onAttachImage
+                      ? &#x27;Use a imagem no chat principal.&#x27;
+                      : &#x27;Não foi possível usar o conteúdo. Confira o limite de 5 anexos e tente novamente.&#x27;,
+                  );
+                await bridge.dismiss(owned.id);
+                clear();
+              } finally {
+                setSending(false);
+              }
+            }}
             privacy=&quot;Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente.&quot;
-          &gt;
-            &lt;div id=&quot;clipboard-content&quot; hidden={!expanded}&gt;
-              {owned.contentType === &#x27;image&#x27; ? (
-                &lt;p id=&quot;clipboard-image-hint&quot;&gt;
-                  {quick
-                    ? &#x27;Prévia local. Para análise, cole a imagem no chat principal.&#x27;
-                    : &#x27;Esta é uma prévia local da imagem. Para análise, adicione ao chat e envie a mensagem explicitamente.&#x27;}
-                &lt;/p&gt;
-              ) : (
-                &lt;pre id=&quot;clipboard-original&quot;&gt;{owned.text}&lt;/pre&gt;
-              )}
-            &lt;/div&gt;
-            &lt;p id=&quot;clipboard-feedback&quot; role=&quot;status&quot;&gt;
-              {feedback}
-            &lt;/p&gt;
-          &lt;/AttachmentCard&gt;
+          /&gt;
         &lt;/div&gt;
       )}
     &lt;/section&gt;

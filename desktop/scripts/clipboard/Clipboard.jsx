@@ -18,9 +18,7 @@ export function Clipboard({
   const bridge = window.jarvisClipboard;
   const [snapshot, setSnapshot] = useState(null),
     [owned, setOwned] = useState(null),
-    [expanded, setExpanded] = useState(false),
-    [sending, setSending] = useState(false),
-    [feedback, setFeedback] = useState('');
+    [sending, setSending] = useState(false);
   const latest = useRef({ context, canClaim, owned, sending }),
     requesting = useRef(false),
     ownedContext = useRef(null),
@@ -29,8 +27,6 @@ export function Clipboard({
   latest.current = { context, canClaim, owned, sending };
   const clear = () => {
     setOwned(null);
-    setFeedback('');
-    setExpanded(false);
   };
   const claim = async (value) => {
     const current = latest.current;
@@ -51,8 +47,6 @@ export function Clipboard({
       if (result.ok) {
         ownedContext.current = latest.current.context;
         setOwned(result.notification);
-        setExpanded(false);
-        setFeedback('');
       }
     } finally {
       requesting.current = false;
@@ -124,7 +118,7 @@ export function Clipboard({
           ),
         )
         .catch(() => {});
-  }, [quick, owned, expanded, feedback, baseHeight]);
+  }, [quick, owned, baseHeight]);
   if (orb) return <i id="clipboard-dot" hidden={!snapshot?.pending} aria-hidden="true" />;
   const same = quick || ownedContext.current === context;
   return (
@@ -161,13 +155,6 @@ export function Clipboard({
                 }
               </span>
             }
-            previewProps={{
-              id: 'clipboard-title',
-              'aria-expanded': expanded,
-              'aria-controls': 'clipboard-content',
-            }}
-            onSave={() => bridge.saveCopy(owned.id)}
-            onPreview={() => setExpanded((value) => !value)}
             onRemove={async () => {
               if (sending) return;
               await bridge.dismiss(owned.id);
@@ -175,59 +162,32 @@ export function Clipboard({
             }}
             removeId="clipboard-ignore"
             imageId="clipboard-image"
-            previewSource={expanded && owned.contentType === 'image' ? owned.imageData : null}
+            previewSource={owned.contentType === 'image' ? owned.imageData : null}
+            suggestion
+            text={owned.contentType === 'image' ? undefined : owned.text || ''}
             busy={sending}
-            detailsHidden={!expanded && !feedback}
-            primaryAction={
-              <div id="clipboard-actions">
-                <button
-                  id="clipboard-use"
-                  disabled={sending}
-                  onClick={async () => {
-                    if (!quick && ownedContext.current !== context) return;
-                    setSending(true);
-                    try {
-                      const result =
-                        owned.contentType === 'image'
-                          ? await onAttachImage?.(owned.imageData)
-                          : await onUseText?.(owned.text || '');
-                      if (result === true) {
-                        await bridge.dismiss(owned.id);
-                        clear();
-                      } else
-                        setFeedback(
-                          owned.contentType === 'image' && !onAttachImage
-                            ? 'Use a imagem no chat principal.'
-                            : 'Não foi possível usar o conteúdo. Confira o limite da mensagem e tente novamente.',
-                        );
-                    } catch (error) {
-                      setFeedback(error.message);
-                    } finally {
-                      setSending(false);
-                    }
-                  }}
-                >
-                  Usar
-                </button>
-              </div>
-            }
+            onUse={async () => {
+              if (sending || (!quick && ownedContext.current !== context)) return;
+              setSending(true);
+              try {
+                const result =
+                  owned.contentType === 'image'
+                    ? await onAttachImage?.(owned.imageData)
+                    : await onUseText?.(owned.text || '');
+                if (result !== true)
+                  throw Error(
+                    owned.contentType === 'image' && !onAttachImage
+                      ? 'Use a imagem no chat principal.'
+                      : 'Não foi possível usar o conteúdo. Confira o limite de 5 anexos e tente novamente.',
+                  );
+                await bridge.dismiss(owned.id);
+                clear();
+              } finally {
+                setSending(false);
+              }
+            }}
             privacy="Prévia local. O conteúdo pode conter dados sensíveis. Nada é enviado automaticamente."
-          >
-            <div id="clipboard-content" hidden={!expanded}>
-              {owned.contentType === 'image' ? (
-                <p id="clipboard-image-hint">
-                  {quick
-                    ? 'Prévia local. Para análise, cole a imagem no chat principal.'
-                    : 'Esta é uma prévia local da imagem. Para análise, adicione ao chat e envie a mensagem explicitamente.'}
-                </p>
-              ) : (
-                <pre id="clipboard-original">{owned.text}</pre>
-              )}
-            </div>
-            <p id="clipboard-feedback" role="status">
-              {feedback}
-            </p>
-          </AttachmentCard>
+          />
         </div>
       )}
     </section>

@@ -2,6 +2,8 @@
 
 Cyro IA é o novo nome do JARVIS, autorizado pelo proprietário em 27/10/2026. Repositório: [Cyro-IA](https://github.com/rodrigojr09/Cyro-IA). Perfis, sessões, IPC e identificadores internos existentes permanecem compatíveis.
 
+Anexos compactos permitem salvar pelo clique; sugestões tracejadas adicionam imagens ou aplicam textos sublinhados ao rascunho, mantendo cinco arquivos por mensagem e envio explícito.
+
 Evolução arquitetural da base 5.1.0 preservada no commit `631d0c7`. Consulte o [plano de migração](docs/architecture/MIGRATION_PLAN.md) e a [auditoria inicial](docs/architecture/AUDIT.md). A v6 ainda não está concluída nem homologada para distribuição. Auditoria e medição de banco em [docs/performance](docs/performance/DATABASE_AUDIT.md). Instalador local desta entrega: `release/v6/Cyro-IA-Setup-6.3.0.exe`. A validação de desenvolvimento usa `npm run check:v6`; `check:v5` permanece como alias de compatibilidade dos iniciadores.
 
 A v6.3 prepara o sistema de versões em **Sistema → Versões** e o servidor externo de publicação de Setup.exe. O Cloud consulta tags reais e não cria tags. O proprietário disponibilizará a infraestrutura externa posteriormente; publicação e atualização instalada ainda precisam de homologação real. O atualizador é ignorado em desenvolvimento. O repositório e seus links permanecem visíveis, com download direto quando público e autenticado quando privado. Veja [arquitetura](docs/updates/ARCHITECTURE.md), [publicação](docs/updates/PUBLISHING.md) e [resultados reais](docs/updates/TEST_RESULTS.md).

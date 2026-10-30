@@ -252,41 +252,20 @@ app.whenReady().then(async () => {
     );
     if (process.platform === 'win32') assert.equal(overlays.at(-1), false);
     assert.equal(sends, 0);
-    await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-title').click();void 0;",
-    );
     assert.equal(
       await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-original').textContent",
+        "document.querySelector('.attachment-suggested-text').textContent",
       ),
       text,
     );
-    assert.equal(
-      await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-title').getAttribute('aria-expanded')",
-      ),
-      'true',
-    );
-    fs.writeFileSync(
-      path.join(directory, 'clipboard-text.png'),
-      (await composer.webContents.capturePage()).toPNG(),
-    );
-    await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-title').click();void 0;",
-    );
-    assert.ok(
-      composer.getBounds().height <= 480,
-      'O cartão compartilhado deve respeitar o limite do painel.',
-    );
     const shared = await composer.webContents.executeJavaScript(
-      `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,overflow:document.documentElement.scrollWidth>innerWidth,thumbnail:getComputedStyle(c.querySelector('.attachment-thumbnail')).width,actionsBelow:c.querySelector('.attachment-footer').getBoundingClientRect().top>=c.querySelector('.attachment-main').getBoundingClientRect().bottom,warningSize:getComputedStyle(c.querySelector('.attachment-privacy')).fontSize};})()`,
+      `(() => {const c=document.querySelector('#clipboard-card .attachment-card');const s=getComputedStyle(c);return {radius:s.borderRadius,padding:s.padding,dashed:s.borderStyle,underline:getComputedStyle(c.querySelector('.attachment-suggested-text')).textDecorationLine,overflow:document.documentElement.scrollWidth>innerWidth};})()`,
     );
-    assert.equal(shared.radius, '12px');
-    assert.equal(shared.padding, '12px');
+    assert.equal(shared.radius, '10px');
+    assert.equal(shared.padding, '8px');
+    assert.equal(shared.dashed, 'dashed');
+    assert.equal(shared.underline, 'underline');
     assert.equal(shared.overflow, false);
-    assert.equal(shared.thumbnail, '56px');
-    assert.equal(shared.actionsBelow, true);
-    assert.equal(shared.warningSize, '12px');
     fs.writeFileSync(
       path.join(directory, 'clipboard-options.png'),
       (await composer.webContents.capturePage()).toPNG(),
@@ -303,7 +282,7 @@ app.whenReady().then(async () => {
     assert.equal(manager.state().pending, false);
     assert.equal(
       await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-original').textContent",
+        "document.querySelector('.attachment-suggested-text').textContent",
       ),
       text,
     );
@@ -324,7 +303,7 @@ app.whenReady().then(async () => {
       true,
     );
     await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-actions').querySelector('button').click();void 0;",
+      "document.getElementById('clipboard-use').click();void 0;",
     );
     const preview = await composer.webContents.executeJavaScript(
       "document.getElementById('question').value",
@@ -407,15 +386,6 @@ app.whenReady().then(async () => {
       ),
       'Imagem copiada',
     );
-    assert.equal(
-      await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-content').hidden",
-      ),
-      true,
-    );
-    await composer.webContents.executeJavaScript(
-      "document.getElementById('clipboard-title').click();void 0;",
-    );
     for (
       let i = 0;
       i < 40 &&
@@ -433,9 +403,9 @@ app.whenReady().then(async () => {
     );
     assert.equal(
       await composer.webContents.executeJavaScript(
-        "document.getElementById('clipboard-actions').children.length",
+        "getComputedStyle(document.querySelector('.attachment-thumbnail')).width",
       ),
-      1,
+      '36px',
     );
     fs.writeFileSync(
       path.join(directory, 'clipboard-image.png'),

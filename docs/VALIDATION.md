@@ -1,3 +1,9 @@
+# Anexos compactos e sugestões clicáveis — 30/10/2026
+
+157 testes Desktop, TypeScript Desktop e sete cenários Electron aprovados. Validados salvamento pelo clique separado da remoção, importação explícita sem envio, preservação de sugestão na falha, bloqueio durante importação, limite de cinco arquivos, layout responsivo e digitação visível. Capturas clipboard-image.png/clipboard-options.png em jarvis-clipboard-smoke-MQJCMb e cyro-v621-attachment.png conferidas visualmente. O teste antigo que esperava rodapé/expansão foi atualizado para o novo contrato de clique, miniatura 36px, texto sublinhado e borda tracejada. A execução inicial falhou por expectativas antigas e seletor removido; a execução final dos sete cenários passou.
+
+Logs: build/v6/v630-compact-tests-final.log, v630-compact-typecheck.log, v630-compact-electron-final.log e v630-compact-format-final.log. Sem alterações Cloud/backend/banco; testes desses serviços não foram repetidos. Catálogos paginas.html/styles.css regenerados. Backup/, dados e cloud/next-env.d.ts do proprietário preservados. Sem tags/releases.
+
 # Entrega dos cartões e contexto temporal — 30/10/2026
 
 Runtime a011c3b42f5219b1fc34408b32aa51e9d911c11b enviado a master e codex/jarvis-v6-architecture. Deploy Vercel success às 08:17:36 America/Sao_Paulo (11:17:36 UTC): https://vercel.com/rodrigo-juniors-projects/cyro-ia/CkvG3yyjiT4qgDQsmLsKbbXYWpih . O contexto temporal usa o relógio confiável por requisição; não foi acrescentada pesquisa web nem certificada resposta de IA paga.

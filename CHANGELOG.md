@@ -1,6 +1,6 @@
 # 6.3.0 — em desenvolvimento
 
-- Cartão único de anexos/clipboard modernizado: miniatura à esquerda, cabeçalho separado, botões com ícones no rodapé, aviso legível, estados acessíveis e rolagem para listas grandes sem esconder a digitação.
+- Anexos compactos com miniatura de 36px, clique para salvar e remoção independente. Sugestões tracejadas aplicam imagem ou texto sublinhado ao clicar, sem envio automático; preservado o limite de cinco arquivos.
 
 - Data/hora confiáveis do servidor em cada chamada de IA, com fuso de São Paulo, reserva de tokens e orientação para não simular consultas de atualidades.
 

@@ -4,28 +4,31 @@ export function AttachmentCard({
   file,
   onRemove,
   onSave,
-  onPreview,
+  onUse,
   previewSource,
   imageId,
-  previewProps,
   removeId,
   heading,
   privacy,
-  children,
-  primaryAction,
-  detailsHidden = false,
   busy = false,
+  suggestion = false,
+  text,
 }) {
-  const [preview, setPreview] = useState(file.preview || null),
-    [textPreview, setTextPreview] = useState(null),
-    [error, setError] = useState(''),
+  const [error, setError] = useState(''),
     [working, setWorking] = useState(false);
-  const image = previewSource === undefined ? preview : previewSource;
-  async function action(callback) {
+  const image = previewSource === undefined ? file.preview : previewSource;
+  async function activate() {
+    if (working || busy) return;
     setWorking(true);
     setError('');
     try {
-      await callback();
+      const result = onUse
+        ? await onUse()
+        : onSave
+          ? await onSave()
+          : await window.jarvisWindow.saveAttachment(file.id);
+      if (result && !result.ok && !result.canceled)
+        throw Error(result.data?.detail || 'Falha ao salvar anexo');
     } catch (error) {
       setError(error.message);
     } finally {
@@ -33,30 +36,58 @@ export function AttachmentCard({
     }
   }
   return (
-    <div className="attachment-card" aria-busy={working || busy}>
+    <div
+      className={
+        'attachment-card' +
+        (suggestion ? ' attachment-suggestion' : '') +
+        (text !== undefined ? ' attachment-text-suggestion' : '')
+      }
+      aria-busy={working || busy}
+    >
       <div className="attachment-main">
-        <div className="attachment-thumbnail">
-          {image ? (
-            <img id={imageId} src={image} alt={'Prévia de ' + file.name} />
-          ) : (
-            <Icon name={file.kind === 'image' ? 'image' : 'text'} />
+        <button
+          type="button"
+          id={suggestion ? 'clipboard-use' : undefined}
+          className="attachment-open"
+          disabled={working || busy}
+          onClick={() => void activate()}
+          aria-label={(suggestion ? 'Usar ' : 'Baixar ') + file.name}
+          title={
+            suggestion
+              ? 'Clique para usar no rascunho. Nada é enviado automaticamente.'
+              : 'Baixar ' + file.name
+          }
+        >
+          {text === undefined && (
+            <span className="attachment-thumbnail">
+              {image ? (
+                <img id={imageId} src={image} alt="" />
+              ) : (
+                <Icon name={file.kind === 'image' ? 'image' : 'text'} />
+              )}
+            </span>
           )}
-        </div>
-        <div className="attachment-info">
-          <strong>{heading || file.name}</strong>
-          <small>
-            {file.type ||
-              {
-                image: 'Imagem',
-                document: 'Documento',
-                text: 'Texto',
-                code: 'Código',
-                link: 'Link',
-              }[file.kind] ||
-              file.kind}{' '}
-            · {Math.ceil((file.size || 0) / 1024)} KB
-          </small>
-        </div>
+          <span className="attachment-info">
+            <strong>{heading || file.name}</strong>
+            {text !== undefined ? (
+              <span className="attachment-suggested-text">{text}</span>
+            ) : (
+              <small>
+                {file.type ||
+                  {
+                    image: 'Imagem',
+                    document: 'Documento',
+                    text: 'Texto',
+                    code: 'Código',
+                    link: 'Link',
+                  }[file.kind] ||
+                  file.kind}{' '}
+                · {Math.ceil((file.size || 0) / 1024)} KB
+              </small>
+            )}
+          </span>
+          <Icon name={suggestion ? 'plus' : 'save'} />
+        </button>
         {onRemove && (
           <button
             id={removeId}
@@ -75,56 +106,6 @@ export function AttachmentCard({
           <Icon name="shield" />
           <span>{privacy}</span>
         </p>
-      )}
-      <div className="attachment-footer">
-        {primaryAction}
-        <div className="attachment-secondary">
-          <button
-            type="button"
-            className="attachment-action"
-            disabled={working || busy}
-            onClick={() =>
-              void action(async () => {
-                const result = onSave
-                  ? await onSave()
-                  : await window.jarvisWindow.saveAttachment(file.id);
-                if (result && !result.ok && !result.canceled)
-                  throw Error(result.data?.detail || 'Falha ao salvar anexo');
-              })
-            }
-          >
-            <Icon name="save" />
-            <span>Salvar cópia</span>
-          </button>
-          <button
-            {...previewProps}
-            type="button"
-            className="attachment-action"
-            disabled={working || busy}
-            onClick={() =>
-              void action(async () => {
-                if (onPreview) {
-                  await onPreview();
-                  return;
-                }
-                const result = await window.jarvisWindow.attachmentInfo(file.id);
-                if (!result.ok)
-                  throw Error(result.data?.detail || 'Não foi possível obter a prévia.');
-                setPreview(result.data.preview || null);
-                setTextPreview(result.data.textPreview || result.data.previewNotice || null);
-              })
-            }
-          >
-            <Icon name="eye" />
-            <span>Ver prévia</span>
-          </button>
-        </div>
-      </div>
-      {textPreview && <pre className="attachment-details">{textPreview}</pre>}
-      {children && (
-        <div className="attachment-details" hidden={detailsHidden}>
-          {children}
-        </div>
       )}
       <span className="attachment-feedback" role="status">
         {error}

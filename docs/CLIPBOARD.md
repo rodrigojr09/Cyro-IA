@@ -1,6 +1,6 @@
 # Cartão compartilhado — refinamento 6.3.0
 
-Sugestão e anexo importado usam AttachmentCard com a mesma estrutura: miniatura/ícone à esquerda, título e tamanho, fechar no cabeçalho, aviso legível e ações no rodapé. Usar aparece só na sugestão. A imagem monitorada só é revelada ao pedir prévia; imagens já anexadas conservam sua miniatura local. Nenhum envio automático foi acrescentado. Ações ficam desabilitadas durante importação, com aria-busy, para evitar duplicatas. Textos continuam entrando entre parênteses e com nova linha.
+Sugestões usam AttachmentCard compacto com borda tracejada. Imagem mostra miniatura local de 36px; clicar no cartão importa para os anexos do chat principal. Texto/código/link mostram conteúdo sublinhado com fundo sutil; clicar acrescenta o texto completo entre parênteses e uma nova linha ao rascunho. Não há mais Usar separado nem expansão de prévia. Falha ou limite mantém a sugestão com erro; controles bloqueiam durante importação. Quick Chat continua recebendo texto, enquanto anexos de imagem são usados no chat principal. Consentimento, exclusividade, TTL e ausência de envio automático preservados. As seções abaixo registram comportamentos anteriores.
 
 # Sugestão de clipboard — ajuste 6.2.2
 

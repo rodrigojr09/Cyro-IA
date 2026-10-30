@@ -127,6 +127,8 @@ test('React clipboard offers Use without sending and dismisses only after applyi
     );
     await settle();
     assert.equal(used, null);
+    assert.ok(document.querySelector('.attachment-text-suggestion'));
+    assert.ok(document.querySelector('.attachment-suggested-text').textContent);
     assert.equal(document.querySelector('#clipboard-confirm'), null);
     await click('#clipboard-use');
     assert.equal(used, 'Texto copiado');
@@ -521,12 +523,13 @@ test('clipboard uses the shared card and attaches only after explicit local acti
     await settle();
     const card = document.querySelector('#clipboard-card .attachment-card');
     assert.ok(card);
-    assert.match(card.textContent, /Salvar cópia/);
-    assert.match(card.textContent, /Ver prévia/);
+    assert.ok(card.classList.contains('attachment-suggestion'));
+    assert.ok(card.querySelector('img'));
+    assert.match(card.querySelector('#clipboard-use').getAttribute('aria-label'), /Usar/);
     assert.match(card.textContent, /Nada é enviado automaticamente/);
     assert.equal(attached, 0);
     assert.equal(sent, 0);
-    const add = [...card.querySelectorAll('button')].find((x) => x.textContent === 'Usar');
+    const add = card.querySelector('#clipboard-use');
     await act(async () => add.click());
     assert.equal(attached, 1);
     assert.equal(sent, 0);
@@ -649,6 +652,39 @@ test('clipboard Use locks actions while importing and never sends a chat message
       f.calls.some((row) => row.route === '/chat'),
       false,
     );
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('compact attachment click saves locally and removal is a separate action', async () => {
+  const env = environment();
+  fixture(env);
+  let saved = [],
+    removed = [];
+  window.jarvisWindow.saveAttachment = async (id) => {
+    saved.push(id);
+    return { ok: true };
+  };
+  try {
+    await env.mount(env.AttachmentList, {
+      files: [
+        {
+          id: 'compact',
+          name: 'foto.png',
+          kind: 'image',
+          size: 4,
+          preview: 'data:image/png;base64,AQID',
+        },
+      ],
+      onRemove: (id) => removed.push(id),
+    });
+    await click('button[aria-label="Baixar foto.png"]');
+    assert.deepEqual(saved, ['compact']);
+    assert.deepEqual(removed, []);
+    await click('button[aria-label="Remover foto.png"]');
+    assert.deepEqual(saved, ['compact']);
+    assert.deepEqual(removed, ['compact']);
   } finally {
     await env.dispose();
   }
