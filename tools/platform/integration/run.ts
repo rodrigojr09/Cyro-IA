@@ -407,6 +407,35 @@ try {
   const device = await deviceLogin("owner@cyro.test"),
     otherDevice = await deviceLogin("other@cyro.test");
   const headers = { Authorization: `Bearer ${device.credential}` };
+  // v8 EV uses the same authenticated API and isolated Client rows as v7.
+  const projectId = randomUUID();
+  const projectCommand = (command: object, credential = device.credential) =>
+    fetch(cloudOrigin + '/api/projects', { method: 'POST',
+      headers: { Authorization: `Bearer ${credential}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(command) });
+  const catalog = await json(await fetch(cloudOrigin + '/api/projects', { headers }));
+  assert.deepEqual(Object.keys(catalog.categories), ['GENERAL', 'GRAMMAR', 'LOGISTICS']);
+  const command = { action: 'create', id: projectId, name: 'Livro integrado', category: 'GRAMMAR' };
+  const created = await json(await projectCommand(command));
+  assert.equal(created.project.ownerId, owner);
+  assert.equal(created.project.category, 'GRAMMAR');
+  const retried = await json(await projectCommand(command));
+  assert.equal(retried.project.id, projectId);
+  const storedProject = await backendDatabase.db.query('SELECT count(*)::int AS count FROM "Project" WHERE id=$1', [projectId]);
+  assert.equal((storedProject.rows[0] as any).count, 1);
+  check('EV: catálogo, criação e retry atravessam Cloud → API → Prisma reais');
+  assert.equal((await projectCommand({ action: 'get', id: projectId }, otherDevice.credential)).status, 404);
+  assert.equal((await projectCommand({ action: 'archive', id: projectId, expectedRevision: 0, archived: true }, otherDevice.credential)).status, 404);
+  assert.equal((await projectCommand({ ...command, id: randomUUID(), ownerId: owner }, otherDevice.credential)).status, 400);
+  const revisionCommand = { action: 'update', id: projectId, expectedRevision: 0,
+    name: 'Revisado', description: '', settings: { autoCorrect: false, language: 'pt-BR' } };
+  const concurrent = await Promise.all([projectCommand(revisionCommand), projectCommand(revisionCommand)]);
+  assert.deepEqual(concurrent.map(response => response.status).sort(), [200, 409]);
+  const persisted = await json(await projectCommand({ action: 'get', id: projectId }));
+  assert.equal(persisted.project.revision, 1);
+  const cookieCatalog = await json(await fetch(cloudOrigin + '/api/projects', { headers: { Cookie: cookie } }));
+  assert.equal(cookieCatalog.contract, '8.0');
+  check('EV: outra conta e ownership forjado recusados; concorrência real aceita uma única revisão');
   const upload = await json(
     await fetch(backendOrigin + "/api/files", {
       method: "POST",
