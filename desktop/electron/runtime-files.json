@@ -5,6 +5,7 @@
   "scripts/app/window-state.js",
   "scripts/session/readiness.js",
   "scripts/session/cloud.js",
+  "scripts/session/login-errors.js",
   "scripts/session/backend-runtime.js",
   "scripts/session/encrypted-state.js",
   "scripts/session/initial-settings.js",

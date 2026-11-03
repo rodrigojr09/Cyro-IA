@@ -24,6 +24,7 @@ const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron')
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const cloud = require('../scripts/session/cloud');
+const { loginErrorMessage } = require('../scripts/session/login-errors');
 const dataDir =
   process.env.JARVIS_DATA_DIR ||
   (app.isPackaged
@@ -119,6 +120,8 @@ ipcMain.handle('jarvis:login', async (event, value) => {
     return { ok: true };
   } catch (error) {
     if (error.code === 'DESKTOP_SESSION') throw Error(error.message);
+    const message = loginErrorMessage(error.code);
+    if (message) throw Error(message);
     throw Error('Login recusado. Confira e-mail, senha, acesso e conexão.');
   }
 });

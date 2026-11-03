@@ -7,10 +7,10 @@ import struct
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def audit():
+def audit(output=None):
     builder = json.loads((ROOT / "desktop/electron/builder.json").read_text())
     payload = (
-        ROOT / "desktop" / builder["directories"]["output"]
+        Path(output) if output else ROOT / "desktop" / builder["directories"]["output"]
     ).resolve() / "win-unpacked"
     archive = payload / "resources/app.asar"
     with archive.open("rb") as stream:
@@ -82,4 +82,8 @@ def audit():
 
 
 if __name__ == "__main__":
-    audit()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", help="Diretório de saída do electron-builder")
+    audit(parser.parse_args().output)

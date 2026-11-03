@@ -1,6 +1,7 @@
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { loginError } = require('./login-errors');
 function cloudOrigin(value, packaged = true) {
   const url = new URL(value);
   if (
@@ -130,20 +131,34 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
       throw Error('Login inválido.');
     if (!safeStorage.isEncryptionAvailable()) throw Error('Proteção de credenciais indisponível.');
     const deviceId = session?.deviceId || randomUUID();
-    const response = await fetcher(base + '/api/device/login', {
-      method: 'POST',
-      redirect: 'error',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: input.email.trim().toLowerCase(),
-        password: input.password,
-        deviceId,
-        name: String(name).slice(0, 100) || 'Cyro Desktop',
-      }),
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!response.ok)
-      throw Error('Login recusado. Confira e-mail, senha e acesso com o administrador.');
+    let response;
+    try {
+      response = await fetcher(base + '/api/device/login', {
+        method: 'POST',
+        redirect: 'error',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: input.email.trim().toLowerCase(),
+          password: input.password,
+          deviceId,
+          name: String(name).slice(0, 100) || 'Cyro Desktop',
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+    } catch {
+      throw loginError('LOGIN_NETWORK');
+    }
+    if (!response.ok) {
+      const code =
+        response.status === 401 || response.status === 400
+          ? 'LOGIN_INVALID'
+          : response.status === 403
+            ? 'LOGIN_BLOCKED'
+            : response.status === 429
+              ? 'LOGIN_LIMIT'
+              : 'LOGIN_UNAVAILABLE';
+      throw loginError(code);
+    }
     const value = await response.json();
     if (!/^[\w-]{43}$/.test(value.credential) || !(Date.parse(value.expiresAt) > Date.now()))
       throw Error('Resposta de login inválida.');

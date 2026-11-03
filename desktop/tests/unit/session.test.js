@@ -12,7 +12,7 @@ const mainPage = pathToFileURL(path.join(DESKTOP_ROOT, 'index.html')).href;
 async function settle() {
   for (let i = 0; i < 10; i++) await new Promise(setImmediate);
 }
-async function setup({ saved = false, corrupt = false, failUnlock = false } = {}) {
+async function setup({ saved = false, corrupt = false, failUnlock = false, loginFailure } = {}) {
   const handlers = new Map(),
     events = [],
     intervals = [],
@@ -50,6 +50,7 @@ async function setup({ saved = false, corrupt = false, failUnlock = false } = {}
       if (status !== 'active') throw Error('unavailable');
     },
     login: async () => {
+      if (loginFailure) throw loginFailure;
       current = { origin: 'https://jarvis.example.test', credential: 'b'.repeat(43) };
       status = 'active';
     },
@@ -157,6 +158,21 @@ test('Cloud Desktop usa a mesma pasta LocalAppData do backend para publicar a se
   assert.equal(state.environment.JARVIS_DATA_DIR, expected);
   assert.deepEqual(state.tokenFiles, [path.join(expected, '.local-token')]);
   assert.equal(state.frame.url, mainPage);
+});
+
+test('IPC preserves only locally authored login failure messages', async () => {
+  const { loginError } = require('../../scripts/session/login-errors');
+  const state = await setup({ loginFailure: loginError('LOGIN_UNAVAILABLE') });
+  await assert.rejects(
+    state.handlers.get('jarvis:login')(state.event, {}),
+    /serviço do Cyro está indisponível/,
+  );
+  assert.equal(state.environment.JARVIS_AUTHENTICATED, undefined);
+  const unsafe = await setup({ loginFailure: Error('private-driver-information') });
+  await assert.rejects(
+    unsafe.handlers.get('jarvis:login')(unsafe.event, {}),
+    (error) => !error.message.includes('private-driver-information'),
+  );
 });
 
 test('falha depois da autenticação bloqueia o Desktop e não acusa senha incorreta', async () => {

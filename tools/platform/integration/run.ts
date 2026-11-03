@@ -453,7 +453,9 @@ try {
   check("exclusão coordenada remove arquivo e vínculo autorizado");
 
   // Run the actual Desktop HTTP/session client. Windows safeStorage is exercised by Electron.
-  const desktop = join(root, "cyro-desktop");
+  const desktop = resolve(
+    process.env.CYRO_DESKTOP_ROOT || join(root, "cyro-desktop"),
+  );
   const requireDesktop = createRequire(join(desktop, "desktop/package.json"));
   const electron = requireDesktop("electron") as string;
   const electronChild = spawn(

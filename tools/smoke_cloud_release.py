@@ -34,9 +34,9 @@ def request(route, token=None, body=None):
         return json.load(response)
 
 
-def main():
+def main(output=None):
     builder = json.loads((ROOT / "desktop/electron/builder.json").read_text())
-    output = (ROOT / "desktop" / builder["directories"]["output"]).resolve()
+    output = (Path(output) if output else ROOT / "desktop" / builder["directories"]["output"]).resolve()
     exe = output / "win-unpacked/JARVIS.exe"
     if not exe.is_file():
         raise RuntimeError("Gere o payload NSIS antes do smoke.")
@@ -123,4 +123,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", help="Diretório de saída do electron-builder")
+    main(parser.parse_args().output)

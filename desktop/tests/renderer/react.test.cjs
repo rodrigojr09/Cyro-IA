@@ -25,6 +25,33 @@ test('React login submits only through the private bridge and clears the passwor
     await env.dispose();
   }
 });
+test('React login shows a sanitized service outage and clears the password', async () => {
+  const env = environment();
+  fixture(env);
+  const { loginErrorMessage } = require('../../scripts/session/login-errors');
+  window.jarvisAuth.login = async () => {
+    throw Error(`Error invoking remote method: ${loginErrorMessage('LOGIN_UNAVAILABLE')}`);
+  };
+  try {
+    await env.mount(env.Login);
+    await input('#login-email', 'person@example.test');
+    await input('#login-password', 'synthetic-password');
+    await act(async () =>
+      document
+        .querySelector('#login-form')
+        .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })),
+    );
+    assert.equal(document.querySelector('#login-password').value, '');
+    assert.match(
+      document.querySelector('#login-status').textContent,
+      /serviço do Cyro está indisponível/,
+    );
+    assert.ok(!document.querySelector('#login-status').textContent.includes('senha inválid'));
+  } finally {
+    await env.dispose();
+  }
+});
+
 test('React workspace blocks sending until the entire bootstrap resolves and renders loaded history', async () => {
   const env = environment(),
     pending = deferred(),

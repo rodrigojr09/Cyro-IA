@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { displayLoginError } from './login-errors';
 export function Login() {
   const [busy, setBusy] = useState(false),
     [status, setStatus] = useState(
@@ -53,7 +54,7 @@ export function Login() {
               setStatus(
                 String(error?.message).includes('Conta autenticada.')
                   ? 'Sua conta foi autenticada, mas o serviço local não conectou. Reinicie o Cyro.'
-                  : 'Login recusado. Confira e-mail, senha, acesso e conexão com o administrador.',
+                  : displayLoginError(error),
               );
             } finally {
               if (password.current) password.current.value = '';

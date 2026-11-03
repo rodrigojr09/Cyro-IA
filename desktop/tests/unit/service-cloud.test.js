@@ -5,6 +5,58 @@ const path = require('node:path');
 const os = require('node:os');
 const { cloudOrigin, createCloud } = require('../../scripts/session/cloud');
 const code = 'a'.repeat(43);
+
+test('login distinguishes dependency failure, invalid credentials and limits without exposing HTTP bodies', async () => {
+  const { displayLoginError, loginErrorMessage } = require('../../scripts/session/login-errors');
+  for (const [status, expected] of [
+    [401, 'LOGIN_INVALID'],
+    [403, 'LOGIN_BLOCKED'],
+    [429, 'LOGIN_LIMIT'],
+    [503, 'LOGIN_UNAVAILABLE'],
+    [404, 'LOGIN_UNAVAILABLE'],
+  ]) {
+    let reads = 0;
+    const service = createCloud({
+      dataDir: '/unused',
+      origin: 'https://api.example.test',
+      safeStorage: { isEncryptionAvailable: () => true },
+      fetcher: async () => ({
+        ok: false,
+        status,
+        json: async () => {
+          reads++;
+          throw Error('private raw error');
+        },
+      }),
+    });
+    await assert.rejects(
+      service.login({ email: 'user@example.test', password: 'synthetic-password' }, 'Test'),
+      (error) => {
+        assert.equal(error.code, expected);
+        assert.equal(
+          displayLoginError(Error(`Error invoking remote method: ${error.message}`)),
+          loginErrorMessage(expected),
+        );
+        return true;
+      },
+    );
+    assert.equal(reads, 0);
+    assert.equal(service.current(), null);
+  }
+  assert.ok(!displayLoginError(Error('private raw error')).includes('private'));
+  const service = createCloud({
+    dataDir: '/unused',
+    origin: 'https://api.example.test',
+    safeStorage: { isEncryptionAvailable: () => true },
+    fetcher: async () => {
+      throw Error('private network details');
+    },
+  });
+  await assert.rejects(
+    service.login({ email: 'user@example.test', password: 'synthetic-password' }, 'Test'),
+    { code: 'LOGIN_NETWORK' },
+  );
+});
 test('origem exige HTTPS em distribuição e não aceita credenciais/caminho', () => {
   assert.equal(cloudOrigin('https://jarvis.example.test'), 'https://jarvis.example.test');
   assert.equal(cloudOrigin('http://localhost:3000', false), 'http://localhost:3000');

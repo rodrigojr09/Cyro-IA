@@ -6,6 +6,8 @@ A interface principal, o login e os três painéis do Quick Chat usam React.js. 
 
 ## Organização
 
+No v7, autenticação e permissões centrais pertencem ao cyro-backend. O aplicativo usa `/api/device/login` diretamente na API; não autentica pelo painel Cloud. O serviço Python do Desktop mantém arquivos, projetos, Writer e orquestração local de contexto/ferramentas; isso ainda constitui processamento local, mesmo com chamadas de IA mediadas pela API. Falhas de login distinguem credenciais, bloqueio, limite de tentativas, indisponibilidade e conexão, sem exibir detalhes internos.
+
 - `scripts/app`: janela principal, entrada React e preload.
 - `scripts/session`: autenticação, configuração protegida, login e estado de carregamento.
 - `scripts/workspace`: catálogo, histórico em cache, projetos e navegação.
