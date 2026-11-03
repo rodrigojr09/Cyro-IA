@@ -3,7 +3,7 @@
   "productName": "Cyro IA",
   "asar": true,
   "directories": {
-    "output": "../release/v6"
+    "output": "../release/v8"
   },
   "files": [
     "scripts/app/main.js",

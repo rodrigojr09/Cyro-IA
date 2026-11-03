@@ -51,6 +51,8 @@ class CloudBuildTests(unittest.TestCase):
         self.assertEqual(config["win"]["target"][0]["target"], "nsis")
         self.assertNotIn("protocols", config)
         self.assertFalse(config["nsis"]["deleteAppDataOnUninstall"])
+        version = json.loads((ROOT / "desktop/package.json").read_text())["version"]
+        self.assertEqual(config["directories"]["output"], f"../release/v{version.split('.')[0]}")
         self.assertNotIn("**/*", config["files"])
         self.assertEqual(
             config["extraResources"][0]["from"], "../build/v6/backend/jarvis-backend"

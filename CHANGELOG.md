@@ -1,5 +1,7 @@
 # 8.0.1 — 03/11/2026
 
+- Corrigido o destino dos instaladores para release/v8; checksum utiliza o mesmo destino do empacotador. Instaladores anteriores preservados em release/v6.
+
 - A fundação Cyro EV foi renumerada de 8.0.0-alpha.0 para 8.0.1 por solicitação do proprietário.
 - Compilação e envio das alterações autorizados continuamente; instaladores anteriores preservados.
 - Interfaces EV, livro, revisão e Logistics continuam pendentes; ver docs/ev no Backend.

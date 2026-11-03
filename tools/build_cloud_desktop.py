@@ -88,7 +88,9 @@ def main():
         ROOT / "desktop",
     )
     run([sys.executable, str(ROOT / "tools/audit_cloud_artifact.py")])
-    artifact = ROOT / "release/v6" / f"Cyro-IA-Setup-{package['version']}.exe"
+    builder = json.loads((ROOT / "desktop/electron/builder.json").read_text())
+    output = (ROOT / "desktop" / builder["directories"]["output"]).resolve()
+    artifact = output / f"Cyro-IA-Setup-{package['version']}.exe"
     with artifact.open("rb") as stream:
         checksum = hashlib.file_digest(stream, "sha256").hexdigest()
     artifact.with_suffix(".exe.sha256").write_text(

@@ -6,6 +6,7 @@ binários anteriores recusam esse formato. O livro e a interface Logistics estã
 Veja [histórico e limites desta alpha](versions/8.0.1.md).
 Não há importação automática de fontes/dados para a API. Compilação e envio desta versão autorizados em 03/11/2026; resultados em versions/8.0.1.md.
 Validação: `npm run check:v8` (os aliases v7/v6 permanecem compatíveis).
+Instaladores da v8 são gravados em `release/v8/`; `release/v6/` conserva os anteriores.
 
 ## Referência da arquitetura v7 preservada
 
