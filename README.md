@@ -1,3 +1,8 @@
+> **Próxima versão do produto: v8.1.0.** EVs substituem projetos locais como
+> forma ativa de organização, preservando os dados antigos. Primeiro ambiente:
+> Logístico. [Escopo atualizado](docs/ev/V8_1_SCOPE.md). Implementação em andamento;
+> os registros abaixo descrevem versões anteriores e não comprovam entrega da v8.1.0.
+
 # Cyro Desktop — Cyro EV v8.0.1 em desenvolvimento
 
 Versão de trabalho **8.0.1**. A migração aditiva do catálogo local atribui GENERAL

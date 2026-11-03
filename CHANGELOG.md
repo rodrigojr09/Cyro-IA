@@ -1,3 +1,10 @@
+# Próxima versão — suporte ao Cyro v8.1.0 (em desenvolvimento)
+
+- Escopo atualizado pelo proprietário: somente EVs centrais como forma ativa de organização.
+- Retirar projetos locais da navegação e dos caminhos de criação; usar EVs pela API central.
+- Preservação do legado local, sem exclusão nem upload automático.
+- Decisão de escopo documentada; funcionalidades, testes completos e instalador da v8.1.0 ainda não concluídos.
+
 # 8.0.1 — 03/11/2026
 
 - Corrigido o destino dos instaladores para release/v8; checksum utiliza o mesmo destino do empacotador. Instaladores anteriores preservados em release/v6.

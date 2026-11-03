@@ -28,3 +28,12 @@ Compilar e entregar o instalador atualizado, preservando todos os instaladores a
 Esta instrução prevalece sobre as restrições anteriores de compilação/envio. Não autoriza
 force push, migrações destrutivas, exposição de segredos ou eliminação de dados.
 Manter o estado real das funcionalidades documentado; mudar a versão não conclui os EVs.
+
+## Escopo vigente — v8.1.0, 03/11/2026
+
+O proprietário renumerou a próxima implementação para v8.1.0 e determinou remover
+projetos locais como funcionalidade ativa, mantendo apenas EVs centrais.
+Retirar projetos locais da navegação e dos caminhos de criação; usar EVs pela API central.
+Preservar todos os dados legados e Backup/; não enviar conteúdo antigo automaticamente.
+A autorização contínua de compilação/envio permanece; não anunciar conclusão antes
+dos testes e da entrega efetiva. Escopo detalhado em docs/ev/V8_1_SCOPE.md.
