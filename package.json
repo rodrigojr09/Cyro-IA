@@ -1,6 +1,6 @@
 {
   "name": "cyro-desktop",
-  "version": "7.1.0",
+  "version": "8.0.0-alpha.0",
   "private": true,
   "engines": {
     "node": ">=24.11 <25"
@@ -19,6 +19,7 @@
     "check:v6": "npm run check:repository && npm run test:tools && npm run typecheck && npm test && python -m unittest discover -s backend -p \"test_*.py\" && python -m unittest -q test_start test_start_local test_cloud_build test_build test_setup && npm run test:electron && npm run test:platform-tools",
     "package": "python tools/build_cloud_desktop.py",
     "check:v7": "npm run check:v6",
+    "check:v8": "npm run check:v7",
     "test:platform-tools": "python -m unittest discover -s tools/platform -p \"test_*.py\""
   },
   "author": {

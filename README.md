@@ -1,3 +1,14 @@
+# Cyro Desktop — Cyro EV v8.0.0 em desenvolvimento
+
+Versão de trabalho **8.0.0-alpha.0**. A migração aditiva do catálogo local atribui GENERAL
+aos projetos existentes, preservando seus bancos, chats e Writer. O catálogo passa a v4;
+binários anteriores recusam esse formato. O livro e a interface Logistics estão pendentes.
+Veja [histórico e limites desta alpha](versions/8.0.0-alpha.0.md).
+Não há importação automática de fontes/dados para a API nem instalador final desta versão.
+Validação: `npm run check:v8` (os aliases v7/v6 permanecem compatíveis).
+
+## Referência da arquitetura v7 preservada
+
 # Cyro IA — Desktop v7
 
 Versão 7.1.0. O repositório original permanece Desktop, com histórico/remoto, appId, executável JARVIS, perfis, sessões e IPC preservados. O Desktop comunica diretamente com **https://api.cyro-ia.tech** e não depende do painel Cloud.

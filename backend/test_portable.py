@@ -44,8 +44,9 @@ class PortableTests(unittest.TestCase):
                 .fetchone()[0]
                 .startswith("volume:")
             )
-            self.assertEqual(con.execute("PRAGMA user_version").fetchone()[0], 3)
+            self.assertEqual(con.execute("PRAGMA user_version").fetchone()[0], 4)
         reopened = ProjectStore(self.data)
+        self.assertEqual(reopened.project(project["id"])["category"], "GENERAL")
         self.assertEqual(Path(reopened.project(project["id"])["path"]), source)
         self.assertTrue(reopened.db_path(project["id"]).is_file())
 

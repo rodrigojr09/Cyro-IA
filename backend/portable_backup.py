@@ -16,6 +16,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from portable_paths import safe_directory
 from secure_vault import atomic_write
 import protected_storage
+from storage_versions import CATALOG_VERSION, MEMORY_VERSION
 
 BACKUP_MAGIC = b"JARVIS-BACKUP\x02"
 
@@ -60,7 +61,7 @@ def verify_database(path, key=None, relative=None):
         con.deserialize(content)
         if con.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
             raise ValueError("Backup contém banco danificado.")
-        supported = 3 if Path(path).name == "registry.db" else 2
+        supported = CATALOG_VERSION if Path(path).name == "registry.db" else MEMORY_VERSION
         if con.execute("PRAGMA user_version").fetchone()[0] > supported:
             raise ValueError("Backup requer uma versão mais recente do JARVIS.")
 

@@ -1,3 +1,11 @@
+# 8.0.0-alpha.0 — 03/11/2026
+
+- Início da v8.0.0: categorias/capacidades na API e contrato de projetos isolado por conta.
+- GENERAL adicionado aos projetos locais por migração aditiva; chats e Writer preservados.
+- Snapshot Cloud atualizado e testes de autorização, revisão concorrente e migração.
+- Fundação somente: livro, Logistics e interfaces EV ainda pendentes; sem release final.
+- Histórico e limitações em versions/8.0.0-alpha.0.md.
+
 # 7.1.0 — 03/11/2026
 
 - Desktop compilado para a API central de produção em https://api.cyro-ia.tech, com versão sincronizada na interface, Electron e runtime local.

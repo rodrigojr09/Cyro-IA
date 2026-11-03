@@ -20,6 +20,7 @@ from project_scope import (
 )
 from portable_paths import source_reference, resolve_source
 import protected_storage
+from storage_versions import CATALOG_VERSION, MEMORY_VERSION
 
 
 def now():
@@ -80,7 +81,7 @@ class ProjectStore:
         (self.root / "projects").mkdir(exist_ok=True)
         (self.root / "general").mkdir(exist_ok=True)
         with database(self.registry) as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] > 3:
+            if con.execute("PRAGMA user_version").fetchone()[0] > CATALOG_VERSION:
                 raise ReadError(
                     "Formato de catálogo mais recente que esta versão do JARVIS."
                 )
@@ -120,7 +121,16 @@ class ProjectStore:
                 con.execute(
                     "UPDATE projects SET state='selecting',progress='Confirme os arquivos do projeto antes de usar a API'"
                 )
-            con.execute("PRAGMA user_version=3")
+            # v8: local v7 projects remain GENERAL. No upload, ownership change,
+            # or rewrite of project/chat/Writer contents accompanies this DDL.
+            if "category" not in {
+                row["name"] for row in con.execute("PRAGMA table_info(projects)")
+            }:
+                con.execute(
+                    "ALTER TABLE projects ADD COLUMN category TEXT NOT NULL "
+                    "DEFAULT 'GENERAL' CHECK(category IN ('GENERAL','GRAMMAR','LOGISTICS'))"
+                )
+            con.execute(f"PRAGMA user_version={CATALOG_VERSION}")
             for table in ("projects", "chats"):
                 if "instructions" not in {
                     row["name"] for row in con.execute(f"PRAGMA table_info({table})")
@@ -198,7 +208,7 @@ class ProjectStore:
 
     def initialize_db(self, path):
         with database(path) as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] > 2:
+            if con.execute("PRAGMA user_version").fetchone()[0] > MEMORY_VERSION:
                 raise ReadError(
                     "Formato de memória mais recente que esta versão do JARVIS."
                 )
@@ -225,7 +235,7 @@ class ProjectStore:
                 CREATE TABLE IF NOT EXISTS usage (id INTEGER PRIMARY KEY, created_at TEXT,
                     operation TEXT, prompt_tokens INTEGER, completion_tokens INTEGER, total_tokens INTEGER);
             """)
-            con.execute("PRAGMA user_version=2")
+            con.execute(f"PRAGMA user_version={MEMORY_VERSION}")
             if "scope_revision" not in {
                 row["name"] for row in con.execute("PRAGMA table_info(messages)")
             }:
