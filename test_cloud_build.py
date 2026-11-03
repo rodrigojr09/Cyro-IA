@@ -91,7 +91,10 @@ class CloudBuildTests(unittest.TestCase):
 
     def test_build_refuses_insecure_origin_before_spawning(self):
         with patch.dict(
-            "os.environ", {"JARVIS_CLOUD_ORIGIN": "http://localhost:3000"}
+            "os.environ", {
+                "CYRO_BACKEND_ORIGIN": "http://localhost:3000",
+                "JARVIS_CLOUD_ORIGIN": "http://localhost:3000",
+            }
         ), patch.object(build_cloud_desktop, "run") as run:
             with self.assertRaises(SystemExit):
                 build_cloud_desktop.main()

@@ -21,9 +21,12 @@ test("smoke runner clears Electron host flag without changing parent environment
     ELECTRON_RUN_AS_NODE: "1",
     PATH: "fixture",
     JARVIS_CLOUD_ORIGIN: "https://example.test",
+    CYRO_BACKEND_ORIGIN: "https://api.example.test",
   };
   const result = smokeEnvironment(source);
   assert.equal(result.ELECTRON_RUN_AS_NODE, undefined);
-  assert.equal(result.JARVIS_CLOUD_ORIGIN, source.JARVIS_CLOUD_ORIGIN);
+  assert.equal(result.JARVIS_CLOUD_ORIGIN, undefined);
+  assert.equal(result.CYRO_BACKEND_ORIGIN, undefined);
+  assert.equal(source.CYRO_BACKEND_ORIGIN, "https://api.example.test");
   assert.equal(source.ELECTRON_RUN_AS_NODE, "1");
 });

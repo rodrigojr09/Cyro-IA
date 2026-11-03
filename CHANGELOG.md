@@ -1,3 +1,9 @@
+# 7.1.0 — 03/11/2026
+
+- Desktop compilado para a API central de produção em https://api.cyro-ia.tech, com versão sincronizada na interface, Electron e runtime local.
+- Preservados atualizador via API, recursos Windows, perfis e identificadores existentes. Sem publicação automática ou alterações na infraestrutura.
+- Resultados do instalador e limitações em versions/7.1.0.md.
+
 # 6.3.1 — em desenvolvimento
 
 ## 6.4.0 — extração estrutural, 30/10/2026

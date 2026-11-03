@@ -22,6 +22,9 @@ function smokeEnvironment(source) {
   const environment = { ...source };
   // Electron launched inside an Electron host must still start as a GUI runtime.
   delete environment.ELECTRON_RUN_AS_NODE;
+  // Every smoke defines its own synthetic origin; never inherit the build API.
+  delete environment.CYRO_BACKEND_ORIGIN;
+  delete environment.JARVIS_CLOUD_ORIGIN;
   return environment;
 }
 function main(args = process.argv.slice(2)) {

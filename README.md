@@ -1,6 +1,6 @@
 # Cyro IA — Desktop v7
 
-Versão 7.0.0-alpha.0, em desenvolvimento. O repositório original permanece Desktop, com histórico/remoto, appId, executável JARVIS, perfis, sessões e IPC preservados. O Desktop comunica diretamente com **https://api.cyro-ia.tech** e não depende do painel Cloud.
+Versão 7.1.0. O repositório original permanece Desktop, com histórico/remoto, appId, executável JARVIS, perfis, sessões e IPC preservados. O Desktop comunica diretamente com **https://api.cyro-ia.tech** e não depende do painel Cloud.
 
 ## Código e funcionalidades
 
