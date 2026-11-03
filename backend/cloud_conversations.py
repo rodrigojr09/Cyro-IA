@@ -33,46 +33,22 @@ class CloudConversations:
         return self.request({"action": "fixed", "slot": "quick"})["id"]
 
     def project_quick_chat(self, project_id):
-        project_id = identifier(project_id)
-        key = "project_quick:" + project_id
-        with database(self.local.registry) as con:
-            row = con.execute(
-                "SELECT value FROM settings WHERE key=?", (key,)
-            ).fetchone()
-        if row:
-            try:
-                self.local.chat(row["value"])
-                return row["value"]
-            except ReadError:
-                pass
-        chat = self.local.create_chat(project_id, "Cyro IA Quick Chat")
-        with database(self.local.registry) as con:
-            con.execute(
-                "INSERT OR REPLACE INTO settings VALUES(?,?)", (key, chat["id"])
-            )
-        return chat["id"]
+        raise ReadError("Abra um Espaço Virtual na janela principal.")
 
     def chat(self, chat_id, allow_archived=False):
         if self.local_chat(chat_id):
-            return self.local.chat(chat_id, allow_archived)
+            raise ReadError("Conversa de projeto local preservada no legado; use um Espaço Virtual.")
         row = self.request({"action": "get", "id": identifier(chat_id)})
         if row["archived"] and not allow_archived:
             raise ReadError("Conversa arquivada.")
         return row
 
     def all_chats(self):
-        with database(self.local.registry) as con:
-            rows = [
-                dict(row)
-                for row in con.execute(
-                    "SELECT * FROM chats WHERE project_id IS NOT NULL ORDER BY COALESCE(last_message_at,created_at) DESC"
-                )
-            ]
-        return self.request({"action": "list"}) + rows
+        return self.request({"action": "list"})
 
     def chats(self, project_id=None, archived=False):
         if project_id:
-            return self.local.chats(project_id, archived)
+            raise ReadError("Projetos locais foram substituídos por Espaços Virtuais.")
         return [
             row
             for row in self.request({"action": "list"})
@@ -81,7 +57,7 @@ class CloudConversations:
 
     def create_chat(self, project_id=None, title="Nova conversa"):
         if project_id:
-            return self.local.create_chat(project_id, title)
+            raise ReadError("Crie conversas no Espaço Virtual pela API central.")
         return self.request(
             {
                 "action": "create",
@@ -100,9 +76,7 @@ class CloudConversations:
         clear=False,
     ):
         if self.local_chat(chat_id):
-            return self.local.change_chat(
-                chat_id, title, archived, delete, instructions, clear
-            )
+            raise ReadError("O legado local está preservado e não pode ser alterado por este fluxo.")
         command = {"action": "change", "id": identifier(chat_id), "delete": delete}
         if title is not None:
             command["title"] = redact(title.strip())[:120]
@@ -118,7 +92,7 @@ class CloudConversations:
         self, chat_id, limit=100, before=None, for_model=False, context_scope=None
     ):
         if self.local_chat(chat_id):
-            return self.local.history(chat_id, limit, before, for_model, context_scope)
+            raise ReadError("O histórico local está preservado no legado.")
         command = {
             "action": "history",
             "id": identifier(chat_id),
@@ -150,14 +124,8 @@ class CloudConversations:
             if page["next"] is not None and page["next"] <= after:
                 raise ReadError("Falha ao carregar o histórico. Entre novamente.")
             after = page["next"] if page["next"] is not None else until
-        with database(self.local.registry) as con:
-            local_rows = [
-                dict(row)
-                for row in con.execute(
-                    "SELECT * FROM chats WHERE project_id IS NOT NULL"
-                )
-            ]
-        return general_id, chats + local_rows, messages
+        return general_id, chats, messages
+
 
     def append_exchange(self, chat_id, user, assistant):
         return self.request(
@@ -173,7 +141,7 @@ class CloudConversations:
 
     def append(self, chat_id, role, content, context_scope=None, attachment_count=0):
         if self.local_chat(chat_id):
-            return self.local.append(chat_id, role, content, context_scope)
+            raise ReadError("O legado local está preservado e não pode ser alterado por este fluxo.")
         return self.request(
             {
                 "action": "append",
@@ -188,8 +156,8 @@ class CloudConversations:
 
     def context(self, chat_id):
         # Device references/permissions must never travel in general chat memory.
-        return self.local.context(chat_id) if self.local_chat(chat_id) else None
+        return None
 
     def save_context(self, chat_id, data):
         if self.local_chat(chat_id):
-            self.local.save_context(chat_id, data)
+            raise ReadError("O legado local está preservado e não pode ser alterado por este fluxo.")

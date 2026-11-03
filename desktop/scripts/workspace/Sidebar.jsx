@@ -11,7 +11,8 @@ export function Sidebar({
   onNewChat,
   onCreateMenu,
   onChatMenu,
-  onAddProject,
+  onEV,
+  evActive,
   onLogout,
   onSettings,
 }) {
@@ -23,8 +24,8 @@ export function Sidebar({
     <button
       key={chat.id}
       title={chat.title}
-      className={'nav-item chat-item' + (state.chat?.id === chat.id ? ' active' : '')}
-      aria-current={state.chat?.id === chat.id ? 'page' : undefined}
+      className={'nav-item chat-item' + (!evActive && state.chat?.id === chat.id ? ' active' : '')}
+      aria-current={!evActive && state.chat?.id === chat.id ? 'page' : undefined}
       disabled={busy || !state.ready}
       onClick={() => onView(chat.project_id || '', chat.id)}
       onContextMenu={(event) => {
@@ -36,20 +37,20 @@ export function Sidebar({
     </button>
   );
   return (
-    <aside id="sidebar" aria-label="Projetos e conversas">
+    <aside id="sidebar" aria-label="Espaços Virtuais e conversas">
       <div className="brand">
         <span className="brand-mark">C</span>
         <strong>Cyro IA</strong>
         <span className="brand-caption">WORKSPACE</span>
       </div>
       <button
-        id="add-project"
-        className="quiet"
+        id="ev-nav"
+        className={'quiet' + (evActive ? ' active' : '')}
         disabled={!state.ready || busy}
-        onClick={onAddProject}
+        onClick={onEV}
       >
         <Icon name="folder-plus" />
-        Adicionar projeto
+        Espaços Virtuais
       </button>
       <label className="search">
         <Icon name="search" />
@@ -58,12 +59,14 @@ export function Sidebar({
           type="search"
           value={search}
           onChange={(event) => onSearch(event.target.value)}
-          placeholder="Buscar projetos e chats"
-          aria-label="Buscar projetos e conversas"
+          placeholder="Buscar conversas"
+          aria-label="Buscar conversas"
         />
       </label>
       <nav id="navigation" aria-label="Navegação">
-        <div className={'navigation-heading' + (!state.project ? ' current-group' : '')}>
+        <div
+          className={'navigation-heading' + (!evActive && !state.project ? ' current-group' : '')}
+        >
           <button
             id="general-nav"
             className="nav-item"
@@ -87,55 +90,6 @@ export function Sidebar({
         <div id="general-chats" className="chat-list">
           {filtered.filter((chat) => !chat.project_id).map(chatButton)}
         </div>
-        <div className="section-label">PROJETOS</div>
-        <div id="project-list">
-          {state.projects
-            .filter(
-              (project) =>
-                !search ||
-                project.name.toLocaleLowerCase().includes(query) ||
-                filtered.some((chat) => chat.project_id === project.id),
-            )
-            .map((project) => (
-              <div key={project.id}>
-                <div
-                  className={
-                    'project-row' + (state.project?.id === project.id ? ' current-group' : '')
-                  }
-                >
-                  <button
-                    className="project-toggle"
-                    aria-expanded={expanded.has(project.id)}
-                    aria-label={'Expandir ou recolher ' + project.name}
-                    onClick={() => onToggle(project.id)}
-                  >
-                    <Icon name={expanded.has(project.id) ? 'chevron-down' : 'chevron-right'} />
-                  </button>
-                  <button
-                    className="project-item"
-                    disabled={busy || !state.ready}
-                    onClick={() => onView(project.id)}
-                  >
-                    <span className="nav-title">{project.name}</span>
-                  </button>
-                  <button
-                    className="navigation-add"
-                    aria-label={'Criar no projeto ' + project.name}
-                    aria-haspopup="menu"
-                    disabled={busy || !state.ready}
-                    onClick={(event) => onCreateMenu(project, event)}
-                  >
-                    <Icon name="plus" />
-                  </button>
-                </div>
-                {(expanded.has(project.id) || search) && (
-                  <div className="chat-list">
-                    {filtered.filter((chat) => chat.project_id === project.id).map(chatButton)}
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
         <p id="nav-empty" hidden={!search || filtered.length > 0}>
           Nenhuma conversa encontrada.
         </p>
@@ -151,10 +105,10 @@ export function Sidebar({
         </button>
         <span
           className="read-only-note"
-          title="Os arquivos originais dos projetos são usados em modo leitura. O Writer só salva após aprovação ou edição explícita."
+          title="Os projetos locais antigos não são enviados à nuvem automaticamente."
         >
           <span className="read-only-dot" aria-hidden="true" />
-          Projetos em modo leitura
+          Dados antigos preservados
         </span>
       </footer>
     </aside>

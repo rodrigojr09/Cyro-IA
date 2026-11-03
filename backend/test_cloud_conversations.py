@@ -225,20 +225,22 @@ class CloudConversationTests(unittest.TestCase):
         self.assertEqual(self.store.quick_chat(), first)
         self.assertEqual(self.store.history(first)[0]["content"], "Cloud history A")
 
-    def test_project_chats_and_quick_stay_local_without_cloud_requests(self):
-        project = register_selected(
-            self.local, make_project(Path(self.temp.name) / "source")
-        )
+    def test_legacy_project_data_is_preserved_but_cannot_create_or_mutate_through_cloud(self):
+        from programming.security import ReadError
+        project = register_selected(self.local, make_project(Path(self.temp.name) / "source"))
         self.local.update_project(project["id"], ready=1, state="ready")
-        chat = self.store.create_chat(project["id"], "Local")
-        self.store.append(chat["id"], "user", "LOCAL_PROJECT_SECRET")
-        self.assertEqual(
-            self.store.history(chat["id"])[0]["content"], "LOCAL_PROJECT_SECRET"
-        )
-        quick = self.store.project_quick_chat(project["id"])
-        self.assertEqual(self.store.project_quick_chat(project["id"]), quick)
-        self.store.append(quick, "assistant", "LOCAL_QUICK_REPLY", "quick:project")
-        self.assertEqual(self.store.history(quick)[0]["content"], "LOCAL_QUICK_REPLY")
+        chat = self.local.create_chat(project["id"], "Legado")
+        self.local.append(chat["id"], "user", "LOCAL_PROJECT_SECRET")
+        for operation in [
+            lambda: self.store.create_chat(project["id"], "Novo"),
+            lambda: self.store.project_quick_chat(project["id"]),
+            lambda: self.store.chat(chat["id"]),
+            lambda: self.store.history(chat["id"]),
+            lambda: self.store.change_chat(chat["id"], delete=True),
+        ]:
+            with self.assertRaises(ReadError):
+                operation()
+        self.assertEqual(self.local.history(chat["id"])[0]["content"], "LOCAL_PROJECT_SECRET")
         self.assertEqual(self.calls, [])
 
     def test_old_local_general_history_and_references_are_never_uploaded(self):

@@ -47,13 +47,16 @@
     "electron/runtime-files.json",
     "!tests/**",
     "!node_modules/**",
-    "dist/highlight.css"
+    "dist/highlight.css",
+    "scripts/workspace/ev-ipc.js"
   ],
   "extraResources": [
     {
       "from": "../build/backend/jarvis-backend",
       "to": "backend",
-      "filter": ["**/*"]
+      "filter": [
+        "**/*"
+      ]
     },
     {
       "from": "../build/icons/jarvis.png",

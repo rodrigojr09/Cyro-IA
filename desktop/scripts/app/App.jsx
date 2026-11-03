@@ -17,6 +17,7 @@ import { Conversation } from '../chat/Conversation';
 import { Composer } from '../chat/Composer';
 import { UpdateNotice } from '../updates/UpdateNotice';
 import { Icon } from '../ui/Icon';
+import { EVWorkspace } from '../workspace/EVWorkspace';
 
 export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [workspace] = useState(() => providedWorkspace || createWorkspace()),
@@ -26,6 +27,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [preferences, setPreferences] = usePreferences(state.settings),
     speaker = useSpeaker(preferences.voice),
     attachments = useAttachments();
+  const [evActive, setEVActive] = useState(!!window.cyroEV),
+    [evDirty, setEVDirty] = useState(false);
   const [input, setInput] = useState(''),
     [submitting, setSubmitting] = useState(false),
     [search, setSearch] = useState(''),
@@ -51,9 +54,16 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const busy = state.busy || state.loading || writerState.busy || writerState.loading;
   useEffect(() => {
     window.cyroUpdates?.setPending(
-      !!(busy || submitting || input.trim() || attachments.files.length || attachments.choosing),
+      !!(
+        evDirty ||
+        busy ||
+        submitting ||
+        input.trim() ||
+        attachments.files.length ||
+        attachments.choosing
+      ),
     );
-  }, [busy, submitting, input, attachments.files.length, attachments.choosing]);
+  }, [evDirty, busy, submitting, input, attachments.files.length, attachments.choosing]);
   const canSend =
     !submitting &&
     workspace.canSend() &&
@@ -83,6 +93,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   };
   async function navigate(projectId = '', chatId = null) {
     if (busy) return;
+    if (evDirty) throw Error('Salve o rascunho do espaço antes de navegar.');
+    setEVActive(false);
     speaker.stop();
     await writer.leave();
     attachments.clear();
@@ -92,6 +104,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   }
   async function createChat(projectId = state.project?.id || '') {
     if (busy) return;
+    if (evDirty) throw Error('Salve o rascunho do espaço antes de criar outra conversa.');
+    setEVActive(false);
     await writer.leave();
     speaker.stop();
     attachments.clear();
@@ -170,6 +184,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       !state.ready ||
       busy ||
       submitting ||
+      evDirty ||
       writerState.saving ||
       settings ||
       document.querySelector('dialog[open]')
@@ -183,17 +198,18 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       attachments.clear();
       setInput('');
       await workspace.openById(id);
+      setEVActive(false);
     });
-  }, [openRequest, state.ready, busy, submitting, writerState.saving, settings]);
+  }, [openRequest, state.ready, busy, submitting, evDirty, writerState.saving, settings]);
   useEffect(() => {
     if (state.project) setExpanded((value) => new Set([...value, state.project.id]));
   }, [state.project?.id]);
   useEffect(() => {
-    if (isWriter && state.project)
+    if (!evActive && isWriter && state.project)
       void writer
         .load(state.project, state.chat)
         .catch((error) => workspace.set({ error: error.message }));
-  }, [state.chat?.id]);
+  }, [state.chat?.id, evActive]);
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
@@ -284,17 +300,19 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
           openSidebarMenu('create', item, event);
         }}
         onChatMenu={(item, event) => openSidebarMenu('chat', item, event)}
-        onAddProject={() =>
+        evActive={evActive}
+        onEV={() =>
           run(async () => {
-            const result = await window.jarvisWindow.authorizeFolder();
-            if (result.canceled) return;
-            if (!result.ok) throw Error(result.data?.detail);
-            await workspace.catalog(result.data.id, null);
-            setScope(workspace.get().project);
+            if (input.trim() || attachments.files.length)
+              throw Error('Envie ou remova o rascunho da conversa antes de abrir os espaços.');
+            await writer.leave();
+            speaker.stop();
+            setEVActive(true);
           })
         }
         onLogout={() =>
           run(async () => {
+            if (evDirty) throw Error('Salve o rascunho do espaço antes de sair.');
             await writer.leave();
             speaker.stop();
             await window.jarvisAuth.logout();
@@ -302,7 +320,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         }
         onSettings={() => setSettings(true)}
       />
-      <main className="main-panel">
+      <EVWorkspace hidden={!evActive} onDirty={setEVDirty} />
+      <main className="main-panel" hidden={evActive}>
         <header className="topbar">
           <button
             id="sidebar-toggle"
@@ -429,7 +448,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               <Welcome
                 hidden={rows.length > 0 || isWriter || !state.ready}
                 displayName={state.settings.displayName}
-                onProject={() => window.document.getElementById('add-project').click()}
+                onProject={() => window.document.getElementById('ev-nav').click()}
                 onContinue={() => setPreferences({ collapsed: false })}
                 onPrompt={setInput}
               />

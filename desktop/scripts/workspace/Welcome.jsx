@@ -13,8 +13,8 @@ export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }
           [
             'suggest-project',
             'folder-search',
-            'Analisar um projeto',
-            'Estudos, escrita, planejamento ou software',
+            'Abrir um Espaço Virtual',
+            'Documentos fiscais, planilhas e sua operação',
             onProject,
           ],
           [

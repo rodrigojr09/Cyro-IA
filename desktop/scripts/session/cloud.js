@@ -31,6 +31,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
   }
   async function request(route, method = 'GET', payload) {
     const integration = route === '/api/integrations/spotify';
+    const ev = route === '/api/ev' || route === '/api/ev/chat' || route === '/api/ev/assistant';
     if (!session) throw Error('Entre com sua conta.');
     try {
       const response = await fetcher(base + route, {
@@ -41,9 +42,11 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
           ...(payload ? { 'Content-Type': 'application/json' } : {}),
         },
         ...(payload ? { body: JSON.stringify(payload) } : {}),
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(
+          ['/api/ev/chat', '/api/ev/assistant'].includes(route) ? 110000 : 20000,
+        ),
       });
-      if (response.status === 401 || (response.status === 403 && !integration)) {
+      if (response.status === 401 || (response.status === 403 && !integration && !ev)) {
         state = {
           status: 'revoked',
           message: 'Sessão encerrada ou acesso bloqueado. Entre novamente.',
@@ -53,6 +56,15 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         throw Error(state.message);
       }
       if (!response.ok) {
+        if (ev) {
+          const result = await response.json().catch(() => ({}));
+          const error = Error(
+            typeof result.error === 'string' ? result.error.slice(0, 400) : 'Espaço indisponível.',
+          );
+          error.ev = true;
+          error.status = response.status;
+          throw error;
+        }
         if (integration) {
           const result = await response.json().catch(() => ({}));
           const error = Error(
@@ -69,7 +81,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
       state = { status: 'active', message: 'Conectado ao Cyro.' };
       return responsePayload;
     } catch (error) {
-      if (state.status !== 'revoked' && !error.spotify)
+      if (state.status !== 'revoked' && !error.spotify && !error.ev)
         state = {
           status: 'offline',
           message: 'Não foi possível validar a sessão. Verifique a conexão.',

@@ -52,7 +52,8 @@
     "scripts/updates/installer.js",
     "scripts/updates/client.js",
     "scripts/updates/ipc.js",
-    "electron/backend-config.json"
+    "electron/backend-config.json",
+    "scripts/workspace/ev-ipc.js"
   ],
   "extraResources": [
     {
@@ -87,7 +88,7 @@
     "createStartMenuShortcut": true,
     "deleteAppDataOnUninstall": false
   },
-  "copyright": "Copyright \u00a9 2026 Rodrigo Junior",
+  "copyright": "Copyright © 2026 Rodrigo Junior",
   "executableName": "JARVIS",
   "beforeBuild": "./scripts/app/bundle-packaging.cjs"
 }

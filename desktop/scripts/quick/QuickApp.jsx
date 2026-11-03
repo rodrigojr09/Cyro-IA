@@ -280,7 +280,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
           Carregando histórico e informações. Você já pode preparar a próxima mensagem.
         </p>
         <div className="tools">
-          <label>
+          <label hidden={!state?.project}>
             <input
               id="use-project"
               type="checkbox"

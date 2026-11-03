@@ -37,6 +37,7 @@ const dataDir =
 process.env.JARVIS_DATA_DIR = dataDir;
 require('../scripts/app/portable-paths').configureElectron(app, dataDir);
 let service;
+require('../scripts/workspace/ev-ipc').installEVIPC({ electron: require('electron'), service: () => service, dataDir });
 require('../scripts/integrations/spotify-ipc').installSpotifyIPC({
   electron: require('electron'),
   service: () => service,

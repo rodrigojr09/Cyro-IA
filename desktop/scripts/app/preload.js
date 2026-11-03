@@ -1,4 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('cyroEV', {
+  request: (input) => ipcRenderer.invoke('ev:request', input),
+  upload: (projectId) => ipcRenderer.invoke('ev:upload', projectId),
+  download: (input) => ipcRenderer.invoke('ev:download', input),
+  draft: (input) => ipcRenderer.invoke('ev:draft', input),
+  dirty: (value) => ipcRenderer.invoke('ev:dirty', value),
+});
 contextBridge.exposeInMainWorld('cyroUpdates', {
   state: () => ipcRenderer.invoke('cyro:updates-state'),
   check: () => ipcRenderer.invoke('cyro:updates-check'),
@@ -77,9 +84,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
     };
   },
   api: (route, options) => ipcRenderer.invoke('jarvis:api', route, options),
-  authorizeFolder: () => ipcRenderer.invoke('jarvis:authorize-folder'),
   copyCode: (text) => ipcRenderer.invoke('jarvis:copy-code', text),
-  removeProject: (id) => ipcRenderer.invoke('jarvis:remove-project', id),
   manageChat: (id, action, title) => ipcRenderer.invoke('jarvis:manage-chat', id, action, title),
   openLink: (url) => ipcRenderer.invoke('jarvis:open-link', url),
   minimize: () => ipcRenderer.send('window:minimize'),

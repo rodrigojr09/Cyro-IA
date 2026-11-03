@@ -37,3 +37,16 @@ Retirar projetos locais da navegação e dos caminhos de criação; usar EVs pel
 Preservar todos os dados legados e Backup/; não enviar conteúdo antigo automaticamente.
 A autorização contínua de compilação/envio permanece; não anunciar conclusão antes
 dos testes e da entrega efetiva. Escopo detalhado em docs/ev/V8_1_SCOPE.md.
+
+## Instrução posterior do proprietário — continuação v8.1.0
+
+Não executar push sem nova autorização. Não gerar instalador nem declarar v8.1.0
+concluída enquanto os critérios funcionais não forem atendidos. Continuar código,
+testes e documentação preservando todas as alterações e os dados legados.
+
+## Interação EV aprovada posteriormente
+
+Todas as funcionalidades do EV devem ser acionadas por mensagens ao mesmo Cyro.
+Não reintroduzir barras de ferramentas, painéis de operações ou dezenas de botões.
+Tabelas, resultados e arquivos aparecem na conversa; alterações existentes exigem
+proposta e confirmação por mensagem. Preservar autorização central e idempotência.

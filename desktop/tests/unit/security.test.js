@@ -258,45 +258,24 @@ test('IPC rejeita corpos inválidos e excessivos', async () => {
   assert.equal(requests.length, 0);
 });
 
-test('autorização exige seleção e confirmação humanas; API genérica não pode conceder acesso', async () => {
-  const denied = setup();
-  await assert.rejects(
-    denied.invoke(denied.event, '/programming/authorize', { body: '{"path":"C:\\"}' }),
-  );
-  await assert.rejects(denied.invoke(denied.event, '/projects/register', { body: '{}' }));
-  await assert.rejects(denied.invoke(denied.event, '/projects/remove', { body: '{}' }));
-  await assert.rejects(denied.invoke(denied.event, '/chats/change', { body: '{}' }));
-  assert.equal((await denied.handlers.get('jarvis:authorize-folder')(denied.event)).canceled, true);
-  assert.equal(denied.requests.length, 0);
-  const approved = setup({ authorized: true });
-  await approved.handlers.get('jarvis:authorize-folder')(approved.event);
-  assert.equal(approved.dialogs.length, 2);
-  assert.equal(approved.requests[0].url, 'http://127.0.0.1:8765/projects/register');
-  assert.equal(JSON.parse(approved.requests[0].options.body).path, 'C:\\Projects');
-  const canceled = setup({ authorized: true, canceled: true });
-  await canceled.handlers.get('jarvis:authorize-folder')(canceled.event);
-  assert.equal(canceled.requests.length, 0);
+test('v8.1 blocks folder projects and preserves legacy even with old IPC calls', async () => {
+  for (const options of [{}, { authorized: true }, { authorized: true, canceled: true }]) {
+    const f = setup(options);
+    await assert.rejects(f.handlers.get('jarvis:authorize-folder')(f.event), /substituídos/);
+    await assert.rejects(f.handlers.get('jarvis:remove-project')(f.event, '11111111-1111-4111-8111-111111111111'), /preservado/);
+    await assert.rejects(f.invoke(f.event, '/projects/register', { body: '{}' }));
+    assert.equal(f.requests.length, 0);
+    assert.equal(f.dialogs.length, 0);
+  }
 });
-
-test('remoção de projeto e exclusão de chat exigem diálogo humano', async () => {
-  const denied = setup();
+test('general conversation deletion still requires native confirmation', async () => {
   const id = '11111111-1111-4111-8111-111111111111';
-  assert.equal(
-    (await denied.handlers.get('jarvis:remove-project')(denied.event, id)).canceled,
-    true,
-  );
-  assert.equal(
-    (await denied.handlers.get('jarvis:manage-chat')(denied.event, id, 'delete')).canceled,
-    true,
-  );
+  const denied = setup();
+  assert.equal((await denied.handlers.get('jarvis:manage-chat')(denied.event, id, 'delete')).canceled, true);
   assert.equal(denied.requests.length, 0);
   const approved = setup({ authorized: true });
-  await approved.handlers.get('jarvis:remove-project')(approved.event, id);
-  const body = JSON.parse(approved.requests[0].options.body);
-  assert.equal(body.confirmed, true);
-  assert.equal(body.delete_memory, false);
   await approved.handlers.get('jarvis:manage-chat')(approved.event, id, 'delete');
-  assert.equal(JSON.parse(approved.requests[1].options.body).delete, true);
+  assert.equal(JSON.parse(approved.requests[0].options.body).delete, true);
 });
 
 test('cópia é limitada à janela confiável e nunca executa código', async () => {
@@ -423,7 +402,7 @@ test('Writer pendente bloqueia encerramento até descarte explícito', async () 
   keep.windowEvents.get('close')({ preventDefault() {} });
   await Promise.resolve();
   assert.equal(keep.quitCalls, 0);
-  assert.match(keep.dialogs.at(-1).message, /Writer/);
+  assert.match(keep.dialogs.at(-1).message, /altera/);
   const discard = setup({ writerDirty: true, authorized: true });
   discard.windowEvents.get('close')({ preventDefault() {} });
   await Promise.resolve();

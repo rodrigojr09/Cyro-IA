@@ -5,6 +5,7 @@ const { createRequire } = require("node:module");
 const root = path.resolve(__dirname, "..");
 const desktop = path.join(root, "desktop");
 const SMOKES = Object.freeze([
+  "ev-smoke.cjs",
   "smoke.cjs",
   "quick-smoke.cjs",
   "cloud-smoke.cjs",

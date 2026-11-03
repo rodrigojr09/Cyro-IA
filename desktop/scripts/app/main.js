@@ -89,6 +89,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       !win ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
     ) {
       done(false);
@@ -107,6 +108,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       answer.response !== 1 ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
     ) {
       done(false);
@@ -256,12 +258,13 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       windowState.save(stateFile, win, stateStorage);
       if (!quitting) {
         event.preventDefault();
-        if (writerController?.isDirty()) {
+        if (writerController?.isDirty() || win?.cyroEVDirty) {
           dialog
             .showMessageBox(win, {
               type: 'warning',
-              message: 'Há alterações do Writer ainda não salvas.',
-              detail: 'Aguarde a indicação Salvo. Sair agora pode perder a edição pendente.',
+              message: 'Há alterações ainda não salvas.',
+              detail:
+                'Aguarde a confirmação de salvamento. Rascunhos protegidos dos EVs podem ser recuperados ao reabrir o espaço.',
               buttons: ['Manter aberto', 'Sair sem salvar'],
               defaultId: 0,
               cancelId: 0,
@@ -311,6 +314,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       'jarvis.preferences',
       'jarvis.setup-applied',
       'jarvis.selection',
+      'cyro.ev.selection',
       'jarvis.quick.draft',
     ]);
     ipcMain.on('jarvis:storage', (event, key, value, write) => {
@@ -431,29 +435,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         );
       }
     });
-    ipcMain.handle('jarvis:authorize-folder', async (event) => {
-      if (!trusted(event)) throw new Error('Solicitação não autorizada.');
-      const selected = await dialog.showOpenDialog(win, {
-        title: 'Autorizar leitura de código nesta pasta — nenhum arquivo será alterado',
-        buttonLabel: 'Selecionar pasta',
-        properties: ['openDirectory'],
-      });
-      if (selected.canceled || selected.filePaths.length !== 1) return { canceled: true };
-      const selectedPath = selected.filePaths[0];
-      const confirmation = await dialog.showMessageBox(win, {
-        type: 'question',
-        title: 'Autorizar análise somente leitura',
-        message: 'Permitir que o Cyro leia código nesta pasta e nas subpastas?',
-        detail:
-          selectedPath +
-          '\nPrimeiro você escolherá os arquivos e pastas usados na análise, sem consumo de tokens. A OpenAI será usada somente após confirmar a seleção. A pasta original não será modificada.',
-        buttons: ['Cancelar', 'Autorizar leitura'],
-        defaultId: 0,
-        cancelId: 0,
-        noLink: true,
-      });
-      if (confirmation.response !== 1) return { canceled: true };
-      return backend('/projects/register', 'POST', JSON.stringify({ path: selectedPath }));
+    ipcMain.handle('jarvis:authorize-folder', async () => {
+      throw Error('Projetos locais foram substituídos por Espaços Virtuais.');
     });
     ipcMain.handle('jarvis:attachments-choose', async (event, remaining) => {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
@@ -483,30 +466,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       if (!trusted(event)) throw Error('Solicitação não autorizada.');
       return attachments.discard(id);
     });
-    ipcMain.handle('jarvis:remove-project', async (event, projectId) => {
-      if (!trusted(event) || !/^[a-f0-9-]{36}$/i.test(projectId))
-        throw new Error('Projeto inválido.');
-      const result = await dialog.showMessageBox(win, {
-        type: 'warning',
-        title: 'Remover projeto do Cyro IA',
-        message: 'A pasta original será preservada. O que deseja remover?',
-        detail:
-          'Manter memória permite recuperar os chats ao cadastrar a mesma pasta novamente. Apagar memória remove os chats e o conhecimento internos deste projeto.',
-        buttons: ['Cancelar', 'Somente cadastro; manter memória', 'Cadastro e memória interna'],
-        defaultId: 0,
-        cancelId: 0,
-        noLink: true,
-      });
-      if (result.response === 0) return { canceled: true };
-      return backend(
-        '/projects/remove',
-        'POST',
-        JSON.stringify({
-          project_id: projectId,
-          delete_memory: result.response === 2,
-          confirmed: true,
-        }),
-      );
+    ipcMain.handle('jarvis:remove-project', async () => {
+      throw Error('O legado local está preservado. Nenhum dado será excluído.');
     });
     ipcMain.handle('jarvis:manage-chat', async (event, chatId, action, title) => {
       if (

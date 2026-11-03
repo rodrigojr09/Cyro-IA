@@ -1,3 +1,11 @@
+# 8.1.0 — implementação em validação, 03/11/2026
+
+- Navegação EV pela API central e interface centrada exclusivamente na conversa.
+- Funções acionadas por mensagem; resultados, tabelas e arquivos no histórico; apenas o botão de envio no EV.
+- Retirados cadastro por pasta, indexação no modo Cloud e mutações de projetos/Writer locais; dados antigos preservados.
+- IPC restrito, envio/download nativos, rascunhos protegidos, recuperação e tentativas idempotentes.
+- Sem declaração de release final, push, instalador ou implantação nesta continuação.
+
 # Próxima versão — suporte ao Cyro v8.1.0 (em desenvolvimento)
 
 - Escopo atualizado pelo proprietário: somente EVs centrais como forma ativa de organização.

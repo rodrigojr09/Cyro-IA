@@ -37,8 +37,8 @@ const project = {
   progress: 'Memória atualizada',
 };
 const chats = [
-  { id: firstId, project_id: projectId, title: 'Investigando a autenticação', archived: 0 },
-  { id: secondId, project_id: projectId, title: 'Melhorias no feed', archived: 0 },
+  { id: firstId, project_id: null, title: 'Investigando a autenticação', archived: 0 },
+  { id: secondId, project_id: null, title: 'Melhorias no feed', archived: 0 },
   { id: generalId, project_id: null, title: 'Ideias para a semana', archived: 0 },
 ];
 const reply =
@@ -241,35 +241,14 @@ app.whenReady().then(async () => {
     });
     await win.loadFile(path.join(DESKTOP_ROOT, 'index.html'));
     await waitFor(`document.getElementById('status')?.textContent==='Conectado'`);
+    await js(`document.getElementById('general-nav').click()`);
     assert.equal(await js(`typeof require`), 'undefined');
     assert.equal(await js(`document.getElementById('welcome').hidden`), false);
     assert.equal(await js(`document.querySelectorAll('.suggestions button').length`), 6);
     assert.equal(await js(`document.querySelectorAll('#sidebar select').length`), 0);
     await shot('cyro-v603-home.png');
-    // Sidebar action alignment and anchored popup geometry use real Chromium layout.
-    const actionLayout = await js(`(() => {
-      const general = document.querySelector('#new-general-chat').getBoundingClientRect();
-      const project = document.querySelector('.project-row .navigation-add').getBoundingClientRect();
-      const row = document.querySelector('.project-row').getBoundingClientRect();
-      return { edge: Math.abs(general.right-project.right), center: Math.abs((project.top+project.bottom-row.top-row.bottom)/2) };
-    })()`);
-    assert.ok(actionLayout.edge < 1);
-    assert.ok(actionLayout.center < 1);
-    await js(`document.querySelector('.project-row .navigation-add').click()`);
-    await waitFor(`document.querySelector('.workspace-action-menu')?.style.visibility==='visible'`);
-    assert.equal(
-      await js(`(() => {
-      const menu=document.querySelector('.workspace-action-menu').getBoundingClientRect();
-      const side=document.querySelector('#sidebar').getBoundingClientRect();
-      return menu.left >= side.right+7 && menu.right <= innerWidth-7 && menu.bottom <= innerHeight-7;
-    })()`),
-      true,
-    );
-    await shot('cyro-sidebar-create-menu.png');
-    await js(
-      `document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
-    );
-    await waitFor(`!document.querySelector('.workspace-action-menu')`);
+    assert.equal(await js(`document.querySelectorAll('.project-row,#add-project').length`), 0);
+    assert.ok(await js(`!!document.getElementById('ev-nav')`));
     await js(
       `document.querySelector('.chat-item').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`,
     );
@@ -290,8 +269,6 @@ app.whenReady().then(async () => {
     );
     await waitFor(`!document.querySelector('.workspace-action-menu')`);
 
-    await js(`document.querySelector('.project-item').click()`);
-    await waitFor(`document.getElementById('project-name').textContent==='iPet'`);
     await js(`document.querySelector('.chat-item[title="Investigando a autenticação"]').click()`);
     await waitFor(`document.getElementById('conversation-name').dataset.chatId==='${firstId}'`);
     await enter('#input', 'Oi');
@@ -446,18 +423,7 @@ app.whenReady().then(async () => {
     await shot('cyro-manage-dialog-layout.png');
 
     await js(`document.querySelector('#manage-dialog .dialog-header button').click()`);
-    await js(`document.getElementById('project-name').click()`);
-    await waitFor(`document.getElementById('project-settings-dialog').open`);
-    await js(`document.getElementById('project-select-sources').click()`);
-    await waitFor(
-      `document.getElementById('scope-dialog').open && document.querySelectorAll('#scope-list input').length===3`,
-    );
-    assert.equal(await js(`document.querySelectorAll('#scope-list input:disabled').length`), 2);
-    await js(`document.getElementById('scope-none').click()`);
-    await frame();
-    await js(`document.getElementById('scope-save').click()`);
-    await waitFor(`!document.getElementById('scope-dialog').open`);
-    assert.deepEqual(savedScope.include, []);
+    assert.equal(await js(`document.getElementById('scope-dialog').open`), false);
     await js(`document.getElementById('settings-open').click()`);
     await waitFor(`!document.getElementById('settings-dialog').hidden`);
     await js(

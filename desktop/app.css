@@ -10,6 +10,7 @@
 @import url('./styles/settings.css');
 @import url('./styles/sidebar.css');
 @import url('./styles/ui.css');
+@import url('./styles/ev.css');
 
 .chat-context-menu {
   position: fixed;

@@ -40,5 +40,6 @@
   "scripts/updates/installer.js",
   "scripts/updates/client.js",
   "scripts/updates/ipc.js",
-  "electron/backend-config.json"
+  "electron/backend-config.json",
+  "scripts/workspace/ev-ipc.js"
 ]

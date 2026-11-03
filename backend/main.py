@@ -99,7 +99,8 @@ async def lifespan(app: FastAPI):
         lambda: bool(configured_key() and configured_key() != "coloque_sua_chave_aqui"),
         api_gate,
     )
-    await indexer.start()
+    if not CLOUD:
+        await indexer.start()
     TOKEN_FILE.write_text(SESSION_TOKEN, encoding="utf-8")
     try:
         yield
@@ -134,7 +135,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="8.0.1" if CLOUD else "2.0.1-dev.0",
+    version="8.1.0" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -181,6 +182,8 @@ async def authenticate(request: Request, call_next):
             return JSONResponse(
                 status_code=401, content={"detail": "Sessão local não autorizada."}
             )
+    if CLOUD and (request.url.path.startswith("/projects/") or request.url.path.startswith("/writer/") or request.url.path == "/writer"):
+        return JSONResponse(status_code=410, content={"detail": "Projetos locais foram substituídos por Espaços Virtuais. Os dados antigos estão preservados."})
     return await call_next(request)
 
 
@@ -466,30 +469,23 @@ async def read_error_handler(request: Request, exc: ReadError):
 @app.get("/workspace/progress")
 def workspace_progress():
     # Indexing progress is local; never invoke Cloud conversation/catalog services.
-    return {"projects": store.projects()}
+    return {"projects": [] if CLOUD else store.projects()}
 
 
 @app.get("/workspace")
 def workspace():
-    projects = store.projects()
+    projects = [] if CLOUD else store.projects()
     general_id = store.general_chat()
     active_projects = {project["id"] for project in projects}
-    with database(store.registry) as con:
-        rows = con.execute(
-            "SELECT id,project_id,title,archived,last_message_at,created_at,writer_document_id FROM chats "
-            "ORDER BY COALESCE(last_message_at,created_at) DESC"
-        )
-        chats = [
-            dict(row)
-            for row in rows
-            if row["project_id"] is None or row["project_id"] in active_projects
-        ]
     if CLOUD:
-        chats = [
-            row
-            for row in store.all_chats()
-            if row["project_id"] is None or row["project_id"] in active_projects
-        ]
+        chats = store.all_chats()
+    else:
+        with database(store.registry) as con:
+            rows = con.execute(
+                "SELECT id,project_id,title,archived,last_message_at,created_at,writer_document_id FROM chats "
+                "ORDER BY COALESCE(last_message_at,created_at) DESC"
+            )
+            chats = [dict(row) for row in rows if row["project_id"] is None or row["project_id"] in active_projects]
     return {
         "projects": projects,
         "chats": chats,
@@ -500,7 +496,7 @@ def workspace():
 
 @app.get("/workspace/bootstrap")
 def workspace_bootstrap():
-    projects = store.projects()
+    projects = [] if CLOUD else store.projects()
     if CLOUD:
         general_id, chats, histories = store.bootstrap()
     else:
@@ -543,6 +539,8 @@ def workspace_bootstrap():
 
 @app.post("/workspace/view")
 async def workspace_view(req: WorkspaceViewRequest):
+    if CLOUD and req.project_id:
+        raise HTTPException(410, "Abra este ambiente como um Espaço Virtual pela API central.")
     if chat_lock.locked():
         raise HTTPException(409, "Aguarde a operação em andamento.")
     project = store.project(req.project_id) if req.project_id else None
