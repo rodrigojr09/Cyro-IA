@@ -1,10 +1,10 @@
-# Cyro Desktop — Cyro EV v8.0.0 em desenvolvimento
+# Cyro Desktop — Cyro EV v8.0.1 em desenvolvimento
 
-Versão de trabalho **8.0.0-alpha.0**. A migração aditiva do catálogo local atribui GENERAL
+Versão de trabalho **8.0.1**. A migração aditiva do catálogo local atribui GENERAL
 aos projetos existentes, preservando seus bancos, chats e Writer. O catálogo passa a v4;
 binários anteriores recusam esse formato. O livro e a interface Logistics estão pendentes.
-Veja [histórico e limites desta alpha](versions/8.0.0-alpha.0.md).
-Não há importação automática de fontes/dados para a API nem instalador final desta versão.
+Veja [histórico e limites desta alpha](versions/8.0.1.md).
+Não há importação automática de fontes/dados para a API. Compilação e envio desta versão autorizados em 03/11/2026; resultados em versions/8.0.1.md.
 Validação: `npm run check:v8` (os aliases v7/v6 permanecem compatíveis).
 
 ## Referência da arquitetura v7 preservada

@@ -1,3 +1,10 @@
+# 8.0.1 — 03/11/2026
+
+- A fundação Cyro EV foi renumerada de 8.0.0-alpha.0 para 8.0.1 por solicitação do proprietário.
+- Compilação e envio das alterações autorizados continuamente; instaladores anteriores preservados.
+- Interfaces EV, livro, revisão e Logistics continuam pendentes; ver docs/ev no Backend.
+- Resultados desta compilação em versions/8.0.1.md.
+
 # 8.0.0-alpha.0 — 03/11/2026
 
 - Início da v8.0.0: categorias/capacidades na API e contrato de projetos isolado por conta.

@@ -18,3 +18,13 @@
 - v6.3: Cloud apenas consulta tags existentes; nunca criar, mover ou excluir tags. Não publicar releases reais automaticamente. Servidor externo de upload será configurado posteriormente. Ignorar atualizador quando app.isPackaged=false; preservar informações/links do repositório mesmo ao torná-lo público.
 
 - Instrução mais recente de 30/10/2026 prevalece sobre autorização contínua anterior: não publicar repositórios, executar push, criar tags/releases ou alterar produção sem autorização específica. Preservar histórico/remoto do Desktop e instaladores anteriores.
+
+## Autorização vigente — 03/11/2026
+
+O proprietário definiu esta etapa como v8.0.1 e autorizou continuamente compilar e enviar
+as versões/alterações a partir de agora. Após validar cada alteração, criar commits e
+executar push normal para os remotos/branches existentes, sem pedir nova autorização.
+Compilar e entregar o instalador atualizado, preservando todos os instaladores anteriores.
+Esta instrução prevalece sobre as restrições anteriores de compilação/envio. Não autoriza
+force push, migrações destrutivas, exposição de segredos ou eliminação de dados.
+Manter o estado real das funcionalidades documentado; mudar a versão não conclui os EVs.

@@ -1,10 +1,10 @@
-# Cyro EV v8.0.0 — desenvolvimento
+# Cyro EV v8.0.1 — desenvolvimento
 
-Versão de trabalho: **8.0.0-alpha.0** em API, Cloud e Desktop; Files permanece 0.2.0.
+Versão de trabalho: **8.0.1** em API, Cloud e Desktop; Files permanece 0.2.0.
 A fundação inclui categorias/capacidades, catálogo central de projetos e default GENERAL
 no catálogo local v4. Livro, Logistics, interfaces e migração de conteúdos estão pendentes.
 Leia cyro-backend/docs/ev/ARCHITECTURE.md e TEST_RESULTS.md para escopo e evidências.
-Os quatro repositórios continuam independentes, sem publicação ou migration de produção.
+Os quatro repositórios continuam independentes. Compilação/envio autorizados em 03/11/2026; nenhuma migration de produção é executada pelo build.
 
 ## Referência da organização v7
 
