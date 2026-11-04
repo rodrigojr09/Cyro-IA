@@ -22,6 +22,8 @@ app.whenReady().then(async () => {
       columnId = randomUUID(),
       planId = randomUUID(),
       rowId = randomUUID();
+    const noteId = randomUUID();
+    const note = { id: noteId, name: 'nota-teste.xml', status: 'PROCESSED' };
     const space = { id: projectId, name: 'Transportadora de teste', state: 'READY' };
     let fail = true,
       calls = [],
@@ -32,6 +34,8 @@ app.whenReady().then(async () => {
       current: () => session,
       request: async (_route, _method, c) => {
         calls.push(c);
+        if (c.action === 'files.list') return { files: [note], next: null };
+        if (c.action === 'file.get') { assert.equal(c.projectId, projectId); return { file: note, extracted: { type: 'FISCAL', documentType: 'NFE', number: '12345', total: '1450.00', freight: { value: '150.00' }, weight: '82', warnings: ['Documento fictício para teste.'] }, analyses: [{ id: 'saved', kind: 'CHAT', state: 'DONE', createdAt: '2026-11-04T12:00:00Z', reply: 'O frete declarado é 150.00.' }] }; }
         if (c.message === 'confirmar') assert.equal(c.confirmationProposalId, planId);
         if (c.action === 'assistant.open')
           return { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
@@ -138,6 +142,11 @@ app.whenReady().then(async () => {
     await wait(
       `document.querySelector('.ev-chat-heading h1').textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
     );
+    await wait(`!!document.querySelector('.ev-notes li button')`);
+    await js(`document.querySelector('.ev-notes li button').click()`);
+    await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
+    assert.ok(await js(`document.querySelector('.ev-note-detail').textContent.includes('Documento fictício')`));
+    assert.ok(await js(`document.querySelector('.ev-note-detail').textContent.includes('O frete declarado é')`));
     await input('#ev-message', 'edite o primeiro frete para 22,50');
     await js(`document.querySelector('#ev-send').click()`);
     await wait(`!!document.querySelector('.ev-chat-error')`);
@@ -164,11 +173,13 @@ app.whenReady().then(async () => {
     );
     const shots = path.resolve(__dirname, '../../../build/v8');
     await fs.mkdir(shots, { recursive: true });
-    await fs.writeFile(
-      path.join(shots, 'ev-logistics-chat.png'),
-      (await win.webContents.capturePage()).toPNG(),
-    );
-    assert.ok(calls.every((c) => c.action.startsWith('assistant.')));
+    let capture;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try { capture = await win.webContents.capturePage(); break; }
+      catch (e) { if (attempt === 2) throw e; await new Promise((r) => setTimeout(r, 150)); }
+    }
+    await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
+    assert.ok(calls.every((c) => c.action.startsWith('assistant.') || ['files.list', 'file.get'].includes(c.action)));
     console.log(
       'EV Electron: chat-only creation, shared composer, retry, protected IPC, human confirmation and inline table passed.',
     );
@@ -181,7 +192,7 @@ app.whenReady().then(async () => {
     });
     app.exit(0);
   } catch (e) {
-    console.error(e.message);
+    console.error(e.stack || e.message);
     clearTimeout(timer);
     win?.destroy();
     app.exit(1);

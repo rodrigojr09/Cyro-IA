@@ -19,6 +19,7 @@ test('EV operates only by messages; inline results, confirmation and retry prese
     },
     request: async (c) => {
       calls.push(c);
+      if (c.action === 'files.list') return { files: [], next: null };
       if (c.action === 'assistant.open')
         return {
           ownerId: 'owner',
@@ -124,6 +125,7 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
     },
     request: async (c) => {
       calls.push(c);
+      if (c.action === 'files.list') return { files: [], next: null };
       if (c.action === 'assistant.open')
         return {
           space,
@@ -167,13 +169,85 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
   }
 });
 
+test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis without sending a message', async () => {
+  const env = environment(),
+    calls = [];
+  const projectId = '11111111-1111-4111-8111-111111111111',
+    fileId = '33333333-3333-4333-8333-333333333333';
+  const space = { id: projectId, name: 'Notas', state: 'READY' };
+  const file = { id: fileId, name: 'nota-teste.xml', status: 'PROCESSED' };
+  window.cyroEV = {
+    dirty: async () => {},
+    draft: async () => null,
+    request: async (c) => {
+      calls.push(c);
+      if (c.action === 'files.list') return { files: [file], next: null };
+      if (c.action === 'file.get')
+        return {
+          file,
+          extracted: {
+            type: 'FISCAL',
+            documentType: 'NFE',
+            number: '12345',
+            total: '1450.00',
+            freight: { value: '150.00' },
+            weight: '82',
+            warnings: ['Chave fictícia; validação oficial não realizada.'],
+          },
+          analyses: [
+            {
+              id: 'saved-analysis',
+              kind: 'CHAT',
+              state: 'DONE',
+              createdAt: '2026-11-04T12:00:00Z',
+              reply: 'O frete declarado nesta nota é 150.00.',
+            },
+          ],
+        };
+      if (c.action === 'assistant.open')
+        return {
+          space,
+          conversation: { id: '22222222-2222-4222-8222-222222222222' },
+          messages: [],
+        };
+      return { space, effect: 'OPEN_SPACE' };
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false });
+    await input('#ev-message', 'crie um espaço chamado Notas');
+    await submit();
+    await act(async () => new Promise((r) => setTimeout(r, 30)));
+    const list = document.querySelector('.ev-notes li button');
+    assert.match(list.textContent, /nota-teste.xml/);
+    await click(list);
+    assert.match(document.querySelector('.ev-note-detail').textContent, /150.00/);
+    assert.match(document.querySelector('.ev-note-detail').textContent, /Chave fictícia/);
+    assert.match(
+      document.querySelector('.ev-note-detail').textContent,
+      /frete declarado nesta nota/,
+    );
+    assert.equal(calls.filter((c) => c.action === 'assistant.send').length, 1);
+    await click('.ev-note-detail > button');
+    assert.match(document.querySelector('#ev-attachment-list').textContent, /nota-teste.xml/);
+    assert.equal(document.querySelector('#ev-message').value, '');
+    assert.ok(calls.filter((c) => c.action === 'file.get').every((c) => c.projectId === projectId));
+  } finally {
+    await env.dispose();
+  }
+});
+
 test('chat connection failure preserves the message and retries without a local-project fallback', async () => {
   const env = environment();
   let fail = true;
   window.cyroEV = {
     dirty: async () => {},
-    request: async () =>
-      fail ? { error: 'Espaços ainda não ativados.' } : { reply: 'Você ainda não criou espaços.' },
+    request: async (c) =>
+      c.action === 'files.list'
+        ? { files: [], next: null }
+        : fail
+          ? { error: 'Espaços ainda não ativados.' }
+          : { reply: 'Você ainda não criou espaços.' },
   };
   try {
     await env.mount(env.EVWorkspace, { hidden: false });

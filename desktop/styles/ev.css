@@ -1,8 +1,101 @@
 .ev-chat {
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 0;
   padding: 0 34px;
+}
+.ev-chat.has-notes {
+  grid-template-columns: minmax(0, 1fr) 310px;
+  column-gap: 20px;
+}
+.ev-chat > .ev-chat-heading,
+.ev-chat > .ev-chat-history,
+.ev-chat > .ev-chat-input {
+  grid-column: 1;
+  min-width: 0;
+}
+.ev-notes {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 0 20px 18px;
+  border-left: 1px solid var(--border);
+  font-size: 12px;
+}
+.ev-notes header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ev-notes h2 {
+  font-size: 15px;
+}
+.ev-notes h3 {
+  font-size: 13px;
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+.ev-notes input,
+.ev-notes select {
+  width: 100%;
+  min-width: 0;
+  margin: 10px 0;
+}
+.ev-notes > ul {
+  list-style: none;
+  padding: 0;
+}
+.ev-notes > ul button {
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.ev-notes button[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+.ev-notes small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.ev-note-detail {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  overflow-wrap: anywhere;
+}
+.ev-note-detail table {
+  font-size: 11px;
+}
+.ev-note-detail td {
+  padding: 6px 3px;
+}
+.ev-note-detail .ev-chat-result {
+  padding: 8px;
+}
+@media (max-width: 1100px) {
+  .ev-chat.has-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ev-notes {
+    position: absolute;
+    z-index: 5;
+    top: 85px;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 90%);
+    padding: 18px;
+    background: var(--side, #111827);
+    box-shadow: -12px 0 25px #0005;
+  }
 }
 .ev-chat[hidden],
 .main-panel[hidden] {

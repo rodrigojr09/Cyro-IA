@@ -3,6 +3,7 @@ import { Markdown } from '../ui/components';
 import { publicError, readPreference, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
+import { EVNotes } from './EVNotes';
 
 export async function evRequest(input) {
   if (!window.cyroEV) throw Error('Espaços Virtuais indisponíveis nesta sessão.');
@@ -96,6 +97,7 @@ function FiscalData({ data }) {
             ['Destinatário', data.dest?.name],
             ['CNPJ destinatário', data.destCnpj],
             ['Valor do documento', data.total],
+            ['Frete declarado', data.freight?.value],
             ['Valor da carga', data.cargoValue],
             ['Peso (kg)', data.weight],
           ].map(([label, value]) => (
@@ -114,7 +116,7 @@ function Analysis({ item, projectId, hidden }) {
   const [job, setJob] = useState(item),
     [error, setError] = useState('');
   useEffect(() => {
-    if (hidden || ['DONE', 'ERROR'].includes(job.state)) return;
+    if (hidden || (['DONE', 'ERROR'].includes(job.state) && Object.hasOwn(job, 'result'))) return;
     let disposed = false;
     const timer = setTimeout(
       () =>
@@ -352,6 +354,9 @@ export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled 
     [notice, setNotice] = useState(''),
     [contextFiles, setContextFiles] = useState([]);
   const [attached, setAttached] = useState([]);
+  const [notesOpen, setNotesOpen] = useState(
+    () => !window.matchMedia?.('(max-width: 1100px)').matches,
+  );
   const changeQuestion = (value) => {
     operation.current = null;
     confirmation.current = null;
@@ -615,7 +620,7 @@ export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled 
   }
   return (
     <section
-      className="ev-chat main-panel"
+      className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
       hidden={hidden}
       aria-label="Espaço Virtual por conversa"
       aria-busy={loading}
@@ -625,6 +630,14 @@ export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled 
           <span>CYRO EV · LOGÍSTICO</span>
           <h1>{space?.name || 'Espaços Virtuais'}</h1>
         </div>
+        <button
+          type="button"
+          className="ev-notes-toggle"
+          aria-expanded={notesOpen}
+          onClick={() => setNotesOpen((old) => !old)}
+        >
+          Notas e arquivos
+        </button>
         <small role="status">
           {loading ? 'Cyro está trabalhando…' : stateLabel(space?.state) || 'Converse com o Cyro'}
         </small>
@@ -718,6 +731,31 @@ export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled 
           attachmentCaption="XML, CSV, XLSX, PDF e TXT · até 8 MB por arquivo. Os anexos são enviados ao espaço; remover da mensagem preserva o original."
         />
       </div>
+      {notesOpen && (
+        <EVNotes
+          key={space?.id || 'lobby'}
+          projectId={space?.id}
+          hidden={hidden}
+          refreshKey={messages.length + ':' + contextFiles.join(',')}
+          request={evRequest}
+          onUse={(file) => {
+            operation.current = null;
+            confirmation.current = null;
+            setAttached((old) => [...old.filter((f) => f.id !== file.id), file].slice(-5));
+            setContextFiles((old) => [...new Set([...old, file.id])].slice(-5));
+            input.current?.focus();
+          }}
+          renderFiscal={(data) => <FiscalData data={data} />}
+          renderAnalysis={(item) =>
+            item &&
+            (item.kind === 'CHAT' ? (
+              <Markdown text={item.reply || 'Resposta ainda não disponível.'} />
+            ) : (
+              <Analysis key={item.id} item={item} projectId={space?.id} hidden={hidden} />
+            ))
+          }
+        />
+      )}
     </section>
   );
 }
