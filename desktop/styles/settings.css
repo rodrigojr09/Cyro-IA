@@ -171,3 +171,18 @@
 .archived-chat-title {
   font-style: italic;
 }
+
+.memory-panel { min-width: 0; display: grid; gap: 12px; }
+.memory-summary, .memory-message { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.memory-chat { max-height: 260px; overflow-y: auto; }
+.memory-message { padding: 10px 12px; border-radius: 10px; background: var(--surface); }
+.memory-message.user { border-left: 2px solid var(--accent); }
+.memory-confirm { padding: 12px; border: 1px solid var(--accent); border-radius: 10px; }
+.memory-panel form { display: grid; gap: 8px; }
+.memory-panel textarea { min-height: 80px; width: 100%; resize: vertical; }
+.memory-toggle { display: flex !important; gap: 10px; align-items: center; }
+.memory-toggle input { width: auto !important; }
+
+.ev-conversation-nav { display:flex; align-items:end; gap:12px; flex-wrap:wrap; margin:12px 0; }
+.ev-conversation-nav label { display:grid; gap:6px; flex:1; min-width:180px; }
+.ev-conversation-nav select { width:100%; }

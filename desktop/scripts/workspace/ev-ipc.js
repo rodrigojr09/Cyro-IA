@@ -63,6 +63,10 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
           : await service().request(
               [
                 'memory.list',
+                'memory.message',
+                'memory.confirm',
+                'memory.settings.get',
+                'memory.settings',
                 'memory.put',
                 'memory.correct',
                 'memory.forget',
