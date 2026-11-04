@@ -29,6 +29,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     attachments = useAttachments();
   const [evActive, setEVActive] = useState(!!window.cyroEV),
     [evDirty, setEVDirty] = useState(false);
+  const [activeEVId, setActiveEVId] = useState(null);
   const [input, setInput] = useState(''),
     [submitting, setSubmitting] = useState(false),
     [search, setSearch] = useState(''),
@@ -323,6 +324,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       <EVWorkspace
         hidden={!evActive}
         onDirty={setEVDirty}
+        onSpaceChange={setActiveEVId}
         speaker={speaker}
         voiceEnabled={preferences.voice}
       />
@@ -622,6 +624,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         onRun={run}
       />
       <Settings
+        memoryProjectId={evActive ? activeEVId : undefined}
         open={settings}
         onClose={() => setSettings(false)}
         workspace={workspace}

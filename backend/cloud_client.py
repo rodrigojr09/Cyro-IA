@@ -12,6 +12,7 @@ _client = None
 _storage_origin = None
 _storage_credential = None
 stream_sink = contextvars.ContextVar("jarvis_stream_sink", default=None)
+memory_context = contextvars.ContextVar("cyro_memory_context", default=None)
 
 
 def configure(origin, credential):
@@ -124,6 +125,9 @@ class Completions:
             for message in kwargs["messages"]
         ]
         sink = stream_sink.get()
+        scope = memory_context.get()
+        if scope:
+            kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), "memory_context": scope}
         if sink is None:
             return await _client.chat.completions.create(**kwargs)
         from openai.types.chat import ChatCompletion

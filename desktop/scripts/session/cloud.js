@@ -31,7 +31,11 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
   }
   async function request(route, method = 'GET', payload) {
     const integration = route === '/api/integrations/spotify';
-    const ev = route === '/api/ev' || route === '/api/ev/chat' || route === '/api/ev/assistant';
+    const ev =
+      route === '/api/ev' ||
+      route === '/api/ev/chat' ||
+      route === '/api/ev/assistant' ||
+      route === '/api/memory';
     if (!session) throw Error('Entre com sua conta.');
     try {
       const response = await fetcher(base + route, {

@@ -343,7 +343,13 @@ function Artifact({ item, projectId, hidden }) {
   return null;
 }
 
-export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled = false }) {
+export function EVWorkspace({
+  hidden,
+  onDirty = () => {},
+  onSpaceChange = () => {},
+  speaker,
+  voiceEnabled = false,
+}) {
   const [space, setSpace] = useState(null),
     [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]),
@@ -354,6 +360,9 @@ export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled 
     [notice, setNotice] = useState(''),
     [contextFiles, setContextFiles] = useState([]);
   const [attached, setAttached] = useState([]);
+  useEffect(() => {
+    onSpaceChange(space?.id || null);
+  }, [space?.id]);
   const [notesOpen, setNotesOpen] = useState(
     () => !window.matchMedia?.('(max-width: 1100px)').matches,
   );

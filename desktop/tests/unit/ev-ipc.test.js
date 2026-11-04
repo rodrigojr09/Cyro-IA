@@ -63,6 +63,8 @@ test('EV IPC authenticates main frame, restricts routes, rejects late account re
     assert.equal(await draft(event, { projectId, operation: 'read' }), null);
     await invoke(event, { action: 'chat.send', projectId });
     assert.equal(requests.at(-1).route, '/api/ev/chat');
+    await invoke(event, { action: 'memory.list', scope: 'MAIN' });
+    assert.equal(requests.at(-1).route, '/api/memory');
     let resolve;
     pending = new Promise((r) => {
       resolve = r;

@@ -5,6 +5,33 @@ import cloud_client
 
 
 class CloudAdapterTests(unittest.TestCase):
+    def test_memory_context_follows_current_request_and_is_not_shared_between_tasks(self):
+        async def run():
+            transport = AsyncMock()
+            client = type("Client", (), {"chat": type("Chat", (), {"completions": type("Completions", (), {"create": transport})()})()})()
+            with patch.object(cloud_client, "_client", client):
+                marker = cloud_client.memory_context.set({"conversationId": "synthetic-conversation", "operationId": "synthetic-operation"})
+                try:
+                    await cloud_client.Completions().create(model="test", messages=[{"role": "user", "content": "Mensagem"}])
+                    self.assertEqual(transport.call_args.kwargs["extra_body"]["memory_context"]["conversationId"], "synthetic-conversation")
+                finally:
+                    cloud_client.memory_context.reset(marker)
+                await cloud_client.Completions().create(model="test", messages=[{"role": "user", "content": "Outra conversa"}])
+                self.assertNotIn("extra_body", transport.call_args.kwargs)
+                async def simultaneous(conversation):
+                    scoped = cloud_client.memory_context.set({"conversationId": conversation})
+                    try:
+                        await asyncio.sleep(0)
+                        await cloud_client.Completions().create(model="test", messages=[{"role": "user", "content": conversation}])
+                    finally:
+                        cloud_client.memory_context.reset(scoped)
+                await asyncio.gather(simultaneous("first-chat"), simultaneous("second-chat"))
+                concurrent = transport.call_args_list[-2:]
+                for call in concurrent:
+                    self.assertEqual(call.kwargs["messages"][0]["content"], call.kwargs["extra_body"]["memory_context"]["conversationId"])
+                self.assertIsNone(cloud_client.memory_context.get())
+        asyncio.run(run())
+
     def test_stream_keeps_tool_arguments_and_usage(self):
         from types import SimpleNamespace
         from openai.types.chat import ChatCompletionChunk

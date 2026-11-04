@@ -61,11 +61,21 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
         input.action === 'catalog'
           ? await service().request('/api/ev')
           : await service().request(
-              input.action?.startsWith('assistant.')
-                ? '/api/ev/assistant'
-                : input.action === 'chat.send'
-                  ? '/api/ev/chat'
-                  : '/api/ev',
+              [
+                'memory.list',
+                'memory.put',
+                'memory.correct',
+                'memory.forget',
+                'memory.history',
+                'memory.rebuild',
+                'memory.migrate',
+              ].includes(input.action)
+                ? '/api/memory'
+                : input.action?.startsWith('assistant.')
+                  ? '/api/ev/assistant'
+                  : input.action === 'chat.send'
+                    ? '/api/ev/chat'
+                    : '/api/ev',
               'POST',
               input,
             );

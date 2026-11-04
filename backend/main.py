@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import secrets
+import uuid
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -135,7 +136,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="8.1.1" if CLOUD else "2.0.1-dev.0",
+    version="8.1.2" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -1080,7 +1081,7 @@ async def process_chat(req: ChatRequest):
                     + idea[:10000],
                 }
             )
-    if req.chat_id and not is_quick:
+    if req.chat_id and not is_quick and not CLOUD:
         messages.append(
             {
                 "role": "user",
@@ -1157,6 +1158,10 @@ async def process_chat(req: ChatRequest):
             await asyncio.to_thread(
                 attachment_store.bind, req.attachments, owner, chat_id, user_message_id
             )
+    memory_token = None
+    if CLOUD:
+        from cloud_client import memory_context
+        memory_token = memory_context.set({"conversationId": chat_id, "operationId": str(uuid.uuid4())})
     try:
         reply, pending_actions = await converse(
             client, MODEL, messages, mode, service, api_gate, record_usage
@@ -1167,6 +1172,9 @@ async def process_chat(req: ChatRequest):
 
             raise StorageFullError() from None
         raise HTTPException(502, f"Falha na API de IA: {type(exc).__name__}") from exc
+    finally:
+        if memory_token is not None:
+            memory_context.reset(memory_token)
     if getattr(service, "spotify_result", None):
         return {**service.spotify_result, "chat_id": chat_id}
     reply = redact(reply)

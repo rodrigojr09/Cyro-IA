@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardSettings } from '../clipboard/Clipboard';
 import { Integrations } from '../integrations/Integrations';
 import { Storage } from '../storage/Storage';
+import { MemoryPanel } from '../memory/MemoryPanel';
 export function Settings({
   open,
   onClose,
@@ -11,6 +12,7 @@ export function Settings({
   onPreferences,
   onRun,
   onView,
+  memoryProjectId,
 }) {
   const page = useRef(null);
   useEffect(() => {
@@ -42,6 +44,7 @@ export function Settings({
     'Aparência',
     'Voz',
     'Armazenamento',
+    'Memória',
     'Chats arquivados',
     'Quick Chat',
     'Área de transferência',
@@ -107,6 +110,7 @@ export function Settings({
           </nav>
           <div id="settings-content">
             <SettingsSectionBoundary key={category}>
+              {category === 'Memória' && <MemoryPanel projectId={memoryProjectId} />}
               {category === 'Aparência' && (
                 <>
                   <h3>Aparência</h3>
@@ -272,7 +276,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 8.1.1</p>
+                  <p>Versão 8.1.2</p>
                   <button
                     onClick={() =>
                       perform(async () => {
