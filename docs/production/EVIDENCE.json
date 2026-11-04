@@ -1,0 +1,202 @@
+{
+  "candidate": "8.3.0-rc.1",
+  "date": "2026-11-04",
+  "recommendation": "NO-GO",
+  "codeCommits": {
+    "cyro-backend": "f0e8298c934a11984e2972010bca3438dc94675f",
+    "cyro-files": "768782cc6fe90e6ca053e898bfbf22366572c25b",
+    "cyro-desktop": "9e192425306797ef1f96fc3f0915245a76cbef24",
+    "cyro-cloud": "577da6e503f954f2381c2e3c1c1024c6a99e5867"
+  },
+  "nodeAudit": {
+    "cyro-backend": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "cyro-files": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "cyro-desktop": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "cyro-cloud": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "pythonAudit": "No known vulnerabilities found, resolved runtime requirements",
+  "tests": {
+    "apiFull": 134,
+    "apiRedisRecoveryFocused": 1,
+    "filesPassed": 77,
+    "filesExternalSkipped": 7,
+    "desktopJS": 173,
+    "desktopPython": 219,
+    "desktopStartup": 31,
+    "platformTools": 4,
+    "desktopTools": 2,
+    "electronScenarios": 8,
+    "cloudTests": 15,
+    "cloudLayoutChecks": 70,
+    "platformIntegrationChecks": 13
+  },
+  "desktopMetrics": [
+    {
+      "scenario": "EV conversation and memory settings",
+      "memoryUnit": "KiB",
+      "processes": [
+        {
+          "type": "Browser",
+          "cpu": {
+            "cumulativeCPUUsage": 0.889496,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 144016,
+            "peakWorkingSetSize": 179336,
+            "privateBytes": 113972
+          }
+        },
+        {
+          "type": "GPU",
+          "cpu": {
+            "cumulativeCPUUsage": 0.287914,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 69604,
+            "peakWorkingSetSize": 85880,
+            "privateBytes": 14648
+          }
+        },
+        {
+          "type": "Utility",
+          "cpu": {
+            "cumulativeCPUUsage": 0.083846,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 42116,
+            "peakWorkingSetSize": 42120,
+            "privateBytes": 11364
+          }
+        },
+        {
+          "type": "Tab",
+          "cpu": {
+            "cumulativeCPUUsage": 0.992447,
+            "percentCPUUsage": 0,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 121520,
+            "peakWorkingSetSize": 121524,
+            "privateBytes": 56940
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "idle 3 seconds after interaction",
+      "memoryUnit": "KiB",
+      "processes": [
+        {
+          "type": "Browser",
+          "cpu": {
+            "cumulativeCPUUsage": 0.910597,
+            "percentCPUUsage": 0.17530290241324994,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 152192,
+            "peakWorkingSetSize": 179336,
+            "privateBytes": 121992
+          }
+        },
+        {
+          "type": "GPU",
+          "cpu": {
+            "cumulativeCPUUsage": 0.296402,
+            "percentCPUUsage": 0.070523807102432,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 69744,
+            "peakWorkingSetSize": 85880,
+            "privateBytes": 14656
+          }
+        },
+        {
+          "type": "Utility",
+          "cpu": {
+            "cumulativeCPUUsage": 0.084446,
+            "percentCPUUsage": 0.0049852088852375,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 42236,
+            "peakWorkingSetSize": 42240,
+            "privateBytes": 11368
+          }
+        },
+        {
+          "type": "Tab",
+          "cpu": {
+            "cumulativeCPUUsage": 0.995137,
+            "percentCPUUsage": 0.02235039773737535,
+            "idleWakeupsPerSecond": 0
+          },
+          "memory": {
+            "workingSetSize": 121536,
+            "peakWorkingSetSize": 121540,
+            "privateBytes": 56952
+          }
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Synthetic fixtures, not production services",
+    "No real backup restore or clean-Windows installer validation",
+    "No publication or production migration"
+  ],
+  "memoryBenchmark": {
+    "records": 101,
+    "structuredJsonTokens": 7263,
+    "summaryTokens": 486,
+    "additionalFactTokens": 16,
+    "retrievalQueries": 4,
+    "retrievalMs": 243.7677,
+    "automaticCaptureQueries": 23,
+    "evMetadataHistoryQueries": 0,
+    "automaticConsolidationModelCalls": 0,
+    "explicitManagementFixtureModelCalls": 2,
+    "monetaryCost": "unknown; prices not configured"
+  },
+  "gitSecretReview": {
+    "candidates": 3,
+    "classification": "synthetic healthcheck placeholder in documentation and its preserved history",
+    "realSecretsIdentified": 0
+  }
+}

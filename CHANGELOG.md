@@ -1,3 +1,10 @@
+# 8.3.0-rc.1 — 04/11/2026
+
+- Estabilização do trabalho 8.2 preservado: memória TXT/controles, chats sob demanda e cache local por sessão.
+- Correções de integração, segurança, erros, readiness, dependências e testes, conforme relatório de prontidão.
+- Candidata local; sem declaração de produção pronta, publicação, tag ou push.
+- [Evidências e pendências](docs/production/V8_3_READINESS.md).
+
 # 8.1.2 — 04/11/2026
 
 - Contexto real de conversa/EV no chat e gerenciamento em Configurações → Memória, usando exclusivamente a API central.

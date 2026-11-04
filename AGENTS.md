@@ -66,3 +66,19 @@ release/v8 e executar push normal nos remotos/branches existentes dos quatro
 repositórios, preservando instaladores anteriores. Não criar releases ou tags
 automáticas nem aplicar migrações destrutivas. O painel lateral de notas foi
 solicitado posteriormente à interface somente por chat e deve ser preservado.
+
+## Escopo vigente — v8.2.0, 04/11/2026
+
+O novo escopo fornecido pelo proprietário pertence à v8.2.0: memória automática
+com snapshots TXT, controles de captura/uso, gerenciamento por mensagem e limpeza
+confirmada; conversas comuns sob demanda e somente Quick Chat fixo. Preservar
+históricos, anexos, registros, instaladores e Backup/. Reutilizar a arquitetura
+8.1.2 e o hotfix SUPER_ADMIN. O documento novo determina não executar push sem
+nova autorização e não publicar releases automaticamente; concluir implementação,
+testes, builds e commits locais. Não aplicar migrations de produção nesta etapa.
+
+Orientação posterior: na inicialização, não buscar nem preencher cache com históricos. Buscar as mensagens somente na primeira abertura manual de cada chat e reutilizar o cache local da sessão nas próximas aberturas; não restaurar seleção com download automático de mensagens.
+
+## Escopo vigente — v8.3.0, auditoria de produção
+
+Congelamento de funcionalidades: estabilizar e validar o trabalho existente, incluindo pendências reais da v8.2.0. Preservar alterações, Backup/ e dados. Sem push, tags, releases, credenciais reais ou mudanças em produção. Candidata local 8.3.0-rc.1 (Files mantém versão independente). Evidências e bloqueadores em docs/production/V8_3_READINESS.md; aprovação final explícita necessária.

@@ -1,3 +1,5 @@
+> Estado vigente: candidata de estabilização Cyro 8.3.0-rc.1, Files0.4.0. Snapshots canônicos são TXT; captura e uso possuem controles separados e gerenciamento por mensagem exige confirmação real. MAIN acompanha chats/Quick; EV acrescenta apenas seu contexto autorizado. Os registros abaixo são históricos 8.1.2. Consulte o relatório local docs/production/V8_3_READINESS.md.
+
 # Desktop — memória 8.1.2
 
 A memória persistente pertence à Cyro API, não ao perfil local. Chat geral propaga conversationId real e operationId por requisição, isolados entre tarefas; EV usa os IDs autorizados da API. Não injeta novamente o resumo antigo da conversa geral. Histórico recente continua existindo. Quick Chat sem conversa central explicitada recebe somente MAIN.
