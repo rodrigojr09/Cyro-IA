@@ -57,7 +57,7 @@ dialog {
   padding: 0;
   border-radius: var(--radius-control);
 }
-.composer-actions button:not(#send):hover:not(:disabled) {
+.composer-actions button:not(.send-button):hover:not(:disabled) {
   background: var(--hover-surface);
 }
 .search:focus-within {

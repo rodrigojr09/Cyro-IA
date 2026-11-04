@@ -50,3 +50,10 @@ Todas as funcionalidades do EV devem ser acionadas por mensagens ao mesmo Cyro.
 Não reintroduzir barras de ferramentas, painéis de operações ou dezenas de botões.
 Tabelas, resultados e arquivos aparecem na conversa; alterações existentes exigem
 proposta e confirmação por mensagem. Preservar autorização central e idempotência.
+
+## Ajustes v8.1.1 — 04/11/2026
+
+O proprietário pediu o campo do EV igual ao chat normal, incluindo clipe de anexo
+e microfone, mantendo as operações do espaço por mensagem. Essa instrução autoriza
+os controles usuais de composição. Solicitou gerar instalador; entregar em release/v8
+preservando anteriores. Não autoriza push, publicação ou mudança de produção.

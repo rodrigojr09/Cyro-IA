@@ -320,7 +320,12 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         }
         onSettings={() => setSettings(true)}
       />
-      <EVWorkspace hidden={!evActive} onDirty={setEVDirty} />
+      <EVWorkspace
+        hidden={!evActive}
+        onDirty={setEVDirty}
+        speaker={speaker}
+        voiceEnabled={preferences.voice}
+      />
       <main className="main-panel" hidden={evActive}>
         <header className="topbar">
           <button
@@ -454,6 +459,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               />
             </Conversation>
             <Composer
+              active={!evActive}
               state={state}
               writerState={writerState}
               isWriter={isWriter}

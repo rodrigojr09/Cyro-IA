@@ -64,6 +64,9 @@ export function useDictation(onText, onStatus) {
   return {
     available,
     listening,
+    stop() {
+      recognition.current?.abort();
+    },
     async toggle() {
       if (listening) {
         recognition.current?.stop();

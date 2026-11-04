@@ -261,7 +261,7 @@ test('React composer switches microphone to send and Use inserts parenthesized t
       !!(
         document
           .querySelector('#attachment-list')
-          .compareDocumentPosition(document.querySelector('.composer')) &
+          .compareDocumentPosition(document.querySelector('#input').closest('.composer')) &
         window.Node.DOCUMENT_POSITION_FOLLOWING
       ),
       true,

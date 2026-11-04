@@ -292,9 +292,9 @@ app.whenReady().then(async () => {
       );
       await frame();
       const geometry = await js(`(() => {
-        const input=document.querySelector('.composer').getBoundingClientRect();
+        const input=document.querySelector('#input').closest('.composer').getBoundingClientRect();
         const jump=document.getElementById('jump-bottom');
-        const actions=[...document.querySelectorAll('.composer-actions button:not([hidden])')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect());
+        const actions=[...document.querySelector('#input').closest('.composer').querySelectorAll('.composer-actions button:not([hidden])')].filter(n=>getComputedStyle(n).display!=='none').map(n=>n.getBoundingClientRect());
         return {overlap:!jump.hidden && getComputedStyle(jump.parentElement).display!=='none' && jump.getBoundingClientRect().bottom>input.top,
           overflow:document.documentElement.scrollWidth>innerWidth,
           gaps:actions.slice(1).map((r,i)=>r.left-actions[i].right), font:getComputedStyle(document.getElementById('input')).fontFamily};
@@ -383,7 +383,7 @@ app.whenReady().then(async () => {
     await waitFor(`!document.querySelector('#attachment-list .attachment-card')`);
 
     await js(
-      `(() => {const data=new DataTransfer();data.items.add(new File(['Notas locais'],'notas.txt',{type:'text/plain'}));document.querySelector('.composer').dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));})()`,
+      `(() => {const data=new DataTransfer();data.items.add(new File(['Notas locais'],'notas.txt',{type:'text/plain'}));document.querySelector('#input').closest('.composer').dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));})()`,
     );
     await waitFor(`!!document.querySelector('#attachment-list .attachment-card')`);
     assert.equal(dropRequests, 1);
@@ -397,7 +397,7 @@ app.whenReady().then(async () => {
     assert.equal(attachmentStyle.preview, true);
     await shot('cyro-v621-attachment.png');
     const multiLayout = await js(
-      `(()=>{const list=document.querySelector('#attachment-list .attachment-list'),card=list.firstElementChild,copies=[];for(let i=0;i<4;i++){const copy=card.cloneNode(true);list.append(copy);copies.push(copy);}const box=document.querySelector('.composer-attachments'),field=document.querySelector('#input').getBoundingClientRect();const result={scrolls:box.scrollHeight>box.clientHeight,fieldVisible:field.top>=0&&field.bottom<=innerHeight};copies.forEach(copy=>copy.remove());return result;})()`,
+      `(()=>{const list=document.querySelector('#attachment-list .attachment-list'),card=list.firstElementChild,copies=[];for(let i=0;i<4;i++){const copy=card.cloneNode(true);list.append(copy);copies.push(copy);}const box=document.querySelector('#attachment-list').parentElement,field=document.querySelector('#input').getBoundingClientRect();const result={scrolls:box.scrollHeight>box.clientHeight,fieldVisible:field.top>=0&&field.bottom<=innerHeight};copies.forEach(copy=>copy.remove());return result;})()`,
     );
     // Compact cards may fit without scrolling; the input must remain visible.
     assert.equal(multiLayout.fieldVisible, true);

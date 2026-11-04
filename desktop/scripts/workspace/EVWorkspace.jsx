@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Markdown } from '../ui/components';
 import { publicError, readPreference, writePreference } from '../shared/bridge';
+import { Composer } from '../chat/Composer';
+import { useDictation } from '../voice/hooks';
 
 export async function evRequest(input) {
   if (!window.cyroEV) throw Error('Espaços Virtuais indisponíveis nesta sessão.');
@@ -300,7 +302,13 @@ function Artifact({ item, projectId, hidden }) {
   if (item.type === 'ANALYSIS')
     return <Analysis item={item} projectId={projectId} hidden={hidden} />;
   if (item.type === 'BATCH') return <Batch item={item} projectId={projectId} hidden={hidden} />;
-  if (item.type === 'PROPOSAL' && ['APPLIED', 'REJECTED'].includes(item.state)) return <p className="ev-chat-notice"><strong>{item.state === 'APPLIED' ? 'Alteração aplicada.' : 'Proposta rejeitada.'}</strong> {item.summary}</p>;
+  if (item.type === 'PROPOSAL' && ['APPLIED', 'REJECTED'].includes(item.state))
+    return (
+      <p className="ev-chat-notice">
+        <strong>{item.state === 'APPLIED' ? 'Alteração aplicada.' : 'Proposta rejeitada.'}</strong>{' '}
+        {item.summary}
+      </p>
+    );
   if (item.type === 'PROPOSAL')
     return (
       <div className="ev-chat-proposal">
@@ -333,7 +341,7 @@ function Artifact({ item, projectId, hidden }) {
   return null;
 }
 
-export function EVWorkspace({ hidden, onDirty = () => {} }) {
+export function EVWorkspace({ hidden, onDirty = () => {}, speaker, voiceEnabled = false }) {
   const [space, setSpace] = useState(null),
     [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]),
@@ -343,7 +351,19 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [contextFiles, setContextFiles] = useState([]);
+  const [attached, setAttached] = useState([]);
+  const changeQuestion = (value) => {
+    operation.current = null;
+    confirmation.current = null;
+    setQuestion(value.slice(0, 6000));
+  };
+  const dictation = useDictation((text) => {
+    if (!hidden && !sending.current) changeQuestion((question ? question + ' ' : '') + text);
+  }, setNotice);
   const confirmation = useRef(null);
+  useEffect(() => {
+    if (hidden || loading) dictation.stop();
+  }, [hidden, loading]);
   const proposalContext = () =>
     [...artifacts]
       .sort((a, b) => a.messageId - b.messageId)
@@ -369,12 +389,14 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
     [],
   );
   useEffect(() => {
-    const pending = !!question.trim() || loading;
+    const pending = !!question.trim() || contextFiles.length > 0 || loading;
     onDirty(pending);
     void window.cyroEV?.dirty?.(pending)?.catch(() => {});
-  }, [question, loading]);
+  }, [question, contextFiles, loading]);
   useEffect(() => {
-    const frame = requestAnimationFrame(() => scroll.current?.scrollTo?.({ top: scroll.current.scrollHeight, behavior: 'auto' }));
+    const frame = requestAnimationFrame(() =>
+      scroll.current?.scrollTo?.({ top: scroll.current.scrollHeight, behavior: 'auto' }),
+    );
     return () => cancelAnimationFrame(frame);
   }, [messages, artifacts, loading]);
   async function apply(out) {
@@ -417,7 +439,7 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
     await apply(out);
     if (out.space?.state === 'READY') {
       const draft = await window.cyroEV.draft({ channel: 'CHAT', operation: 'read', projectId });
-      if (draft?.question && epoch === generation.current) {
+      if ((draft?.question || draft?.fileIds?.length) && epoch === generation.current) {
         if (draft.conversationId && draft.conversationId !== out.conversation?.id)
           await apply(
             await evRequest({
@@ -426,8 +448,15 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
               conversationId: draft.conversationId,
             }),
           );
-        setQuestion((old) => old || draft.question);
+        setQuestion((old) => old || draft.question || '');
         setContextFiles(draft.fileIds || []);
+        const recovered = await Promise.allSettled(
+          (draft.fileIds || [])
+            .slice(0, 5)
+            .map((id) => evRequest({ action: 'file.get', projectId, id })),
+        );
+        if (epoch === generation.current)
+          setAttached(recovered.filter((r) => r.status === 'fulfilled').map((r) => r.value.file));
         operation.current = draft.operationId;
         confirmation.current = draft.confirmationProposalId || null;
         setNotice('Rascunho recuperado. Revise a mensagem antes de enviar.');
@@ -459,7 +488,7 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
     return () => clearTimeout(timer);
   }, [hidden, space, loading]);
   useEffect(() => {
-    if (!question.trim() || !space || !conversation) return;
+    if ((!question.trim() && !contextFiles.length) || !space || !conversation) return;
     const timer = setTimeout(
       () =>
         void window.cyroEV
@@ -481,14 +510,51 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
     );
     return () => clearTimeout(timer);
   }, [question, conversation, contextFiles]);
+  async function upload(projectId) {
+    const uploaded = await window.cyroEV.upload(projectId);
+    if (!active.current) return;
+    if (uploaded.files?.length) {
+      operation.current = null;
+      confirmation.current = null;
+      setAttached((old) =>
+        [...old.filter((f) => !uploaded.files.some((n) => n.id === f.id)), ...uploaded.files].slice(
+          -5,
+        ),
+      );
+      setContextFiles((old) =>
+        [...new Set([...old, ...uploaded.files.map((f) => f.id)])].slice(-5),
+      );
+      setNotice(
+        `${uploaded.files.length} arquivo(s) enviado(s) ao espaço. Até 5 ficam selecionados como contexto da mensagem.`,
+      );
+    }
+    if (uploaded.failures?.length)
+      setError(uploaded.failures.map((f) => f.name + ': ' + f.error).join('\n'));
+  }
+  async function chooseAttachments() {
+    if (loading || sending.current) return;
+    if (!space || space.state !== 'READY') {
+      setNotice('Crie ou abra um espaço antes de anexar arquivos.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await upload(space.id);
+    } catch (e) {
+      setError(publicError(e));
+    } finally {
+      if (active.current) setLoading(false);
+    }
+  }
   async function send(event) {
-    event.preventDefault();
-    if (sending.current || !question.trim()) return;
+    event?.preventDefault();
+    if (sending.current || loading || (!question.trim() && !contextFiles.length)) return;
     sending.current = true;
     setLoading(true);
     setError('');
     setNotice('');
-    const text = question,
+    const text = question.trim() || 'Analise os arquivos anexados.',
       previousSpace = space,
       operationId = (operation.current ||= crypto.randomUUID());
     try {
@@ -512,6 +578,7 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
         );
       await apply(out);
       setQuestion('');
+      setContextFiles([]);
       operation.current = null;
       confirmation.current = null;
       if (previousSpace)
@@ -522,19 +589,17 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
         });
       if (out.effect === 'CLEAR_CONTEXT') setContextFiles([]);
       if ((out.effect === 'UPLOAD' || out.effects?.some((e) => e.type === 'UPLOAD')) && out.space) {
-        const uploaded = await window.cyroEV.upload(out.space.id);
-        if (uploaded.files?.length) {
-          setContextFiles(uploaded.files.slice(0, 5).map((f) => f.id));
-          setNotice(
-            `${uploaded.files.length} arquivo(s) enviado(s). Agora diga ao Cyro o que deseja fazer com eles.`,
-          );
-        }
-        if (uploaded.failures?.length)
-          setError(uploaded.failures.map((f) => f.name + ': ' + f.error).join('\n'));
+        await upload(out.space.id);
       }
       for (const effect of out.effects || [])
         if (effect.type === 'DOWNLOAD')
           await window.cyroEV.download({ projectId: out.space.id, fileId: effect.file.id });
+      if (voiceEnabled && speaker) {
+        const reply =
+          out.reply ||
+          [...(out.messages || [])].reverse().find((m) => m.role === 'assistant')?.content;
+        if (reply) void speaker.speak(reply).catch((e) => setNotice(publicError(e)));
+      }
     } catch (e) {
       if (active.current) {
         setError(publicError(e));
@@ -609,44 +674,50 @@ export function EVWorkspace({ hidden, onDirty = () => {} }) {
         )}
         {loading && <p className="ev-chat-working">Cyro está trabalhando…</p>}
       </div>
-      <form className="ev-chat-composer" onSubmit={send}>
-        <label className="sr-only" htmlFor="ev-message">
-          Mensagem ao Cyro
-        </label>
-        <textarea
-          id="ev-message"
-          ref={input}
-          value={question}
-          maxLength={6000}
-          rows={2}
-          disabled={loading}
-          placeholder={space ? 'Peça ao Cyro…' : 'Crie ou abra um espaço por mensagem…'}
-          onChange={(event) => {
-            operation.current = null;
-            confirmation.current = null;
-            setQuestion(event.target.value);
+      <div className="ev-chat-input">
+        <Composer
+          idPrefix="ev-"
+          inputId="ev-message"
+          state={{ ready: !hidden, busy: loading, chat: conversation }}
+          writerState={{ busy: false }}
+          isWriter={false}
+          active={!hidden}
+          busy={loading}
+          canSend={!loading && !hidden}
+          input={question}
+          inputRef={input}
+          onInput={changeQuestion}
+          onSend={send}
+          disableInput={loading}
+          cancelable={false}
+          placeholder={space ? 'Converse com o Cyro...' : 'Crie ou abra um espaço por mensagem…'}
+          attachments={{
+            files: contextFiles.map(
+              (id) =>
+                attached.find((f) => f.id === id) || {
+                  id,
+                  name: 'Arquivo selecionado',
+                  kind: 'document',
+                },
+            ),
+            choose: chooseAttachments,
+            remove: (id) => {
+              operation.current = null;
+              setContextFiles((old) => old.filter((item) => item !== id));
+            },
+            download: (fileId) => window.cyroEV.download({ projectId: space.id, fileId }),
+            supportsImages: false,
+            paste: async () => {
+              setNotice('Use o clipe para selecionar XML, CSV, XLSX, PDF ou TXT para este espaço.');
+              return false;
+            },
           }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              void send(event);
-            }
-          }}
+          dictation={dictation}
+          onDictation={() => void dictation.toggle().catch((e) => setNotice(publicError(e)))}
+          status={loading ? 'Cyro está trabalhando…' : notice || 'Pronto'}
+          attachmentCaption="XML, CSV, XLSX, PDF e TXT · até 8 MB por arquivo. Os anexos são enviados ao espaço; remover da mensagem preserva o original."
         />
-        <button
-          aria-label="Enviar mensagem ao Cyro"
-          disabled={loading || !question.trim()}
-          type="submit"
-        >
-          ↑
-        </button>
-      </form>
-      <p className="ev-chat-hint">
-        {contextFiles.length
-          ? `${contextFiles.length} arquivo(s) como contexto. Diga “limpar anexos” para retirar a seleção.`
-          : 'Para anexar, diga “enviar arquivos”.'}{' '}
-        Enter para enviar · Shift+Enter para nova linha.
-      </p>
+      </div>
     </section>
   );
 }

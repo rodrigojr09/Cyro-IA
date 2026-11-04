@@ -20,6 +20,13 @@ export function Composer({
   onCancel,
   onClearSelection,
   status,
+  idPrefix = '',
+  inputId = 'input',
+  placeholder = 'Converse com o Cyro...',
+  attachmentCaption = 'Até 5 anexos de 5 MB cada. Originais ficam neste computador; a análise envia conteúdo à IA.',
+  active = true,
+  disableInput = false,
+  cancelable = true,
 }) {
   useLayoutEffect(() => {
     const field = inputRef.current;
@@ -30,35 +37,40 @@ export function Composer({
   return (
     <footer className="composer-wrap">
       <div className="composer-attachments">
-        <Clipboard
-          context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
-          canClaim={state.ready && !busy && !settings && !library}
-          onUseText={(text) => {
-            const next = (input ? input + '\n' : '') + '(' + text + ')\n';
-            if (next.length > 6000) return false;
-            onInput(next);
-            inputRef.current?.focus();
-            return true;
-          }}
-          onAttachImage={
-            !isWriter
-              ? async (dataURL) => {
-                  const match =
-                    /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(dataURL);
-                  if (!match) return false;
-                  const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0));
-                  return attachments.paste(
-                    [new window.File([bytes], 'Imagem copiada.png', { type: match[1] })],
-                    !canSend ? 'Aguarde o chat ficar disponível para anexar.' : '',
-                  );
-                }
-              : undefined
-          }
-        />
-        <div id="attachment-list">
+        {active && (
+          <Clipboard
+            context={state.chat?.id || 'draft:' + (state.project?.id || 'general')}
+            canClaim={active && state.ready && !busy && !settings && !library}
+            onUseText={(text) => {
+              const next = (input ? input + '\n' : '') + '(' + text + ')\n';
+              if (next.length > 6000) return false;
+              onInput(next);
+              inputRef.current?.focus();
+              return true;
+            }}
+            onAttachImage={
+              !isWriter && attachments.supportsImages !== false
+                ? async (dataURL) => {
+                    const match =
+                      /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(
+                        dataURL,
+                      );
+                    if (!match) return false;
+                    const bytes = Uint8Array.from(atob(match[2]), (char) => char.charCodeAt(0));
+                    return attachments.paste(
+                      [new window.File([bytes], 'Imagem copiada.png', { type: match[1] })],
+                      !canSend ? 'Aguarde o chat ficar disponível para anexar.' : '',
+                    );
+                  }
+                : undefined
+            }
+          />
+        )}
+        <div id={idPrefix + 'attachment-list'}>
           <AttachmentList
             files={attachments.files}
             onRemove={busy ? undefined : attachments.remove}
+            onSave={attachments.download}
           />
         </div>
       </div>
@@ -86,7 +98,8 @@ export function Composer({
         }}
       >
         <button
-          id="attach-files"
+          id={idPrefix + 'attach-files'}
+          className="attach-files"
           aria-label="Anexar arquivos"
           hidden={isWriter}
           disabled={!canSend || attachments.files.length >= 5}
@@ -95,12 +108,13 @@ export function Composer({
           <Icon name="paperclip" />
         </button>
         <textarea
-          id="input"
+          id={inputId}
           ref={inputRef}
           value={input}
           maxLength={6000}
           rows={1}
-          placeholder="Converse com o Cyro..."
+          placeholder={placeholder}
+          disabled={disableInput}
           aria-label="Mensagem"
           onChange={(event) => onInput(event.target.value)}
           onPaste={(event) => {
@@ -133,7 +147,7 @@ export function Composer({
         />
         <div className="composer-actions">
           <button
-            id="microphone"
+            id={idPrefix + 'microphone'}
             hidden={
               !!input.trim() || attachments.files.length > 0 || state.busy || writerState.busy
             }
@@ -150,15 +164,15 @@ export function Composer({
             <Icon name="mic" />
           </button>
           <button
-            id="cancel-response"
+            id={idPrefix + 'cancel-response'}
             aria-label="Cancelar resposta"
-            hidden={!state.busy && !writerState.busy}
+            hidden={!cancelable || (!state.busy && !writerState.busy)}
             onClick={onCancel}
           >
             ■
           </button>
           <button
-            id="send"
+            id={idPrefix + 'send'}
             hidden={(!input.trim() && !attachments.files.length) || state.busy || writerState.busy}
             className="send-button"
             aria-label="Enviar mensagem"
@@ -175,13 +189,13 @@ export function Composer({
         </button>
       )}
       <div className="composer-caption">
-        <span id="status" role="status">
+        <span id={idPrefix + 'status'} role="status">
           {attachments.error || status}
         </span>
         <span>Enter para enviar · Shift+Enter para nova linha</span>
       </div>
       <p className="attachment-caption" hidden={isWriter}>
-        Até 5 anexos de 5 MB cada. Originais ficam neste computador; a análise envia conteúdo à IA.
+        {attachmentCaption}
       </p>
       {state.storage?.cloud?.blocked && (
         <p className="storage-blocked" role="alert">

@@ -1,6 +1,6 @@
 .ev-chat {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 0;
   padding: 0 34px;
 }
@@ -76,6 +76,14 @@
 .ev-chat-message.user > span {
   color: var(--muted, #9baabd);
 }
+.ev-chat-input {
+  width: min(100%, 880px);
+  justify-self: center;
+  min-width: 0;
+}
+.ev-chat-input .composer-wrap {
+  width: 100%;
+}
 .ev-chat-composer {
   width: min(100%, 880px);
   justify-self: center;
@@ -90,7 +98,16 @@
 .ev-chat-composer:focus-within {
   border-color: var(--accent);
 }
-.ev-chat-composer .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ev-chat-composer .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .ev-chat-composer textarea {
   width: 100%;
   resize: vertical;

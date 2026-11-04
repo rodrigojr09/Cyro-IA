@@ -83,14 +83,16 @@ app.whenReady().then(async () => {
     for (const [channel, value] of [
       ['cyro:updates-state', { phase: 'disabled' }],
       ['jarvis:voice-preference', null],
+      ['jarvis:audio-claim', null],
       ['jarvis:workspace-ready', true],
-      ['jarvis:initial-settings', {}],
+      ['jarvis:initial-settings', { voice: false }],
       ['clipboard:state', { pending: false, owned: {}, settings: { enabled: false } }],
       ['clipboard:claim', { status: 'empty' }],
       ['writer:dirty', null],
     ])
       ipcMain.handle(channel, () => value);
     ipcMain.handle('jarvis:api', (_event, route) => {
+      if (route === '/settings') return { ok: true, data: { voice: false } };
       if (route === '/storage') return { ok: true, data: { cloud: { blocked: false } } };
       if (route === '/workspace/view') return { ok: true, data: { project: null } };
       return { ok: true, data: { projects: [], chats: [], histories: {} } };
@@ -121,45 +123,45 @@ app.whenReady().then(async () => {
       );
     await win.loadFile(path.resolve(__dirname, '../../index.html'));
     await wait(`!!document.getElementById('ev-message')`);
-    assert.equal(await js(`document.querySelectorAll('.ev-chat button').length`), 1);
+    assert.ok(
+      await js(
+        `!!document.querySelector('#ev-attach-files') && !!document.querySelector('#ev-microphone') && !!document.querySelector('#ev-send')`,
+      ),
+    );
     assert.equal(
       await js(`document.querySelectorAll('#add-project,.ev-tabs,.project-row').length`),
       0,
     );
     assert.equal(await js(`typeof require`), 'undefined');
     await input('#ev-message', 'crie um espaço chamado Transportadora de teste');
-    await js(
-      `document.querySelector('.ev-chat-composer').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))`,
-    );
+    await js(`document.querySelector('#ev-send').click()`);
     await wait(
       `document.querySelector('.ev-chat-heading h1').textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
     );
     await input('#ev-message', 'edite o primeiro frete para 22,50');
-    await js(
-      `document.querySelector('.ev-chat-composer').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))`,
-    );
+    await js(`document.querySelector('#ev-send').click()`);
     await wait(`!!document.querySelector('.ev-chat-error')`);
     assert.equal(
       await js(`document.getElementById('ev-message').value`),
       'edite o primeiro frete para 22,50',
     );
     fail = false;
-    await js(
-      `document.querySelector('.ev-chat-composer').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))`,
-    );
+    await js(`document.querySelector('#ev-send').click()`);
     await wait(
       `!!document.querySelector('.ev-chat-proposal') && !document.getElementById('ev-message').disabled`,
     );
     const retries = calls.filter((c) => c.message === 'edite o primeiro frete para 22,50');
     assert.equal(retries[0].operationId, retries[1].operationId);
     await input('#ev-message', 'confirmar');
-    await js(
-      `document.querySelector('.ev-chat-composer').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))`,
-    );
+    await js(`document.querySelector('#ev-send').click()`);
     await wait(
       `!!document.querySelector('.ev-chat-table') && !document.getElementById('ev-message').disabled`,
     );
-    assert.equal(await js(`document.querySelectorAll('.ev-chat button').length`), 1);
+    assert.ok(
+      await js(
+        `!!document.querySelector('#ev-attach-files') && !!document.querySelector('#ev-microphone') && !!document.querySelector('#ev-send')`,
+      ),
+    );
     const shots = path.resolve(__dirname, '../../../build/v8');
     await fs.mkdir(shots, { recursive: true });
     await fs.writeFile(
@@ -168,7 +170,7 @@ app.whenReady().then(async () => {
     );
     assert.ok(calls.every((c) => c.action.startsWith('assistant.')));
     console.log(
-      'EV Electron: chat-only creation, one send button, retry, protected IPC, human confirmation and inline table passed.',
+      'EV Electron: chat-only creation, shared composer, retry, protected IPC, human confirmation and inline table passed.',
     );
     clearTimeout(timer);
     win.destroy();

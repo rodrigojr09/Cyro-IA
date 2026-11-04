@@ -125,7 +125,7 @@ textarea {
 #composer-context,
 .composer-caption,
 .attachment-caption,
-#input::placeholder {
+.composer textarea::placeholder {
   color: var(--chat-secondary);
   font-size: 11px;
 }
@@ -186,7 +186,7 @@ textarea {
   height: 36px;
   padding: 7px 2px;
 }
-.composer > #attach-files,
+.composer > .attach-files,
 .composer-actions button {
   display: inline-flex;
   align-items: center;
@@ -203,11 +203,11 @@ textarea {
   align-items: center;
   gap: 8px;
 }
-.composer > #attach-files[hidden],
+.composer > .attach-files[hidden],
 .composer [hidden] {
   display: none;
 }
-#attachment-list:has(.attachment-card) {
+.composer-attachments > div:has(.attachment-card) {
   margin-bottom: 8px;
 }
 .update-notice {

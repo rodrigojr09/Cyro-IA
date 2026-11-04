@@ -1,3 +1,9 @@
+# 8.1.1 — 04/11/2026
+
+- Campo de mensagem do EV reutiliza o Composer do chat normal: clipe, microfone, envio por Enter e leitura da resposta conforme preferência de voz.
+- Anexos privados do EV aparecem no rascunho; baixar usa o contrato central e remover retira somente o contexto, preservando o original. Até cinco arquivos por mensagem, com 8 MB por arquivo.
+- Rascunhos somente com anexos são preservados; mensagens e IDs idempotentes continuam recuperáveis após erro. IDs de controles separados dos controles do chat geral.
+
 # 8.1.0 — implementação em validação, 03/11/2026
 
 - Navegação EV pela API central e interface centrada exclusivamente na conversa.

@@ -1,4 +1,4 @@
-> **v8.1.0 em validação local.** Projetos locais saem da navegação ativa; o EV é operado pelo chat. Tabelas, análises, arquivos e confirmações aparecem na conversa, sem barra de ferramentas. O legado permanece no disco, sem upload automático. [Implementação e limites](versions/8.1.0.md). Sem novo instalador ou push.
+> **v8.1.1 em validação local.** Projetos locais saem da navegação ativa; o EV é operado pelo chat. Tabelas, análises, arquivos e confirmações aparecem na conversa, sem barra de ferramentas. O legado permanece no disco, sem upload automático. [Implementação e limites](versions/8.1.0.md). Sem novo instalador ou push.
 
 ## Referências anteriores (históricas)
 

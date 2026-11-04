@@ -270,7 +270,7 @@
   margin: 0;
   background: var(--surface);
 }
-#input::placeholder {
+.composer textarea::placeholder {
   color: #a0afc0;
 }
 .message-copy {

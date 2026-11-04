@@ -1,12 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { environment, input, click, act, settle } = require('../helpers/react.cjs');
-const submit = async () =>
-  act(async () =>
-    document
-      .querySelector('.ev-chat-composer')
-      .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })),
-  );
+const submit = async () => click('#ev-send');
+
 test('EV operates only by messages; inline results, confirmation and retry preserve the same operation', async () => {
   const env = environment(),
     calls = [],
@@ -63,7 +59,9 @@ test('EV operates only by messages; inline results, confirmation and retry prese
   };
   try {
     await env.mount(env.EVWorkspace, { hidden: false });
-    assert.equal(document.querySelectorAll('.ev-chat button').length, 1);
+    assert.ok(document.querySelector('#ev-attach-files'));
+    assert.ok(document.querySelector('#ev-microphone'));
+    assert.ok(document.querySelector('#ev-send'));
     assert.equal(document.querySelector('.ev-tabs'), null);
     await input('#ev-message', 'crie um espaço chamado Minha transportadora');
     await submit();
@@ -82,13 +80,93 @@ test('EV operates only by messages; inline results, confirmation and retry prese
     const sends = calls.filter((c) => c.message === 'edite o primeiro frete para 15,50');
     assert.equal(sends[0].operationId, sends[1].operationId);
     assert.match(document.querySelector('.ev-chat-proposal').textContent, /confirmar/);
-    assert.equal(document.querySelectorAll('.ev-chat button').length, 1);
+    assert.ok(document.querySelector('#ev-attach-files'));
+    assert.ok(document.querySelector('#ev-microphone'));
+    assert.ok(document.querySelector('#ev-send'));
     assert.ok(drafts.some((d) => d.operation === 'remove'));
     assert.equal(document.querySelector('#ev-message').value, '');
   } finally {
     await env.dispose();
   }
 });
+test('EV shared composer attaches scoped files, removes only context, dictates text and sends attachment-only messages', async () => {
+  const env = environment(),
+    calls = [],
+    uploads = [],
+    downloads = [],
+    drafts = [];
+  const projectId = '11111111-1111-4111-8111-111111111111';
+  const fileId = '33333333-3333-4333-8333-333333333333';
+  const space = { id: projectId, name: 'Fretes', state: 'READY' };
+  let recognition;
+  window.jarvisWindow = { permitMicrophone: async () => true };
+  window.SpeechRecognition = class {
+    start() {
+      recognition = this;
+    }
+    abort() {
+      this.onend?.();
+    }
+  };
+  window.cyroEV = {
+    dirty: async () => {},
+    draft: async (value) => {
+      drafts.push(value);
+      return null;
+    },
+    upload: async (id) => {
+      uploads.push(id);
+      return { files: [{ id: fileId, name: 'nota.xml', size: 200, mimeType: 'application/xml' }] };
+    },
+    download: async (value) => {
+      downloads.push(value);
+      return { ok: true };
+    },
+    request: async (c) => {
+      calls.push(c);
+      if (c.action === 'assistant.open')
+        return {
+          space,
+          conversation: { id: '22222222-2222-4222-8222-222222222222' },
+          messages: [],
+        };
+      if (c.message.startsWith('crie')) return { space, effect: 'OPEN_SPACE' };
+      return { space, reply: 'Arquivo recebido para conferência.' };
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false });
+    await input('#ev-message', 'crie um espaço chamado Fretes');
+    await submit();
+    assert.equal(document.querySelector('#ev-microphone').disabled, false);
+    await click('#ev-microphone');
+    await act(async () => recognition.onresult({ results: [[{ transcript: 'Confira o frete' }]] }));
+    assert.equal(document.querySelector('#ev-message').value, 'Confira o frete');
+    await input('#ev-message', '');
+    await click('#ev-attach-files');
+    assert.deepEqual(uploads, [projectId]);
+    assert.match(document.querySelector('.composer-attachments').textContent, /nota.xml/);
+    await click('[aria-label="Baixar nota.xml"]');
+    assert.deepEqual(downloads, [{ projectId, fileId }]);
+    await click('[aria-label="Remover nota.xml"]');
+    assert.equal(document.querySelector('.attachment-card'), null);
+    assert.equal(
+      calls.some((c) => c.action === 'file.delete'),
+      false,
+    );
+    await click('#ev-attach-files');
+    await act(async () => new Promise((r) => setTimeout(r, 300)));
+    assert.ok(drafts.some((d) => d.content?.fileIds?.includes(fileId)));
+    await submit();
+    const send = calls.find((c) => c.message === 'Analise os arquivos anexados.');
+    assert.deepEqual(send.fileIds, [fileId]);
+    assert.equal(document.querySelector('.attachment-card'), null);
+    assert.equal(document.querySelector('#ev-message').value, '');
+  } finally {
+    await env.dispose();
+  }
+});
+
 test('chat connection failure preserves the message and retries without a local-project fallback', async () => {
   const env = environment();
   let fail = true;

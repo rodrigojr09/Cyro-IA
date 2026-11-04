@@ -118,7 +118,7 @@ export function AttachmentCard({
     </div>
   );
 }
-export function AttachmentList({ files = [], unavailable = false, onRemove }) {
+export function AttachmentList({ files = [], unavailable = false, onRemove, onSave }) {
   return (
     <div className="attachment-list">
       {files.map((file) => (
@@ -126,6 +126,7 @@ export function AttachmentList({ files = [], unavailable = false, onRemove }) {
           key={file.id}
           file={file}
           onRemove={onRemove ? () => onRemove(file.id) : undefined}
+          onSave={onSave ? () => onSave(file.id) : undefined}
         />
       ))}
       {unavailable && (
