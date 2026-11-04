@@ -25,6 +25,7 @@ app.whenReady().then(async () => {
     const noteId = randomUUID();
     const note = { id: noteId, name: 'nota-teste.xml', status: 'PROCESSED' };
     const space = { id: projectId, name: 'Transportadora de teste', state: 'READY' };
+    let memoryFacts = ["Prefiro respostas objetivas."], memoryControls = { automatic: true, useExisting: true }, memoryProposal;
     let fail = true,
       calls = [],
       messages = [],
@@ -34,11 +35,21 @@ app.whenReady().then(async () => {
       current: () => session,
       request: async (_route, _method, c) => {
         calls.push(c);
+        if (c.action?.startsWith('memory.')) {
+          assert.equal(_route, '/api/memory');
+          if (c.action === 'memory.settings.get') return { settings: { ...memoryControls } };
+          if (c.action === 'memory.settings') { assert.deepEqual(c.expected, memoryControls); memoryControls = { automatic: c.automatic, useExisting: c.useExisting }; return { persisted: true, settings: { ...memoryControls } }; }
+          if (c.action === 'memory.list') return { store: { summary: memoryFacts.join(' '), syncState: 'READY' }, items: memoryFacts.map((content, i) => ({ id: String(i), content, origin: { kind: 'USER_CHAT' }, updatedAt: new Date().toISOString() })) };
+          if (c.action === 'memory.message') { memoryProposal = randomUUID(); return { reply: 'Confirme para limpar a memória principal sem excluir conversas.', proposal: { id: memoryProposal, action: 'CLEAR' } }; }
+          if (c.action === 'memory.confirm') { assert.equal(c.proposalId, memoryProposal); assert.equal(c.scope, 'MAIN'); if (c.decision === 'APPLY') memoryFacts = []; return { persisted: c.decision === 'APPLY', reply: 'Memória ativa limpa.' }; }
+          throw Error('Unexpected memory action');
+        }
         if (c.action === 'files.list') return { files: [note], next: null };
         if (c.action === 'file.get') { assert.equal(c.projectId, projectId); return { file: note, extracted: { type: 'FISCAL', documentType: 'NFE', number: '12345', total: '1450.00', freight: { value: '150.00' }, weight: '82', warnings: ['Documento fictício para teste.'] }, analyses: [{ id: 'saved', kind: 'CHAT', state: 'DONE', createdAt: '2026-11-04T12:00:00Z', reply: 'O frete declarado é 150.00.' }] }; }
         if (c.message === 'confirmar') assert.equal(c.confirmationProposalId, planId);
         if (c.action === 'assistant.open')
-          return { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
+          return c.metadataOnly ? { ownerId, space, conversations: [], conversation: null, messages: [], artifacts: [] } : { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
+        if (c.action === 'conversation.create') return { conversation: { id: conversationId, title: 'Nova conversa' } };
         if (c.action !== 'assistant.send') throw Error('Unexpected action');
         if (c.message.startsWith('crie'))
           return { ownerId, space, effect: 'OPEN_SPACE', reply: 'Espaço criado.' };
@@ -126,6 +137,10 @@ app.whenReady().then(async () => {
         `(()=>{const node=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,${JSON.stringify(value)});node.dispatchEvent(new Event('input',{bubbles:true}));})()`,
       );
     await win.loadFile(path.resolve(__dirname, '../../index.html'));
+    await wait(`!!document.getElementById('ev-nav') && !document.getElementById('ev-nav').disabled`);
+    assert.equal(await js(`document.querySelector('.ev-chat').hidden`), true);
+    assert.equal(calls.filter(c => c.action === 'assistant.open').length, 0);
+    await js(`document.querySelector('#ev-nav').click()`);
     await wait(`!!document.getElementById('ev-message')`);
     assert.ok(
       await js(
@@ -179,7 +194,27 @@ app.whenReady().then(async () => {
       catch (e) { if (attempt === 2) throw e; await new Promise((r) => setTimeout(r, 150)); }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
-    assert.ok(calls.every((c) => c.action.startsWith('assistant.') || ['files.list', 'file.get'].includes(c.action)));
+    await js(`document.querySelector('#settings-open').click()`);
+    await wait(`!!document.querySelector('#settings-tabs')`);
+    await js(`[...document.querySelectorAll('#settings-tabs button')].find(b=>b.textContent==='Memória').click()`);
+    await wait(`document.querySelector('.memory-summary')?.textContent.includes('respostas objetivas')`);
+    assert.ok(await js(`document.querySelector('textarea[aria-label="Mensagem sobre memória"]').placeholder.includes('lembre ou esqueça')`));
+    await js(`document.querySelector('.memory-toggle input').click()`);
+    await wait(`!document.querySelector('.memory-toggle input').disabled && !document.querySelector('.memory-toggle input').checked`);
+    assert.equal(memoryControls.automatic, false); assert.equal(memoryControls.useExisting, true);
+    await js(`[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Limpar memória principal').click()`);
+    await wait(`!!document.querySelector('[aria-label="Confirmar alteração de memória"]')`);
+    assert.equal(memoryFacts.length, 1);
+    await js(`[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Confirmar alteração').click()`);
+    await wait(`document.querySelector('.memory-chat')?.textContent.includes('Memória ativa limpa')`);
+    assert.equal(memoryFacts.length, 0);
+    await fs.writeFile(path.join(shots, 'memory-v82-settings.png'), (await win.webContents.capturePage()).toPNG());
+    console.log('V83_DESKTOP_PROCESS_METRICS ' + JSON.stringify({ scenario: 'EV conversation and memory settings', memoryUnit: 'KiB', processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })) }));
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('V83_DESKTOP_IDLE_METRICS ' + JSON.stringify({ scenario: 'idle 3 seconds after interaction', memoryUnit: 'KiB', processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })) }));
+    const renderer = app.getAppMetrics().find(m => m.pid === win.webContents.getOSProcessId());
+    console.log('V82_DESKTOP_MEMORY_METRICS ' + JSON.stringify(renderer?.memory || {}));
+    assert.ok(calls.every(c => c.action.startsWith('assistant.') || c.action.startsWith('memory.') || ['files.list','file.get','conversation.create'].includes(c.action)));
     console.log(
       'EV Electron: chat-only creation, shared composer, retry, protected IPC, human confirmation and inline table passed.',
     );

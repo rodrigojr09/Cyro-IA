@@ -26,11 +26,11 @@ class CloudConversations:
         return bool(row and row["project_id"])
 
     def general_chat(self):
-        return self.request({"action": "fixed", "slot": "general"})["id"]
+        raise ReadError("Use Novo chat ou escolha uma conversa. A Conversa Geral fixa foi removida.")
 
     def quick_chat(self, create=True):
         # The server unique (owner, slot) guarantees one chat across all launches/devices.
-        return self.request({"action": "fixed", "slot": "quick"})["id"]
+        return self.request({"action": "fixed", "slot": "quick", "metadataOnly": True})["id"]
 
     def project_quick_chat(self, project_id):
         raise ReadError("Abra um Espaço Virtual na janela principal.")
@@ -43,8 +43,11 @@ class CloudConversations:
             raise ReadError("Conversa arquivada.")
         return row
 
+    def catalog(self, search="", offset=0):
+        return self.request({"action": "catalog", "search": search[:200], "offset": offset, "limit": 30, "archived": False})
+
     def all_chats(self):
-        return self.request({"action": "list"})
+        return self.catalog()["chats"]
 
     def chats(self, project_id=None, archived=False):
         if project_id:
@@ -55,14 +58,15 @@ class CloudConversations:
             if bool(row["archived"]) == archived
         ]
 
-    def create_chat(self, project_id=None, title="Nova conversa"):
+    def create_chat(self, project_id=None, title="Nova conversa", request_id=None):
         if project_id:
             raise ReadError("Crie conversas no Espaço Virtual pela API central.")
         return self.request(
             {
                 "action": "create",
                 "title": redact(title.strip())[:120],
-                "requestId": str(uuid.uuid4()),
+                "requestId": request_id or str(uuid.uuid4()),
+                "autoTitle": title == "Nova conversa",
             }
         )
 
@@ -105,48 +109,40 @@ class CloudConversations:
         return self.request(command)
 
     def bootstrap(self):
-        general_id = self.general_chat()
-        chats, messages = [], {}
-        after, until, catalog_after = 0, None, None
-        while True:
-            command = {"action": "bootstrap", "after": after}
-            if until is not None:
-                command["until"] = until
-                command["catalogAfter"] = catalog_after
-            page = self.request(command)
-            chats.extend(page.get("chats") or [])
-            for message in page["messages"]:
-                messages.setdefault(message["chat_id"], []).append(message)
-            until = page["until"]
-            catalog_after = page.get("catalogNext")
-            if page["next"] is None and catalog_after is None:
-                break
-            if page["next"] is not None and page["next"] <= after:
-                raise ReadError("Falha ao carregar o histórico. Entre novamente.")
-            after = page["next"] if page["next"] is not None else until
-        return general_id, chats, messages
+        quick = self.request({"action": "fixed", "slot": "quick", "metadataOnly": True})
+        page = self.catalog()
+        self.catalog_next = page.get("next")
+        return None, [quick, *page["chats"]], {}
 
+    @staticmethod
+    def assistant_request(operation):
+        return str(uuid.uuid5(uuid.UUID(operation), "assistant"))
 
-    def append_exchange(self, chat_id, user, assistant):
+    def exchange_receipt(self, chat_id, operation):
+        return self.request({"action": "receipt", "id": identifier(chat_id), "requestId": operation, "assistantRequestId": self.assistant_request(operation)})
+
+    def append_exchange(self, chat_id, user, assistant, request_id=None, context_scope=None, user_already_stored=False):
+        request_id = request_id or str(uuid.uuid4())
         return self.request(
             {
                 "action": "exchange",
                 "id": identifier(chat_id),
-                "requestId": str(uuid.uuid4()),
-                "assistantRequestId": str(uuid.uuid4()),
+                "requestId": request_id,
+                "assistantRequestId": self.assistant_request(request_id),
                 "user": redact(user),
                 "assistant": redact(assistant),
+                **({"userAlreadyStored": True, "scope": context_scope or ""} if user_already_stored else {}),
             }
         )
 
-    def append(self, chat_id, role, content, context_scope=None, attachment_count=0):
+    def append(self, chat_id, role, content, context_scope=None, attachment_count=0, request_id=None):
         if self.local_chat(chat_id):
             raise ReadError("O legado local está preservado e não pode ser alterado por este fluxo.")
         return self.request(
             {
                 "action": "append",
                 "id": identifier(chat_id),
-                "requestId": str(uuid.uuid4()),
+                "requestId": request_id or str(uuid.uuid4()),
                 "role": role,
                 "content": redact(content),
                 "scope": context_scope or "",

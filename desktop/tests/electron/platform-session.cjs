@@ -37,7 +37,8 @@ app.whenReady().then(async () => {
     await restored.refresh();
     const chat = await restored.request('/api/device/chats', 'POST', {
       action: 'fixed',
-      slot: 'general',
+      slot: 'quick',
+      metadataOnly: true,
     });
     assert.ok(chat.id);
     if (process.env.CYRO_TEST_UPDATE_ALIAS) {

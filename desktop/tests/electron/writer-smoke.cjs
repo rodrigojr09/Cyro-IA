@@ -198,7 +198,7 @@ app.whenReady().then(async () => {
       return result.data;
     };
     await window.loadFile(path.join(DESKTOP_ROOT, 'index.html'));
-    await waitFor(`!document.getElementById('general-nav').disabled`);
+    await waitFor(`!document.getElementById('new-general-chat').disabled`);
     // Exercise the preserved legacy editor using a synthetic test catalog, without
     // reintroducing local-project navigation into the production interface.
     window.webContents.send('jarvis:open-chat', bound.data.id);
@@ -367,7 +367,7 @@ app.whenReady().then(async () => {
     const loaded = new Promise((resolve) => window.webContents.once('did-finish-load', resolve));
     window.webContents.reload();
     await loaded;
-    await waitFor(`!document.getElementById('general-nav').disabled`);
+    await waitFor(`!document.getElementById('new-general-chat').disabled`);
     window.webContents.send('jarvis:open-chat', bound.data.id);
     await waitFor(
       `!document.querySelector('main.main-panel').hidden && document.getElementById('writer-paper')?.textContent.includes(${JSON.stringify(beforeReload.blocks[0].text)})`,

@@ -136,7 +136,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="8.1.2" if CLOUD else "2.0.1-dev.0",
+    version="8.3.0-rc.1" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -193,6 +193,7 @@ class ChatRequest(BaseModel):
     mode: Literal["chat", "programming"] = "chat"
     chat_id: str | None = None
     quick_project_id: str | None = None
+    operation_id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")
     attachments: list[str] = Field(default_factory=list, max_length=100)
 
 
@@ -295,6 +296,7 @@ class ProjectRequest(WorkspaceRequest):
 
 
 class ChatCreate(WorkspaceRequest):
+    request_id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")
     title: str = Field(default="Nova conversa", max_length=120)
 
 
@@ -476,10 +478,11 @@ def workspace_progress():
 @app.get("/workspace")
 def workspace():
     projects = [] if CLOUD else store.projects()
-    general_id = store.general_chat()
+    general_id = None if CLOUD else store.general_chat()
     active_projects = {project["id"] for project in projects}
     if CLOUD:
-        chats = store.all_chats()
+        page = store.catalog()
+        chats = [store.request({"action": "fixed", "slot": "quick", "metadataOnly": True}), *page["chats"]]
     else:
         with database(store.registry) as con:
             rows = con.execute(
@@ -492,6 +495,7 @@ def workspace():
         "chats": chats,
         "general_chat_id": general_id,
         "data_directory": str(DATA),
+        "catalog_next": page.get("next") if CLOUD else None,
     }
 
 
@@ -515,26 +519,12 @@ def workspace_bootstrap():
         key=lambda row: str(row.get("last_message_at") or row.get("created_at") or ""),
         reverse=True,
     )
-    for row in chats:
-        if not CLOUD or row["project_id"]:
-            collected, before = [], None
-            while True:
-                page = store.history(row["id"], before=before)
-                collected = page + collected
-                if len(page) < 100:
-                    break
-                before = page[0]["id"]
-            histories[row["id"]] = collected
-        histories[row["id"]] = attachment_store.history(
-            row["id"],
-            histories.get(row["id"], []),
-            attachment_owner if CLOUD else "local",
-        )
     return {
         "projects": projects,
         "chats": chats,
         "histories": histories,
         "general_chat_id": general_id,
+        "catalog_next": getattr(store, "catalog_next", None) if CLOUD else None,
     }
 
 
@@ -627,7 +617,7 @@ async def project_knowledge(project_id: str, name: str = "IDEIA.md"):
 
 @app.post("/chats/create")
 def create_chat(req: ChatCreate):
-    return store.create_chat(req.project_id, req.title)
+    return store.create_chat(req.project_id, req.title, request_id=req.request_id) if CLOUD else store.create_chat(req.project_id, req.title)
 
 
 @app.post("/chats/change")
@@ -645,6 +635,21 @@ async def change_chat(req: ChatChange):
         req.instructions,
         req.clear,
     )
+
+
+@app.get("/chats/metadata")
+def chat_metadata(chat_id: str):
+    return store.chat(chat_id, allow_archived=True)
+
+
+@app.get("/chats/catalog")
+def chat_catalog(search: str = "", offset: int = 0):
+    if len(search) > 200 or offset < 0 or offset > 10000:
+        raise HTTPException(400, "Busca inválida.")
+    if CLOUD:
+        return store.catalog(search, offset)
+    rows = [row for row in store.chats() if search.lower() in row["title"].lower()]
+    return {"chats": rows[offset:offset+30], "next": offset+30 if len(rows)>offset+30 else None}
 
 
 @app.get("/chats/history")
@@ -720,6 +725,8 @@ async def health():
 
 @app.get("/history")
 def history():
+    if CLOUD:
+        return []
     return [
         {key: item[key] for key in ("role", "content")}
         for item in store.history(store.general_chat(), limit=30)
@@ -749,7 +756,7 @@ async def action_confirm(req: ConfirmationRequest):
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     store.append(
-        action_bindings.pop(req.confirmation_id, store.general_chat()),
+        action_bindings.pop(req.confirmation_id, None) or (store.quick_chat() if CLOUD else store.general_chat()),
         "assistant",
         result["result"],
     )
@@ -904,7 +911,17 @@ async def process_chat(req: ChatRequest):
         quota = await asyncio.to_thread(store.request, {"action": "storage"})
         if quota["blocked"]:
             raise StorageFullError()
+    if CLOUD and not req.chat_id:
+        raise HTTPException(400, "Use Novo chat ou escolha uma conversa antes de enviar.")
     chat_id = req.chat_id or await asyncio.to_thread(store.general_chat)
+    operation = req.operation_id or str(uuid.uuid4())
+    previous_receipt = None
+    if CLOUD and req.operation_id and hasattr(store, "exchange_receipt"):
+        previous_receipt = await asyncio.to_thread(store.exchange_receipt, chat_id, operation)
+        if previous_receipt.get("userContent") is not None and previous_receipt["userContent"] != req.message:
+            raise HTTPException(409, "Identificador já utilizado por outra mensagem.")
+        if previous_receipt.get("ready"):
+            return {**previous_receipt, "chat_id": chat_id, "pending_actions": [], "speech_text": previous_receipt["reply"][:4000]}
     chat_info = await asyncio.to_thread(store.chat, chat_id)
     if CLOUD and not req.attachments:
         from spotify_commands import try_command
@@ -1002,6 +1019,8 @@ async def process_chat(req: ChatRequest):
             )
         )
     )
+    if previous_receipt and previous_receipt.get("userMessageId"):
+        previous = [row for row in previous if row.get("id") != previous_receipt["userMessageId"]]
     messages = [{"role": "system", "content": SYSTEM}]
     custom = []
     if effective_project:
@@ -1145,7 +1164,7 @@ async def process_chat(req: ChatRequest):
                         ),
                     )
 
-    if is_quick or req.attachments:
+    if is_quick or req.attachments or (CLOUD and req.operation_id):
         user_message_id = await asyncio.to_thread(
             store.append,
             chat_id,
@@ -1153,6 +1172,7 @@ async def process_chat(req: ChatRequest):
             req.message,
             context_scope=quick_scope,
             attachment_count=len(req.attachments),
+            **({"request_id": operation} if CLOUD and req.operation_id else {}),
         )
         if req.attachments:
             await asyncio.to_thread(
@@ -1161,7 +1181,7 @@ async def process_chat(req: ChatRequest):
     memory_token = None
     if CLOUD:
         from cloud_client import memory_context
-        memory_token = memory_context.set({"conversationId": chat_id, "operationId": str(uuid.uuid4())})
+        memory_token = memory_context.set({"conversationId": chat_id, "operationId": operation})
     try:
         reply, pending_actions = await converse(
             client, MODEL, messages, mode, service, api_gate, record_usage
@@ -1187,20 +1207,20 @@ async def process_chat(req: ChatRequest):
     if (
         CLOUD
         and hasattr(store, "append_exchange")
-        and not is_quick
-        and not req.attachments
+        and (req.operation_id or (not is_quick and not req.attachments))
         and not store.local_chat(chat_id)
     ):
         persisted = await asyncio.to_thread(
-            store.append_exchange, chat_id, req.message, reply
+            store.append_exchange, chat_id, req.message, reply, **({"request_id": operation, "context_scope": quick_scope, "user_already_stored": True} if req.operation_id else {})
         )
     else:
-        if not is_quick and not req.attachments:
+        if not is_quick and not req.attachments and not (CLOUD and req.operation_id):
             await asyncio.to_thread(
                 store.append,
                 chat_id,
                 "user",
                 req.message if req.chat_id or CLOUD else stored_user,
+                **({"request_id": operation} if CLOUD and req.operation_id else {}),
             )
         await asyncio.to_thread(
             store.append,
@@ -1208,7 +1228,10 @@ async def process_chat(req: ChatRequest):
             "assistant",
             reply if req.chat_id or CLOUD else stored_reply,
             context_scope=quick_scope,
+            **({"request_id": store.assistant_request(operation)} if CLOUD and hasattr(store, "assistant_request") else {}),
         )
+    if persisted and req.attachments:
+        persisted["messages"] = attachment_store.history(chat_id, persisted["messages"], owner)
     for action in pending_actions:
         action_bindings[action["confirmation_id"]] = chat_id
     return {

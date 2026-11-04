@@ -11,6 +11,12 @@ export async function evRequest(input) {
   if (result?.error) throw Object.assign(Error(result.error), { status: result.status });
   return result;
 }
+async function conversationOperation(operation) {
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(operation + ':conversation'))).slice(0, 16);
+  hash[6] = (hash[6] & 15) | 64; hash[8] = (hash[8] & 63) | 128;
+  const hex = [...hash].map(n => n.toString(16).padStart(2, '0')).join('');
+  return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
+}
 const stateLabel = (value) =>
   ({
     READY: 'Conectado',
@@ -352,6 +358,8 @@ export function EVWorkspace({
 }) {
   const [space, setSpace] = useState(null),
     [conversation, setConversation] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  const chatCache = useRef(new Map());
   const [messages, setMessages] = useState([]),
     [artifacts, setArtifacts] = useState([]),
     [question, setQuestion] = useState('');
@@ -425,12 +433,22 @@ export function EVWorkspace({
       return;
     }
     if (out.space) {
-      if (out.space.id !== space?.id) setContextFiles([]);
+      if (out.space.id !== space?.id) { setContextFiles([]); setConversations([]); setConversation(null); setMessages([]); setArtifacts([]); }
       setSpace(out.space);
       if (out.ownerId)
         writePreference('cyro.ev.selection', { ownerId: out.ownerId, projectId: out.space.id });
     }
-    if (out.conversation) setConversation(out.conversation);
+    if (out.conversations) setConversations(out.conversations);
+    if (Object.hasOwn(out, 'conversation')) {
+      setConversation(out.conversation);
+      if (out.conversation) setConversations(old => [out.conversation, ...old.filter(c => c.id !== out.conversation.id)]);
+    }
+    if (out.space && out.conversation && out.messages) {
+      const key = out.space.id + ':' + out.conversation.id;
+      chatCache.current.delete(key); chatCache.current.set(key, out);
+      const cacheBytes = () => [...chatCache.current.values()].reduce((total, value) => total + JSON.stringify({ messages: value.messages, artifacts: value.artifacts }).length * 2, 0);
+      while (chatCache.current.size > 12 || (chatCache.current.size > 1 && cacheBytes() > 8 * 1024 * 1024)) chatCache.current.delete(chatCache.current.keys().next().value);
+    }
     if (out.messages) {
       setMessages(out.messages);
       setArtifacts(out.artifacts || []);
@@ -440,12 +458,14 @@ export function EVWorkspace({
         { id: 'reply-' + crypto.randomUUID(), role: 'assistant', content: out.reply },
       ]);
     if (out.effect === 'OPEN_SPACE' && out.space?.state === 'READY')
-      await apply(await evRequest({ action: 'assistant.open', projectId: out.space.id }));
+      await apply(await evRequest({ action: 'assistant.open', projectId: out.space.id, metadataOnly: true }));
   }
   async function open(projectId, conversationId) {
     const epoch = ++generation.current;
-    const out = await evRequest({
+    const cached = conversationId && chatCache.current.get(projectId + ':' + conversationId);
+    const out = cached || await evRequest({
       action: 'assistant.open',
+      metadataOnly: !conversationId,
       projectId,
       ...(conversationId ? { conversationId } : {}),
     });
@@ -454,14 +474,10 @@ export function EVWorkspace({
     if (out.space?.state === 'READY') {
       const draft = await window.cyroEV.draft({ channel: 'CHAT', operation: 'read', projectId });
       if ((draft?.question || draft?.fileIds?.length) && epoch === generation.current) {
-        if (draft.conversationId && draft.conversationId !== out.conversation?.id)
-          await apply(
-            await evRequest({
-              action: 'assistant.open',
-              projectId,
-              conversationId: draft.conversationId,
-            }),
-          );
+        if (draft.conversationId && draft.conversationId !== out.conversation?.id) {
+          setNotice('Há um rascunho preservado. Abra a conversa correspondente para recuperá-lo.');
+          return;
+        }
         setQuestion((old) => old || draft.question || '');
         setContextFiles(draft.fileIds || []);
         const recovered = await Promise.allSettled(
@@ -502,7 +518,7 @@ export function EVWorkspace({
     return () => clearTimeout(timer);
   }, [hidden, space, loading]);
   useEffect(() => {
-    if ((!question.trim() && !contextFiles.length) || !space || !conversation) return;
+    if ((!question.trim() && !contextFiles.length) || !space) return;
     const timer = setTimeout(
       () =>
         void window.cyroEV
@@ -512,7 +528,7 @@ export function EVWorkspace({
             projectId: space.id,
             content: {
               kind: 'CHAT',
-              conversationId: conversation.id,
+              conversationId: conversation?.id || null,
               question,
               fileIds: contextFiles,
               confirmationProposalId: (confirmation.current ||= proposalContext()),
@@ -572,12 +588,24 @@ export function EVWorkspace({
       previousSpace = space,
       operationId = (operation.current ||= crypto.randomUUID());
     try {
+      let selectedConversation = conversation;
+      if (space?.state === 'READY') {
+        const draft = id => window.cyroEV.draft({ channel: 'CHAT', operation: 'write', projectId: space.id, content: { kind: 'CHAT', conversationId: id || null, question: text, fileIds: contextFiles.slice(0,5), operationId, confirmationProposalId: confirmation.current || null } });
+        await draft(selectedConversation?.id);
+        if (!selectedConversation) {
+          const created = await evRequest({ action: 'conversation.create', projectId: space.id, operationId: await conversationOperation(operationId), title: 'Nova conversa' });
+          selectedConversation = created.conversation;
+          setConversation(selectedConversation);
+          setConversations(old => [selectedConversation, ...old.filter(c => c.id !== selectedConversation.id)]);
+          await draft(selectedConversation.id);
+        }
+      }
       const out = await evRequest({
         action: 'assistant.send',
         operationId,
         message: text,
         ...(space ? { projectId: space.id } : {}),
-        ...(conversation ? { conversationId: conversation.id } : {}),
+        ...(selectedConversation ? { conversationId: selectedConversation.id } : {}),
         fileIds: contextFiles.slice(0, 5),
         ...(confirmation.current || proposalContext()
           ? { confirmationProposalId: (confirmation.current ||= proposalContext()) }
@@ -627,6 +655,14 @@ export function EVWorkspace({
       }
     }
   }
+  async function chooseConversation(id) {
+    if (loading || sending.current || !space) return;
+    if (question.trim() || contextFiles.length) { setNotice('Envie ou limpe o rascunho antes de trocar de conversa.'); return; }
+    setError(''); setNotice('');
+    if (!id) { setConversation(null); setMessages([]); setArtifacts([]); operation.current = null; confirmation.current = null; return; }
+    setLoading(true);
+    try { await open(space.id, id); } catch (e) { setError(publicError(e)); } finally { if (active.current) setLoading(false); }
+  }
   return (
     <section
       className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
@@ -651,6 +687,7 @@ export function EVWorkspace({
           {loading ? 'Cyro está trabalhando…' : stateLabel(space?.state) || 'Converse com o Cyro'}
         </small>
       </header>
+      {space?.state === 'READY' && <div className="ev-conversation-nav"><label>Conversa do espaço<select aria-label="Conversa do espaço" disabled={loading} value={conversation?.id || ''} onChange={event => void chooseConversation(event.target.value)}><option value="">Escolha uma conversa</option>{conversations.map(chat => <option key={chat.id} value={chat.id}>{chat.title || 'Conversa'}</option>)}</select></label><button disabled={loading} onClick={() => void chooseConversation('')}>Novo chat no espaço</button></div>}
       <div className="ev-chat-history" ref={scroll} aria-live="polite">
         {!messages.length && (
           <div className="ev-chat-welcome">

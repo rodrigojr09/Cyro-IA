@@ -16,14 +16,16 @@ async function setup(options) {
     },
   };
 }
-test('session bootstrap performs one batch load and caches all conversations', async () => {
+test('startup loads metadata only; first opening loads history and later openings reuse the local cache', async () => {
   const t = await setup();
   try {
     await t.workspace.initialize();
     assert.equal(t.f.calls.filter((row) => row.route === '/workspace/bootstrap').length, 1);
     assert.equal(t.f.calls.filter((row) => row.route === '/storage').length, 1);
+    assert.equal(t.workspace.get().chat, null);
+    assert.equal(t.f.calls.filter(row => row.route?.startsWith('/chats/history')).length, 0);
     for (const id of ['first', 'second', 'first']) await t.workspace.view('project-a', id);
-    assert.equal(t.f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 0);
+    assert.equal(t.f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 2);
     assert.equal(t.workspace.get().messages[0].content, 'Contexto first');
   } finally {
     await t.close();
@@ -194,7 +196,7 @@ test('durable receipt updates both history and revision without a second fetch',
     await t.workspace.view('project-a', 'second');
     await t.workspace.view('project-a', 'first');
     assert.equal(t.workspace.get().messages.at(-1).content, 'Resposta salva.');
-    assert.ok(!t.f.calls.some((row) => row.route?.startsWith('/chats/history')));
+    assert.equal(t.f.calls.filter(row => row.route?.startsWith('/chats/history')).length, 2);
   } finally {
     await t.close();
   }
@@ -236,7 +238,7 @@ test('hidden windows do not poll the catalog', async () => {
     await t.close();
   }
 });
-test('large preloaded history is paged locally without more database calls', async () => {
+test('large history loads in pages after opening and keeps the fetched pages in the local cache', async () => {
   const t = await setup();
   try {
     t.f.histories.first = Array.from({ length: 250 }, (_, index) => ({
@@ -251,7 +253,11 @@ test('large preloaded history is paged locally without more database calls', asy
     await t.workspace.older();
     await t.workspace.older();
     assert.equal(t.workspace.get().messages.length, 250);
-    assert.ok(!t.f.calls.some((row) => row.route?.startsWith('/chats/history')));
+    assert.equal(t.f.calls.filter(row => row.route?.startsWith('/chats/history')).length, 3);
+    await t.workspace.view('project-a', 'second');
+    await t.workspace.view('project-a', 'first');
+    assert.equal(t.workspace.get().messages.length, 250);
+    assert.equal(t.f.calls.filter(row => row.route?.startsWith('/chats/history')).length, 4);
   } finally {
     await t.close();
   }
@@ -272,4 +278,33 @@ test('native acknowledgment holds sending until the renderer finished startup', 
   } finally {
     await t.close();
   }
+});
+
+
+test('saved selection does not preload messages; New chat stays a draft and retries keep stable operation IDs', async () => {
+  const t = await setup();
+  try {
+    localStorage.setItem('jarvis.selection', JSON.stringify({ project: 'project-a', chat: 'first' }));
+    await t.workspace.initialize();
+    assert.equal(t.workspace.get().chat, null);
+    assert.equal(t.f.calls.filter(c => c.route?.startsWith('/chats/history')).length, 0);
+    await t.workspace.newChat('');
+    assert.equal(t.f.calls.filter(c => c.route === '/chats/create').length, 0);
+    await t.workspace.send('Primeira mensagem');
+    assert.equal(t.f.calls.filter(c => c.route === '/chats/create').length, 1);
+    assert.ok(JSON.parse(t.f.calls.find(c => c.route === '/chats/create').options.body).request_id);
+    assert.ok(JSON.parse(t.f.calls.find(c => c.route === '/chat').options.body).operation_id);
+  } finally { await t.close(); }
+});
+
+
+test('opening by notification reuses an unchanged cached conversation', async () => {
+  const t = await setup();
+  try {
+    await t.workspace.initialize();
+    await t.workspace.view('project-a', 'first');
+    const reads = t.f.calls.filter(c => c.route?.startsWith('/chats/history')).length;
+    await t.workspace.openById('first');
+    assert.equal(t.f.calls.filter(c => c.route?.startsWith('/chats/history')).length, reads);
+  } finally { await t.close(); }
 });

@@ -241,7 +241,7 @@ app.whenReady().then(async () => {
     });
     await win.loadFile(path.join(DESKTOP_ROOT, 'index.html'));
     await waitFor(`document.getElementById('status')?.textContent==='Conectado'`);
-    await js(`document.getElementById('general-nav').click()`);
+    await js(`document.getElementById('new-general-chat').click()`);
     assert.equal(await js(`typeof require`), 'undefined');
     assert.equal(await js(`document.getElementById('welcome').hidden`), false);
     assert.equal(await js(`document.querySelectorAll('.suggestions button').length`), 6);

@@ -51,7 +51,11 @@ const server = http.createServer((request, response) => {
       const command = JSON.parse(raw);
       response.end(
         JSON.stringify(
-          command.action === 'bootstrap'
+          command.action === 'catalog'
+            ? { chats: [], next: null }
+            : command.action === 'fixed'
+              ? { ...general, slot: 'quick', title: 'Quick Chat' }
+            : command.action === 'bootstrap'
             ? { chats: [general], messages: [], until: 0, next: null, catalogNext: null }
             : command.action === 'storage'
               ? { usedBytes: 0, limitBytes: 52428800, blocked: false }
@@ -126,7 +130,7 @@ app.whenReady().then(async () => {
         break;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    assert.ok(window.webContents.getURL().endsWith('/index.html'));
+    assert.ok(window.webContents.getURL().endsWith('/index.html'), await window.webContents.executeJavaScript('document.body.innerText'));
     const workspace = await window.webContents.executeJavaScript(
       "window.jarvisWindow.api('/workspace')",
     );

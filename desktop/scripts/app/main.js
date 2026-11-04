@@ -63,6 +63,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     ['/chats/settings', 'POST'],
     ['/workspace/view', 'POST'],
     ['/chats/history', 'GET'],
+    ['/chats/catalog', 'GET'],
+    ['/chats/metadata', 'GET'],
     ['/chats/create', 'POST'],
     ['/projects/refresh', 'POST'],
     ['/projects/accept-partial', 'POST'],
@@ -564,7 +566,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         !trusted(event) ||
         !routes.has(baseRoute) ||
         (route.includes('?') &&
-          !['/chats/history', '/projects/knowledge', '/projects/selection'].includes(baseRoute))
+          !['/chats/history', '/chats/catalog', '/chats/metadata', '/projects/knowledge', '/projects/selection'].includes(baseRoute))
       ) {
         throw new Error('Solicitação não autorizada.');
       }

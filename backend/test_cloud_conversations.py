@@ -109,6 +109,44 @@ class ProjectChatBindingTests(unittest.TestCase):
             self.assertNotEqual(response.status_code, 200)
             self.assertNotIn("Durable answer", response.text)
 
+    def test_lost_response_recovers_same_saved_exchange_without_another_model_call(self):
+        chat_id, operation = str(uuid.uuid4()), str(uuid.uuid4())
+        rows, calls = [], []
+        first = True
+        def request(command):
+            nonlocal first
+            calls.append(command)
+            if command["action"] == "storage": return {"blocked": False}
+            if command["action"] == "get": return {"id": chat_id, "project_id": None, "archived": 0, "summary": "", "slot": None}
+            if command["action"] == "receipt":
+                return {"ready": len(rows) == 2, "userMessageId": rows[0]["id"] if rows else None, "userContent": rows[0]["content"] if rows else None, "reply": "Resposta salva.", "persisted": {"chat": {"id": chat_id}, "messages": rows.copy()}}
+            if command["action"] == "history": return rows.copy()
+            if command["action"] == "append":
+                self.assertEqual(command["requestId"], operation)
+                if not rows: rows.append({"id": 1, "role": "user", "content": command["content"]})
+                return {"id": 1}
+            if command["action"] == "exchange":
+                self.assertTrue(command["userAlreadyStored"])
+                rows.append({"id": 2, "role": "assistant", "content": command["assistant"]})
+                if first:
+                    first = False
+                    raise ReadError("Conexão interrompida depois da gravação")
+                return {"chat": {"id": chat_id}, "messages": rows.copy()}
+            self.fail("Unexpected request " + command["action"])
+        async def answer(*args):
+            self.assertEqual(rows[0]["role"], "user")
+            return "Resposta salva.", []
+        with patch.object(main, "CLOUD", True), patch.object(main, "store", CloudConversations(main.store, request)), patch.object(main, "configured_key", return_value="session"), patch.object(main, "converse", AsyncMock(side_effect=answer)) as model, patch("spotify_commands.try_command", AsyncMock(return_value=None)):
+            body = {"chat_id": chat_id, "operation_id": operation, "message": "Questão persistente"}
+            first_reply = self.client.post("/chat", json=body)
+            self.assertNotEqual(first_reply.status_code, 200)
+            second = self.client.post("/chat", json=body)
+            self.assertEqual(second.status_code, 200, second.text)
+            self.assertEqual(second.json()["reply"], "Resposta salva.")
+            self.assertEqual(model.call_count, 1)
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(len([c for c in calls if c["action"] == "append"]), 1)
+
     def test_indexing_progress_never_requests_cloud_catalog(self):
         def request(command):
             self.fail("Local progress must not query Cloud")
@@ -169,37 +207,24 @@ class CloudConversationTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_bootstrap_paginates_once_per_batch_and_never_uploads_local_history(self):
-        chat_id = str(uuid.uuid4())
+    def test_bootstrap_loads_only_metadata_and_never_creates_general_or_downloads_histories(self):
+        quick_id, chat_id = str(uuid.uuid4()), str(uuid.uuid4())
         calls = []
-
         def request(command):
             calls.append(command)
             if command["action"] == "fixed":
-                return {"id": chat_id}
-            after = command["after"]
-            return {
-                "chats": [{"id": chat_id, "project_id": None}] if after == 0 else None,
-                "messages": [
-                    {
-                        "id": after + 1,
-                        "chat_id": chat_id,
-                        "role": "user",
-                        "content": "cloud",
-                    }
-                ],
-                "until": 2,
-                "next": 1 if after == 0 else None,
-            }
-
-        general, chats, histories = CloudConversations(self.local, request).bootstrap()
-        self.assertEqual(general, chat_id)
-        self.assertEqual(len(histories[chat_id]), 2)
-        self.assertEqual(
-            [call["action"] for call in calls], ["fixed", "bootstrap", "bootstrap"]
-        )
-        self.assertEqual(calls[-1]["until"], 2)
-        self.assertEqual(len(chats), 1)
+                self.assertEqual(command["slot"], "quick")
+                self.assertTrue(command["metadataOnly"])
+                return {"id": quick_id, "slot": "quick", "project_id": None}
+            self.assertEqual(command["action"], "catalog")
+            return {"chats": [{"id": chat_id, "slot": None, "project_id": None}], "next": 30}
+        store = CloudConversations(self.local, request)
+        general, chats, histories = store.bootstrap()
+        self.assertIsNone(general)
+        self.assertEqual(histories, {})
+        self.assertEqual(len(chats), 2)
+        self.assertEqual(store.catalog_next, 30)
+        self.assertEqual([c["action"] for c in calls], ["fixed", "catalog"])
 
     def test_exchange_uses_one_request_with_two_stable_distinct_ids(self):
         self.store.append_exchange(str(uuid.uuid4()), "question", "answer")
@@ -245,7 +270,9 @@ class CloudConversationTests(unittest.TestCase):
 
     def test_old_local_general_history_and_references_are_never_uploaded(self):
         self.local.append(self.local.general_chat(), "user", "LEGACY_PRIVATE_MESSAGE")
-        general = self.store.general_chat()
+        with self.assertRaises(ReadError):
+            self.store.general_chat()
+        general = str(uuid.uuid4())
         self.assertEqual(self.store.history(general), [])
         self.store.save_context(
             general, {"project": "C:/private", "references": ["secret"]}
@@ -278,8 +305,20 @@ class CloudConversationTests(unittest.TestCase):
         self.assertEqual(requests[0]["requestId"], requests[1]["requestId"])
         with patch("httpx.post", side_effect=httpx.ReadTimeout("private diagnostic")):
             with self.assertRaisesRegex(ReadError, "Verifique a conexão"):
-                store.general_chat()
+                store.quick_chat()
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConversationRetryTests(unittest.TestCase):
+    def test_explicit_operation_keeps_both_message_ids_stable(self):
+        calls = []
+        store = CloudConversations(None, lambda command: calls.append(command) or {})
+        operation = str(uuid.uuid4())
+        store.append_exchange(str(uuid.uuid4()), "Question", "Answer", request_id=operation)
+        store.append_exchange(calls[0]["id"], "Question", "Answer", request_id=operation)
+        self.assertEqual(calls[0]["requestId"], calls[1]["requestId"])
+        self.assertEqual(calls[0]["assistantRequestId"], calls[1]["assistantRequestId"])
+        self.assertNotEqual(calls[0]["requestId"], calls[0]["assistantRequestId"])

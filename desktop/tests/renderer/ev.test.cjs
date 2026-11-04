@@ -264,3 +264,42 @@ test('chat connection failure preserves the message and retries without a local-
     await env.dispose();
   }
 });
+
+
+test('EV opens metadata without histories; conversation selection loads once and keeps a scoped cache', async () => {
+  const env = environment(), calls = [];
+  const projectId = '11111111-1111-4111-8111-111111111111';
+  const a = '22222222-2222-4222-8222-222222222222', b = '33333333-3333-4333-8333-333333333333', created = '44444444-4444-4444-8444-444444444444';
+  const space = { id: projectId, name: 'Conversas do espaço', state: 'READY' };
+  window.cyroEV = {
+    dirty: async () => {}, draft: async () => null,
+    request: async c => {
+      calls.push(c);
+      if (c.action === 'files.list') return { files: [], next: null };
+      if (c.action === 'conversation.create') return { conversation: { id: created, title: 'Nova conversa' } };
+      if (c.action === 'assistant.open') return c.metadataOnly ? { ownerId: 'owner', space, conversations: [{ id: a, title: 'Conferência A' }, { id: b, title: 'Conferência B' }], conversation: null, messages: [], artifacts: [] } : { ownerId: 'owner', space, conversation: { id: c.conversationId, title: c.conversationId === a ? 'Conferência A' : 'Conferência B' }, messages: [{ id: 1, role: 'assistant', content: 'Histórico ' + c.conversationId }], artifacts: [] };
+      if (c.action === 'assistant.send' && !c.projectId) return { ownerId: 'owner', space, effect: 'OPEN_SPACE' };
+      if (c.action === 'assistant.send') { assert.equal(c.conversationId, created); return { ownerId: 'owner', space, conversation: { id: created, title: 'Pergunta nova' }, messages: [{ id: 2, role: 'user', content: c.message }, { id: 3, role: 'assistant', content: 'Resposta salva.' }], artifacts: [] }; }
+      throw Error('Unexpected ' + c.action);
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false });
+    assert.equal(calls.length, 0);
+    await input('#ev-message', 'abra um espaço'); await submit();
+    assert.ok(document.querySelector('select[aria-label="Conversa do espaço"]'));
+    assert.equal(document.querySelectorAll('.ev-chat-message').length, 0);
+    assert.equal(calls.filter(c => c.action === 'assistant.open' && c.conversationId).length, 0);
+    await input('select[aria-label="Conversa do espaço"]', a);
+    assert.match(document.querySelector('.ev-chat-history').textContent, new RegExp(a));
+    await input('select[aria-label="Conversa do espaço"]', b);
+    await input('select[aria-label="Conversa do espaço"]', a);
+    assert.equal(calls.filter(c => c.action === 'assistant.open' && c.conversationId).length, 2);
+    await click([...document.querySelectorAll('button')].find(b => b.textContent === 'Novo chat no espaço'));
+    assert.equal(calls.filter(c => c.action === 'conversation.create').length, 0);
+    await input('#ev-message', 'Pergunta nova'); await submit();
+    for (let attempt = 0; attempt < 100 && !calls.some(c => c.action === 'conversation.create'); attempt++) await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+    assert.equal(calls.filter(c => c.action === 'conversation.create').length, 1);
+    assert.match(document.querySelector('.ev-chat-history').textContent, /Resposta salva/);
+  } finally { await env.dispose(); }
+});

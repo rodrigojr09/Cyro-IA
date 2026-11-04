@@ -148,7 +148,7 @@ class SpotifyChatIntegrationTests(unittest.TestCase):
         ) as tool:
             for route in ["/chat", "/quick/chat"]:
                 response = self.client.post(
-                    route, json={"message": "Jarvis, que música é essa?"}
+                    route, json={"message": "Jarvis, que música é essa?", **({"chat_id": main.store.create_chat()["id"]} if route == "/chat" else {})}
                 )
                 self.assertEqual(response.status_code, 200, response.text)
                 self.assertEqual(response.json()["speech_text"], "Consulte o player.")
@@ -299,7 +299,7 @@ class SpotifyDeviceChatIntegrationTests(unittest.TestCase):
                         {"handled": True, "reply": "Retomada no aparelho escolhido"},
                     ]
                 )
-                first = self.client.post(route, json={"message": "continuar Spotify"})
+                first = self.client.post(route, json={"message": "continuar Spotify", **({"chat_id": main.store.create_chat()["id"]} if route == "/chat" else {})})
                 self.assertEqual(first.status_code, 200, first.text)
                 body = {"message": "Computador"}
                 if route == "/chat":

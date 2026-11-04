@@ -27,7 +27,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [preferences, setPreferences] = usePreferences(state.settings),
     speaker = useSpeaker(preferences.voice),
     attachments = useAttachments();
-  const [evActive, setEVActive] = useState(!!window.cyroEV),
+  const [evActive, setEVActive] = useState(false),
     [evDirty, setEVDirty] = useState(false);
   const [activeEVId, setActiveEVId] = useState(null);
   const [input, setInput] = useState(''),
@@ -103,6 +103,11 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     setMenu(null);
     await workspace.view(projectId, chatId);
   }
+  useEffect(() => {
+    if (!state.ready) return;
+    const timer = setTimeout(() => { void workspace.searchChats?.(search).catch(error => workspace.set({ error: publicError(error) })); }, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [search, state.ready]);
   async function createChat(projectId = state.project?.id || '') {
     if (busy) return;
     if (evDirty) throw Error('Salve o rascunho do espaço antes de criar outra conversa.');
@@ -157,7 +162,6 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   );
   useEffect(() => {
     void workspace.initialize().catch(() => {});
-    const timer = setInterval(() => void workspace.refresh(false).catch(() => {}), 2000);
     const refresh = () => void workspace.refresh().catch(() => {});
     const queueOpen = () => setOpenRequest((value) => value + 1);
     const onOpen = window.jarvisWindow.onOpenChat?.((id) => {
@@ -169,7 +173,6 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
     return () => {
-      clearInterval(timer);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
       if (typeof unsubscribe === 'function') unsubscribe();
@@ -286,6 +289,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         busy={busy}
         search={search}
         onSearch={setSearch}
+        onMore={() => run(() => workspace.moreChats?.(search))}
         expanded={expanded}
         onToggle={(id) =>
           setExpanded((value) => {
@@ -675,11 +679,12 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               id="rename-chat"
               onClick={() =>
                 run(async () => {
-                  await post('/chats/settings', {
+                  const saved = await post('/chats/settings', {
                     chat_id: state.chat.id,
                     title: draftSettings.title,
                     instructions: draftSettings.instructions,
                   });
+                  workspace.acknowledgeChat?.(saved);
                   setManage(false);
                   await workspace.catalog();
                 })

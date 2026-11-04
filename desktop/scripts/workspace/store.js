@@ -19,11 +19,14 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     chat: null,
     messages: [],
     visible: 100,
-    status: 'Carregando suas informações e histórico...',
+    status: 'Carregando suas conversas...',
     error: '',
     storage: null,
     pendingActions: [],
     settings: {},
+    catalogNext: null,
+    searchResults: null,
+    catalogLoading: false,
   });
   const cache = new Map();
   let initialization,
@@ -35,18 +38,27 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     pollFailures = 0,
     nextPoll = 0,
     lastSync = 0,
-    sending = false;
+    sending = false,
+    draftRequestId = crypto.randomUUID(),
+    pendingSend = null,
+    catalogGeneration = 0;
+  const rememberCache = (id, entry) => {
+    cache.delete(id); cache.set(id, entry);
+    const size = () => [...cache.values()].reduce((total, value) => total + value.messages.reduce((n, message) => n + (message.content?.length || 0) * 2, 0), 0);
+    while (cache.size > 12 || (cache.size > 1 && size() > 8 * 1024 * 1024)) cache.delete(cache.keys().next().value);
+  };
   const assertActive = (epoch) => !disposed && epoch === generation;
   const cacheEntry = (chat, messages, complete = false) => ({
+    chat,
     revision: revision(chat),
     messages,
     complete,
   });
   const selection = (project, chat) =>
     writePreference('jarvis.selection', { project: project?.id || '', chat: chat?.id || null });
-  const updateCatalog = (chats) => {
+  const updateCatalog = (chats, partial = false) => {
     for (const [id, entry] of cache)
-      if (!chats.some((chat) => chat.id === id && revision(chat) === entry.revision))
+      if (chats.some((chat) => chat.id === id && revision(chat) !== entry.revision) || (!partial && !chats.some((chat) => chat.id === id)))
         cache.delete(id);
     store.set({ chats });
   };
@@ -55,11 +67,11 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     if (!entry || entry.revision !== revision(chat)) {
       const response = await api('/chats/history?chat_id=' + encodeURIComponent(chat.id));
       if (!assertActive(epoch)) return null;
-      chat = { ...response.chat, ...chat };
-      entry = cacheEntry(chat, response.messages);
-      cache.set(chat.id, entry);
+      chat = { ...chat, ...response.chat };
+      entry = cacheEntry(chat, response.messages, response.messages.length < 100);
+      rememberCache(chat.id, entry);
     }
-    return { chat, messages: entry.messages };
+    return { chat: { ...entry.chat, ...chat }, messages: entry.messages };
   }
   async function view(
     projectId = '',
@@ -113,7 +125,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       messages: [],
       storage: null,
       error: '',
-      status: 'Carregando suas informações e histórico...',
+      status: 'Carregando suas conversas...',
     });
     initialization = (async () => {
       const [snapshot, storage, settings] = await Promise.all([
@@ -124,14 +136,12 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       if (!currentInitialization()) return;
       if (storage.cloudError) throw new Error(storage.cloudError);
       cache.clear();
-      for (const chat of snapshot.chats)
-        cache.set(chat.id, cacheEntry(chat, snapshot.histories[chat.id] || [], true));
-      store.set({ projects: snapshot.projects, chats: snapshot.chats, storage, settings });
+      store.set({ projects: snapshot.projects, chats: snapshot.chats, storage, settings, catalogNext: snapshot.catalog_next ?? null });
       const saved = readPreference('jarvis.selection', {});
       const projectId = snapshot.projects.some((item) => item.id === saved.project)
         ? saved.project
         : '';
-      await view(projectId, saved.chat, { initializing: true });
+      await view(projectId, null, { initializing: true });
       if (currentInitialization()) await window.jarvisWindow.workspaceReady?.();
       if (currentInitialization()) {
         lastSync = Date.now();
@@ -176,9 +186,13 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
           : null,
       });
       if (result.chats) {
-        updateCatalog(result.chats);
+        updateCatalog(result.chats, result.catalog_next != null);
         if (current.chat) {
-          const metadata = result.chats.find((item) => item.id === current.chat.id);
+          let metadata = result.chats.find((item) => item.id === current.chat.id);
+          if (!metadata && result.catalog_next != null) {
+            try { metadata = await api('/chats/metadata?chat_id=' + encodeURIComponent(current.chat.id)); }
+            catch (e) { if (!/404|inexistente|indisponível/i.test(e.message)) throw e; }
+          }
           if (!metadata || metadata.archived) store.set({ chat: null, messages: [] });
           else if (revision(metadata) !== revision(current.chat)) {
             const selected = await history(metadata, epoch);
@@ -200,24 +214,29 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
   async function catalog(projectId = store.get().project?.id || '', chatId = store.get().chat?.id) {
     const result = await api('/workspace');
     store.set({ projects: result.projects });
-    updateCatalog(result.chats);
+    updateCatalog(result.chats, result.catalog_next != null);
     lastSync = Date.now();
     return view(projectId, chatId);
   }
-  async function newChat(projectId = store.get().project?.id || '') {
+  async function newChat(projectId = store.get().project?.id || '', { persist = false } = {}) {
     if (disposed || !store.get().ready || store.get().busy || store.get().loading) return;
+    if (!persist) {
+      draftRequestId = crypto.randomUUID(); pendingSend = null;
+      return view(projectId, null);
+    }
     const epoch = ++generation;
     store.set({ loading: true });
     try {
-      const chat = await post('/chats/create', {
+      const chat = await post('/chats/create' , {
         project_id: projectId || null,
         title: 'Nova conversa',
+        request_id: draftRequestId,
       });
       if (!assertActive(epoch)) return;
       if ((chat.project_id || '') !== projectId)
         throw Error('A conversa criada pertence a outro projeto.');
       store.set({ chats: [chat, ...store.get().chats.filter((item) => item.id !== chat.id)] });
-      cache.set(chat.id, cacheEntry(chat, [], true));
+      rememberCache(chat.id, cacheEntry(chat, [], true));
       await view(projectId, chat.id, { internal: true });
       return chat;
     } finally {
@@ -265,7 +284,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       } finally {
         if (assertActive(contextEpoch)) store.set({ loading: false });
       }
-      if (!s.chat) await newChat();
+      if (!s.chat) await newChat(s.project?.id || '', { persist: true });
       if (!canSend() || !store.get().chat) return false;
       const chat = store.get().chat,
         previous = cache.get(chat.id);
@@ -282,13 +301,17 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
         pendingActions: [],
       });
       try {
+        const key = JSON.stringify([chat.id, question, attachments.map(item => item.id)]);
+        if (pendingSend?.key !== key) pendingSend = { key, id: crypto.randomUUID() };
         const result = await post('/chat', {
+          operation_id: pendingSend.id,
           message: question,
           mode: chat.project_id ? 'programming' : 'chat',
           chat_id: chat.id,
           ...(attachments.length ? { attachments: attachments.map((item) => item.id) } : {}),
         });
         if (disposed) return false;
+        pendingSend = null;
         if (result.persisted?.chat && Array.isArray(result.persisted.messages)) {
           const saved = { ...chat, ...result.persisted.chat };
           const entry = cacheEntry(
@@ -296,10 +319,10 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
             [...(previous?.messages || historyBefore), ...result.persisted.messages],
             previous?.complete,
           );
-          cache.set(chat.id, entry);
+          rememberCache(chat.id, entry);
           store.set({
             chat: saved,
-            chats: store.get().chats.map((item) => (item.id === chat.id ? saved : item)),
+            chats: store.get().chats.map((item) => (item.id === chat.id ? saved : item)).sort((a, b) => String(b.last_message_at || b.created_at).localeCompare(String(a.last_message_at || a.created_at))),
             messages: entry.messages,
           });
         } else {
@@ -329,6 +352,26 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       sending = false;
     }
   }
+  async function searchChats(query = '', append = false) {
+    if (!store.get().ready || disposed) return;
+    if (!query && !append && store.get().searchResults === null) return;
+    const epoch = ++catalogGeneration;
+    const offset = append ? store.get().catalogNext : 0;
+    if (append && offset == null) return;
+    store.set({ catalogLoading: true });
+    try {
+      const page = await api('/chats/catalog?search=' + encodeURIComponent(query) + '&offset=' + (offset || 0));
+      if (disposed || epoch !== catalogGeneration) return;
+      if (query) {
+        const prior = append ? store.get().searchResults || [] : [];
+        store.set({ searchResults: [...prior, ...page.chats.filter(chat => !prior.some(old => old.id === chat.id))], catalogNext: page.next });
+      } else {
+        const known = new Map(store.get().chats.map(chat => [chat.id, chat]));
+        for (const chat of page.chats) known.set(chat.id, { ...known.get(chat.id), ...chat });
+        store.set({ chats: [...known.values()].sort((a,b) => String(b.last_message_at || b.created_at).localeCompare(String(a.last_message_at || a.created_at))), searchResults: null, catalogNext: page.next });
+      }
+    } finally { if (!disposed && epoch === catalogGeneration) store.set({ catalogLoading: false }); }
+  }
   async function older() {
     const s = store.get();
     if (!s.chat || s.busy || s.loading) return;
@@ -342,7 +385,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       '/chats/history?chat_id=' + encodeURIComponent(s.chat.id) + '&before=' + s.messages[0]?.id,
     );
     const messages = [...result.messages, ...s.messages];
-    cache.set(s.chat.id, cacheEntry(s.chat, messages, result.messages.length < 100));
+    rememberCache(s.chat.id, cacheEntry(s.chat, messages, result.messages.length < 100));
     store.set({ messages, visible: s.visible + 100 });
   }
   return {
@@ -352,15 +395,28 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     refresh,
     catalog,
     newChat,
+    searchChats,
+    moreChats: query => searchChats(query, true),
     canSend,
     send,
     older,
     async openById(id) {
       await catalog();
       const chat = store.get().chats.find((item) => item.id === id);
-      if (!chat) throw Error('Conversa indisponível.');
-      cache.delete(id);
+      if (!chat) {
+        const selected = await api('/chats/history?chat_id=' + encodeURIComponent(id));
+        if (disposed) return false;
+        store.set({ chats: [...store.get().chats, selected.chat] });
+        rememberCache(id, cacheEntry(selected.chat, selected.messages, selected.messages.length < 100));
+        return view(selected.chat.project_id || '', id);
+      }
       return view(chat.project_id || '', id);
+    },
+    acknowledgeChat(chat) {
+      if (!chat?.id) return;
+      const entry = cache.get(chat.id);
+      if (entry) rememberCache(chat.id, { ...entry, chat: { ...entry.chat, ...chat }, revision: revision(chat) });
+      store.set({ chats: store.get().chats.map(row => row.id === chat.id ? { ...row, ...chat } : row), ...(store.get().chat?.id === chat.id ? { chat: { ...store.get().chat, ...chat } } : {}) });
     },
     async cancel() {
       await window.jarvisWindow.cancelChat();

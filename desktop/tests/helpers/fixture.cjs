@@ -17,8 +17,8 @@ function fixture(environment, { bootstrap, send, writerCommand } = {}) {
     {
       id: 'general',
       project_id: null,
-      title: 'Conversa geral',
-      slot: 'general',
+      title: 'Conversa Geral (antiga)',
+      slot: null,
       last_message_at: '2026-10-28T01:00:00Z',
     },
     {
@@ -33,6 +33,7 @@ function fixture(environment, { bootstrap, send, writerCommand } = {}) {
       title: 'Feed',
       last_message_at: '2026-10-28T01:00:00Z',
     },
+    { id: 'quick', project_id: null, title: 'Quick Chat', slot: 'quick', last_message_at: '2026-10-28T01:00:00Z' },
   ];
   const histories = Object.fromEntries(
     chats.map((chat) => [chat.id, [{ id: 1, role: 'user', content: 'Contexto ' + chat.id }]]),
@@ -65,7 +66,8 @@ function fixture(environment, { bootstrap, send, writerCommand } = {}) {
     if (route === '/workspace/bootstrap')
       return bootstrap
         ? await bootstrap
-        : { projects: [project], chats, histories, general_chat_id: 'general' };
+        : { projects: [project], chats, histories: {}, general_chat_id: null, catalog_next: null };
+    if (route.startsWith('/chats/catalog')) { const query = new URLSearchParams(route.split('?')[1]); const offset = Number(query.get('offset') || 0), search = (query.get('search') || '').toLowerCase(); const rows = chats.filter(c => !c.project_id && c.slot !== 'quick' && c.title.toLowerCase().includes(search)); return { chats: rows.slice(offset, offset + 30), next: rows.length > offset + 30 ? offset + 30 : null }; }
     if (route === '/workspace') return { projects: [project], chats };
     if (route === '/workspace/progress') return { projects: [project] };
     if (route === '/storage')
@@ -78,7 +80,8 @@ function fixture(environment, { bootstrap, send, writerCommand } = {}) {
       return { project: body.project_id ? project : null, chats: [], archived_chats: [] };
     if (route.startsWith('/chats/history')) {
       const id = new URLSearchParams(route.split('?')[1]).get('chat_id');
-      return { chat: chats.find((item) => item.id === id), messages: histories[id] || [] };
+      const before = Number(new URLSearchParams(route.split('?')[1]).get('before') || Infinity);
+      return { chat: chats.find((item) => item.id === id), messages: (histories[id] || []).filter(m => m.id < before).slice(-100) };
     }
     if (route === '/chats/create') {
       const chat = {

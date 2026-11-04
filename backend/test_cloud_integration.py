@@ -68,7 +68,7 @@ class CloudIntegrationTests(unittest.TestCase):
             main.store, "request", return_value={"blocked": False}, create=True
         ):
             response = self.client.post(
-                "/chat/stream", json={"message": "Escreva uma saudação de teste."}
+                "/chat/stream", json={"message": "Escreva uma saudação de teste.", "chat_id": main.store.create_chat()["id"]}
             )
             self.assertEqual(response.status_code, 200)
             events = [

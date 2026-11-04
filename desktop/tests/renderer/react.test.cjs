@@ -52,7 +52,7 @@ test('React login shows a sanitized service outage and clears the password', asy
   }
 });
 
-test('React workspace blocks sending until the entire bootstrap resolves and renders loaded history', async () => {
+test('React workspace blocks sending until the entire bootstrap resolves and loads history only after opening a chat', async () => {
   const env = environment(),
     pending = deferred(),
     f = fixture(env, { bootstrap: pending.promise }),
@@ -70,7 +70,7 @@ test('React workspace blocks sending until the entire bootstrap resolves and ren
     assert.match(document.querySelector('#messages').textContent, /Contexto first/);
     await act(async () => workspace.view('project-a', 'second'));
     await act(async () => workspace.view('project-a', 'first'));
-    assert.equal(f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 0);
+    assert.equal(f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 2);
   } finally {
     await env.dispose();
   }
@@ -109,7 +109,7 @@ test('React chat reuses acknowledged messages when switching away and back', asy
     await act(async () => workspace.view('project-a', 'second'));
     await act(async () => workspace.view('project-a', 'first'));
     assert.match(document.querySelector('#messages').textContent, /Resposta salva/);
-    assert.equal(f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 0);
+    assert.equal(f.calls.filter((row) => row.route?.startsWith('/chats/history')).length, 2);
   } finally {
     await env.dispose();
   }
