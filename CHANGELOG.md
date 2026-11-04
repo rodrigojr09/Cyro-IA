@@ -1,3 +1,9 @@
+# 8.1.2 — 04/11/2026
+
+- Contexto real de conversa/EV no chat e gerenciamento em Configurações → Memória, usando exclusivamente a API central.
+- Preservados dados, JSONs e instaladores anteriores; nenhuma migração destrutiva ou publicação automática.
+- Contratos, validação e limites registrados em versions/8.1.2.md.
+
 # 8.1.1 — 04/11/2026
 
 - Campo de mensagem do EV reutiliza o Composer do chat normal: clipe, microfone, envio por Enter e leitura da resposta conforme preferência de voz.

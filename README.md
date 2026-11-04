@@ -1,4 +1,5 @@
-> **v8.1.1 em validação local.** Projetos locais saem da navegação ativa; o EV é operado pelo chat. Tabelas, análises, arquivos e confirmações aparecem na conversa, sem barra de ferramentas. O legado permanece no disco, sem upload automático. [Implementação e limites](versions/8.1.0.md). Sem novo instalador ou push.
+> **8.1.2 — Cyro memória persistente (04/11/2026).** Contexto real de conversa/EV no chat e gerenciamento em Configurações → Memória, usando exclusivamente a API central. [Histórico e validação](versions/8.1.2.md). Produção exige atualização/homologação pelo proprietário; registros abaixo são históricos.
+
 
 ## Referências anteriores (históricas)
 

@@ -57,3 +57,12 @@ O proprietário pediu o campo do EV igual ao chat normal, incluindo clipe de ane
 e microfone, mantendo as operações do espaço por mensagem. Essa instrução autoriza
 os controles usuais de composição. Solicitou gerar instalador; entregar em release/v8
 preservando anteriores. Não autoriza push, publicação ou mudança de produção.
+
+## Autorização posterior — v8.1.2, 04/11/2026
+
+O proprietário solicitou memória MAIN/EV transacional com snapshots Markdown e,
+ao final, compilar e enviar tudo. Após validar, compilar o instalador v8.1.2 em
+release/v8 e executar push normal nos remotos/branches existentes dos quatro
+repositórios, preservando instaladores anteriores. Não criar releases ou tags
+automáticas nem aplicar migrações destrutivas. O painel lateral de notas foi
+solicitado posteriormente à interface somente por chat e deve ser preservado.

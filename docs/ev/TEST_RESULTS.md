@@ -1,3 +1,7 @@
+# Atualização 8.1.2 — memória persistente
+
+Ver [contrato e validação de memória](../memory/README.md) e versions/8.1.2.md. Os registros abaixo são históricos.
+
 # Validação Desktop v8.1.1 — 04/11/2026
 
 168 testes JavaScript, 216 Python, 31 de inicialização/build, 2 de ferramentas e 4
