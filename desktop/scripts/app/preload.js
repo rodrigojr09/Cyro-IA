@@ -25,6 +25,8 @@ const listen = (channel, callback) => {
   return () => ipcRenderer.removeListener(channel, listener);
 };
 contextBridge.exposeInMainWorld('jarvisAuth', {
+  account: () => ipcRenderer.invoke('jarvis:account'),
+  openAccount: (mode) => ipcRenderer.invoke('jarvis:account-open', mode),
   login: (value) => ipcRenderer.invoke('jarvis:login', value),
   logout: () => ipcRenderer.invoke('jarvis:logout'),
   state: () => ipcRenderer.invoke('jarvis:cloud-state'),

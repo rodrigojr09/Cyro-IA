@@ -37,7 +37,11 @@ const dataDir =
 process.env.JARVIS_DATA_DIR = dataDir;
 require('../scripts/app/portable-paths').configureElectron(app, dataDir);
 let service;
-require('../scripts/workspace/ev-ipc').installEVIPC({ electron: require('electron'), service: () => service, dataDir });
+require('../scripts/workspace/ev-ipc').installEVIPC({
+  electron: require('electron'),
+  service: () => service,
+  dataDir,
+});
 require('../scripts/integrations/spotify-ipc').installSpotifyIPC({
   electron: require('electron'),
   service: () => service,
@@ -146,6 +150,18 @@ async function lock() {
 ipcMain.handle('jarvis:cloud-state', (event) => {
   if (!trusted(event)) throw Error('Solicitação não autorizada.');
   return service?.state() || { status: 'inactive', message: 'Inicializando conexão…' };
+});
+ipcMain.handle('jarvis:account', async (event) => {
+  if (!trusted(event) || !service) throw Error('Solicitação não autorizada.');
+  return service.request('/api/account');
+});
+ipcMain.handle('jarvis:account-open', async (event, mode) => {
+  if (!trusted(event) || !['register', 'forgot', 'resend', 'account'].includes(mode))
+    throw Error('Solicitação não autorizada.');
+  // Fixed trusted public portal; never accepts a renderer-provided URL.
+  await require('electron').shell.openExternal(
+    'https://admin.cyro-ia.tech/' + (mode === 'account' ? 'account' : 'access?mode=' + mode),
+  );
 });
 async function publish(session) {
   if (!session) return;

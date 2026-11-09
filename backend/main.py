@@ -136,7 +136,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="8.3.0-rc.1" if CLOUD else "2.0.1-dev.0",
+    version="8.4.0-rc.1" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
@@ -1187,6 +1187,9 @@ async def process_chat(req: ChatRequest):
             client, MODEL, messages, mode, service, api_gate, record_usage
         )
     except Exception as exc:
+        from cloud_client import CloudAccountError
+        if isinstance(exc, CloudAccountError):
+            raise HTTPException(exc.status_code, str(exc)) from None
         if getattr(exc, "status_code", None) == 507:
             from local_storage import StorageFullError
 

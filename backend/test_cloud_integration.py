@@ -13,6 +13,9 @@ import test_jarvis as legacy
 class CloudIntegrationTests(unittest.TestCase):
     def setUp(self):
         legacy.JarvisTests.setUp(self)
+        capabilities = patch.object(cloud_client, "account_capabilities", AsyncMock(return_value=None))
+        capabilities.start()
+        self.addCleanup(capabilities.stop)
 
     def tearDown(self):
         cloud_client._client = None

@@ -50,7 +50,16 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
           ['/api/ev/chat', '/api/ev/assistant'].includes(route) ? 110000 : 20000,
         ),
       });
-      if (response.status === 401 || (response.status === 403 && !integration && !ev)) {
+      const failure = !response.ok ? await response.json().catch(() => ({})) : null;
+      const commercial =
+        typeof failure?.code === 'string' &&
+        /^(PLAN_|DAILY_|PLATFORM_|ACCOUNT_RESTRICTED|TARIFF_|INPUT_|REQUEST_TOKEN_)/.test(
+          failure.code,
+        );
+      if (
+        response.status === 401 ||
+        (response.status === 403 && !integration && !ev && !commercial)
+      ) {
         state = {
           status: 'revoked',
           message: 'Sessão encerrada ou acesso bloqueado. Entre novamente.',
@@ -60,8 +69,18 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         throw Error(state.message);
       }
       if (!response.ok) {
+        if (commercial || route === '/api/account') {
+          const error = Error(
+            typeof failure?.error === 'string'
+              ? failure.error.slice(0, 400)
+              : 'Conta indisponível. Tente novamente.',
+          );
+          error.commercial = true;
+          error.status = response.status;
+          throw error;
+        }
         if (ev) {
-          const result = await response.json().catch(() => ({}));
+          const result = failure || {};
           const error = Error(
             typeof result.error === 'string' ? result.error.slice(0, 400) : 'Espaço indisponível.',
           );
@@ -70,7 +89,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
           throw error;
         }
         if (integration) {
-          const result = await response.json().catch(() => ({}));
+          const result = failure || {};
           const error = Error(
             typeof result.error === 'string' ? result.error.slice(0, 400) : 'Spotify indisponível.',
           );
@@ -85,7 +104,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
       state = { status: 'active', message: 'Conectado ao Cyro.' };
       return responsePayload;
     } catch (error) {
-      if (state.status !== 'revoked' && !error.spotify && !error.ev)
+      if (state.status !== 'revoked' && !error.spotify && !error.ev && !error.commercial)
         state = {
           status: 'offline',
           message: 'Não foi possível validar a sessão. Verifique a conexão.',

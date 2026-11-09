@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardSettings } from '../clipboard/Clipboard';
 import { Integrations } from '../integrations/Integrations';
 import { Storage } from '../storage/Storage';
+import { AccountPanel } from '../session/AccountPanel';
 import { MemoryPanel } from '../memory/MemoryPanel';
 export function Settings({
   open,
@@ -41,6 +42,7 @@ export function Settings({
     }
   };
   const categories = [
+    'Conta e plano',
     'Aparência',
     'Voz',
     'Armazenamento',
@@ -110,6 +112,7 @@ export function Settings({
           </nav>
           <div id="settings-content">
             <SettingsSectionBoundary key={category}>
+              {category === 'Conta e plano' && <AccountPanel />}
               {category === 'Memória' && <MemoryPanel projectId={memoryProjectId} />}
               {category === 'Aparência' && (
                 <>
@@ -276,7 +279,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 8.3.0-rc.1</p>
+                  <p>Versão 8.4.0-rc.1</p>
                   <button
                     onClick={() =>
                       perform(async () => {

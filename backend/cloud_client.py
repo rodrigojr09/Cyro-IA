@@ -11,12 +11,14 @@ from openai import AsyncOpenAI, APIStatusError, APITimeoutError, APIConnectionEr
 _client = None
 _storage_origin = None
 _storage_credential = None
+_account_cache = None
+_account_cached_at = 0.0
 stream_sink = contextvars.ContextVar("jarvis_stream_sink", default=None)
 memory_context = contextvars.ContextVar("cyro_memory_context", default=None)
 
 
 def configure(origin, credential):
-    global _client, _storage_origin, _storage_credential
+    global _client, _storage_origin, _storage_credential, _account_cache, _account_cached_at
     parsed = urlparse(origin)
     local_dev = (
         not getattr(__import__("sys"), "frozen", False)
@@ -44,6 +46,8 @@ def configure(origin, credential):
     )
     _storage_origin = origin.rstrip("/")
     _storage_credential = credential
+    _account_cache = None
+    _account_cached_at = 0.0
 
 
 def conversation_request(command):
@@ -114,10 +118,64 @@ async def attachment_identity():
         ) from None
 
 
+async def account_capabilities():
+    """Short-lived display/transport cache. The API revalidates every AI request."""
+    global _account_cache, _account_cached_at
+    if not _storage_origin or not _storage_credential:
+        return None
+    if _account_cache is not None and time.monotonic() - _account_cached_at < 30:
+        return _account_cache
+    import httpx
+    async with httpx.AsyncClient(timeout=10, follow_redirects=False) as transport:
+        response = await transport.get(_storage_origin + "/api/account", headers={"Authorization": "Bearer " + _storage_credential})
+        if response.status_code == 404:
+            return None  # Compatibility with the previously deployed API.
+        response.raise_for_status()
+        _account_cache = response.json()
+        _account_cached_at = time.monotonic()
+        return _account_cache
+
+
+COMMERCIAL_ERRORS = {
+    "DAILY_QUOTA_EXCEEDED": "Limite diário atingido. A renovação ocorre às 00:00 UTC.",
+    "PLAN_FEATURE_REQUIRED": "Este recurso não está incluído no seu plano. Consulte sua conta.",
+    "PLAN_TOOLS_BLOCKED": "Ferramentas não incluídas no plano atual.",
+    "PLAN_IMAGES_BLOCKED": "Análise de imagens exige um plano com esse recurso.",
+    "INPUT_TOKEN_LIMIT": "Mensagem e anexos ultrapassam a entrada permitida. Reduza o conteúdo.",
+    "REQUEST_TOKEN_LIMIT": "Orçamento da solicitação excedido. Reduza o conteúdo.",
+    "PLATFORM_BUDGET_EXCEEDED": "Limite da plataforma atingido. Tente novamente após a renovação.",
+    "PLATFORM_PAUSED": "As operações de IA estão temporariamente suspensas.",
+    "TARIFF_UNAVAILABLE": "O modelo aguarda configuração de tarifa pelo administrador.",
+    "ACCOUNT_RESTRICTED": "O consumo da conta aguarda revisão administrativa.",
+    "AI_REQUEST_ALREADY_RESERVED": "Esta operação já foi enviada. Consulte o histórico antes de tentar novamente.",
+}
+
+class CloudAccountError(RuntimeError):
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status_code = status
+
+async def request_completion(**kwargs):
+    try:
+        return await _client.chat.completions.create(**kwargs)
+    except APIStatusError as exc:
+        code = exc.body.get("code") if isinstance(exc.body, dict) else None
+        if code in COMMERCIAL_ERRORS:
+            raise CloudAccountError(exc.status_code, COMMERCIAL_ERRORS[code]) from None
+        raise
+
+
 class Completions:
     async def create(self, **kwargs):
         if _client is None:
             raise RuntimeError("Entre no Cyro com sua conta.")
+        account = await account_capabilities()
+        if account and account.get("commercialEnabled"):
+            plan = account["plan"]
+            kwargs["max_completion_tokens"] = min(kwargs.get("max_completion_tokens", plan["outputTokens"]), plan["outputTokens"])
+            if not plan.get("features", {}).get("tools"):
+                for field in ("tools", "tool_choice", "parallel_tool_calls"):
+                    kwargs.pop(field, None)
         # SDK response-only annotations/refusal fields must not break the next tool round.
         allowed = {"role", "content", "tool_call_id", "tool_calls"}
         kwargs["messages"] = [
@@ -129,10 +187,10 @@ class Completions:
         if scope:
             kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), "memory_context": scope}
         if sink is None:
-            return await _client.chat.completions.create(**kwargs)
+            return await request_completion(**kwargs)
         from openai.types.chat import ChatCompletion
 
-        stream = await _client.chat.completions.create(**kwargs, stream=True)
+        stream = await request_completion(**kwargs, stream=True)
         text, calls, usage, identifier = "", {}, None, "cloud-stream"
         try:
             async for chunk in stream:
@@ -215,8 +273,9 @@ class Speech:
         try:
             return await _client.audio.speech.create(**kwargs)
         except APIStatusError as exc:
-            message = exc.body.get("error") if isinstance(exc.body, dict) else exc.body
-            if not isinstance(message, str) or message not in SPEECH_MESSAGES:
+            code = exc.body.get("code") if isinstance(exc.body, dict) else None
+            message = COMMERCIAL_ERRORS.get(code) or (exc.body.get("error") if isinstance(exc.body, dict) else exc.body)
+            if not isinstance(message, str) or message not in SPEECH_MESSAGES and message not in COMMERCIAL_ERRORS.values():
                 message = "Serviço de voz indisponível no Cloud. Tente novamente."
             status = (
                 exc.status_code

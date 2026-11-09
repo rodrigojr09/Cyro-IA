@@ -5,6 +5,11 @@ import cloud_client
 
 
 class CloudAdapterTests(unittest.TestCase):
+    def setUp(self):
+        capabilities = patch.object(cloud_client, "account_capabilities", AsyncMock(return_value=None))
+        capabilities.start()
+        self.addCleanup(capabilities.stop)
+
     def test_memory_context_follows_current_request_and_is_not_shared_between_tasks(self):
         async def run():
             transport = AsyncMock()
@@ -178,3 +183,31 @@ class CloudAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CommercialTransportTest(__import__('unittest').IsolatedAsyncioTestCase):
+    async def test_free_transport_omits_tools_and_caps_output_without_copying_credentials_to_payload(self):
+        from unittest.mock import AsyncMock, patch
+        import cloud_client
+        from types import SimpleNamespace
+        create = AsyncMock(return_value=SimpleNamespace(choices=[]))
+        fake = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        with patch.object(cloud_client, '_client', fake), patch.object(cloud_client, 'account_capabilities', AsyncMock(return_value={'commercialEnabled': True, 'plan': {'outputTokens': 400, 'features': {'tools': False}}})):
+            await cloud_client.Completions().create(model='test-model',messages=[{'role':'user','content':'oi'}],max_completion_tokens=3500,tools=[{'type':'function'}],tool_choice='auto')
+        sent = create.call_args.kwargs
+        self.assertEqual(sent['max_completion_tokens'],400)
+        self.assertNotIn('tools',sent)
+        self.assertNotIn('tool_choice',sent)
+
+    async def test_quota_code_is_safe_and_actionable_without_private_http_body(self):
+        import httpx
+        from openai import APIStatusError
+        response=httpx.Response(429,request=httpx.Request('POST','https://api.test/api/v1/chat/completions'))
+        error=APIStatusError('private provider detail',response=response,body={'code':'DAILY_QUOTA_EXCEEDED','error':'private provider detail'})
+        fake=__import__('types').SimpleNamespace(chat=__import__('types').SimpleNamespace(completions=__import__('types').SimpleNamespace(create=AsyncMock(side_effect=error))))
+        with patch.object(cloud_client,'_client',fake):
+            with self.assertRaises(cloud_client.CloudAccountError) as found:
+                await cloud_client.request_completion(model='test',messages=[])
+        self.assertEqual(found.exception.status_code,429)
+        self.assertIn('00:00 UTC',str(found.exception))
+        self.assertNotIn('private',str(found.exception))

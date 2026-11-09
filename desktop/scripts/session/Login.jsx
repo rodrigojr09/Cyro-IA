@@ -32,8 +32,7 @@ export function Login() {
           começar?
         </h1>
         <p className="intro">
-          Entre com o e-mail e a senha cadastrados pelo seu administrador. Suas conversas e projetos
-          continuam disponíveis na sua conta.
+          Entre com seu e-mail e senha. Suas conversas e espaços continuam disponíveis na sua conta.
         </p>
         <form
           id="login-form"
@@ -92,6 +91,26 @@ export function Login() {
         <p id="login-status" role="status" aria-live="polite">
           {status}
         </p>
+        <nav aria-label="Acesso à conta">
+          {[
+            ['register', 'Criar conta'],
+            ['forgot', 'Esqueci minha senha'],
+            ['resend', 'Confirmar e-mail'],
+          ].map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                window.jarvisAuth
+                  .openAccount(mode)
+                  .catch(() => setStatus('Não foi possível abrir o navegador.'))
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
         <div className="privacy">
           ◇ Credencial individual protegida pelo Windows
           <br />◇ A chave OpenAI permanece no servidor

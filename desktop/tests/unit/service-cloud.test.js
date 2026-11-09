@@ -184,3 +184,33 @@ test('Spotify 403 não encerra sessão JARVIS nem expõe credencial', async () =
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test('commercial plan denial preserves the authenticated account and returns an actionable error', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'cyro-plan-test-'));
+  const safeStorage = {
+    isEncryptionAvailable: () => true,
+    encryptString: (v) => Buffer.from(v),
+    decryptString: (v) => v.toString(),
+  };
+  const service = createCloud({
+    dataDir: directory,
+    safeStorage,
+    origin: 'https://api.example.test',
+    fetcher: async (url) =>
+      url.endsWith('/login')
+        ? Response.json({ credential: code, expiresAt: '2030-01-01' })
+        : Response.json(
+            { code: 'PLAN_FEATURE_REQUIRED', error: 'Este recurso exige plano pago.' },
+            { status: 403 },
+          ),
+  });
+  try {
+    await service.login({ email: 'test@example.test', password: 'test-only-password' }, 'Test');
+    await assert.rejects(service.request('/api/account'), /plano pago/);
+    assert.ok(service.current());
+    assert.equal(service.state().status, 'active');
+    assert.ok(await readFile(path.join(directory, 'cloud-session-v4.bin')));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
