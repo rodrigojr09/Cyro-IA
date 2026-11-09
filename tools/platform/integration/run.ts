@@ -586,5 +586,5 @@ try {
     resolve(temporary).startsWith(resolve(sandboxRoot) + sep) &&
     basename(temporary).startsWith("integration-run-")
   )
-    await rm(temporary, { recursive: true, force: true });
+    await rm(temporary, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
