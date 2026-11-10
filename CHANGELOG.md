@@ -1,5 +1,13 @@
 # 8.3.0-rc.1 — 04/11/2026
 
+## 8.4.0-rc.1 — 2026-11-09
+
+- Cadastro/verificação/reset SMTP configurável, conta pessoal e separação de administração.
+- Concessão manual FREE/PAID, expiração, quotas e ledger financeiro central na API.
+- Desktop adapta chat às capacidades; Cloud administra assinaturas auditadas. Files preserva protocolo privado.
+- Migração aditiva e deploy técnico automático autorizado; rollout público condicionado. Ver docs/public-access/.
+
+
 - Estabilização do trabalho 8.2 preservado: memória TXT/controles, chats sob demanda e cache local por sessão.
 - Correções de integração, segurança, erros, readiness, dependências e testes, conforme relatório de prontidão.
 - Candidata local; sem declaração de produção pronta, publicação, tag ou push.

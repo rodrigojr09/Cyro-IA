@@ -82,3 +82,11 @@ Orientação posterior: na inicialização, não buscar nem preencher cache com 
 ## Escopo vigente — v8.3.0, auditoria de produção
 
 Congelamento de funcionalidades: estabilizar e validar o trabalho existente, incluindo pendências reais da v8.2.0. Preservar alterações, Backup/ e dados. Sem push, tags, releases, credenciais reais ou mudanças em produção. Candidata local 8.3.0-rc.1 (Files mantém versão independente). Evidências e bloqueadores em docs/production/V8_3_READINESS.md; aprovação final explícita necessária.
+
+## Escopo vigente — v8.4.0, 09/11/2026
+
+Implementar acesso público, planos FREE/PAID, quotas centrais e administração. Pago exclusivamente por concessão manual auditada do administrador, expiração opcional; sem compra/webhook financeiro fictício. SMTP configurável; responsável Rodrigo Junior, contato rodrigo.macia019@gmail.com. Preservar dados/Backup e bloqueadores 8.3. Sem push, publicação, alterações em produção ou credenciais reais. Preparar 8.4.0-rc.1 para homologação.
+
+Autorização posterior do proprietário: após implementação e validações, compilar e enviar os commits aos remotos existentes. Sem publicação de releases/tags, migrações de produção ou mudança de credenciais. Preservar instaladores anteriores e informar bloqueadores reais.
+
+Autorização posterior: proprietário permite publicação e alteração dos servidores; esclareceu que o deploy é automático pelo commit, sem acesso manual ao Coolify. Validar antes de push, manter rollout público desligado até requisitos operacionais, sem declarar prontidão não demonstrada.

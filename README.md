@@ -1,3 +1,5 @@
+> **Cyro v8.4.0-rc.1 — acesso público em homologação.** Plano pago ativado manualmente pelo administrador. [Arquitetura, contratos, migração e rollout](docs/public-access/V8_4_ARCHITECTURE.md); [testes](docs/public-access/TEST_RESULTS.md). Files mantém 0.4.0. Deploy automático autorizado por commit; abertura pública depende das configurações e validações indicadas. Os registros anteriores abaixo são históricos.
+
 > **Cyro 8.3.0-rc.1 — estabilização, não liberado para produção.** Files mantém versão 0.4.0. [Relatório de prontidão e bloqueadores](docs/production/V8_3_READINESS.md). O trabalho 8.2 preservado foi incorporado à candidata; os registros abaixo são históricos. Sem push, release, tag ou implantação automática.
 
 > **8.1.2 — Cyro memória persistente (04/11/2026).** Contexto real de conversa/EV no chat e gerenciamento em Configurações → Memória, usando exclusivamente a API central. [Histórico e validação](versions/8.1.2.md). Produção exige atualização/homologação pelo proprietário; registros abaixo são históricos.

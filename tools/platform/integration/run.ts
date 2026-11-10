@@ -522,6 +522,19 @@ try {
   check(
     "Electron/Windows: cliente Desktop faz login, persiste sessão protegida, consulta chats e sai pela API real",
   );
+  const accountURL=cloudOrigin+'/api/account';
+  const ownedAccount=()=>fetch(accountURL,{headers:{Cookie:cookie}}).then(json);
+  const initialAccount=await ownedAccount();
+  const updatePlan=async(planCode:'FREE'|'PAID',revision:number)=>json(await fetch(cloudOrigin+'/api/commercial',{method:'POST',headers:{Cookie:cookie,Origin:cloudOrigin,'Content-Type':'application/json'},body:JSON.stringify({action:'user.update',id:owner,expectedRevision:revision,planCode,state:planCode==='FREE'?'FREE':'ACTIVE',expiresAt:null,status:'ACTIVE',confirmed:true,reason:'Synthetic manual plan integration test',operationId:randomUUID()})}));
+  await updatePlan('PAID',initialAccount.plan.subscription.revision);
+  const paidAccount=await ownedAccount();assert.equal(paidAccount.plan.code,'PAID');assert.equal(paidAccount.upgrade.method,'ADMIN_MANUAL');assert.equal(paidAccount.user.role,'SUPER_ADMIN');
+  await updatePlan('FREE',paidAccount.plan.subscription.revision);
+  assert.equal((await ownedAccount()).plan.code,'FREE');
+  assert.equal((await projectCommand({action:'get',id:created.project.id},device.credential)).status,200);
+  check('v8.4: concessão manual PAID e downgrade FREE via Cloud → API → PostgreSQL, com EV e papel preservados');
+  assert.equal((await fetch(cloudOrigin+'/api/commercial?kind=users')).status,401);
+  const publicConfiguration=await json(await fetch(cloudOrigin+'/api/public/account'));assert.equal(publicConfiguration.paidActivation,'ADMIN_MANUAL');assert.equal(publicConfiguration.purchaseEnabled,false);
+  check('v8.4: administração sem sessão bloqueada e contrato público sem compra automática');
   await json(
     await fetch(cloudOrigin + "/api/auth/logout", {
       method: "POST",
