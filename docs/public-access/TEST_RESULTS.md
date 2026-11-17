@@ -1,4 +1,12 @@
-# Validação v8.4.0-rc.1 — 09/11/2026
+# Revalidação da candidata — 17/11/2026
+
+Desktop validado e instalador refeito, auditado e testado com perfil temporário.
+Referências persistentes do EV e leitura do XLSX fornecido corrigidas em API/Files.
+Next.js API/Cloud atualizado para 16.4.6. Resultados, hashes, commits e limites em
+[versions/8.4.0-rc.1.md](../../versions/8.4.0-rc.1.md). Os registros abaixo são
+históricos; a abertura pública continua NO-GO pelos bloqueadores operacionais.
+
+# Validação v8.4.0-rc.1 — 09/11/2026 (histórico)
 
 Ambiente local Windows, Node 24.22.1, Python 3.14. Banco PostgreSQL embarcado PGlite e fixtures HTTP/SMTP sintéticas; nenhum uso de IA pago nos testes.
 

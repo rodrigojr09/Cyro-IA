@@ -8,9 +8,11 @@ import json
 import os
 from pathlib import Path
 import socket
+import sqlite3
 import sys
 import tempfile
 import time
+from contextlib import closing, contextmanager
 from urllib.error import HTTPError, URLError
 from urllib.request import build_opener, ProxyHandler, Request
 
@@ -19,6 +21,22 @@ sys.path.insert(0, str(ROOT))
 from start import OwnedProcesses
 
 OPENER = build_opener(ProxyHandler({}))
+
+
+@contextmanager
+def temporary_profile():
+    profile = tempfile.TemporaryDirectory(prefix="jarvis-cloud-runtime-")
+    try:
+        yield profile.name
+    finally:
+        for attempt in range(50):
+            try:
+                profile.cleanup()
+                break
+            except PermissionError:
+                if attempt == 49:
+                    raise
+                time.sleep(0.1)
 
 
 def request(route, token=None, body=None):
@@ -46,21 +64,18 @@ def main(output=None):
     version = json.loads((ROOT / "package.json").read_text())["version"]
     expected = hashlib.sha256(str(exe.resolve()).lower().encode()).hexdigest()
     previous_env = dict(os.environ)
-    with tempfile.TemporaryDirectory(prefix="jarvis-cloud-runtime-") as temporary:
+    with temporary_profile() as temporary:
         try:
             data = Path(temporary) / "data"
-            source = Path(temporary) / "source"
-            source.mkdir()
-            (source / "notes.txt").write_text(
-                "Projeto local de teste", encoding="utf-8"
-            )
+            sys.path.insert(0, str(ROOT / "backend"))
+            from project_store import ProjectStore
+            legacy_chat = ProjectStore(data).create_chat(title="Smoke privado")["id"]
             os.environ["JARVIS_DATA_DIR"] = str(data)
             os.environ["PATH"] = str(Path(os.environ["SystemRoot"]) / "System32")
             os.environ.pop("ELECTRON_RUN_AS_NODE", None)
             for name in list(os.environ):
                 if name.startswith("OPENAI_"):
                     os.environ.pop(name, None)
-            chat_id = None
             for cycle in range(2):
                 owner = OwnedProcesses()
                 try:
@@ -93,21 +108,25 @@ def main(output=None):
                         raise AssertionError("Histórico Cloud disponível sem login.")
                     except HTTPError as error:
                         assert error.code == 400
-                    if cycle == 0:
-                        chat_id = request(
+                    # v8 keeps legacy data but no longer registers local projects.
+                    try:
+                        request(
                             "/projects/register",
                             token,
-                            {"path": str(source), "name": "Smoke privado"},
-                        )["id"]
-                    else:
-                        listing = request(
-                            "/projects/selection?project_id=" + chat_id, token
+                            {"path": str(Path(temporary) / "source"), "name": "Smoke privado"},
                         )
-                        assert any(
-                            item["name"] == "notes.txt" for item in listing["entries"]
-                        )
+                        raise AssertionError("Projetos locais reativados no modo EV.")
+                    except HTTPError as error:
+                        assert error.code == 410
+                    # Startup must preserve legacy history while keeping it inactive.
+                    with closing(sqlite3.connect(data / "registry.db")) as connection:
+                        assert connection.execute(
+                            "SELECT title FROM chats WHERE id=?", (legacy_chat,)
+                        ).fetchone() == ("Smoke privado",)
                 finally:
                     owner.close()
+                    # Windows may release Chromium cache handles just after Job close.
+                    time.sleep(0.5)
                 for _ in range(100):
                     try:
                         request("/health")
