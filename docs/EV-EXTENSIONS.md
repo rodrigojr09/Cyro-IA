@@ -39,3 +39,10 @@ Usar este tipo retorna à criação com a seleção preenchida, preservando o no
 Novo EV tem campos em largura completa e ações no rodapé. O catálogo não aparece
 no histórico da conversa. Capturas: build/v8/ev-extension-catalog.png,
 ev-extension-details.png e ev-create-menu.png. API e Cloud permanecem 8.5.0-rc.1.
+
+## Sem chat padrão — 8.5.0-rc.3
+
+Novo EV abre somente o formulário e o catálogo. A área de conversa só é montada
+quando existe um EV criado ou aberto; não há lobby com composer ou pasta.
+Cancelar a criação sem EV retorna à conversa anterior. O título Conversas recentes
+é estático, em negrito e sem fundo ou hover.

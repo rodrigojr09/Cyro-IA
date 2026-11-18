@@ -350,6 +350,7 @@ export function EVWorkspace({
   selectedEV = null,
   createRequest = 0,
   onCreated = () => {},
+  onCancelCreation = () => {},
   onDirty = () => {},
   onSpaceChange = () => {},
   speaker,
@@ -778,254 +779,261 @@ export function EVWorkspace({
     }
   }
   return (
-    <section
-      className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
-      hidden={hidden}
-      aria-label="Espaço Virtual por conversa"
-      aria-busy={loading}
-    >
-      <header className="ev-chat-heading">
-        <div>
-          <span>
-            {space?.extensionId
-              ? extensionCatalog?.extensions?.find((item) => item.id === space.extensionId)?.name ||
-                'CYRO EV'
-              : 'CYRO EV'}
-          </span>
-          <h1>{space?.name || 'Espaços Virtuais'}</h1>
-        </div>
-        <small role="status">
-          {loading ? 'Cyro está trabalhando…' : stateLabel(space?.state) || 'Converse com o Cyro'}
-        </small>
-        <button
-          type="button"
-          className="ev-notes-toggle"
-          aria-label="Notas e arquivos"
-          title="Notas e arquivos"
-          aria-expanded={notesOpen}
-          onClick={() => setNotesOpen((old) => !old)}
-        >
-          <Icon name="folder" />
-        </button>
-      </header>
-      <div className="ev-chat-history" ref={scroll} aria-live="polite">
-        <EVCatalog
-          open={!hidden && catalogOpen}
-          catalog={extensionCatalog}
-          busy={loading}
-          error={catalogError}
-          onRefresh={() => void refreshExtensions()}
-          onManage={(extension, install) => void manageExtension(extension, install)}
-          onBack={() => {
-            setCatalogOpen(false);
-            setCreationOpen(true);
-          }}
-          onUse={(extension) => {
-            creationOperation.current = null;
-            setSelectedExtension(extension.id);
-            setCatalogOpen(false);
-            setCreationOpen(true);
-          }}
-        />
-        <Dialog
-          id="ev-create-menu"
-          title="Novo EV"
-          open={!hidden && creationOpen}
-          onClose={() => {
-            if (!loading) setCreationOpen(false);
-          }}
-        >
-          <div className="ev-create-intro">
-            <span className="ev-create-icon">
-              <Icon name="folder-plus" />
-            </span>
-            <p>Um chat dedicado ao seu trabalho, com memória e arquivos privados.</p>
-          </div>
-          <form
-            className="ev-extension-create"
-            onSubmit={createSpace}
-            aria-label="Criar Espaço Virtual"
-          >
-            <label>
-              Tipo do novo espaço
-              <select
-                aria-label="Tipo do novo espaço"
-                disabled={loading}
-                value={selectedExtension}
-                onChange={(event) => {
-                  creationOperation.current = null;
-                  setSelectedExtension(event.target.value);
-                }}
-              >
-                <option value="">Escolha um tipo instalado</option>
-                {extensionCatalog?.extensions
-                  .filter((item) => item.installed)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              Nome do espaço
-              <input
-                aria-label="Nome do espaço"
-                maxLength={120}
-                placeholder="Ex.: Minha transportadora"
-                autoFocus
-                value={newSpaceName}
-                disabled={loading}
-                onChange={(event) => {
-                  creationOperation.current = null;
-                  setNewSpaceName(event.target.value);
-                }}
-              />
-            </label>
-            <p className="ev-create-hint">
-              Escolha um tipo instalado ou explore outros no catálogo.
-            </p>
-            <div className="ev-menu-actions">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setCreationOpen(false);
-                  setCatalogOpen(true);
-                }}
-              >
-                Explorar catálogo
-              </button>
-              <button
-                className="ev-primary-action"
-                disabled={
-                  loading ||
-                  !selectedExtension ||
-                  !newSpaceName.trim() ||
-                  !extensionCatalog?.enabled
-                }
-              >
-                {loading ? 'Criando…' : 'Criar EV'}
-              </button>
-            </div>
-          </form>
-          {catalogError && <p role="alert">{catalogError}</p>}
-          {creationOpen && error && <p role="alert">{error}</p>}
-          {extensionCatalog && !extensionCatalog.enabled && (
-            <p>O catálogo de EVs ainda não foi ativado neste servidor.</p>
-          )}
-        </Dialog>
-        {!messages.length && (
-          <div className="ev-chat-welcome">
-            <h2>{space ? 'Como posso ajudar neste EV?' : 'Crie ou escolha um chat EV.'}</h2>
-            <p>
-              {space
-                ? 'Peça para enviar arquivos, conferir notas, criar uma tabela ou comparar planilhas. O Cyro organiza os dados e mantém o contexto deste espaço.'
-                : 'Use Novo EV para escolher nome e tipo. Seus EVs aparecem como chats na barra lateral.'}
-            </p>
-          </div>
-        )}
-        {messages.map((message) => (
-          <article className={'ev-chat-message ' + message.role} key={message.id}>
-            <span>{message.role === 'user' ? 'Você' : 'Cyro'}</span>
-            <Markdown text={message.content} />
-            {artifacts
-              .filter((a) => a.messageId === message.id)
-              .flatMap((a) => a.items)
-              .map((item, index) => (
-                <Artifact
-                  key={item.id || item.file?.id || index}
-                  item={item}
-                  projectId={space?.id}
-                  hidden={hidden}
-                />
-              ))}
-          </article>
-        ))}
-        {notice && (
-          <p className="ev-chat-notice" role="status">
-            {notice}
-          </p>
-        )}
-        {error && (
-          <p className="ev-chat-error" role="alert">
-            {error}{' '}
-            {question.trim()
-              ? 'Sua mensagem foi preservada; tente enviá-la novamente.'
-              : 'A conversa e os arquivos já enviados continuam preservados.'}
-          </p>
-        )}
-        {loading && <p className="ev-chat-working">Cyro está trabalhando…</p>}
-      </div>
-      <div className="ev-chat-input">
-        <Composer
-          idPrefix="ev-"
-          inputId="ev-message"
-          state={{ ready: !hidden, busy: loading, chat: conversation }}
-          writerState={{ busy: false }}
-          isWriter={false}
-          active={!hidden}
-          busy={loading}
-          canSend={!loading && !hidden && space?.state === 'READY'}
-          input={question}
-          inputRef={input}
-          onInput={changeQuestion}
-          onSend={send}
-          disableInput={loading}
-          cancelable={false}
-          placeholder={space ? 'Converse com o Cyro...' : 'Crie ou abra um espaço por mensagem…'}
-          attachments={{
-            files: contextFiles.map(
-              (id) =>
-                attached.find((f) => f.id === id) || {
-                  id,
-                  name: 'Arquivo selecionado',
-                  kind: 'document',
-                },
-            ),
-            choose: chooseAttachments,
-            remove: (id) => {
-              operation.current = null;
-              setContextFiles((old) => old.filter((item) => item !== id));
-            },
-            download: (fileId) => window.cyroEV.download({ projectId: space.id, fileId }),
-            supportsImages: false,
-            paste: async () => {
-              setNotice('Use o clipe para selecionar XML, CSV, XLSX, PDF ou TXT para este espaço.');
-              return false;
-            },
-          }}
-          dictation={dictation}
-          onDictation={() => void dictation.toggle().catch((e) => setNotice(publicError(e)))}
-          status={loading ? 'Cyro está trabalhando…' : notice || 'Pronto'}
-          attachmentCaption="XML, CSV, XLSX, PDF e TXT · até 8 MB por arquivo. Os anexos são enviados ao espaço; remover da mensagem preserva o original."
-        />
-      </div>
-      {notesOpen && (
-        <EVNotes
-          key={space?.id || 'lobby'}
-          projectId={space?.id}
-          hidden={hidden}
-          refreshKey={messages.length + ':' + contextFiles.join(',')}
-          request={evRequest}
-          onUse={(file) => {
-            operation.current = null;
-            confirmation.current = null;
-            setAttached((old) => [...old.filter((f) => f.id !== file.id), file].slice(-5));
-            setContextFiles((old) => [...new Set([...old, file.id])].slice(-5));
-            input.current?.focus();
-          }}
-          renderFiscal={(data) => <FiscalData data={data} />}
-          renderAnalysis={(item) =>
-            item &&
-            (item.kind === 'CHAT' ? (
-              <Markdown text={item.reply || 'Resposta ainda não disponível.'} />
-            ) : (
-              <Analysis key={item.id} item={item} projectId={space?.id} hidden={hidden} />
-            ))
+    <>
+      <EVCatalog
+        open={!hidden && catalogOpen}
+        catalog={extensionCatalog}
+        busy={loading}
+        error={catalogError}
+        onRefresh={() => void refreshExtensions()}
+        onManage={(extension, install) => void manageExtension(extension, install)}
+        onBack={() => {
+          setCatalogOpen(false);
+          setCreationOpen(true);
+        }}
+        onUse={(extension) => {
+          creationOperation.current = null;
+          setSelectedExtension(extension.id);
+          setCatalogOpen(false);
+          setCreationOpen(true);
+        }}
+      />
+      <Dialog
+        id="ev-create-menu"
+        title="Novo EV"
+        open={!hidden && creationOpen}
+        onClose={() => {
+          if (!loading) {
+            setCreationOpen(false);
+            if (!space) onCancelCreation();
           }
-        />
+        }}
+      >
+        <div className="ev-create-intro">
+          <span className="ev-create-icon">
+            <Icon name="folder-plus" />
+          </span>
+          <p>Um chat dedicado ao seu trabalho, com memória e arquivos privados.</p>
+        </div>
+        <form
+          className="ev-extension-create"
+          onSubmit={createSpace}
+          aria-label="Criar Espaço Virtual"
+        >
+          <label>
+            Tipo do novo espaço
+            <select
+              aria-label="Tipo do novo espaço"
+              disabled={loading}
+              value={selectedExtension}
+              onChange={(event) => {
+                creationOperation.current = null;
+                setSelectedExtension(event.target.value);
+              }}
+            >
+              <option value="">Escolha um tipo instalado</option>
+              {extensionCatalog?.extensions
+                .filter((item) => item.installed)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Nome do espaço
+            <input
+              aria-label="Nome do espaço"
+              maxLength={120}
+              placeholder="Ex.: Minha transportadora"
+              autoFocus
+              value={newSpaceName}
+              disabled={loading}
+              onChange={(event) => {
+                creationOperation.current = null;
+                setNewSpaceName(event.target.value);
+              }}
+            />
+          </label>
+          <p className="ev-create-hint">Escolha um tipo instalado ou explore outros no catálogo.</p>
+          <div className="ev-menu-actions">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setCreationOpen(false);
+                setCatalogOpen(true);
+              }}
+            >
+              Explorar catálogo
+            </button>
+            <button
+              className="ev-primary-action"
+              disabled={
+                loading || !selectedExtension || !newSpaceName.trim() || !extensionCatalog?.enabled
+              }
+            >
+              {loading ? 'Criando…' : 'Criar EV'}
+            </button>
+          </div>
+        </form>
+        {catalogError && <p role="alert">{catalogError}</p>}
+        {creationOpen && error && <p role="alert">{error}</p>}
+        {extensionCatalog && !extensionCatalog.enabled && (
+          <p>O catálogo de EVs ainda não foi ativado neste servidor.</p>
+        )}
+      </Dialog>
+
+      {space && (
+        <section
+          className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
+          hidden={hidden}
+          aria-label="Espaço Virtual por conversa"
+          aria-busy={loading}
+        >
+          <header className="ev-chat-heading">
+            <div>
+              <span>
+                {space?.extensionId
+                  ? extensionCatalog?.extensions?.find((item) => item.id === space.extensionId)
+                      ?.name || 'CYRO EV'
+                  : 'CYRO EV'}
+              </span>
+              <h1>{space?.name || 'Espaços Virtuais'}</h1>
+            </div>
+            <small role="status">
+              {loading
+                ? 'Cyro está trabalhando…'
+                : stateLabel(space?.state) || 'Converse com o Cyro'}
+            </small>
+            <button
+              type="button"
+              className="ev-notes-toggle"
+              aria-label="Notas e arquivos"
+              title="Notas e arquivos"
+              aria-expanded={notesOpen}
+              onClick={() => setNotesOpen((old) => !old)}
+            >
+              <Icon name="folder" />
+            </button>
+          </header>
+          <div className="ev-chat-history" ref={scroll} aria-live="polite">
+            {!messages.length && (
+              <div className="ev-chat-welcome">
+                <h2>Como posso ajudar neste EV?</h2>
+                <p>
+                  {space
+                    ? 'Peça para enviar arquivos, conferir notas, criar uma tabela ou comparar planilhas. O Cyro organiza os dados e mantém o contexto deste espaço.'
+                    : 'Use Novo EV para escolher nome e tipo. Seus EVs aparecem como chats na barra lateral.'}
+                </p>
+              </div>
+            )}
+            {messages.map((message) => (
+              <article className={'ev-chat-message ' + message.role} key={message.id}>
+                <span>{message.role === 'user' ? 'Você' : 'Cyro'}</span>
+                <Markdown text={message.content} />
+                {artifacts
+                  .filter((a) => a.messageId === message.id)
+                  .flatMap((a) => a.items)
+                  .map((item, index) => (
+                    <Artifact
+                      key={item.id || item.file?.id || index}
+                      item={item}
+                      projectId={space?.id}
+                      hidden={hidden}
+                    />
+                  ))}
+              </article>
+            ))}
+            {notice && (
+              <p className="ev-chat-notice" role="status">
+                {notice}
+              </p>
+            )}
+            {error && (
+              <p className="ev-chat-error" role="alert">
+                {error}{' '}
+                {question.trim()
+                  ? 'Sua mensagem foi preservada; tente enviá-la novamente.'
+                  : 'A conversa e os arquivos já enviados continuam preservados.'}
+              </p>
+            )}
+            {loading && <p className="ev-chat-working">Cyro está trabalhando…</p>}
+          </div>
+          <div className="ev-chat-input">
+            <Composer
+              idPrefix="ev-"
+              inputId="ev-message"
+              state={{ ready: !hidden, busy: loading, chat: conversation }}
+              writerState={{ busy: false }}
+              isWriter={false}
+              active={!hidden}
+              busy={loading}
+              canSend={!loading && !hidden && space?.state === 'READY'}
+              input={question}
+              inputRef={input}
+              onInput={changeQuestion}
+              onSend={send}
+              disableInput={loading}
+              cancelable={false}
+              placeholder="Converse com o Cyro..."
+              attachments={{
+                files: contextFiles.map(
+                  (id) =>
+                    attached.find((f) => f.id === id) || {
+                      id,
+                      name: 'Arquivo selecionado',
+                      kind: 'document',
+                    },
+                ),
+                choose: chooseAttachments,
+                remove: (id) => {
+                  operation.current = null;
+                  setContextFiles((old) => old.filter((item) => item !== id));
+                },
+                download: (fileId) => window.cyroEV.download({ projectId: space.id, fileId }),
+                supportsImages: false,
+                paste: async () => {
+                  setNotice(
+                    'Use o clipe para selecionar XML, CSV, XLSX, PDF ou TXT para este espaço.',
+                  );
+                  return false;
+                },
+              }}
+              dictation={dictation}
+              onDictation={() => void dictation.toggle().catch((e) => setNotice(publicError(e)))}
+              status={loading ? 'Cyro está trabalhando…' : notice || 'Pronto'}
+              attachmentCaption="XML, CSV, XLSX, PDF e TXT · até 8 MB por arquivo. Os anexos são enviados ao espaço; remover da mensagem preserva o original."
+            />
+          </div>
+          {notesOpen && (
+            <EVNotes
+              key={space?.id || 'lobby'}
+              projectId={space?.id}
+              hidden={hidden}
+              refreshKey={messages.length + ':' + contextFiles.join(',')}
+              request={evRequest}
+              onUse={(file) => {
+                operation.current = null;
+                confirmation.current = null;
+                setAttached((old) => [...old.filter((f) => f.id !== file.id), file].slice(-5));
+                setContextFiles((old) => [...new Set([...old, file.id])].slice(-5));
+                input.current?.focus();
+              }}
+              renderFiscal={(data) => <FiscalData data={data} />}
+              renderAnalysis={(item) =>
+                item &&
+                (item.kind === 'CHAT' ? (
+                  <Markdown text={item.reply || 'Resposta ainda não disponível.'} />
+                ) : (
+                  <Analysis key={item.id} item={item} projectId={space?.id} hidden={hidden} />
+                ))
+              }
+            />
+          )}
+        </section>
       )}
-    </section>
+    </>
   );
 }

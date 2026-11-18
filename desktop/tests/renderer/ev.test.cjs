@@ -62,6 +62,8 @@ test('EV catalog installs for the account and creation sends the chosen extensio
   try {
     await env.mount(env.EVWorkspace, { hidden: false, createRequest: 1 });
     await settle();
+    assert.equal(document.querySelector('.ev-chat'), null);
+    assert.equal(document.querySelector('#ev-message'), null);
     assert.equal(document.querySelector('select[aria-label="Tipo do novo espaço"]').value, '');
     await act(async () => {
       [...document.querySelectorAll('button')]

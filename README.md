@@ -1,3 +1,5 @@
+> **Desktop 8.5.0-rc.3:** Conversas recentes em negrito e sem hover; somente EVs criados têm chat. [Entrega](versions/8.5.0-rc.3.md).
+
 > **Desktop 8.5.0-rc.2:** catálogo de EVs no padrão de Conexões, com busca, filtros, cartões e detalhes. Menu Novo EV reorganizado. [Entrega](versions/8.5.0-rc.2.md).
 
 > **Cyro Desktop 8.5.0-rc.1 — cada EV é um chat.** Novo EV abaixo do Quick Chat, menu com nome/tipo, instalação por conta e ícone de pasta no cabeçalho. [Fluxo e validação](docs/EV-EXTENSIONS.md); [entrega e instalador](versions/8.5.0-rc.1.md).

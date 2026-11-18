@@ -369,6 +369,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
           setEVChats((old) => [item, ...old.filter((ev) => ev.id !== item.id)]);
           void refreshEVChats();
         }}
+        onCancelCreation={() => setEVActive(false)}
         onDirty={setEVDirty}
         onSpaceChange={setActiveEVId}
         speaker={speaker}

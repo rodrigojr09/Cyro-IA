@@ -203,8 +203,10 @@
   background: transparent;
   box-shadow: none;
 }
+#sidebar .navigation-heading,
 #sidebar .navigation-heading:hover {
-  background: var(--nav-hover);
+  font-weight: 700;
+  background: transparent;
 }
 #sidebar .navigation-heading .nav-item:hover:not(:disabled) {
   background: transparent;

@@ -205,7 +205,9 @@ app.whenReady().then(async () => {
         offscreen: true,
       },
     });
-    const js = (code) => win.webContents.executeJavaScript(code, true);
+    const js = (code) => win.webContents.executeJavaScript(code, true).catch((error) => {
+      throw new Error(`${error.message}\nRenderer script: ${code}`);
+    });
     const wait = async (code) => {
       for (let n = 0; n < 160; n++) {
         if (await js(code)) return;
@@ -221,15 +223,17 @@ app.whenReady().then(async () => {
     await wait(
       `!!document.getElementById('ev-nav') && !document.getElementById('ev-nav').disabled`,
     );
-    assert.equal(await js(`document.querySelector('.ev-chat').hidden`), true);
+    assert.equal(await js(`!!document.querySelector('.ev-chat')`), false);
     assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 0);
     await js(`document.querySelector('#ev-nav').click()`);
-    await wait(`!!document.getElementById('ev-message')`);
-    assert.ok(
-      await js(
-        `!!document.querySelector('#ev-attach-files') && !!document.querySelector('#ev-microphone') && !!document.querySelector('#ev-send')`,
-      ),
-    );
+    await wait(`document.getElementById('ev-create-menu').open`);
+    assert.equal(await js(`!!document.getElementById('ev-message')`), false);
+    await js(`document.querySelector('#ev-create-menu button[aria-label="Fechar"]').click()`);
+    await wait(`!document.getElementById('ev-create-menu').open && !document.querySelector('main.main-panel').hidden`);
+    assert.equal(await js(`!!document.querySelector('.ev-chat')`), false);
+    await js(`document.querySelector('#ev-nav').click()`);
+    await wait(`document.getElementById('ev-create-menu').open`);
+    assert.equal(await js(`getComputedStyle([...document.querySelectorAll('.navigation-heading')].find(n=>n.textContent==='Conversas recentes')).fontWeight`), '700');
     assert.equal(
       await js(`document.querySelectorAll('#add-project,.ev-tabs,.project-row').length`),
       0,
@@ -274,7 +278,7 @@ app.whenReady().then(async () => {
     await fs.writeFile(createShot, (await win.webContents.capturePage()).toPNG());
     await js(`document.querySelector('form[aria-label="Criar Espaço Virtual"]').requestSubmit()`);
     await wait(
-      `document.querySelector('.ev-chat-heading h1').textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
+      `document.querySelector('.ev-chat-heading h1')?.textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
     );
     await wait(`!!document.querySelector('#ev-chats button')`);
     assert.equal(
