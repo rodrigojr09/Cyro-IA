@@ -1,3 +1,5 @@
+> **Desktop 8.5.0-rc.2:** catálogo de EVs no padrão de Conexões, com busca, filtros, cartões e detalhes. Menu Novo EV reorganizado. [Entrega](versions/8.5.0-rc.2.md).
+
 > **Cyro Desktop 8.5.0-rc.1 — cada EV é um chat.** Novo EV abaixo do Quick Chat, menu com nome/tipo, instalação por conta e ícone de pasta no cabeçalho. [Fluxo e validação](docs/EV-EXTENSIONS.md); [entrega e instalador](versions/8.5.0-rc.1.md).
 
 > **Cyro v8.4.0-rc.1 — acesso público em homologação.** Plano pago ativado manualmente pelo administrador. [Arquitetura, contratos, migração e rollout](docs/public-access/V8_4_ARCHITECTURE.md); [testes](docs/public-access/TEST_RESULTS.md). Files mantém 0.4.0. Deploy automático autorizado por commit; abertura pública depende das configurações e validações indicadas. Os registros anteriores abaixo são históricos.

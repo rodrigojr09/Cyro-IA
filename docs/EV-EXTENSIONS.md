@@ -29,3 +29,13 @@ A API precisa aplicar a migration 20261118000100_ev_extensions antes do uso.
 O catálogo fica ativo junto com CYRO_EV_ENABLED=1; CYRO_EV_EXTENSIONS_ENABLED=0
 permite desativá-lo explicitamente. Ver o guia do host e o registro da candidata
 em versions/8.5.0-rc.1.md para o estado real da entrega.
+
+## Melhoria visual — 8.5.0-rc.2
+
+O catálogo usa a mesma linguagem visual de Conexões: janela própria, busca,
+filtros Todos/Instalados/Disponíveis, cartões com status e página de detalhes.
+Permissões ficam nos detalhes; instalar/desinstalar mantém autorização central.
+Usar este tipo retorna à criação com a seleção preenchida, preservando o nome.
+Novo EV tem campos em largura completa e ações no rodapé. O catálogo não aparece
+no histórico da conversa. Capturas: build/v8/ev-extension-catalog.png,
+ev-extension-details.png e ev-create-menu.png. API e Cloud permanecem 8.5.0-rc.1.

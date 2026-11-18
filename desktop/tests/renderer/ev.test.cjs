@@ -65,9 +65,14 @@ test('EV catalog installs for the account and creation sends the chosen extensio
     assert.equal(document.querySelector('select[aria-label="Tipo do novo espaço"]').value, '');
     await act(async () => {
       [...document.querySelectorAll('button')]
-        .find((b) => b.textContent === 'Escolher extensão para instalar')
+        .find((b) => b.textContent === 'Explorar catálogo')
         .click();
     });
+    assert.equal(document.querySelector('#ev-extension-menu').open, true);
+    await input('#ev-catalog-search', 'inexistente');
+    assert.equal(document.querySelectorAll('#ev-extension-menu .integration-card').length, 0);
+    await input('#ev-catalog-search', 'logístico');
+    await click('#ev-extension-menu .integration-card');
     await act(async () => {
       [...document.querySelectorAll('button')]
         .find((b) => b.textContent === 'Instalar Cyro Logístico')

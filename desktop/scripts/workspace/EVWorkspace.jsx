@@ -4,6 +4,7 @@ import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
 import { EVNotes } from './EVNotes';
+import { EVCatalog } from './EVCatalog';
 import { Icon } from '../ui/Icon';
 
 export async function evRequest(input) {
@@ -375,6 +376,7 @@ export function EVWorkspace({
   const creationOperation = useRef(null);
   useEffect(() => {
     if (!hidden && createRequest) {
+      setCatalogOpen(false);
       setCreationOpen(true);
       void refreshExtensions();
     }
@@ -807,59 +809,24 @@ export function EVWorkspace({
         </button>
       </header>
       <div className="ev-chat-history" ref={scroll} aria-live="polite">
-        {catalogOpen && (
-          <section className="ev-extension-catalog" aria-label="Catálogo de extensões EV">
-            <h2>Extensões dos seus espaços</h2>
-            <button
-              type="button"
-              onClick={() => {
-                setCatalogOpen(false);
-                setCreationOpen(true);
-              }}
-            >
-              Voltar à criação
-            </button>
-            <p>Instale um tipo de EV na sua conta para criar espaços com ele.</p>
-            {catalogError && <p role="alert">{catalogError}</p>}
-            {!extensionCatalog && (
-              <button disabled={loading} onClick={() => void refreshExtensions()}>
-                Atualizar catálogo
-              </button>
-            )}
-            {extensionCatalog && !extensionCatalog.enabled && (
-              <p>O catálogo de extensões ainda não foi ativado neste servidor.</p>
-            )}
-            {extensionCatalog?.enabled &&
-              extensionCatalog.extensions.map((extension) => (
-                <article key={extension.id}>
-                  <h3>
-                    {extension.name} <small>{extension.version}</small>
-                  </h3>
-                  <p>{extension.description}</p>
-                  <p>
-                    Permissões:{' '}
-                    {extension.permissions
-                      .map(
-                        (permission) =>
-                          ({
-                            storage: 'salvar dados do EV',
-                            messages: 'responder na conversa',
-                            files: 'consultar arquivos do espaço',
-                          })[permission] || permission,
-                      )
-                      .join(', ')}
-                    .
-                  </p>
-                  <button
-                    disabled={loading}
-                    onClick={() => void manageExtension(extension, !extension.installed)}
-                  >
-                    {extension.installed ? 'Desinstalar' : 'Instalar'} {extension.name}
-                  </button>
-                </article>
-              ))}
-          </section>
-        )}
+        <EVCatalog
+          open={!hidden && catalogOpen}
+          catalog={extensionCatalog}
+          busy={loading}
+          error={catalogError}
+          onRefresh={() => void refreshExtensions()}
+          onManage={(extension, install) => void manageExtension(extension, install)}
+          onBack={() => {
+            setCatalogOpen(false);
+            setCreationOpen(true);
+          }}
+          onUse={(extension) => {
+            creationOperation.current = null;
+            setSelectedExtension(extension.id);
+            setCatalogOpen(false);
+            setCreationOpen(true);
+          }}
+        />
         <Dialog
           id="ev-create-menu"
           title="Novo EV"
@@ -868,6 +835,12 @@ export function EVWorkspace({
             if (!loading) setCreationOpen(false);
           }}
         >
+          <div className="ev-create-intro">
+            <span className="ev-create-icon">
+              <Icon name="folder-plus" />
+            </span>
+            <p>Um chat dedicado ao seu trabalho, com memória e arquivos privados.</p>
+          </div>
           <form
             className="ev-extension-create"
             onSubmit={createSpace}
@@ -899,6 +872,8 @@ export function EVWorkspace({
               <input
                 aria-label="Nome do espaço"
                 maxLength={120}
+                placeholder="Ex.: Minha transportadora"
+                autoFocus
                 value={newSpaceName}
                 disabled={loading}
                 onChange={(event) => {
@@ -907,34 +882,32 @@ export function EVWorkspace({
                 }}
               />
             </label>
-            <button
-              disabled={
-                loading || !selectedExtension || !newSpaceName.trim() || !extensionCatalog?.enabled
-              }
-            >
-              Criar EV
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => {
-                setCreationOpen(false);
-                setCatalogOpen(true);
-              }}
-            >
-              Gerenciar tipos de EV
-            </button>
-            {!extensionCatalog?.extensions?.some((item) => item.installed) && (
+            <p className="ev-create-hint">
+              Escolha um tipo instalado ou explore outros no catálogo.
+            </p>
+            <div className="ev-menu-actions">
               <button
                 type="button"
+                disabled={loading}
                 onClick={() => {
                   setCreationOpen(false);
                   setCatalogOpen(true);
                 }}
               >
-                Escolher extensão para instalar
+                Explorar catálogo
               </button>
-            )}
+              <button
+                className="ev-primary-action"
+                disabled={
+                  loading ||
+                  !selectedExtension ||
+                  !newSpaceName.trim() ||
+                  !extensionCatalog?.enabled
+                }
+              >
+                {loading ? 'Criando…' : 'Criar EV'}
+              </button>
+            </div>
           </form>
           {catalogError && <p role="alert">{catalogError}</p>}
           {creationOpen && error && <p role="alert">{error}</p>}

@@ -27,7 +27,7 @@
   font-size: 9px;
   letter-spacing: 1.4px;
 }
-#settings-content .integrations-heading h3 {
+:is(#settings-content, #ev-extension-menu) .integrations-heading h3 {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 8px;
@@ -36,7 +36,7 @@
   margin: 0 0 20px;
   font-size: 12px;
 }
-#settings-content .integrations-search-label {
+:is(#settings-content, #ev-extension-menu) .integrations-search-label {
   margin: 0 0 7px;
   font-size: 11px;
 }
@@ -71,14 +71,14 @@
   gap: 6px;
   margin: 14px 0;
 }
-#settings-dialog .integrations-filters button {
+:is(#settings-dialog, #ev-extension-menu) .integrations-filters button {
   padding: 7px 10px;
   font-size: 11px;
   color: var(--muted);
   background: transparent;
   border: 1px solid var(--border);
 }
-#settings-dialog .integrations-filters button[aria-pressed='true'] {
+:is(#settings-dialog, #ev-extension-menu) .integrations-filters button[aria-pressed='true'] {
   color: var(--integration-accent);
   border-color: var(--integration-accent);
   background: var(--integration-tint);
@@ -99,7 +99,7 @@
   grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
   gap: 12px;
 }
-#settings-dialog .integration-card {
+:is(#settings-dialog, #ev-extension-menu) .integration-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -115,7 +115,7 @@
     border-color 150ms,
     background 150ms;
 }
-#settings-dialog .integration-card:hover {
+:is(#settings-dialog, #ev-extension-menu) .integration-card:hover {
   border-color: var(--integration-accent);
   background: var(--integration-tint);
 }

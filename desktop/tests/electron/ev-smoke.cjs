@@ -236,6 +236,33 @@ app.whenReady().then(async () => {
     );
     assert.equal(await js(`typeof require`), 'undefined');
     await wait(`document.getElementById('ev-create-menu').open`);
+    await js(
+      `[...document.querySelectorAll('#ev-create-menu button')].find(b=>b.textContent==='Explorar catálogo').click()`,
+    );
+    await wait(
+      `document.getElementById('ev-extension-menu').open && !!document.querySelector('#ev-extension-menu .integration-card')`,
+    );
+    await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    const catalogShot = path.resolve(__dirname, '../../../build/v8/ev-extension-catalog.png');
+    await fs.mkdir(path.dirname(catalogShot), { recursive: true });
+    await fs.writeFile(catalogShot, (await win.webContents.capturePage()).toPNG());
+    await input('#ev-catalog-search', 'sem resultados');
+    await wait(`document.querySelectorAll('#ev-extension-menu .integration-card').length===0`);
+    await input('#ev-catalog-search', '');
+    await wait(`!!document.querySelector('#ev-extension-menu .integration-card')`);
+    await js(`document.querySelector('#ev-extension-menu .integration-card').click()`);
+    await wait(`!!document.querySelector('#ev-extension-menu .integration-details')`);
+    await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    await fs.writeFile(
+      path.resolve(__dirname, '../../../build/v8/ev-extension-details.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(
+      `[...document.querySelectorAll('#ev-extension-menu button')].find(b=>b.textContent==='Usar este tipo').click()`,
+    );
+    await wait(
+      `document.getElementById('ev-create-menu').open && !document.getElementById('ev-extension-menu').open`,
+    );
     await input('select[aria-label="Tipo do novo espaço"]', 'cyro.logistics');
     await input('input[aria-label="Nome do espaço"]', 'Transportadora de teste');
     await wait(
