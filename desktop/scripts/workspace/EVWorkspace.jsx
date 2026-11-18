@@ -1,21 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Markdown } from '../ui/components';
-import { publicError, readPreference, writePreference } from '../shared/bridge';
+import { Dialog, Markdown } from '../ui/components';
+import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
 import { EVNotes } from './EVNotes';
+import { Icon } from '../ui/Icon';
 
 export async function evRequest(input) {
   if (!window.cyroEV) throw Error('Espaços Virtuais indisponíveis nesta sessão.');
   const result = await window.cyroEV.request(input);
   if (result?.error) throw Object.assign(Error(result.error), { status: result.status });
   return result;
-}
-async function conversationOperation(operation) {
-  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(operation + ':conversation'))).slice(0, 16);
-  hash[6] = (hash[6] & 15) | 64; hash[8] = (hash[8] & 63) | 128;
-  const hex = [...hash].map(n => n.toString(16).padStart(2, '0')).join('');
-  return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
 }
 const stateLabel = (value) =>
   ({
@@ -351,6 +346,9 @@ function Artifact({ item, projectId, hidden }) {
 
 export function EVWorkspace({
   hidden,
+  selectedEV = null,
+  createRequest = 0,
+  onCreated = () => {},
   onDirty = () => {},
   onSpaceChange = () => {},
   speaker,
@@ -368,12 +366,85 @@ export function EVWorkspace({
     [notice, setNotice] = useState(''),
     [contextFiles, setContextFiles] = useState([]);
   const [attached, setAttached] = useState([]);
+  const [extensionCatalog, setExtensionCatalog] = useState(null);
+  const [selectedExtension, setSelectedExtension] = useState('');
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [newSpaceName, setNewSpaceName] = useState('');
+  const [catalogError, setCatalogError] = useState('');
+  const [creationOpen, setCreationOpen] = useState(false);
+  const creationOperation = useRef(null);
+  useEffect(() => {
+    if (!hidden && createRequest) {
+      setCreationOpen(true);
+      void refreshExtensions();
+    }
+  }, [createRequest]);
+  async function refreshExtensions() {
+    try {
+      const result = await evRequest({ action: 'catalog' });
+      if (Array.isArray(result?.extensions)) {
+        setExtensionCatalog(result);
+        setCatalogError('');
+      }
+    } catch (e) {
+      setCatalogError(publicError(e));
+    }
+  }
+  useEffect(() => {
+    if (!hidden) void refreshExtensions();
+  }, [hidden]);
+  async function manageExtension(extension, install) {
+    if (loading || sending.current) return;
+    setLoading(true);
+    setCatalogError('');
+    try {
+      const result = await evRequest({
+        action: install ? 'extension.install' : 'extension.uninstall',
+        extensionId: extension.id,
+        operationId: crypto.randomUUID(),
+      });
+      setExtensionCatalog(result);
+      if (install) setSelectedExtension(extension.id);
+      else if (selectedExtension === extension.id) setSelectedExtension('');
+      setNotice(
+        install
+          ? `${extension.name} instalada na sua conta.`
+          : `${extension.name} desinstalada. Os dados dos espaços foram preservados.`,
+      );
+    } catch (e) {
+      setCatalogError(publicError(e));
+    } finally {
+      if (active.current) setLoading(false);
+    }
+  }
+  async function createSpace(event) {
+    event.preventDefault();
+    if (loading || !selectedExtension || !newSpaceName.trim() || !extensionCatalog?.enabled) return;
+    setLoading(true);
+    setError('');
+    try {
+      const result = await evRequest({
+        action: 'create',
+        operationId: (creationOperation.current ||= crypto.randomUUID()),
+        extensionId: selectedExtension,
+        name: newSpaceName.trim(),
+        description: '',
+      });
+      await apply({ ...result, effect: 'OPEN_SPACE' });
+      onCreated(result.space);
+      setCreationOpen(false);
+      creationOperation.current = null;
+      setNewSpaceName('');
+    } catch (e) {
+      setError(publicError(e));
+    } finally {
+      if (active.current) setLoading(false);
+    }
+  }
   useEffect(() => {
     onSpaceChange(space?.id || null);
   }, [space?.id]);
-  const [notesOpen, setNotesOpen] = useState(
-    () => !window.matchMedia?.('(max-width: 1100px)').matches,
-  );
+  const [notesOpen, setNotesOpen] = useState(false);
   const changeQuestion = (value) => {
     operation.current = null;
     confirmation.current = null;
@@ -396,8 +467,7 @@ export function EVWorkspace({
           (!item.state || ['PROPOSED', 'APPLYING'].includes(item.state)),
       )
       .at(-1)?.id;
-  const initialized = useRef(false),
-    operation = useRef(null),
+  const operation = useRef(null),
     generation = useRef(0),
     scroll = useRef(null),
     input = useRef(null),
@@ -423,6 +493,11 @@ export function EVWorkspace({
   }, [messages, artifacts, loading]);
   async function apply(out) {
     if (!active.current) return;
+    if (out.effect === 'CREATE_EV') {
+      setCreationOpen(true);
+      void refreshExtensions();
+      return;
+    }
     if (out.effect === 'LOBBY') {
       setSpace(null);
       setConversation(null);
@@ -433,7 +508,13 @@ export function EVWorkspace({
       return;
     }
     if (out.space) {
-      if (out.space.id !== space?.id) { setContextFiles([]); setConversations([]); setConversation(null); setMessages([]); setArtifacts([]); }
+      if (out.space.id !== space?.id) {
+        setContextFiles([]);
+        setConversations([]);
+        setConversation(null);
+        setMessages([]);
+        setArtifacts([]);
+      }
       setSpace(out.space);
       if (out.ownerId)
         writePreference('cyro.ev.selection', { ownerId: out.ownerId, projectId: out.space.id });
@@ -441,13 +522,28 @@ export function EVWorkspace({
     if (out.conversations) setConversations(out.conversations);
     if (Object.hasOwn(out, 'conversation')) {
       setConversation(out.conversation);
-      if (out.conversation) setConversations(old => [out.conversation, ...old.filter(c => c.id !== out.conversation.id)]);
+      if (out.conversation)
+        setConversations((old) => [
+          out.conversation,
+          ...old.filter((c) => c.id !== out.conversation.id),
+        ]);
     }
     if (out.space && out.conversation && out.messages) {
       const key = out.space.id + ':' + out.conversation.id;
-      chatCache.current.delete(key); chatCache.current.set(key, out);
-      const cacheBytes = () => [...chatCache.current.values()].reduce((total, value) => total + JSON.stringify({ messages: value.messages, artifacts: value.artifacts }).length * 2, 0);
-      while (chatCache.current.size > 12 || (chatCache.current.size > 1 && cacheBytes() > 8 * 1024 * 1024)) chatCache.current.delete(chatCache.current.keys().next().value);
+      chatCache.current.delete(key);
+      chatCache.current.set(key, out);
+      const cacheBytes = () =>
+        [...chatCache.current.values()].reduce(
+          (total, value) =>
+            total +
+            JSON.stringify({ messages: value.messages, artifacts: value.artifacts }).length * 2,
+          0,
+        );
+      while (
+        chatCache.current.size > 12 ||
+        (chatCache.current.size > 1 && cacheBytes() > 8 * 1024 * 1024)
+      )
+        chatCache.current.delete(chatCache.current.keys().next().value);
     }
     if (out.messages) {
       setMessages(out.messages);
@@ -458,17 +554,26 @@ export function EVWorkspace({
         { id: 'reply-' + crypto.randomUUID(), role: 'assistant', content: out.reply },
       ]);
     if (out.effect === 'OPEN_SPACE' && out.space?.state === 'READY')
-      await apply(await evRequest({ action: 'assistant.open', projectId: out.space.id, metadataOnly: true }));
+      await apply(
+        await evRequest({
+          action: 'assistant.open',
+          projectId: out.space.id,
+          ...(out.space.chatId ? { conversationId: out.space.chatId } : {}),
+          metadataOnly: false,
+        }),
+      );
   }
   async function open(projectId, conversationId) {
     const epoch = ++generation.current;
     const cached = conversationId && chatCache.current.get(projectId + ':' + conversationId);
-    const out = cached || await evRequest({
-      action: 'assistant.open',
-      metadataOnly: !conversationId,
-      projectId,
-      ...(conversationId ? { conversationId } : {}),
-    });
+    const out =
+      cached ||
+      (await evRequest({
+        action: 'assistant.open',
+        metadataOnly: false,
+        projectId,
+        ...(conversationId ? { conversationId } : {}),
+      }));
     if (!active.current || epoch !== generation.current) return;
     await apply(out);
     if (out.space?.state === 'READY') {
@@ -494,19 +599,18 @@ export function EVWorkspace({
     }
   }
   useEffect(() => {
-    if (hidden || initialized.current || !window.cyroEV) return;
-    initialized.current = true;
-    const saved = readPreference('cyro.ev.selection', {});
-    if (!saved.projectId) return;
+    if (hidden || !selectedEV?.id || !window.cyroEV) return;
+    if (
+      selectedEV.id === space?.id &&
+      space.state === 'READY' &&
+      conversation?.id === selectedEV.chatId
+    )
+      return;
     setLoading(true);
-    void evRequest({ action: 'list' })
-      .then((out) => {
-        if (out.ownerId === saved.ownerId && out.spaces.some((s) => s.id === saved.projectId))
-          return open(saved.projectId);
-      })
+    void open(selectedEV.id, selectedEV.chatId)
       .catch((e) => setError(publicError(e)))
       .finally(() => setLoading(false));
-  }, [hidden]);
+  }, [hidden, selectedEV?.id, selectedEV?.chatId]);
   useEffect(() => {
     if (hidden || !space || space.state !== 'PROVISIONING' || loading) return;
     const timer = setTimeout(() => {
@@ -588,17 +692,32 @@ export function EVWorkspace({
       previousSpace = space,
       operationId = (operation.current ||= crypto.randomUUID());
     try {
+      if (
+        !space &&
+        extensionCatalog?.enabled &&
+        /(?:criar|crie|novo|nova)\s+(?:um\s+)?(?:ev|espaço)/i.test(text) &&
+        !selectedExtension
+      )
+        throw Error('Escolha o tipo do novo espaço antes de criar.');
       let selectedConversation = conversation;
       if (space?.state === 'READY') {
-        const draft = id => window.cyroEV.draft({ channel: 'CHAT', operation: 'write', projectId: space.id, content: { kind: 'CHAT', conversationId: id || null, question: text, fileIds: contextFiles.slice(0,5), operationId, confirmationProposalId: confirmation.current || null } });
+        const draft = (id) =>
+          window.cyroEV.draft({
+            channel: 'CHAT',
+            operation: 'write',
+            projectId: space.id,
+            content: {
+              kind: 'CHAT',
+              conversationId: id || null,
+              question: text,
+              fileIds: contextFiles.slice(0, 5),
+              operationId,
+              confirmationProposalId: confirmation.current || null,
+            },
+          });
         await draft(selectedConversation?.id);
-        if (!selectedConversation) {
-          const created = await evRequest({ action: 'conversation.create', projectId: space.id, operationId: await conversationOperation(operationId), title: 'Nova conversa' });
-          selectedConversation = created.conversation;
-          setConversation(selectedConversation);
-          setConversations(old => [selectedConversation, ...old.filter(c => c.id !== selectedConversation.id)]);
-          await draft(selectedConversation.id);
-        }
+        if (!selectedConversation)
+          throw Error('Reabra este EV para carregar seu chat antes de enviar.');
       }
       const out = await evRequest({
         action: 'assistant.send',
@@ -607,6 +726,7 @@ export function EVWorkspace({
         ...(space ? { projectId: space.id } : {}),
         ...(selectedConversation ? { conversationId: selectedConversation.id } : {}),
         fileIds: contextFiles.slice(0, 5),
+        ...(!space && selectedExtension ? { extensionId: selectedExtension } : {}),
         ...(confirmation.current || proposalContext()
           ? { confirmationProposalId: (confirmation.current ||= proposalContext()) }
           : {}),
@@ -655,14 +775,6 @@ export function EVWorkspace({
       }
     }
   }
-  async function chooseConversation(id) {
-    if (loading || sending.current || !space) return;
-    if (question.trim() || contextFiles.length) { setNotice('Envie ou limpe o rascunho antes de trocar de conversa.'); return; }
-    setError(''); setNotice('');
-    if (!id) { setConversation(null); setMessages([]); setArtifacts([]); operation.current = null; confirmation.current = null; return; }
-    setLoading(true);
-    try { await open(space.id, id); } catch (e) { setError(publicError(e)); } finally { if (active.current) setLoading(false); }
-  }
   return (
     <section
       className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
@@ -672,32 +784,171 @@ export function EVWorkspace({
     >
       <header className="ev-chat-heading">
         <div>
-          <span>CYRO EV · LOGÍSTICO</span>
+          <span>
+            {space?.extensionId
+              ? extensionCatalog?.extensions?.find((item) => item.id === space.extensionId)?.name ||
+                'CYRO EV'
+              : 'CYRO EV'}
+          </span>
           <h1>{space?.name || 'Espaços Virtuais'}</h1>
         </div>
-        <button
-          type="button"
-          className="ev-notes-toggle"
-          aria-expanded={notesOpen}
-          onClick={() => setNotesOpen((old) => !old)}
-        >
-          Notas e arquivos
-        </button>
         <small role="status">
           {loading ? 'Cyro está trabalhando…' : stateLabel(space?.state) || 'Converse com o Cyro'}
         </small>
+        <button
+          type="button"
+          className="ev-notes-toggle"
+          aria-label="Notas e arquivos"
+          title="Notas e arquivos"
+          aria-expanded={notesOpen}
+          onClick={() => setNotesOpen((old) => !old)}
+        >
+          <Icon name="folder" />
+        </button>
       </header>
-      {space?.state === 'READY' && <div className="ev-conversation-nav"><label>Conversa do espaço<select aria-label="Conversa do espaço" disabled={loading} value={conversation?.id || ''} onChange={event => void chooseConversation(event.target.value)}><option value="">Escolha uma conversa</option>{conversations.map(chat => <option key={chat.id} value={chat.id}>{chat.title || 'Conversa'}</option>)}</select></label><button disabled={loading} onClick={() => void chooseConversation('')}>Novo chat no espaço</button></div>}
       <div className="ev-chat-history" ref={scroll} aria-live="polite">
+        {catalogOpen && (
+          <section className="ev-extension-catalog" aria-label="Catálogo de extensões EV">
+            <h2>Extensões dos seus espaços</h2>
+            <button
+              type="button"
+              onClick={() => {
+                setCatalogOpen(false);
+                setCreationOpen(true);
+              }}
+            >
+              Voltar à criação
+            </button>
+            <p>Instale um tipo de EV na sua conta para criar espaços com ele.</p>
+            {catalogError && <p role="alert">{catalogError}</p>}
+            {!extensionCatalog && (
+              <button disabled={loading} onClick={() => void refreshExtensions()}>
+                Atualizar catálogo
+              </button>
+            )}
+            {extensionCatalog && !extensionCatalog.enabled && (
+              <p>O catálogo de extensões ainda não foi ativado neste servidor.</p>
+            )}
+            {extensionCatalog?.enabled &&
+              extensionCatalog.extensions.map((extension) => (
+                <article key={extension.id}>
+                  <h3>
+                    {extension.name} <small>{extension.version}</small>
+                  </h3>
+                  <p>{extension.description}</p>
+                  <p>
+                    Permissões:{' '}
+                    {extension.permissions
+                      .map(
+                        (permission) =>
+                          ({
+                            storage: 'salvar dados do EV',
+                            messages: 'responder na conversa',
+                            files: 'consultar arquivos do espaço',
+                          })[permission] || permission,
+                      )
+                      .join(', ')}
+                    .
+                  </p>
+                  <button
+                    disabled={loading}
+                    onClick={() => void manageExtension(extension, !extension.installed)}
+                  >
+                    {extension.installed ? 'Desinstalar' : 'Instalar'} {extension.name}
+                  </button>
+                </article>
+              ))}
+          </section>
+        )}
+        <Dialog
+          id="ev-create-menu"
+          title="Novo EV"
+          open={!hidden && creationOpen}
+          onClose={() => {
+            if (!loading) setCreationOpen(false);
+          }}
+        >
+          <form
+            className="ev-extension-create"
+            onSubmit={createSpace}
+            aria-label="Criar Espaço Virtual"
+          >
+            <label>
+              Tipo do novo espaço
+              <select
+                aria-label="Tipo do novo espaço"
+                disabled={loading}
+                value={selectedExtension}
+                onChange={(event) => {
+                  creationOperation.current = null;
+                  setSelectedExtension(event.target.value);
+                }}
+              >
+                <option value="">Escolha um tipo instalado</option>
+                {extensionCatalog?.extensions
+                  .filter((item) => item.installed)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label>
+              Nome do espaço
+              <input
+                aria-label="Nome do espaço"
+                maxLength={120}
+                value={newSpaceName}
+                disabled={loading}
+                onChange={(event) => {
+                  creationOperation.current = null;
+                  setNewSpaceName(event.target.value);
+                }}
+              />
+            </label>
+            <button
+              disabled={
+                loading || !selectedExtension || !newSpaceName.trim() || !extensionCatalog?.enabled
+              }
+            >
+              Criar EV
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setCreationOpen(false);
+                setCatalogOpen(true);
+              }}
+            >
+              Gerenciar tipos de EV
+            </button>
+            {!extensionCatalog?.extensions?.some((item) => item.installed) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCreationOpen(false);
+                  setCatalogOpen(true);
+                }}
+              >
+                Escolher extensão para instalar
+              </button>
+            )}
+          </form>
+          {catalogError && <p role="alert">{catalogError}</p>}
+          {creationOpen && error && <p role="alert">{error}</p>}
+          {extensionCatalog && !extensionCatalog.enabled && (
+            <p>O catálogo de EVs ainda não foi ativado neste servidor.</p>
+          )}
+        </Dialog>
         {!messages.length && (
           <div className="ev-chat-welcome">
-            <h2>
-              {space ? 'O que vamos fazer neste espaço?' : 'Seu trabalho começa com uma conversa.'}
-            </h2>
+            <h2>{space ? 'Como posso ajudar neste EV?' : 'Crie ou escolha um chat EV.'}</h2>
             <p>
               {space
                 ? 'Peça para enviar arquivos, conferir notas, criar uma tabela ou comparar planilhas. O Cyro organiza os dados e mantém o contexto deste espaço.'
-                : 'Diga “crie um espaço chamado Transportadora ABC” ou “liste meus espaços”.'}
+                : 'Use Novo EV para escolher nome e tipo. Seus EVs aparecem como chats na barra lateral.'}
             </p>
           </div>
         )}
@@ -742,7 +993,7 @@ export function EVWorkspace({
           isWriter={false}
           active={!hidden}
           busy={loading}
-          canSend={!loading && !hidden}
+          canSend={!loading && !hidden && space?.state === 'READY'}
           input={question}
           inputRef={input}
           onInput={changeQuestion}

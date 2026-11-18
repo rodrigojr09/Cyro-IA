@@ -14,12 +14,16 @@ export function Sidebar({
   onChatMenu,
   onEV,
   evActive,
+  evChats = [],
+  activeEVId,
+  onEVChat = () => {},
   onLogout,
   onSettings,
 }) {
   const query = search.toLocaleLowerCase();
   const filtered = (state.searchResults || state.chats).filter(
-    (chat) => !chat.archived && chat.slot !== 'quick' && chat.title.toLocaleLowerCase().includes(query),
+    (chat) =>
+      !chat.archived && chat.slot !== 'quick' && chat.title.toLocaleLowerCase().includes(query),
   );
   const chatButton = (chat) => (
     <button
@@ -44,9 +48,28 @@ export function Sidebar({
         <strong>Cyro IA</strong>
         <span className="brand-caption">WORKSPACE</span>
       </div>
-      <button id="new-general-chat" className="primary new-chat-action" disabled={!state.ready || busy} onClick={() => onNewChat('')}><Icon name="plus" />Novo chat</button>
-      <button id="quick-nav" className={'quiet' + (!evActive && state.chat?.slot === 'quick' ? ' active' : '')} disabled={!state.ready || busy || !state.chats.some(chat => chat.slot === 'quick')} onClick={() => onView('', state.chats.find(chat => chat.slot === 'quick')?.id)}><Icon name="zap" />Quick Chat</button>
-      <button id="ev-nav" className={'quiet' + (evActive ? ' active' : '')} disabled={!state.ready || busy} onClick={onEV}><Icon name="folder-plus" />Espaços Virtuais</button>
+      <button
+        id="new-general-chat"
+        className="primary new-chat-action"
+        disabled={!state.ready || busy}
+        onClick={() => onNewChat('')}
+      >
+        <Icon name="plus" />
+        Novo chat
+      </button>
+      <button
+        id="quick-nav"
+        className={'quiet' + (!evActive && state.chat?.slot === 'quick' ? ' active' : '')}
+        disabled={!state.ready || busy || !state.chats.some((chat) => chat.slot === 'quick')}
+        onClick={() => onView('', state.chats.find((chat) => chat.slot === 'quick')?.id)}
+      >
+        <Icon name="zap" />
+        Quick Chat
+      </button>
+      <button id="ev-nav" className="quiet" disabled={!state.ready || busy} onClick={onEV}>
+        <Icon name="folder-plus" />
+        Novo EV
+      </button>
       <label className="search">
         <Icon name="search" />
         <input
@@ -59,11 +82,39 @@ export function Sidebar({
         />
       </label>
       <nav id="navigation" aria-label="Navegação">
+        {evChats.length > 0 && (
+          <>
+            <p className="navigation-heading">Chats EV</p>
+            <div className="chat-list" id="ev-chats">
+              {evChats
+                .filter((chat) => chat.name.toLocaleLowerCase().includes(query))
+                .map((chat) => (
+                  <button
+                    key={chat.id}
+                    className={
+                      'nav-item chat-item' + (evActive && activeEVId === chat.id ? ' active' : '')
+                    }
+                    aria-current={evActive && activeEVId === chat.id ? 'page' : undefined}
+                    disabled={busy || !state.ready}
+                    onClick={() => onEVChat(chat)}
+                    title={chat.name}
+                  >
+                    <span className="nav-title">{chat.name}</span>
+                    <small>EV</small>
+                  </button>
+                ))}
+            </div>
+          </>
+        )}
         <p className="navigation-heading">Conversas recentes</p>
         <div id="general-chats" className="chat-list">
           {filtered.filter((chat) => !chat.project_id).map(chatButton)}
         </div>
-        {state.catalogNext != null && <button disabled={busy || state.catalogLoading} onClick={onMore}>{state.catalogLoading ? 'Carregando…' : 'Mais conversas'}</button>}
+        {state.catalogNext != null && (
+          <button disabled={busy || state.catalogLoading} onClick={onMore}>
+            {state.catalogLoading ? 'Carregando…' : 'Mais conversas'}
+          </button>
+        )}
         <p id="nav-empty" hidden={!search || filtered.length > 0}>
           Nenhuma conversa encontrada.
         </p>

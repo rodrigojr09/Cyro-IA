@@ -5,6 +5,33 @@
   min-height: 0;
   padding: 0 34px;
 }
+.ev-extension-catalog,
+.ev-extension-create {
+  padding: 18px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.ev-extension-catalog article {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.ev-extension-create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+.ev-extension-create label {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 180px;
+}
+.ev-extension-create input,
+.ev-extension-create select {
+  min-width: 0;
+  width: 100%;
+}
 .ev-chat.has-notes {
   grid-template-columns: minmax(0, 1fr) 310px;
   column-gap: 20px;
@@ -108,6 +135,27 @@
   gap: 20px;
   padding: 26px 0 22px;
   border-bottom: 1px solid var(--border);
+}
+.ev-chat-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+.ev-notes-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+.ev-notes-toggle:hover,
+.ev-notes-toggle[aria-expanded='true'] {
+  color: var(--accent);
+  background: var(--panel);
 }
 .ev-chat-heading span {
   font-size: 10px;

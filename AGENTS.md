@@ -90,3 +90,13 @@ Implementar acesso público, planos FREE/PAID, quotas centrais e administração
 Autorização posterior do proprietário: após implementação e validações, compilar e enviar os commits aos remotos existentes. Sem publicação de releases/tags, migrações de produção ou mudança de credenciais. Preservar instaladores anteriores e informar bloqueadores reais.
 
 Autorização posterior: proprietário permite publicação e alteração dos servidores; esclareceu que o deploy é automático pelo commit, sem acesso manual ao Coolify. Validar antes de push, manter rollout público desligado até requisitos operacionais, sem declarar prontidão não demonstrada.
+
+## EVs como chats de extensões — 18/11/2026
+
+Criar EV no menu Novo EV com nome e tipo instalado pelo catálogo da conta.
+Cada EV é um chat, não um contêiner com várias conversas. Mostrar os EVs na
+barra lateral e abrir somente o histórico selecionado manualmente. Preservar
+memória privada + memória MAIN da conta e arquivos privados por EV. SDK e modelo
+Logístico são pacotes independentes do host. Proprietário autorizou remover
+instâncias antigas, migrando somente o modelo Logístico para o catálogo; não
+importar dados antigos automaticamente. A tag/instalador 8.4.0-rc.1 é anterior.

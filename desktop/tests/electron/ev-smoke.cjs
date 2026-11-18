@@ -24,9 +24,18 @@ app.whenReady().then(async () => {
       rowId = randomUUID();
     const noteId = randomUUID();
     const note = { id: noteId, name: 'nota-teste.xml', status: 'PROCESSED' };
-    const space = { id: projectId, name: 'Transportadora de teste', state: 'READY' };
-    let memoryFacts = ["Prefiro respostas objetivas."], memoryControls = { automatic: true, useExisting: true }, memoryProposal;
+    const space = {
+      id: projectId,
+      chatId: conversationId,
+      extensionId: 'cyro.logistics',
+      name: 'Transportadora de teste',
+      state: 'READY',
+    };
+    let memoryFacts = ['Prefiro respostas objetivas.'],
+      memoryControls = { automatic: true, useExisting: true },
+      memoryProposal;
     let fail = true,
+      createdEV = false,
       calls = [],
       messages = [],
       artifacts = [];
@@ -34,22 +43,94 @@ app.whenReady().then(async () => {
     const service = {
       current: () => session,
       request: async (_route, _method, c) => {
+        c ||= { action: 'catalog' };
         calls.push(c);
+        if (c.action === 'catalog')
+          return {
+            enabled: true,
+            extensions: [
+              {
+                id: 'cyro.logistics',
+                name: 'Cyro Logístico',
+                version: '1.0.0',
+                description: 'Transporte',
+                permissions: ['storage', 'messages', 'files'],
+                installed: true,
+              },
+            ],
+          };
+        if (c.action === 'list') return { ownerId, spaces: createdEV ? [space] : [] };
+        if (c.action === 'create') {
+          createdEV = true;
+          assert.equal(c.extensionId, 'cyro.logistics');
+          assert.equal(c.name, space.name);
+          return { ownerId, space };
+        }
         if (c.action?.startsWith('memory.')) {
           assert.equal(_route, '/api/memory');
           if (c.action === 'memory.settings.get') return { settings: { ...memoryControls } };
-          if (c.action === 'memory.settings') { assert.deepEqual(c.expected, memoryControls); memoryControls = { automatic: c.automatic, useExisting: c.useExisting }; return { persisted: true, settings: { ...memoryControls } }; }
-          if (c.action === 'memory.list') return { store: { summary: memoryFacts.join(' '), syncState: 'READY' }, items: memoryFacts.map((content, i) => ({ id: String(i), content, origin: { kind: 'USER_CHAT' }, updatedAt: new Date().toISOString() })) };
-          if (c.action === 'memory.message') { memoryProposal = randomUUID(); return { reply: 'Confirme para limpar a memória principal sem excluir conversas.', proposal: { id: memoryProposal, action: 'CLEAR' } }; }
-          if (c.action === 'memory.confirm') { assert.equal(c.proposalId, memoryProposal); assert.equal(c.scope, 'MAIN'); if (c.decision === 'APPLY') memoryFacts = []; return { persisted: c.decision === 'APPLY', reply: 'Memória ativa limpa.' }; }
+          if (c.action === 'memory.settings') {
+            assert.deepEqual(c.expected, memoryControls);
+            memoryControls = { automatic: c.automatic, useExisting: c.useExisting };
+            return { persisted: true, settings: { ...memoryControls } };
+          }
+          if (c.action === 'memory.list')
+            return {
+              store: { summary: memoryFacts.join(' '), syncState: 'READY' },
+              items: memoryFacts.map((content, i) => ({
+                id: String(i),
+                content,
+                origin: { kind: 'USER_CHAT' },
+                updatedAt: new Date().toISOString(),
+              })),
+            };
+          if (c.action === 'memory.message') {
+            memoryProposal = randomUUID();
+            return {
+              reply: 'Confirme para limpar a memória principal sem excluir conversas.',
+              proposal: { id: memoryProposal, action: 'CLEAR' },
+            };
+          }
+          if (c.action === 'memory.confirm') {
+            assert.equal(c.proposalId, memoryProposal);
+            assert.equal(c.scope, 'MAIN');
+            if (c.decision === 'APPLY') memoryFacts = [];
+            return { persisted: c.decision === 'APPLY', reply: 'Memória ativa limpa.' };
+          }
           throw Error('Unexpected memory action');
         }
         if (c.action === 'files.list') return { files: [note], next: null };
-        if (c.action === 'file.get') { assert.equal(c.projectId, projectId); return { file: note, extracted: { type: 'FISCAL', documentType: 'NFE', number: '12345', total: '1450.00', freight: { value: '150.00' }, weight: '82', warnings: ['Documento fictício para teste.'] }, analyses: [{ id: 'saved', kind: 'CHAT', state: 'DONE', createdAt: '2026-11-04T12:00:00Z', reply: 'O frete declarado é 150.00.' }] }; }
+        if (c.action === 'file.get') {
+          assert.equal(c.projectId, projectId);
+          return {
+            file: note,
+            extracted: {
+              type: 'FISCAL',
+              documentType: 'NFE',
+              number: '12345',
+              total: '1450.00',
+              freight: { value: '150.00' },
+              weight: '82',
+              warnings: ['Documento fictício para teste.'],
+            },
+            analyses: [
+              {
+                id: 'saved',
+                kind: 'CHAT',
+                state: 'DONE',
+                createdAt: '2026-11-04T12:00:00Z',
+                reply: 'O frete declarado é 150.00.',
+              },
+            ],
+          };
+        }
         if (c.message === 'confirmar') assert.equal(c.confirmationProposalId, planId);
         if (c.action === 'assistant.open')
-          return c.metadataOnly ? { ownerId, space, conversations: [], conversation: null, messages: [], artifacts: [] } : { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
-        if (c.action === 'conversation.create') return { conversation: { id: conversationId, title: 'Nova conversa' } };
+          return c.metadataOnly
+            ? { ownerId, space, conversations: [], conversation: null, messages: [], artifacts: [] }
+            : { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
+        if (c.action === 'conversation.create')
+          return { conversation: { id: conversationId, title: 'Nova conversa' } };
         if (c.action !== 'assistant.send') throw Error('Unexpected action');
         if (c.message.startsWith('crie'))
           return { ownerId, space, effect: 'OPEN_SPACE', reply: 'Espaço criado.' };
@@ -134,12 +215,14 @@ app.whenReady().then(async () => {
     };
     const input = async (selector, value) =>
       js(
-        `(()=>{const node=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,${JSON.stringify(value)});node.dispatchEvent(new Event('input',{bubbles:true}));})()`,
+        `(()=>{const node=document.querySelector(${JSON.stringify(selector)});const type=node.tagName==='TEXTAREA'?HTMLTextAreaElement:node.tagName==='SELECT'?HTMLSelectElement:HTMLInputElement;Object.getOwnPropertyDescriptor(type.prototype,'value').set.call(node,${JSON.stringify(value)});node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));})()`,
       );
     await win.loadFile(path.resolve(__dirname, '../../index.html'));
-    await wait(`!!document.getElementById('ev-nav') && !document.getElementById('ev-nav').disabled`);
+    await wait(
+      `!!document.getElementById('ev-nav') && !document.getElementById('ev-nav').disabled`,
+    );
     assert.equal(await js(`document.querySelector('.ev-chat').hidden`), true);
-    assert.equal(calls.filter(c => c.action === 'assistant.open').length, 0);
+    assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 0);
     await js(`document.querySelector('#ev-nav').click()`);
     await wait(`!!document.getElementById('ev-message')`);
     assert.ok(
@@ -152,16 +235,43 @@ app.whenReady().then(async () => {
       0,
     );
     assert.equal(await js(`typeof require`), 'undefined');
-    await input('#ev-message', 'crie um espaço chamado Transportadora de teste');
-    await js(`document.querySelector('#ev-send').click()`);
+    await wait(`document.getElementById('ev-create-menu').open`);
+    await input('select[aria-label="Tipo do novo espaço"]', 'cyro.logistics');
+    await input('input[aria-label="Nome do espaço"]', 'Transportadora de teste');
+    await wait(
+      `document.querySelector('input[aria-label="Nome do espaço"]').value==='Transportadora de teste' && document.querySelector('select[aria-label="Tipo do novo espaço"]').value==='cyro.logistics'`,
+    );
+    await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    const createShot = path.resolve(__dirname, '../../../build/v8/ev-create-menu.png');
+    await fs.mkdir(path.dirname(createShot), { recursive: true });
+    await fs.writeFile(createShot, (await win.webContents.capturePage()).toPNG());
+    await js(`document.querySelector('form[aria-label="Criar Espaço Virtual"]').requestSubmit()`);
     await wait(
       `document.querySelector('.ev-chat-heading h1').textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
     );
+    await wait(`!!document.querySelector('#ev-chats button')`);
+    assert.equal(
+      await js(
+        `[...document.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Novo EV').length`,
+      ),
+      1,
+    );
+    assert.equal(await js(`document.querySelector('#quick-nav').nextElementSibling.id`), 'ev-nav');
+    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 1);
+    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
     await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
-    assert.ok(await js(`document.querySelector('.ev-note-detail').textContent.includes('Documento fictício')`));
-    assert.ok(await js(`document.querySelector('.ev-note-detail').textContent.includes('O frete declarado é')`));
+    assert.ok(
+      await js(
+        `document.querySelector('.ev-note-detail').textContent.includes('Documento fictício')`,
+      ),
+    );
+    assert.ok(
+      await js(
+        `document.querySelector('.ev-note-detail').textContent.includes('O frete declarado é')`,
+      ),
+    );
     await input('#ev-message', 'edite o primeiro frete para 22,50');
     await js(`document.querySelector('#ev-send').click()`);
     await wait(`!!document.querySelector('.ev-chat-error')`);
@@ -188,35 +298,88 @@ app.whenReady().then(async () => {
     );
     const shots = path.resolve(__dirname, '../../../build/v8');
     await fs.mkdir(shots, { recursive: true });
+    await fs.writeFile(
+      path.join(shots, 'ev-notes-panel.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
+    await wait(`!document.querySelector('.ev-chat').classList.contains('has-notes')`);
+    await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
     let capture;
     for (let attempt = 0; attempt < 3; attempt++) {
-      try { capture = await win.webContents.capturePage(); break; }
-      catch (e) { if (attempt === 2) throw e; await new Promise((r) => setTimeout(r, 150)); }
+      try {
+        capture = await win.webContents.capturePage();
+        break;
+      } catch (e) {
+        if (attempt === 2) throw e;
+        await new Promise((r) => setTimeout(r, 150));
+      }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
     await js(`document.querySelector('#settings-open').click()`);
     await wait(`!!document.querySelector('#settings-tabs')`);
-    await js(`[...document.querySelectorAll('#settings-tabs button')].find(b=>b.textContent==='Memória').click()`);
-    await wait(`document.querySelector('.memory-summary')?.textContent.includes('respostas objetivas')`);
-    assert.ok(await js(`document.querySelector('textarea[aria-label="Mensagem sobre memória"]').placeholder.includes('lembre ou esqueça')`));
+    await js(
+      `[...document.querySelectorAll('#settings-tabs button')].find(b=>b.textContent==='Memória').click()`,
+    );
+    await wait(
+      `document.querySelector('.memory-summary')?.textContent.includes('respostas objetivas')`,
+    );
+    assert.ok(
+      await js(
+        `document.querySelector('textarea[aria-label="Mensagem sobre memória"]').placeholder.includes('lembre ou esqueça')`,
+      ),
+    );
     await js(`document.querySelector('.memory-toggle input').click()`);
-    await wait(`!document.querySelector('.memory-toggle input').disabled && !document.querySelector('.memory-toggle input').checked`);
-    assert.equal(memoryControls.automatic, false); assert.equal(memoryControls.useExisting, true);
-    await js(`[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Limpar memória principal').click()`);
+    await wait(
+      `!document.querySelector('.memory-toggle input').disabled && !document.querySelector('.memory-toggle input').checked`,
+    );
+    assert.equal(memoryControls.automatic, false);
+    assert.equal(memoryControls.useExisting, true);
+    await js(
+      `[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Limpar memória principal').click()`,
+    );
     await wait(`!!document.querySelector('[aria-label="Confirmar alteração de memória"]')`);
     assert.equal(memoryFacts.length, 1);
-    await js(`[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Confirmar alteração').click()`);
-    await wait(`document.querySelector('.memory-chat')?.textContent.includes('Memória ativa limpa')`);
+    await js(
+      `[...document.querySelectorAll('.memory-panel button')].find(b=>b.textContent==='Confirmar alteração').click()`,
+    );
+    await wait(
+      `document.querySelector('.memory-chat')?.textContent.includes('Memória ativa limpa')`,
+    );
     assert.equal(memoryFacts.length, 0);
-    await fs.writeFile(path.join(shots, 'memory-v82-settings.png'), (await win.webContents.capturePage()).toPNG());
-    console.log('V83_DESKTOP_PROCESS_METRICS ' + JSON.stringify({ scenario: 'EV conversation and memory settings', memoryUnit: 'KiB', processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })) }));
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    console.log('V83_DESKTOP_IDLE_METRICS ' + JSON.stringify({ scenario: 'idle 3 seconds after interaction', memoryUnit: 'KiB', processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })) }));
-    const renderer = app.getAppMetrics().find(m => m.pid === win.webContents.getOSProcessId());
-    console.log('V82_DESKTOP_MEMORY_METRICS ' + JSON.stringify(renderer?.memory || {}));
-    assert.ok(calls.every(c => c.action.startsWith('assistant.') || c.action.startsWith('memory.') || ['files.list','file.get','conversation.create'].includes(c.action)));
+    await fs.writeFile(
+      path.join(shots, 'memory-v82-settings.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
     console.log(
-      'EV Electron: chat-only creation, shared composer, retry, protected IPC, human confirmation and inline table passed.',
+      'V83_DESKTOP_PROCESS_METRICS ' +
+        JSON.stringify({
+          scenario: 'EV conversation and memory settings',
+          memoryUnit: 'KiB',
+          processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })),
+        }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log(
+      'V83_DESKTOP_IDLE_METRICS ' +
+        JSON.stringify({
+          scenario: 'idle 3 seconds after interaction',
+          memoryUnit: 'KiB',
+          processes: app.getAppMetrics().map(({ type, cpu, memory }) => ({ type, cpu, memory })),
+        }),
+    );
+    const renderer = app.getAppMetrics().find((m) => m.pid === win.webContents.getOSProcessId());
+    console.log('V82_DESKTOP_MEMORY_METRICS ' + JSON.stringify(renderer?.memory || {}));
+    assert.ok(
+      calls.every(
+        (c) =>
+          c.action.startsWith('assistant.') ||
+          c.action.startsWith('memory.') ||
+          ['files.list', 'file.get', 'catalog', 'list', 'create'].includes(c.action),
+      ),
+    );
+    console.log(
+      'EV Electron: menu creation with name/type, one private chat, shared composer, retry, protected IPC, human confirmation and inline table passed.',
     );
     clearTimeout(timer);
     win.destroy();

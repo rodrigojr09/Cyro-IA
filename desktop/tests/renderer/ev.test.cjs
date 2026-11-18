@@ -3,7 +3,97 @@ const assert = require('node:assert/strict');
 const { environment, input, click, act, settle } = require('../helpers/react.cjs');
 const submit = async () => click('#ev-send');
 
-test('EV operates only by messages; inline results, confirmation and retry preserve the same operation', async () => {
+test('EV catalog installs for the account and creation sends the chosen extension type', async () => {
+  const env = environment(),
+    calls = [];
+  const projectId = '77777777-7777-4777-8777-777777777777';
+  let installed = false;
+  const catalog = () => ({
+    enabled: true,
+    extensions: [
+      {
+        id: 'cyro.logistics',
+        name: 'Cyro Logístico',
+        description: 'Transporte',
+        version: '1.0.0',
+        permissions: ['storage', 'messages', 'files'],
+        installed,
+      },
+    ],
+  });
+  window.cyroEV = {
+    dirty: async () => {},
+    draft: async () => null,
+    request: async (command) => {
+      calls.push(command);
+      if (command.action === 'catalog') return catalog();
+      if (command.action === 'extension.install') {
+        installed = true;
+        return catalog();
+      }
+      if (command.action === 'create')
+        return {
+          ownerId: 'owner',
+          space: {
+            id: projectId,
+            name: command.name,
+            extensionId: command.extensionId,
+            state: 'READY',
+          },
+        };
+      if (command.action === 'assistant.open')
+        return {
+          ownerId: 'owner',
+          space: {
+            id: projectId,
+            name: 'Minha transportadora',
+            extensionId: 'cyro.logistics',
+            state: 'READY',
+          },
+          conversation: null,
+          conversations: [],
+          messages: [],
+          artifacts: [],
+        };
+      if (command.action === 'files.list') return { files: [] };
+      throw Error('Unexpected ' + command.action);
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false, createRequest: 1 });
+    await settle();
+    assert.equal(document.querySelector('select[aria-label="Tipo do novo espaço"]').value, '');
+    await act(async () => {
+      [...document.querySelectorAll('button')]
+        .find((b) => b.textContent === 'Escolher extensão para instalar')
+        .click();
+    });
+    await act(async () => {
+      [...document.querySelectorAll('button')]
+        .find((b) => b.textContent === 'Instalar Cyro Logístico')
+        .click();
+    });
+    assert.equal(
+      document.querySelector('select[aria-label="Tipo do novo espaço"]').value,
+      'cyro.logistics',
+    );
+    await click(
+      [...document.querySelectorAll('button')].find((b) => b.textContent === 'Voltar à criação'),
+    );
+    await input('input[aria-label="Nome do espaço"]', 'Minha transportadora');
+    await act(async () => {
+      document
+        .querySelector('form[aria-label="Criar Espaço Virtual"]')
+        .dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+    });
+    assert.equal(calls.find((c) => c.action === 'create').extensionId, 'cyro.logistics');
+    assert.equal(document.querySelector('.ev-chat-heading h1').textContent, 'Minha transportadora');
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('EV chat keeps inline results, confirmation and retry on the same operation', async () => {
   const env = environment(),
     calls = [],
     drafts = [];
@@ -19,6 +109,7 @@ test('EV operates only by messages; inline results, confirmation and retry prese
     },
     request: async (c) => {
       calls.push(c);
+      if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
       if (c.action === 'assistant.open')
         return {
@@ -59,13 +150,14 @@ test('EV operates only by messages; inline results, confirmation and retry prese
     },
   };
   try {
-    await env.mount(env.EVWorkspace, { hidden: false });
+    await env.mount(env.EVWorkspace, {
+      hidden: false,
+      selectedEV: { ...space, chatId: conversationId },
+    });
     assert.ok(document.querySelector('#ev-attach-files'));
     assert.ok(document.querySelector('#ev-microphone'));
     assert.ok(document.querySelector('#ev-send'));
     assert.equal(document.querySelector('.ev-tabs'), null);
-    await input('#ev-message', 'crie um espaço chamado Minha transportadora');
-    await submit();
     assert.equal(document.querySelector('.ev-chat-heading h1').textContent, 'Minha transportadora');
     await input('#ev-message', 'edite o primeiro frete para 15,50');
     await act(async () => new Promise((r) => setTimeout(r, 300)));
@@ -125,6 +217,7 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
     },
     request: async (c) => {
       calls.push(c);
+      if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
       if (c.action === 'assistant.open')
         return {
@@ -137,9 +230,10 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
     },
   };
   try {
-    await env.mount(env.EVWorkspace, { hidden: false });
-    await input('#ev-message', 'crie um espaço chamado Fretes');
-    await submit();
+    await env.mount(env.EVWorkspace, {
+      hidden: false,
+      selectedEV: { ...space, chatId: '22222222-2222-4222-8222-222222222222' },
+    });
     assert.equal(document.querySelector('#ev-microphone').disabled, false);
     await click('#ev-microphone');
     await act(async () => recognition.onresult({ results: [[{ transcript: 'Confira o frete' }]] }));
@@ -181,6 +275,7 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
     draft: async () => null,
     request: async (c) => {
       calls.push(c);
+      if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [file], next: null };
       if (c.action === 'file.get')
         return {
@@ -214,9 +309,12 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
     },
   };
   try {
-    await env.mount(env.EVWorkspace, { hidden: false });
-    await input('#ev-message', 'crie um espaço chamado Notas');
-    await submit();
+    await env.mount(env.EVWorkspace, {
+      hidden: false,
+      selectedEV: { ...space, chatId: '22222222-2222-4222-8222-222222222222' },
+    });
+    await act(async () => new Promise((r) => setTimeout(r, 30)));
+    await click('button[aria-label="Notas e arquivos"]');
     await act(async () => new Promise((r) => setTimeout(r, 30)));
     const list = document.querySelector('.ev-notes li button');
     assert.match(list.textContent, /nota-teste.xml/);
@@ -227,7 +325,7 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
       document.querySelector('.ev-note-detail').textContent,
       /frete declarado nesta nota/,
     );
-    assert.equal(calls.filter((c) => c.action === 'assistant.send').length, 1);
+    assert.equal(calls.filter((c) => c.action === 'assistant.send').length, 0);
     await click('.ev-note-detail > button');
     assert.match(document.querySelector('#ev-attachment-list').textContent, /nota-teste.xml/);
     assert.equal(document.querySelector('#ev-message').value, '');
@@ -237,69 +335,52 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
   }
 });
 
-test('chat connection failure preserves the message and retries without a local-project fallback', async () => {
-  const env = environment();
-  let fail = true;
+test('EV has one private chat; history loads only after choosing that EV and is cached', async () => {
+  const env = environment(),
+    calls = [];
+  const one = {
+    id: '11111111-1111-4111-8111-111111111111',
+    chatId: '22222222-2222-4222-8222-222222222222',
+    name: 'Fretes',
+    state: 'READY',
+  };
+  const two = {
+    id: '33333333-3333-4333-8333-333333333333',
+    chatId: '44444444-4444-4444-8444-444444444444',
+    name: 'Prazos',
+    state: 'READY',
+  };
   window.cyroEV = {
     dirty: async () => {},
-    request: async (c) =>
-      c.action === 'files.list'
-        ? { files: [], next: null }
-        : fail
-          ? { error: 'Espaços ainda não ativados.' }
-          : { reply: 'Você ainda não criou espaços.' },
-  };
-  try {
-    await env.mount(env.EVWorkspace, { hidden: false });
-    await input('#ev-message', 'liste meus espaços');
-    await submit();
-    assert.match(document.querySelector('[role="alert"]').textContent, /não ativados/);
-    assert.equal(document.querySelector('#ev-message').value, 'liste meus espaços');
-    fail = false;
-    await submit();
-    assert.equal(document.querySelector('[role="alert"]'), null);
-    assert.match(document.body.textContent, /não criou espaços/);
-    assert.equal(document.querySelector('#add-project'), null);
-  } finally {
-    await env.dispose();
-  }
-});
-
-
-test('EV opens metadata without histories; conversation selection loads once and keeps a scoped cache', async () => {
-  const env = environment(), calls = [];
-  const projectId = '11111111-1111-4111-8111-111111111111';
-  const a = '22222222-2222-4222-8222-222222222222', b = '33333333-3333-4333-8333-333333333333', created = '44444444-4444-4444-8444-444444444444';
-  const space = { id: projectId, name: 'Conversas do espaço', state: 'READY' };
-  window.cyroEV = {
-    dirty: async () => {}, draft: async () => null,
-    request: async c => {
+    draft: async () => null,
+    request: async (c) => {
       calls.push(c);
-      if (c.action === 'files.list') return { files: [], next: null };
-      if (c.action === 'conversation.create') return { conversation: { id: created, title: 'Nova conversa' } };
-      if (c.action === 'assistant.open') return c.metadataOnly ? { ownerId: 'owner', space, conversations: [{ id: a, title: 'Conferência A' }, { id: b, title: 'Conferência B' }], conversation: null, messages: [], artifacts: [] } : { ownerId: 'owner', space, conversation: { id: c.conversationId, title: c.conversationId === a ? 'Conferência A' : 'Conferência B' }, messages: [{ id: 1, role: 'assistant', content: 'Histórico ' + c.conversationId }], artifacts: [] };
-      if (c.action === 'assistant.send' && !c.projectId) return { ownerId: 'owner', space, effect: 'OPEN_SPACE' };
-      if (c.action === 'assistant.send') { assert.equal(c.conversationId, created); return { ownerId: 'owner', space, conversation: { id: created, title: 'Pergunta nova' }, messages: [{ id: 2, role: 'user', content: c.message }, { id: 3, role: 'assistant', content: 'Resposta salva.' }], artifacts: [] }; }
+      if (c.action === 'catalog') return { enabled: true, extensions: [] };
+      if (c.action === 'files.list') return { files: [] };
+      if (c.action === 'assistant.open') {
+        const space = c.projectId === one.id ? one : two;
+        return {
+          ownerId: 'owner',
+          space,
+          conversation: { id: space.chatId },
+          messages: [{ id: 1, role: 'assistant', content: 'Histórico ' + space.name }],
+          artifacts: [],
+        };
+      }
       throw Error('Unexpected ' + c.action);
     },
   };
   try {
     await env.mount(env.EVWorkspace, { hidden: false });
-    assert.equal(calls.length, 0);
-    await input('#ev-message', 'abra um espaço'); await submit();
-    assert.ok(document.querySelector('select[aria-label="Conversa do espaço"]'));
-    assert.equal(document.querySelectorAll('.ev-chat-message').length, 0);
-    assert.equal(calls.filter(c => c.action === 'assistant.open' && c.conversationId).length, 0);
-    await input('select[aria-label="Conversa do espaço"]', a);
-    assert.match(document.querySelector('.ev-chat-history').textContent, new RegExp(a));
-    await input('select[aria-label="Conversa do espaço"]', b);
-    await input('select[aria-label="Conversa do espaço"]', a);
-    assert.equal(calls.filter(c => c.action === 'assistant.open' && c.conversationId).length, 2);
-    await click([...document.querySelectorAll('button')].find(b => b.textContent === 'Novo chat no espaço'));
-    assert.equal(calls.filter(c => c.action === 'conversation.create').length, 0);
-    await input('#ev-message', 'Pergunta nova'); await submit();
-    for (let attempt = 0; attempt < 100 && !calls.some(c => c.action === 'conversation.create'); attempt++) await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
-    assert.equal(calls.filter(c => c.action === 'conversation.create').length, 1);
-    assert.match(document.querySelector('.ev-chat-history').textContent, /Resposta salva/);
-  } finally { await env.dispose(); }
+    assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 0);
+    await env.mount(env.EVWorkspace, { hidden: false, selectedEV: one });
+    assert.match(document.querySelector('.ev-chat-history').textContent, /Histórico Fretes/);
+    assert.equal(document.querySelector('select[aria-label="Conversa do espaço"]'), null);
+    await env.mount(env.EVWorkspace, { hidden: false, selectedEV: two });
+    await env.mount(env.EVWorkspace, { hidden: false, selectedEV: one });
+    assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 2);
+    assert.equal(calls.filter((c) => c.action === 'conversation.create').length, 0);
+  } finally {
+    await env.dispose();
+  }
 });

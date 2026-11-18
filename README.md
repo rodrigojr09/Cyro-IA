@@ -1,3 +1,5 @@
+> **Cyro Desktop 8.5.0-rc.1 — cada EV é um chat.** Novo EV abaixo do Quick Chat, menu com nome/tipo, instalação por conta e ícone de pasta no cabeçalho. [Fluxo e validação](docs/EV-EXTENSIONS.md); [entrega e instalador](versions/8.5.0-rc.1.md).
+
 > **Cyro v8.4.0-rc.1 — acesso público em homologação.** Plano pago ativado manualmente pelo administrador. [Arquitetura, contratos, migração e rollout](docs/public-access/V8_4_ARCHITECTURE.md); [testes](docs/public-access/TEST_RESULTS.md). Files mantém 0.4.0. Deploy automático autorizado por commit; abertura pública depende das configurações e validações indicadas. Os registros anteriores abaixo são históricos.
 
 > **Cyro 8.3.0-rc.1 — estabilização, não liberado para produção.** Files mantém versão 0.4.0. [Relatório de prontidão e bloqueadores](docs/production/V8_3_READINESS.md). O trabalho 8.2 preservado foi incorporado à candidata; os registros abaixo são históricos. Sem push, release, tag ou implantação automática.

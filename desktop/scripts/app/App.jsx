@@ -30,6 +30,21 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [evActive, setEVActive] = useState(false),
     [evDirty, setEVDirty] = useState(false);
   const [activeEVId, setActiveEVId] = useState(null);
+  const [evChats, setEVChats] = useState([]),
+    [selectedEV, setSelectedEV] = useState(null),
+    [evCreateRequest, setEVCreateRequest] = useState(0);
+  async function refreshEVChats() {
+    if (!window.cyroEV) return;
+    try {
+      const result = await window.cyroEV.request({ action: 'list', limit: 100 });
+      if (result?.spaces) setEVChats(result.spaces);
+    } catch {
+      /* API errors are shown when the user opens the EV. */
+    }
+  }
+  useEffect(() => {
+    if (state.ready) void refreshEVChats();
+  }, [state.ready]);
   const [input, setInput] = useState(''),
     [submitting, setSubmitting] = useState(false),
     [search, setSearch] = useState(''),
@@ -105,7 +120,14 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   }
   useEffect(() => {
     if (!state.ready) return;
-    const timer = setTimeout(() => { void workspace.searchChats?.(search).catch(error => workspace.set({ error: publicError(error) })); }, search ? 300 : 0);
+    const timer = setTimeout(
+      () => {
+        void workspace
+          .searchChats?.(search)
+          .catch((error) => workspace.set({ error: publicError(error) }));
+      },
+      search ? 300 : 0,
+    );
     return () => clearTimeout(timer);
   }, [search, state.ready]);
   async function createChat(projectId = state.project?.id || '') {
@@ -306,6 +328,18 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         }}
         onChatMenu={(item, event) => openSidebarMenu('chat', item, event)}
         evActive={evActive}
+        evChats={evChats}
+        activeEVId={activeEVId}
+        onEVChat={(item) =>
+          run(async () => {
+            if (evDirty || input.trim() || attachments.files.length)
+              throw Error('Envie ou remova o rascunho antes de trocar de chat.');
+            await writer.leave();
+            speaker.stop();
+            setSelectedEV(item);
+            setEVActive(true);
+          })
+        }
         onEV={() =>
           run(async () => {
             if (input.trim() || attachments.files.length)
@@ -313,6 +347,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
             await writer.leave();
             speaker.stop();
             setEVActive(true);
+            setEVCreateRequest((value) => value + 1);
           })
         }
         onLogout={() =>
@@ -327,6 +362,13 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       />
       <EVWorkspace
         hidden={!evActive}
+        selectedEV={selectedEV}
+        createRequest={evCreateRequest}
+        onCreated={(item) => {
+          setSelectedEV(item);
+          setEVChats((old) => [item, ...old.filter((ev) => ev.id !== item.id)]);
+          void refreshEVChats();
+        }}
         onDirty={setEVDirty}
         onSpaceChange={setActiveEVId}
         speaker={speaker}

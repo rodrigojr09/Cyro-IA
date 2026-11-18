@@ -2,6 +2,7 @@ import React from 'react';
 import {
   PanelLeft,
   FolderPlus,
+  Folder,
   Search,
   MessagesSquare,
   Settings2,
@@ -37,6 +38,7 @@ import {
 const nodes = {
   'panel-left': PanelLeft,
   'folder-plus': FolderPlus,
+  folder: Folder,
   search: Search,
   plus: Plus,
   copy: Copy,
