@@ -9,6 +9,13 @@ const MIME = {
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.pdf': 'application/pdf',
   '.txt': 'text/plain',
+  '.md': 'text/markdown',
+  '.json': 'application/json',
+  '.js': 'text/javascript',
+  '.ts': 'text/plain',
+  '.py': 'text/plain',
+  '.html': 'text/html',
+  '.css': 'text/css',
 };
 function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
   const { ipcMain, BrowserWindow, dialog } = electron;
@@ -176,9 +183,7 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
     const chosen = await dialog.showOpenDialog(s.win, {
       title: 'Enviar arquivos ao Espaço Virtual',
       properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Documentos e planilhas', extensions: ['xml', 'csv', 'xlsx', 'pdf', 'txt'] },
-      ],
+      filters: [{ name: 'Todos os arquivos', extensions: ['*'] }],
     });
     s.check();
     if (chosen.canceled) return { canceled: true };
@@ -190,9 +195,9 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       const name = path.basename(file);
       try {
         const stat = await fs.stat(file),
-          mime = MIME[path.extname(file).toLowerCase()];
-        if (!stat.isFile() || !mime || stat.size <= 0 || stat.size > MAX)
-          throw Error('Formato inválido, arquivo vazio ou maior que 8 MB.');
+          mime = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+        if (!stat.isFile() || stat.size <= 0 || stat.size > MAX)
+          throw Error('Arquivo vazio ou maior que 8 MB.');
         const handle = await fs.open(file, 'r'),
           buffer = Buffer.alloc(MAX + 1);
         let length = 0;

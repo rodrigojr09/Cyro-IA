@@ -87,12 +87,16 @@ export function AttachmentCard({
                     {
                       image: 'Imagem',
                       document: 'Documento',
+                      file: 'Arquivo',
+                      UPLOAD: 'Arquivo',
+                      GENERATED: 'Arquivo gerado',
                       text: 'Texto',
                       code: 'Código',
                       link: 'Link',
                     }[file.kind] ||
                     file.kind}{' '}
                   · {Math.ceil((file.size || 0) / 1024)} KB
+                  {file.analysisAvailable === false ? ' · sem leitura automática' : ''}
                 </small>
               )}
             </span>
@@ -187,7 +191,7 @@ export function useAttachments() {
       ) {
         setError(
           source === 'drop'
-            ? 'Use arquivos compatíveis de até 5 MB.'
+            ? 'Use arquivos de qualquer extensão de até 5 MB.'
             : 'Use imagens PNG, JPEG, WebP ou GIF estático de até 5 MB.',
         );
         return;

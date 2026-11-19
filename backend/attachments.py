@@ -214,6 +214,25 @@ def document_text(raw, extension):
         ) from None
 
 
+OPAQUE_EXTENSIONS = {".exe", ".dll", ".so", ".zip", ".rar", ".7z", ".tar", ".tgz", ".gz", ".xz", ".bin", ".iso", ".db", ".sqlite", ".sqlite3", ".p12", ".pfx"}
+
+
+def attachment_kind(raw, extension):
+    """Storage accepts every suffix; decoding is optional and never executes files."""
+    if extension in OPAQUE_EXTENSIONS:
+        return "file", False
+    try:
+        if extension in IMAGE_EXTENSIONS:
+            image_bytes(raw)
+            return "image", False
+        if extension not in OFFICE | {".pdf"} and re.search(rb"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", raw):
+            return "file", False
+        _, partial = document_text(raw, extension)
+        return "document", partial
+    except ReadError:
+        return "file", False
+
+
 class AttachmentStore:
     def __init__(self, data, forbidden=()):
         self.root = Path(data) / "attachments"
@@ -273,7 +292,10 @@ class AttachmentStore:
     def metadata(self, file_id, owner, preview=False):
         row = self.row(file_id, owner)
         result = {key: row[key] for key in ("id", "name", "size", "kind", "partial")}
-        if preview and row["kind"] == "image":
+        result["analysisAvailable"] = row["kind"] != "file"
+        if row["kind"] == "file":
+            result["previewNotice"] = "Arquivo preservado. Este formato não possui leitura automática; você pode salvar uma cópia."
+        elif preview and row["kind"] == "image":
             _, raw = self.content(file_id, owner)
             result["preview"] = (
                 "data:image/jpeg;base64,"
@@ -325,10 +347,6 @@ class AttachmentStore:
             if info.st_size > MAX_BYTES:
                 raise AttachmentLimitError("Cada anexo pode ter no máximo 5 MB.")
             extension = path.suffix.lower()
-            if extension not in SUPPORTED:
-                raise ReadError(
-                    "Formato não suportado. Use imagens, PDF, DOCX, XLSX, PPTX ou arquivos de texto."
-                )
             with path.open("rb") as handle:
                 opened = os.fstat(handle.fileno())
                 if (opened.st_ino, opened.st_dev) != (info.st_ino, info.st_dev):
@@ -338,12 +356,7 @@ class AttachmentStore:
                 raise AttachmentLimitError("Cada anexo pode ter no máximo 5 MB.")
             if not raw:
                 raise ReadError("Arquivo vazio não pode ser anexado.")
-            kind = "image" if extension in IMAGE_EXTENSIONS else "document"
-            if kind == "image":
-                image_bytes(raw)
-                partial = False
-            else:
-                _, partial = document_text(raw, extension)
+            kind, partial = attachment_kind(raw, extension)
             prepared.append((path.name, raw, kind, partial))
         return self._store_prepared(prepared, owner)
 
@@ -353,16 +366,9 @@ class AttachmentStore:
         if not isinstance(name, str) or not name or len(name) > 200 or any(c in name for c in "/\\:\x00") or any(ord(c) < 32 for c in name):
             raise ReadError("Nome de anexo inválido.")
         extension = Path(name).suffix.lower()
-        if extension not in SUPPORTED:
-            raise ReadError("Formato de anexo não suportado.")
         if not raw or len(raw) > MAX_BYTES:
             raise AttachmentLimitError("Cada anexo deve ter entre 1 byte e 5 MB.")
-        kind = "image" if extension in IMAGE_EXTENSIONS else "document"
-        if kind == "image":
-            image_bytes(raw)
-            partial = False
-        else:
-            _, partial = document_text(raw, extension)
+        kind, partial = attachment_kind(raw, extension)
         return self._store_prepared([(name, raw, kind, partial)], owner)
 
     def import_image(self, raw, owner):
@@ -430,7 +436,12 @@ class AttachmentStore:
                     + row["name"],
                 }
             )
-            if row["kind"] == "image":
+            if row["kind"] == "file":
+                blocks.append({
+                    "type": "text",
+                    "text": f"Arquivo anexado e preservado: {row['name']} ({row['size']} bytes, SHA256 {row['sha256']}). O conteúdo deste formato não foi extraído. Não trate este registro como leitura do arquivo."
+                })
+            elif row["kind"] == "image":
                 blocks.append(
                     {
                         "type": "image_url",

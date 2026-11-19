@@ -23,7 +23,7 @@ export function Composer({
   idPrefix = '',
   inputId = 'input',
   placeholder = 'Converse com o Cyro...',
-  attachmentCaption = 'Até 5 anexos de 5 MB cada. Originais ficam neste computador; a análise envia conteúdo à IA.',
+  attachmentCaption = 'Qualquer extensão · até 5 arquivos de 5 MB cada. Originais ficam neste computador; a análise disponível envia conteúdo à IA.',
   active = true,
   disableInput = false,
   cancelable = true,

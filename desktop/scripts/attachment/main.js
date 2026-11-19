@@ -1,33 +1,6 @@
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const MAX_BYTES = 5 * 1024 * 1024;
-const EXTENSIONS = [
-  'png',
-  'jpg',
-  'jpeg',
-  'webp',
-  'gif',
-  'pdf',
-  'docx',
-  'xlsx',
-  'pptx',
-  'txt',
-  'md',
-  'csv',
-  'tsv',
-  'json',
-  'xml',
-  'yaml',
-  'yml',
-  'rst',
-  'tex',
-  'html',
-  'css',
-  'js',
-  'ts',
-  'py',
-  'sql',
-];
 function createAttachments({ dialog, window, backend, downloads }) {
   return {
     async choose(remaining = 5) {
@@ -37,7 +10,7 @@ function createAttachments({ dialog, window, backend, downloads }) {
         title: 'Anexar até 5 arquivos · máximo de 5 MB cada',
         buttonLabel: 'Anexar',
         properties: ['openFile', 'multiSelections'],
-        filters: [{ name: 'Imagens e documentos', extensions: EXTENSIONS }],
+        filters: [{ name: 'Todos os arquivos', extensions: ['*'] }],
       });
       if (selected.canceled) return { canceled: true };
       if (!selected.filePaths.length || selected.filePaths.length > remaining)
@@ -85,7 +58,6 @@ function createAttachments({ dialog, window, backend, downloads }) {
         !value.name ||
         value.name.length > 200 ||
         /[\\/:\x00-\x1f]/.test(value.name) ||
-        !EXTENSIONS.includes(path.extname(value.name).slice(1).toLowerCase()) ||
         typeof value.data !== 'string' ||
         value.data.length > Math.ceil(MAX_BYTES / 3) * 4 ||
         !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data)

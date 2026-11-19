@@ -279,7 +279,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 8.5.0-rc.3</p>
+                  <p>Versão 8.6.0-rc.1</p>
                   <button
                     onClick={() =>
                       perform(async () => {

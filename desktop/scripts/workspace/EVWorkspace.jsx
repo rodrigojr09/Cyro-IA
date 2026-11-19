@@ -996,7 +996,7 @@ export function EVWorkspace({
                 supportsImages: false,
                 paste: async () => {
                   setNotice(
-                    'Use o clipe para selecionar XML, CSV, XLSX, PDF ou TXT para este espaço.',
+                    'Use o clipe para selecionar qualquer arquivo de até 8 MB para este espaço.',
                   );
                   return false;
                 },
@@ -1004,7 +1004,7 @@ export function EVWorkspace({
               dictation={dictation}
               onDictation={() => void dictation.toggle().catch((e) => setNotice(publicError(e)))}
               status={loading ? 'Cyro está trabalhando…' : notice || 'Pronto'}
-              attachmentCaption="XML, CSV, XLSX, PDF e TXT · até 8 MB por arquivo. Os anexos são enviados ao espaço; remover da mensagem preserva o original."
+              attachmentCaption="Qualquer arquivo · até 8 MB. A leitura depende do formato; remover da mensagem preserva o original."
             />
           </div>
           {notesOpen && (

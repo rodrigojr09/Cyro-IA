@@ -75,7 +75,7 @@ test('explicit image paste validates MIME, bounded base64 and never accepts path
   assert.equal(calls.length, 1);
 });
 
-test('dropped file imports only bounded bytes and a plain supported name, never a path', async () => {
+test('dropped files accept every extension but only bounded bytes and a plain name, never a path', async () => {
   const calls = [];
   const service = createAttachments({
     backend: async (...args) => {
@@ -88,16 +88,16 @@ test('dropped file imports only bounded bytes and a plain supported name, never 
     data: Buffer.from('Conteúdo').toString('base64'),
   });
   assert.equal(calls[0][0], '/desktop/attachments/import-data');
+  await service.dropFile({ name: 'arquivo.exe', data: 'AQID' });
   for (const value of [
     { name: '../secret.txt', data: 'AQID' },
     { name: 'C:secret.txt', data: 'AQID' },
-    { name: 'arquivo.exe', data: 'AQID' },
     { name: 'x.png', data: 'https://example.test/x' },
     { name: 'x.txt', data: 'AQID', path: 'C:/private.txt' },
     { name: 'x.txt', data: Buffer.alloc(MAX_BYTES + 1).toString('base64') },
   ])
     await assert.rejects(service.dropFile(value));
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
 });
 
 test('automatic download reserves a unique Downloads file without dialog or overwriting existing data', async () => {

@@ -42,6 +42,32 @@ class AttachmentStoreTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_any_extension_is_preserved_and_binary_content_is_not_sent_as_extracted_text(self):
+        raw = b"MZ\x00\xff\x01private-binary"
+        for name in ["programa.exe", "backup.zip", "arquivo.extensao-nova"]:
+            source = self.base / name
+            source.write_bytes(raw)
+            file = self.store.import_files([str(source)], "owner")[0]
+            self.assertEqual(file["kind"], "file")
+            self.assertFalse(file["analysisAvailable"])
+            self.assertEqual(self.store.content(file["id"], "owner")[1], raw)
+            parts = self.store.prepare([file["id"]], "owner", self.chat)
+            self.assertIn("não foi extraído", parts[1]["text"])
+            self.assertNotIn("private-binary", json.dumps(parts))
+            with self.assertRaises(ReadError):
+                self.store.content(file["id"], "another-owner")
+        text = self.store.import_data("config.custom-extension", b"feature=true", "owner")[0]
+        self.assertEqual(text["kind"], "document")
+        self.assertEqual(text["textPreview"], "feature=true")
+
+    def test_unreadable_document_can_be_attached_without_disabling_processing_guards(self):
+        raw = b"not a valid Office archive"
+        file = self.store.import_data("documento.docx", raw, "owner")[0]
+        self.assertEqual(file["kind"], "file")
+        self.assertIn("preservado", file["previewNotice"])
+        with self.assertRaises(ReadError):
+            document_text(raw, ".docx")
+
     def test_pasted_image_is_protected_owned_and_validated_without_source_paths(self):
         raw=io.BytesIO();Image.new("RGB",(12,12),"blue").save(raw,"PNG")
         files=self.store.import_image(raw.getvalue(),"owner-a")
@@ -58,10 +84,10 @@ class AttachmentStoreTests(unittest.TestCase):
         self.assertEqual(files[0]["textPreview"], "Texto para prévia")
         self.assertEqual(self.store.content(files[0]["id"], "a")[1], "Texto para prévia".encode())
         with self.assertRaises(ReadError): self.store.content(files[0]["id"], "b")
-        for name in ["../secreto.txt", "C:secreto.txt", "arquivo.exe", "pasta/nota.txt"]:
+        for name in ["../secreto.txt", "C:secreto.txt", "pasta/nota.txt"]:
             with self.assertRaises(ReadError): self.store.import_data(name, b"texto", "a")
         with self.assertRaises(ReadError): self.store.import_data("nota.txt", b"texto", "")
-        with self.assertRaises(ReadError): self.store.import_data("foto.png", b"nao e imagem", "a")
+        self.assertEqual(self.store.import_data("foto.png", b"nao e imagem", "a")[0]["kind"], "file")
         with self.assertRaises(AttachmentLimitError): self.store.import_data("nota.txt", b"x"*(MAX_BYTES+1), "a")
 
     def test_five_files_and_exact_five_mb_are_accepted_but_overages_fail_atomically(

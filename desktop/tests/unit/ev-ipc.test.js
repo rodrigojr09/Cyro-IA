@@ -5,6 +5,56 @@ const os = require('node:os');
 const fs = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
 const { installEVIPC } = require('../../scripts/workspace/ev-ipc');
+
+test('EV picker uploads unknown extensions as bytes and keeps the 8 MB bound', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cyro-ev-any-'));
+  const handlers = new Map(),
+    requests = [],
+    win = {};
+  const frame = { url: pathToFileURL(path.resolve(__dirname, '../../index.html')).href };
+  const sender = { mainFrame: frame },
+    event = { sender, senderFrame: frame };
+  const original = process.env.JARVIS_AUTHENTICATED;
+  process.env.JARVIS_AUTHENTICATED = '1';
+  try {
+    const source = path.join(dir, 'arquivo.nova-extensao'),
+      large = path.join(dir, 'grande.bin');
+    await fs.writeFile(source, Buffer.from([0, 255, 1, 2]));
+    await fs.writeFile(large, '');
+    await fs.truncate(large, 8 * 1024 * 1024 + 1);
+    installEVIPC({
+      electron: {
+        ipcMain: { handle: (key, fn) => handlers.set(key, fn) },
+        BrowserWindow: { fromWebContents: () => win },
+        dialog: {
+          showOpenDialog: async (_win, options) => {
+            assert.deepEqual(options.filters[0].extensions, ['*']);
+            return { filePaths: [source, large] };
+          },
+        },
+      },
+      service: () => ({
+        current: () => ({ credential: 'synthetic', origin: 'https://fixture.test' }),
+      }),
+      dataDir: dir,
+      fetcher: async (url, options) => {
+        requests.push({ url, options });
+        return Response.json({ file: { id: 'file', name: 'arquivo.nova-extensao' } });
+      },
+    });
+    const result = await handlers.get('ev:upload')(event, '11111111-1111-4111-8111-111111111111');
+    assert.equal(result.files.length, 1);
+    assert.equal(result.failures.length, 1);
+    assert.match(result.failures[0].error, /8 MB/);
+    assert.equal(requests[0].options.headers['Content-Type'], 'application/octet-stream');
+    assert.deepEqual(requests[0].options.body, Buffer.from([0, 255, 1, 2]));
+  } finally {
+    if (original === undefined) delete process.env.JARVIS_AUTHENTICATED;
+    else process.env.JARVIS_AUTHENTICATED = original;
+    assert.ok(path.resolve(dir).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
 test('EV IPC authenticates main frame, restricts routes, rejects late account responses and isolates encrypted drafts', async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cyro-ev-test-'));
   const handlers = new Map(),
