@@ -132,7 +132,14 @@ async function runIsolated(request, { check = () => {}, spawnProcess = spawn } =
   } finally {
     // Killing the docker CLI alone does not stop its container.
     await runProcess(['rm', '--force', name], { timeout: 5000, spawnProcess }).catch(() => {});
-    await fs.rm(folder, { recursive: true, force: true });
+    const resolved = path.resolve(folder),
+      temporaryRoot = path.resolve(os.tmpdir());
+    if (
+      !resolved.startsWith(temporaryRoot + path.sep) ||
+      !path.basename(resolved).startsWith('cyro-execution-')
+    )
+      throw Error('Pasta temporária inválida para limpeza.');
+    await fs.rm(resolved, { recursive: true, force: true });
   }
 }
 module.exports = { dockerArgs, runIsolated, runProcess, images };

@@ -41,7 +41,19 @@ app.whenReady().then(async () => {
       artifacts = [];
     let workbench = {
       revision: 0,
-      files: [{ name: 'main.py', content: 'print("Olá, Cyro!")' }],
+      files: [
+        {
+          name: 'main.py',
+          content: 'from datetime import date\n\nprazos = [3, 2, 5]\nprint(sum(prazos))\n',
+          revision: 1,
+        },
+        {
+          name: 'index.html',
+          content:
+            '<style>body{background:#f2f5fa!important;padding:30px!important}h1{font-size:27px;letter-spacing:-1px;margin:0}.eyebrow{font-size:10px;letter-spacing:2px;color:#378eae}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}.card{background:white;border:1px solid #e3e9f2;border-radius:14px;padding:22px}.card b{display:block;color:#173b55;font-size:32px}.card small{color:#68778c}.status{display:inline-block;color:#16755e;background:#e2f4ed;border-radius:6px;padding:4px 8px;font-size:11px;margin-top:15px}p{color:#6e7a8e}</style><span class="eyebrow">CYRO · RESULTADO</span><h1>Uma visão mais clara.</h1><p>Seu código, transformado em resultado.</p><div class="grid"><div class="card"><b>24</b><small>entregas organizadas</small></div><div class="card"><b>98%</b><small>dentro do prazo</small></div></div><span class="status">✓ Dados do espaço de teste</span>',
+          revision: 1,
+        },
+      ],
       tables: [
         {
           name: 'prazos',
@@ -60,6 +72,22 @@ app.whenReady().then(async () => {
       request: async (_route, _method, c) => {
         c ||= { action: 'catalog' };
         calls.push(c);
+        if (c.action === 'tables.list') return { tables: [] };
+        if (c.action === 'workbench.runFile') {
+          const file = workbench.files.find((f) => f.name === c.name);
+          workbench = {
+            ...workbench,
+            revision: workbench.revision + 1,
+            preview: { format: 'html', content: file.content, title: file.name },
+            panel: {
+              kind: 'preview',
+              target: 'document',
+              source: 'workbench',
+              token: randomUUID(),
+            },
+          };
+          return structuredClone(workbench);
+        }
         if (c.action === 'workbench.list') return structuredClone(workbench);
         if (c.action === 'workbench.write') {
           workbench = {
@@ -279,7 +307,7 @@ app.whenReady().then(async () => {
       `document.getElementById('ev-extension-menu').open && !!document.querySelector('#ev-extension-menu .integration-card')`,
     );
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
-    const catalogShot = path.resolve(__dirname, '../../../build/v8/ev-extension-catalog.png');
+    const catalogShot = path.resolve(__dirname, '../../../build/v9/ev-extension-catalog.png');
     await fs.mkdir(path.dirname(catalogShot), { recursive: true });
     await fs.writeFile(catalogShot, (await win.webContents.capturePage()).toPNG());
     await input('#ev-catalog-search', 'sem resultados');
@@ -290,7 +318,7 @@ app.whenReady().then(async () => {
     await wait(`!!document.querySelector('#ev-extension-menu .integration-details')`);
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
     await fs.writeFile(
-      path.resolve(__dirname, '../../../build/v8/ev-extension-details.png'),
+      path.resolve(__dirname, '../../../build/v9/ev-extension-details.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
     await js(
@@ -305,7 +333,7 @@ app.whenReady().then(async () => {
       `document.querySelector('input[aria-label="Nome do espaço"]').value==='Transportadora de teste' && document.querySelector('select[aria-label="Tipo do novo espaço"]').value==='cyro.logistics'`,
     );
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
-    const createShot = path.resolve(__dirname, '../../../build/v8/ev-create-menu.png');
+    const createShot = path.resolve(__dirname, '../../../build/v9/ev-create-menu.png');
     await fs.mkdir(path.dirname(createShot), { recursive: true });
     await fs.writeFile(createShot, (await win.webContents.capturePage()).toPNG());
     await js(`document.querySelector('form[aria-label="Criar Espaço Virtual"]').requestSubmit()`);
@@ -320,7 +348,7 @@ app.whenReady().then(async () => {
       1,
     );
     assert.equal(await js(`document.querySelector('#quick-nav').nextElementSibling.id`), 'ev-nav');
-    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 2);
+    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 1);
     await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
@@ -359,7 +387,7 @@ app.whenReady().then(async () => {
         `!!document.querySelector('#ev-attach-files') && !!document.querySelector('#ev-microphone') && !!document.querySelector('#ev-send')`,
       ),
     );
-    const shots = path.resolve(__dirname, '../../../build/v8');
+    const shots = path.resolve(__dirname, '../../../build/v9');
     await fs.mkdir(shots, { recursive: true });
     await fs.writeFile(
       path.join(shots, 'ev-notes-panel.png'),
@@ -379,26 +407,32 @@ app.whenReady().then(async () => {
       }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
-    await js(`document.querySelector('button[aria-label="Abrir IDE do EV"]').click()`);
-    await wait(
-      `!!document.querySelector('#ev-workbench[open] textarea[aria-label="Editor de código"]')`,
+    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
+    await wait(`!!document.querySelector('.ev-studio:not([hidden]) .ev-resource-open')`);
+    await js(
+      `[...document.querySelectorAll('.ev-resource-open')].find(b=>b.textContent.includes('main.py')).click()`,
     );
+    await wait(`!!document.querySelector('[aria-label="Painel de código"] textarea')`);
     await new Promise((r) => setTimeout(r, 250));
     await fs.writeFile(
-      path.join(shots, 'ev-ide-files.png'),
+      path.join(shots, 'ev9-code-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
-    await js(
-      `[...document.querySelectorAll('#ev-workbench button')].find(b=>b.textContent==='Tabelas').click()`,
-    );
-    await wait(`!!document.querySelector('table[aria-label="Editor da tabela"]')`);
+    await js(`document.querySelector('.ev-resource-table').click()`);
     await wait(`!!document.querySelector('table[aria-label="Editor da tabela"] input')`);
     await new Promise((r) => setTimeout(r, 250));
     await fs.writeFile(
-      path.join(shots, 'ev-ide-tables.png'),
+      path.join(shots, 'ev9-table-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
-    await js(`document.querySelector('#ev-workbench button[aria-label="Fechar"]').click()`);
+    await js(`document.querySelector('button[aria-label="Executar index.html"]').click()`);
+    await wait(`!!document.querySelector('iframe[title="Preview visual do EV"]')`);
+    await new Promise((r) => setTimeout(r, 350));
+    await fs.writeFile(
+      path.join(shots, 'ev9-preview-panel.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(`document.querySelector('button[aria-label="Fechar arquivos"]').click()`);
     await js(`document.querySelector('#settings-open').click()`);
     await wait(`!!document.querySelector('#settings-tabs')`);
     await js(
@@ -459,7 +493,7 @@ app.whenReady().then(async () => {
           c.action.startsWith('assistant.') ||
           c.action.startsWith('workbench.') ||
           c.action.startsWith('memory.') ||
-          ['files.list', 'file.get', 'catalog', 'list', 'create'].includes(c.action),
+          ['files.list', 'tables.list', 'file.get', 'catalog', 'list', 'create'].includes(c.action),
       ),
     );
     console.log(

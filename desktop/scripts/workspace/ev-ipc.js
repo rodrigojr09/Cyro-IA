@@ -115,6 +115,7 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
     const requestId = id(input?.requestId);
     if (executions.size) throw Error('Aguarde a execução atual terminar.');
     executions.add(requestId);
+    s.win.cyroEVExecuting = true;
     try {
       // Reauthorize on the central API; renderer cannot inject a command or files.
       const state = await service().request('/api/ev', 'POST', {
@@ -155,6 +156,7 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       return result;
     } finally {
       executions.delete(requestId);
+      s.win.cyroEVExecuting = executions.size > 0;
     }
   });
   ipcMain.handle('ev:export-source', async (event, input) => {
@@ -308,6 +310,63 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       }
     }
     return { files, failures };
+  });
+  ipcMain.handle('ev:read-source', async (event, input) => {
+    const s = session(event),
+      projectId = id(input?.projectId),
+      fileId = id(input?.fileId);
+    const metadata = await service().request('/api/ev', 'POST', {
+      action: 'file.get',
+      projectId,
+      id: fileId,
+    });
+    s.check();
+    if (metadata.file.size > 64000)
+      throw Error('O editor aceita arquivos de texto de até 64 KB. O original foi preservado.');
+    const response = await fetcher(
+      s.current.origin + '/api/ev/files?' + new URLSearchParams({ projectId, fileId }),
+      {
+        redirect: 'error',
+        headers: { Authorization: 'Bearer ' + s.current.credential },
+        signal: AbortSignal.timeout(30000),
+      },
+    );
+    s.check();
+    if (!response.ok || !response.body) throw Error('Arquivo indisponível.');
+    const reader = response.body.getReader(),
+      chunks = [];
+    let length = 0;
+    try {
+      while (true) {
+        const part = await reader.read();
+        if (part.done) break;
+        length += part.value.length;
+        if (length > 64000) {
+          await reader.cancel();
+          throw Error('Arquivo acima do limite do editor.');
+        }
+        chunks.push(part.value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const content = Buffer.concat(chunks);
+    s.check();
+    if (
+      content.length !== metadata.file.size ||
+      require('node:crypto').createHash('sha256').update(content).digest('hex') !==
+        metadata.file.sha256
+    )
+      throw Error('Integridade do arquivo não confirmada.');
+    let text;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(content);
+    } catch {
+      throw Error('Este formato não é texto UTF-8. Baixe o original para abri-lo.');
+    }
+    if (text.includes('\0'))
+      throw Error('O arquivo contém dados binários. O original continua preservado.');
+    return { name: metadata.file.name, content: text };
   });
   ipcMain.handle('ev:download', async (event, input) => {
     const s = session(event);

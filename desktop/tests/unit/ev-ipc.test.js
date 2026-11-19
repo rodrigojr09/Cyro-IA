@@ -188,3 +188,68 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
     else process.env.JARVIS_AUTHENTICATED = prior;
   }
 });
+
+test('v9 source reader reauthorizes scoped uploads, verifies bytes and refuses binary/oversized input', async () => {
+  const handlers = new Map(),
+    frame = { url: pathToFileURL(path.resolve(__dirname, '../../index.html')).href },
+    sender = {};
+  sender.mainFrame = frame;
+  const event = { sender, senderFrame: frame };
+  const projectId = '11111111-1111-4111-8111-111111111111',
+    fileId = '22222222-2222-4222-8222-222222222222';
+  let content = Buffer.from('print(42)'),
+    size = content.length,
+    sha = require('node:crypto').createHash('sha256').update(content).digest('hex'),
+    fetches = 0;
+  const prior = process.env.JARVIS_AUTHENTICATED;
+  process.env.JARVIS_AUTHENTICATED = '1';
+  try {
+    installEVIPC({
+      electron: {
+        ipcMain: { handle: (k, fn) => handlers.set(k, fn) },
+        BrowserWindow: { fromWebContents: () => ({}) },
+        dialog: {},
+      },
+      service: () => ({
+        current: () => ({ credential: 'synthetic', origin: 'https://fixture.test' }),
+        request: async (_route, _method, c) => {
+          assert.equal(c.projectId, projectId);
+          assert.equal(c.id, fileId);
+          return { file: { name: 'script.py', size, sha256: sha } };
+        },
+      }),
+      fetcher: async (url, options) => {
+        fetches++;
+        assert.equal(new URL(url).searchParams.get('projectId'), projectId);
+        assert.equal(options.redirect, 'error');
+        return new Response(content);
+      },
+    });
+    assert.deepEqual(await handlers.get('ev:read-source')(event, { projectId, fileId }), {
+      name: 'script.py',
+      content: 'print(42)',
+    });
+    size = 64001;
+    await assert.rejects(handlers.get('ev:read-source')(event, { projectId, fileId }), /64 KB/);
+    assert.equal(fetches, 1);
+    size = content.length;
+    sha = 'f'.repeat(64);
+    await assert.rejects(
+      handlers.get('ev:read-source')(event, { projectId, fileId }),
+      /Integridade/,
+    );
+    content = Buffer.from([0, 1, 2]);
+    size = content.length;
+    sha = require('node:crypto').createHash('sha256').update(content).digest('hex');
+    await assert.rejects(handlers.get('ev:read-source')(event, { projectId, fileId }), /binários/);
+    await assert.rejects(
+      handlers.get('ev:read-source')(
+        { ...event, senderFrame: { url: 'https://evil.test' } },
+        { projectId, fileId },
+      ),
+    );
+  } finally {
+    if (prior === undefined) delete process.env.JARVIS_AUTHENTICATED;
+    else process.env.JARVIS_AUTHENTICATED = prior;
+  }
+});

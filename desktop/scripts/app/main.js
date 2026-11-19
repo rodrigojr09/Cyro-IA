@@ -91,6 +91,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       !win ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVExecuting ||
       win?.cyroEVWorkbenchDirty ||
       win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
@@ -111,6 +112,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       answer.response !== 1 ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVExecuting ||
       win?.cyroEVWorkbenchDirty ||
       win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
@@ -262,7 +264,12 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       windowState.save(stateFile, win, stateStorage);
       if (!quitting) {
         event.preventDefault();
-        if (writerController?.isDirty() || win?.cyroEVDirty || win?.cyroEVWorkbenchDirty) {
+        if (
+          writerController?.isDirty() ||
+          win?.cyroEVExecuting ||
+          win?.cyroEVDirty ||
+          win?.cyroEVWorkbenchDirty
+        ) {
           dialog
             .showMessageBox(win, {
               type: 'warning',

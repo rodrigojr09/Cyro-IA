@@ -30,7 +30,7 @@ const tags = [
   'code',
   'a',
 ];
-export function Markdown({ text = '' }) {
+export function Markdown({ text = '', onOpenCode, onRunCode }) {
   const nodes = useMemo(() => {
     const html = DOMPurify.sanitize(marked.parse(String(text), { gfm: true, breaks: true }), {
       ALLOWED_TAGS: tags,
@@ -72,16 +72,18 @@ export function Markdown({ text = '' }) {
           <Code
             key={key}
             text={node.textContent || ''}
+            onOpenCode={onOpenCode}
+            onRunCode={onRunCode}
             language={node.querySelector('code')?.className.match(/language-([\w+-]+)/)?.[1] || ''}
           />
         );
       return React.createElement(tag, { key }, children);
     };
     return [...document.body.childNodes].map(convert);
-  }, [text]);
+  }, [text, onOpenCode, onRunCode]);
   return <div className="markdown">{nodes}</div>;
 }
-function Code({ text, language }) {
+function Code({ text, language, onOpenCode, onRunCode }) {
   const [label, setLabel] = React.useState('Copiar código');
   const highlighted = useMemo(
     () =>
@@ -101,6 +103,16 @@ function Code({ text, language }) {
     <div className="code-block">
       <div className="code-header">
         <span>{language || 'código'}</span>
+        {onOpenCode && (
+          <button type="button" onClick={() => onOpenCode({ content: text, language })}>
+            Abrir código
+          </button>
+        )}
+        {onRunCode && (
+          <button type="button" onClick={() => onRunCode({ content: text, language })}>
+            Executar
+          </button>
+        )}
         <button
           type="button"
           onClick={async () => {

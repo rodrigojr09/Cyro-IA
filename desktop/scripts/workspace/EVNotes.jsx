@@ -9,6 +9,10 @@ export function EVNotes({
   onUse,
   renderFiscal,
   renderAnalysis,
+  mode = 'full',
+  selectedFile,
+  onOpen,
+  externalSearch,
 }) {
   const [files, setFiles] = useState([]),
     [search, setSearch] = useState(''),
@@ -20,6 +24,8 @@ export function EVNotes({
   const [error, setError] = useState(''),
     [loading, setLoading] = useState(false),
     [retry, setRetry] = useState(0);
+  const searchTerm = externalSearch ?? search;
+  useEffect(()=>setOffset(0),[externalSearch]);
   useEffect(() => {
     setFiles([]);
     setSelected(null);
@@ -29,13 +35,13 @@ export function EVNotes({
     setOffset(0);
   }, [projectId]);
   useEffect(() => {
-    if (!projectId || hidden) return;
+    if (!projectId || hidden || mode === 'detail') return;
     let alive = true;
     const timer = setTimeout(
       () => {
         setLoading(true);
         setError('');
-        request({ action: 'files.list', projectId, search, offset, limit: 30 })
+        request({ action: 'files.list', projectId, search: searchTerm, offset, limit: 30 })
           .then((out) => {
             if (alive) {
               setFiles((old) =>
@@ -53,17 +59,20 @@ export function EVNotes({
             if (alive) setLoading(false);
           });
       },
-      search ? 300 : 0,
+      searchTerm ? 300 : 0,
     );
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, [projectId, hidden, search, offset, refreshKey, retry]);
+  }, [projectId, hidden, searchTerm, offset, refreshKey, retry]);
+  useEffect(() => {
+    if (selectedFile) setSelected(selectedFile);
+  }, [selectedFile, projectId]);
   useEffect(() => {
     setDetail(null);
     setAnalysisId(null);
-    if (!selected || !projectId || hidden) return;
+    if (!selected || !projectId || hidden || mode === 'files') return;
     let alive = true;
     request({ action: 'file.get', projectId, id: selected })
       .then((out) => {
@@ -80,62 +89,73 @@ export function EVNotes({
     };
   }, [projectId, selected, hidden, refreshKey, retry]);
   return (
-    <aside className="ev-notes" aria-label="Notas e análises do espaço">
-      <header>
-        <h2>Notas e arquivos</h2>
-        <button
-          type="button"
-          onClick={() => setRetry((n) => n + 1)}
-          disabled={!projectId || loading}
-        >
-          Atualizar
-        </button>
-      </header>
+    <aside className={'ev-notes ev-notes-' + mode} aria-label="Notas e análises do espaço">
+      {mode !== 'detail' && (
+        <header>
+          <h2>Notas e arquivos</h2>
+          <button
+            type="button"
+            onClick={() => setRetry((n) => n + 1)}
+            disabled={!projectId || loading}
+          >
+            Atualizar
+          </button>
+        </header>
+      )}
       {!projectId ? (
         <p>Abra um espaço para consultar seus documentos.</p>
       ) : (
         <>
-          <input
-            aria-label="Buscar notas e arquivos"
-            placeholder="Buscar pelo nome…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setOffset(0);
-            }}
-          />
-          {loading && <p role="status">Carregando arquivos…</p>}
-          {error && <p role="alert">{error}</p>}
-          {!loading && !files.length && !error && (
-            <p>Nenhum arquivo encontrado. Use o clipe da conversa para enviar uma nota.</p>
-          )}
-          <ul>
-            {files.map((file) => (
-              <li key={file.id}>
-                <button
-                  type="button"
-                  aria-pressed={selected === file.id}
-                  onClick={() => setSelected(file.id)}
-                >
-                  <strong>{file.name}</strong>
-                  <small>
-                    {{
-                      READY: 'Enviado',
-                      PROCESSED: 'Lido',
-                      ERROR: 'Falha na leitura',
-                      PROCESSING: 'Processando',
-                    }[file.status] || file.status}
-                  </small>
+          {mode !== 'detail' && (
+            <>
+              {externalSearch === undefined && (
+                <input
+                  aria-label="Buscar notas e arquivos"
+                  placeholder="Buscar pelo nome…"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setOffset(0);
+                  }}
+                />
+              )}
+              {loading && <p role="status">Carregando arquivos…</p>}
+              {error && <p role="alert">{error}</p>}
+              {!loading && !files.length && !error && (
+                <p>Nenhum arquivo encontrado. Use o clipe da conversa para enviar uma nota.</p>
+              )}
+              <ul>
+                {files.map((file) => (
+                  <li key={file.id}>
+                    <button
+                      type="button"
+                      aria-pressed={selected === file.id}
+                      onClick={() => {
+                        setSelected(file.id);
+                        onOpen?.(file);
+                      }}
+                    >
+                      <strong>{file.name}</strong>
+                      <small>
+                        {{
+                          READY: 'Enviado',
+                          PROCESSED: 'Lido',
+                          ERROR: 'Falha na leitura',
+                          PROCESSING: 'Processando',
+                        }[file.status] || file.status}
+                      </small>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {next != null && (
+                <button type="button" disabled={loading} onClick={() => setOffset(next)}>
+                  Mais arquivos
                 </button>
-              </li>
-            ))}
-          </ul>
-          {next != null && (
-            <button type="button" disabled={loading} onClick={() => setOffset(next)}>
-              Mais arquivos
-            </button>
+              )}
+            </>
           )}
-          {detail && (
+          {mode !== 'files' && detail && (
             <section className="ev-note-detail" aria-label="Detalhes da nota selecionada">
               <h3>{detail.file.name}</h3>
               <button type="button" onClick={() => onUse(detail.file)}>

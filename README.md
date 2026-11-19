@@ -1,3 +1,5 @@
+Versão atual: **9.0.0**, chat com arquivos, código, preview e tabelas em painéis laterais. [Notas](versions/9.0.0.md).
+
 Candidata atual: **8.8.0-rc.1**, publicação direta pelo Dev e atualizações automáticas dos EVs e chats. [Notas](versions/8.8.0-rc.1.md).
 
 Candidata atual: **8.7.0-rc.1**, IDE privada por EV, arquivos/tabelas e execução opcional em Docker. Consulte [as notas](versions/8.7.0-rc.1.md).

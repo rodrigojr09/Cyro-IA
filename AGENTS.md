@@ -100,3 +100,13 @@ memória privada + memória MAIN da conta e arquivos privados por EV. SDK e mode
 Logístico são pacotes independentes do host. Proprietário autorizou remover
 instâncias antigas, migrando somente o modelo Logístico para o catálogo; não
 importar dados antigos automaticamente. A tag/instalador 8.4.0-rc.1 é anterior.
+
+## V9.0.0 — pedido posterior do proprietário
+
+A versão é 9.0.0 sem RC. EV permanece chat, com recursos privados na lateral.
+Código abre pela lista de arquivos ou pelo trecho do chat, sem modal IDE.
+Preview lateral acompanha execução autorizada; tabelas nascem pelo chat/SDK e
+são editáveis em painel. SDK inclui intenções de painel e eventos de arquivo,
+tabela e resultado. Preservar dados, publicações e atualizações automáticas.
+HTML de preview é estático/sanitizado; executar código continua isolado e exige
+autorização nativa. Preservar instaladores antigos e gerar em release/v9.

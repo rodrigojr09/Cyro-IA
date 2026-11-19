@@ -25,6 +25,8 @@ test('EV catalog installs for the account and creation sends the chosen extensio
     dirty: async () => {},
     draft: async () => null,
     request: async (command) => {
+      if(command.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
+      if(command.action==='tables.list')return {tables:[]};
       calls.push(command);
       if (command.action === 'catalog') return catalog();
       if (command.action === 'extension.install') {
@@ -115,6 +117,8 @@ test('EV chat keeps inline results, confirmation and retry on the same operation
       return null;
     },
     request: async (c) => {
+      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
+      if(c.action==='tables.list')return {tables:[]};
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
@@ -223,6 +227,8 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
       return { ok: true };
     },
     request: async (c) => {
+      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
+      if(c.action==='tables.list')return {tables:[]};
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
@@ -281,6 +287,8 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
     dirty: async () => {},
     draft: async () => null,
     request: async (c) => {
+      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
+      if(c.action==='tables.list')return {tables:[]};
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [file], next: null };
@@ -361,6 +369,8 @@ test('EV has one private chat; history loads only after choosing that EV and is 
     dirty: async () => {},
     draft: async () => null,
     request: async (c) => {
+      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
+      if(c.action==='tables.list')return {tables:[]};
       calls.push(c);
       if (c.action === 'catalog') return { enabled: true, extensions: [] };
       if (c.action === 'files.list') return { files: [] };

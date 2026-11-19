@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Dialog, Markdown } from '../ui/components';
 import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
-import { EVWorkbench } from './EVWorkbench';
-import { EVNotes } from './EVNotes';
+import { EVStudio } from './EVStudio';
 import { EVCatalog } from './EVCatalog';
 import { Icon } from '../ui/Icon';
 
@@ -53,7 +52,7 @@ function FileLink({ file, projectId }) {
     </div>
   );
 }
-function DataTable({ item }) {
+function DataTable({ item, onOpen }) {
   return (
     <div className="ev-chat-table">
       <p>
@@ -79,7 +78,9 @@ function DataTable({ item }) {
           </tbody>
         </table>
       </div>
-      <small>Prévia. Peça por mensagem para ver mais linhas, editar ou exportar.</small>
+      <button type="button" className="ev-open-table" onClick={() => onOpen?.(item.id)}>
+        Abrir tabela no painel
+      </button>
     </div>
   );
 }
@@ -300,8 +301,21 @@ function Batch({ item, projectId, hidden }) {
     </div>
   );
 }
-function Artifact({ item, projectId, hidden }) {
-  if (item.type === 'TABLE') return <DataTable item={item} />;
+function Artifact({ item, projectId, hidden, onOpen, onTable }) {
+  if (item.type === 'TABLE') return <DataTable item={item} onOpen={onTable} />;
+  if (item.type === 'WORKBENCH')
+    return (
+      <div className="ev-studio-chat-card">
+        <Icon name="folder" />
+        <div>
+          <strong>Recursos do seu EV</strong>
+          <small>
+            {item.files.length} arquivos · {item.tables.length} tabelas
+          </small>
+        </div>
+        <button onClick={() => onOpen?.(item.panel)}>Abrir no painel</button>
+      </div>
+    );
   if (item.type === 'FILE' || item.type === 'DOWNLOAD')
     return <FileLink file={item.file} projectId={projectId} />;
   if (item.type === 'ANALYSIS')
@@ -392,7 +406,12 @@ export function EVWorkspace({
           const extension = result.extensions.find(
             (item) => item.id === current?.extensionId && item.installed,
           );
-          if (!current || !extension?.installedVersion || current.extensionVersion===extension.installedVersion) return current;
+          if (
+            !current ||
+            !extension?.installedVersion ||
+            current.extensionVersion === extension.installedVersion
+          )
+            return current;
           return { ...current, extensionVersion: extension.installedVersion };
         });
         setCatalogError('');
@@ -466,7 +485,10 @@ export function EVWorkspace({
     onSpaceChange(space?.id || null);
   }, [space?.id]);
   const [notesOpen, setNotesOpen] = useState(false);
-  const [ideOpen, setIdeOpen] = useState(false);
+  const studio = useRef(null);
+  const [studioPending, setStudioPending] = useState(false);
+  const openStudioCode = useCallback((payload) => studio.current?.openCode(payload), []);
+  const runStudioCode = useCallback((payload) => studio.current?.runCode(payload), []);
   const changeQuestion = (value) => {
     operation.current = null;
     confirmation.current = null;
@@ -504,9 +526,9 @@ export function EVWorkspace({
   );
   useEffect(() => {
     const pending = !!question.trim() || contextFiles.length > 0 || loading;
-    onDirty(pending);
-    void window.cyroEV?.dirty?.(pending)?.catch(() => {});
-  }, [question, contextFiles, loading]);
+    onDirty(pending || studioPending);
+    void window.cyroEV?.dirty?.(pending || studioPending)?.catch(() => {});
+  }, [question, contextFiles, loading, studioPending]);
   useEffect(() => {
     const frame = requestAnimationFrame(() =>
       scroll.current?.scrollTo?.({ top: scroll.current.scrollHeight, behavior: 'auto' }),
@@ -799,15 +821,6 @@ export function EVWorkspace({
   }
   return (
     <>
-      {space && (
-        <EVWorkbench
-          key={space.id}
-          projectId={space.id}
-          open={!hidden && ideOpen}
-          onClose={() => setIdeOpen(false)}
-          request={evRequest}
-        />
-      )}
       <EVCatalog
         open={!hidden && catalogOpen}
         catalog={extensionCatalog}
@@ -930,15 +943,6 @@ export function EVWorkspace({
               </span>
               <h1>{space?.name || 'Espaços Virtuais'}</h1>
             </div>
-            <button
-              type="button"
-              className="ev-notes-toggle"
-              aria-label="Abrir IDE do EV"
-              title="IDE do EV"
-              onClick={() => setIdeOpen(true)}
-            >
-              <Icon name="code" />
-            </button>
             <small role="status">
               {loading
                 ? 'Cyro está trabalhando…'
@@ -970,7 +974,11 @@ export function EVWorkspace({
             {messages.map((message) => (
               <article className={'ev-chat-message ' + message.role} key={message.id}>
                 <span>{message.role === 'user' ? 'Você' : 'Cyro'}</span>
-                <Markdown text={message.content} />
+                <Markdown
+                  text={message.content}
+                  onOpenCode={openStudioCode}
+                  onRunCode={runStudioCode}
+                />
                 {artifacts
                   .filter((a) => a.messageId === message.id)
                   .flatMap((a) => a.items)
@@ -978,6 +986,8 @@ export function EVWorkspace({
                     <Artifact
                       key={item.id || item.file?.id || index}
                       item={item}
+                      onOpen={(intent) => studio.current?.openIntent(intent)}
+                      onTable={(id) => studio.current?.openTable(id, 'space')}
                       projectId={space?.id}
                       hidden={hidden}
                     />
@@ -1045,31 +1055,34 @@ export function EVWorkspace({
               attachmentCaption="Qualquer arquivo · até 8 MB. A leitura depende do formato; remover da mensagem preserva o original."
             />
           </div>
-          {notesOpen && (
-            <EVNotes
-              key={space?.id || 'lobby'}
-              projectId={space?.id}
-              hidden={hidden}
-              refreshKey={messages.length + ':' + contextFiles.join(',')}
-              request={evRequest}
-              onUse={(file) => {
-                operation.current = null;
-                confirmation.current = null;
-                setAttached((old) => [...old.filter((f) => f.id !== file.id), file].slice(-5));
-                setContextFiles((old) => [...new Set([...old, file.id])].slice(-5));
-                input.current?.focus();
-              }}
-              renderFiscal={(data) => <FiscalData data={data} />}
-              renderAnalysis={(item) =>
-                item &&
-                (item.kind === 'CHAT' ? (
-                  <Markdown text={item.reply || 'Resposta ainda não disponível.'} />
-                ) : (
-                  <Analysis key={item.id} item={item} projectId={space?.id} hidden={hidden} />
-                ))
-              }
-            />
-          )}
+          <EVStudio
+            ref={studio}
+            visible={notesOpen}
+            onOpen={() => setNotesOpen(true)}
+            onClose={() => setNotesOpen(false)}
+            onPending={setStudioPending}
+            key={space?.id || 'lobby'}
+            projectId={space?.id}
+            hidden={hidden}
+            refreshKey={messages.length + ':' + contextFiles.join(',')}
+            request={evRequest}
+            onUse={(file) => {
+              operation.current = null;
+              confirmation.current = null;
+              setAttached((old) => [...old.filter((f) => f.id !== file.id), file].slice(-5));
+              setContextFiles((old) => [...new Set([...old, file.id])].slice(-5));
+              input.current?.focus();
+            }}
+            renderFiscal={(data) => <FiscalData data={data} />}
+            renderAnalysis={(item) =>
+              item &&
+              (item.kind === 'CHAT' ? (
+                <Markdown text={item.reply || 'Resposta ainda não disponível.'} />
+              ) : (
+                <Analysis key={item.id} item={item} projectId={space?.id} hidden={hidden} />
+              ))
+            }
+          />
         </section>
       )}
     </>
