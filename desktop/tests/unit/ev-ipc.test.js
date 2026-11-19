@@ -143,7 +143,9 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
   sender.mainFrame = frame;
   const event = { sender, senderFrame: frame };
   let dialogOptions,
-    authorized = false;
+    authorized = false,
+    approval = 0,
+    remoteCalls = 0;
   const prior = process.env.JARVIS_AUTHENTICATED;
   process.env.JARVIS_AUTHENTICATED = '1';
   try {
@@ -154,7 +156,7 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
         dialog: {
           showMessageBox: async (_win, opts) => {
             dialogOptions = opts;
-            return { response: 0 };
+            return { response: approval };
           },
         },
       },
@@ -162,6 +164,11 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
         current: () => ({ credential: 'fixture' }),
         request: async (_route, _method, input) => {
           assert.equal(input.projectId, projectId);
+          if (_route === '/api/ev/execute') {
+            remoteCalls++;
+            assert.deepEqual(input, { projectId, requestId });
+            return { output: '42', exitCode: 0, executor: 'server' };
+          }
           authorized = true;
           return {
             executions: [{ id: requestId, runtime: 'python', source: 'print(42)', files: [] }],
@@ -177,6 +184,19 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
     assert.match(dialogOptions.detail, /print\(42\)/);
     assert.doesNotMatch(dialogOptions.detail, /forged/);
     assert.equal(dialogOptions.defaultId, 0);
+    assert.equal(remoteCalls, 0);
+    approval = 1;
+    assert.deepEqual(
+      await handlers.get('ev:execute')(event, {
+        projectId,
+        requestId,
+        source: 'forged',
+        files: [{ name: 'forged' }],
+      }),
+      { output: '42', exitCode: 0, executor: 'server' },
+    );
+    assert.equal(remoteCalls, 1);
+    assert.match(dialogOptions.detail, /backend/);
     await assert.rejects(
       handlers.get('ev:execute')(
         { ...event, senderFrame: { url: 'https://evil.test' } },

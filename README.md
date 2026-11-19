@@ -1,4 +1,6 @@
-Versão atual: **9.0.0**, chat com arquivos, código, preview e tabelas em painéis laterais. [Notas](versions/9.0.0.md).
+Versão atual: **9.0.1**, execução no backend com área privada por EV. [Notas](versions/9.0.1.md).
+
+Versão anterior: **9.0.0**, chat com arquivos, código, preview e tabelas em painéis laterais. [Notas](versions/9.0.0.md).
 
 Candidata atual: **8.8.0-rc.1**, publicação direta pelo Dev e atualizações automáticas dos EVs e chats. [Notas](versions/8.8.0-rc.1.md).
 

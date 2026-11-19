@@ -128,30 +128,16 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       const approval = await dialog.showMessageBox(s.win, {
         type: 'warning',
         title: 'Executar código do EV',
-        message: 'Autorizar esta execução isolada?',
-        detail: `Runtime: ${request.runtime}\nSem rede · 128 MB · 15 segundos\nArquivos: ${request.files.map((f) => f.name).join(', ') || 'nenhum'}\n\n${request.source}`,
-        buttons: ['Cancelar', 'Executar no contêiner'],
+        message: 'Autorizar a execução no servidor do Cyro?',
+        detail: `Runtime: ${request.runtime}\nÁrea privada deste EV no backend · Sem rede · 128 MB · 15 segundos\nArquivos: ${request.files.map((f) => f.name).join(', ') || 'nenhum'}\n\n${request.source}`,
+        buttons: ['Cancelar', 'Executar no servidor'],
         defaultId: 0,
         cancelId: 0,
         noLink: true,
       });
       s.check();
       if (approval.response !== 1) return { cancelled: true };
-      const result = await require('./workbench-runner').runIsolated(request, { check: s.check });
-      try {
-        await service().request('/api/ev', 'POST', {
-          action: 'workbench.result',
-          projectId,
-          operationId: randomUUID(),
-          requestId,
-          output: result.output.slice(0, 16000),
-          exitCode: result.exitCode,
-          timedOut: result.timedOut,
-          outputLimited: result.outputLimited,
-        });
-      } catch {
-        result.persistenceError = 'A saída não foi salva no EV. Copie o resultado antes de fechar.';
-      }
+      const result = await service().request('/api/ev/execute', 'POST', { projectId, requestId });
       s.check();
       return result;
     } finally {

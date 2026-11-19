@@ -937,9 +937,21 @@ export const EVStudio = forwardRef(function EVStudio(
                   </small>
                 )}
                 {execution && !busy && (
-                  <button onClick={() => void perform(() => execute(execution.id))}>
+                  <button
+                    onClick={() =>
+                      void perform(async () => {
+                        if (result && !result.cancelled) {
+                          const next = await operation('workbench.execute', {
+                            runtime: execution.runtime,
+                            source: execution.source,
+                          });
+                          await execute(next.panel.target);
+                        } else await execute(execution.id);
+                      })
+                    }
+                  >
                     <Icon name="play" />
-                    {result ? 'Executar novamente' : 'Revisar e executar'}
+                    {result ? 'Nova execução' : 'Revisar e executar'}
                   </button>
                 )}
               </div>
@@ -957,6 +969,19 @@ export const EVStudio = forwardRef(function EVStudio(
               ) : (
                 <EVPreview preview={renderedPreview} />
               )}
+              {result?.files?.length > 0 && (
+                <p role="status">Arquivos salvos no EV: {result.files.join(', ')}.</p>
+              )}
+              {result?.conflicts?.length > 0 && (
+                <p role="alert">
+                  Edições recentes preservadas. Não importados: {result.conflicts.join(', ')}.
+                </p>
+              )}
+              {result?.warnings?.map((warning, i) => (
+                <p key={i} role="status">
+                  {warning}
+                </p>
+              ))}
               {execution && (
                 <details className="ev-execution-code">
                   <summary>Código e arquivos desta execução</summary>
@@ -1006,7 +1031,9 @@ export const EVStudio = forwardRef(function EVStudio(
                     <Icon name="play" />
                     Executar com autorização
                   </button>
-                  <small>Docker Desktop · sem rede · até 15 segundos e 128 MB.</small>
+                  <small>
+                    Área privada do EV no servidor · sem rede · até 15 segundos e 128 MB.
+                  </small>
                 </div>
               )}
             </>

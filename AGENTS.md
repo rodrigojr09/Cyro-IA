@@ -110,3 +110,10 @@ são editáveis em painel. SDK inclui intenções de painel e eventos de arquivo
 tabela e resultado. Preservar dados, publicações e atualizações automáticas.
 HTML de preview é estático/sanitizado; executar código continua isolado e exige
 autorização nativa. Preservar instaladores antigos e gerar em release/v9.
+
+## V9.0.1 — execução central, pedido posterior
+
+Códigos/comandos rodam no backend em serviço executor separado, com área privada
+persistente por EV e sandbox temporário. Desktop confirma e solicita; não exige Docker
+local. Preservar 9.0.0. Após validar, enviar e criar tag v9.0.1 conforme pedido explícito
+do proprietário. Sem force push ou substituir tags existentes.

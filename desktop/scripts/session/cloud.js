@@ -34,6 +34,7 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
     const ev =
       route === '/api/ev' ||
       route === '/api/ev/chat' ||
+      route === '/api/ev/execute' ||
       route === '/api/ev/assistant' ||
       route === '/api/memory';
     if (!session) throw Error('Entre com sua conta.');
@@ -47,7 +48,11 @@ function createCloud({ safeStorage, dataDir, origin, packaged = true, fetcher = 
         },
         ...(payload ? { body: JSON.stringify(payload) } : {}),
         signal: AbortSignal.timeout(
-          ['/api/ev/chat', '/api/ev/assistant'].includes(route) ? 110000 : 20000,
+          ['/api/ev/chat', '/api/ev/assistant'].includes(route)
+            ? 110000
+            : route === '/api/ev/execute'
+              ? 45000
+              : 20000,
         ),
       });
       const failure = !response.ok ? await response.json().catch(() => ({})) : null;
