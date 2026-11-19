@@ -43,7 +43,17 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     }
   }
   useEffect(() => {
-    if (state.ready) void refreshEVChats();
+    if (!state.ready) return;
+    const refresh = () => {
+      if (document.visibilityState !== 'hidden') void refreshEVChats();
+    };
+    refresh();
+    const timer = setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
   }, [state.ready]);
   const [input, setInput] = useState(''),
     [submitting, setSubmitting] = useState(false),

@@ -391,3 +391,17 @@ test('EV has one private chat; history loads only after choosing that EV and is 
     await env.dispose();
   }
 });
+
+test('EV refreshes its installed version on focus without fetching chat history again',async()=>{
+ const env=environment(),calls=[];let version='1.0.0';
+ const space={id:'11111111-1111-4111-8111-111111111111',chatId:'22222222-2222-4222-8222-222222222222',name:'EV atualizado',extensionId:'studio.test',extensionVersion:'1.0.0',state:'READY'};
+ window.cyroEV={dirty:async()=>{},draft:async()=>null,request:async c=>{calls.push(c);if(c.action==='catalog')return {enabled:true,automaticUpdates:true,extensions:[{id:space.extensionId,version,installedVersion:version,installed:true,name:'Teste'}]};if(c.action==='assistant.open')return {ownerId:'owner',space,conversation:{id:space.chatId},messages:[{id:1,role:'user',content:'Histórico preservado'}],artifacts:[]};if(c.action==='files.list')return {files:[]};throw Error(c.action);}};
+ try{
+  await env.mount(env.EVWorkspace,{hidden:false,selectedEV:space});await settle();
+  assert.match(document.querySelector('.ev-chat-heading').textContent,/v1.0.0/);
+  version='1.1.0';await act(async()=>window.dispatchEvent(new window.Event('focus')));await settle();
+  assert.match(document.querySelector('.ev-chat-heading').textContent,/v1.1.0/);
+  assert.match(document.querySelector('.ev-chat-history').textContent,/Histórico preservado/);
+  assert.equal(calls.filter(c=>c.action==='assistant.open').length,1);
+ }finally{await env.dispose();}
+});

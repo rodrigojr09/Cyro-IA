@@ -3,6 +3,7 @@ import { Dialog } from '../ui/components';
 import { Icon } from '../ui/Icon';
 
 const permissionLabels = {
+  workbench: 'Usar a IDE privada, criar arquivos/tabelas e solicitar execução com sua autorização',
   storage: 'Salvar dados privados deste EV',
   messages: 'Responder na conversa do EV',
   files: 'Consultar arquivos privados do EV',
@@ -160,6 +161,10 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
             <p className="ev-catalog-privacy">
               Cada EV mantém seus próprios arquivos e memória privada, com acesso à memória
               principal da sua conta.
+            </p>
+            <p className="ev-catalog-privacy">
+              Atualizações automáticas: a versão mais recente é aplicada aos seus chats EV,
+              preservando memória e arquivos.
             </p>
             <div className="ev-menu-actions">
               {selected.installed && (

@@ -388,6 +388,13 @@ export function EVWorkspace({
       const result = await evRequest({ action: 'catalog' });
       if (Array.isArray(result?.extensions)) {
         setExtensionCatalog(result);
+        setSpace((current) => {
+          const extension = result.extensions.find(
+            (item) => item.id === current?.extensionId && item.installed,
+          );
+          if (!current || !extension?.installedVersion || current.extensionVersion===extension.installedVersion) return current;
+          return { ...current, extensionVersion: extension.installedVersion };
+        });
         setCatalogError('');
       }
     } catch (e) {
@@ -395,7 +402,17 @@ export function EVWorkspace({
     }
   }
   useEffect(() => {
-    if (!hidden) void refreshExtensions();
+    if (hidden) return;
+    const update = () => {
+      if (document.visibilityState !== 'hidden') void refreshExtensions();
+    };
+    update();
+    const timer = setInterval(update, 30000);
+    window.addEventListener('focus', update);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', update);
+    };
   }, [hidden]);
   async function manageExtension(extension, install) {
     if (loading || sending.current) return;
@@ -925,7 +942,8 @@ export function EVWorkspace({
             <small role="status">
               {loading
                 ? 'Cyro está trabalhando…'
-                : stateLabel(space?.state) || 'Converse com o Cyro'}
+                : (stateLabel(space?.state) || 'Converse com o Cyro') +
+                  (space?.extensionVersion ? ` · v${space.extensionVersion}` : '')}
             </small>
             <button
               type="button"
