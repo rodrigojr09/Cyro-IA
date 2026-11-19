@@ -3,6 +3,7 @@ import { Dialog, Markdown } from '../ui/components';
 import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
+import { EVWorkbench } from './EVWorkbench';
 import { EVNotes } from './EVNotes';
 import { EVCatalog } from './EVCatalog';
 import { Icon } from '../ui/Icon';
@@ -448,6 +449,7 @@ export function EVWorkspace({
     onSpaceChange(space?.id || null);
   }, [space?.id]);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [ideOpen, setIdeOpen] = useState(false);
   const changeQuestion = (value) => {
     operation.current = null;
     confirmation.current = null;
@@ -780,6 +782,15 @@ export function EVWorkspace({
   }
   return (
     <>
+      {space && (
+        <EVWorkbench
+          key={space.id}
+          projectId={space.id}
+          open={!hidden && ideOpen}
+          onClose={() => setIdeOpen(false)}
+          request={evRequest}
+        />
+      )}
       <EVCatalog
         open={!hidden && catalogOpen}
         catalog={extensionCatalog}
@@ -902,6 +913,15 @@ export function EVWorkspace({
               </span>
               <h1>{space?.name || 'Espaços Virtuais'}</h1>
             </div>
+            <button
+              type="button"
+              className="ev-notes-toggle"
+              aria-label="Abrir IDE do EV"
+              title="IDE do EV"
+              onClick={() => setIdeOpen(true)}
+            >
+              <Icon name="code" />
+            </button>
             <small role="status">
               {loading
                 ? 'Cyro está trabalhando…'

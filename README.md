@@ -1,3 +1,5 @@
+Candidata atual: **8.7.0-rc.1**, IDE privada por EV, arquivos/tabelas e execução opcional em Docker. Consulte [as notas](versions/8.7.0-rc.1.md).
+
 > **8.6.0-rc.1:** anexos de qualquer extensão no chat normal (5 MB) e no EV (8 MB). Arquivos sem leitura automática são preservados com aviso. [Entrega](versions/8.6.0-rc.1.md).
 
 > **Desktop 8.5.0-rc.3:** Conversas recentes em negrito e sem hover; somente EVs criados têm chat. [Entrega](versions/8.5.0-rc.3.md).

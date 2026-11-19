@@ -48,7 +48,8 @@
     "!tests/**",
     "!node_modules/**",
     "dist/highlight.css",
-    "scripts/workspace/ev-ipc.js"
+    "scripts/workspace/ev-ipc.js",
+    "scripts/workspace/workbench-runner.js"
   ],
   "extraResources": [
     {

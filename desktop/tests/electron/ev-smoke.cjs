@@ -39,12 +39,36 @@ app.whenReady().then(async () => {
       calls = [],
       messages = [],
       artifacts = [];
+    let workbench = {
+      revision: 0,
+      files: [{ name: 'main.py', content: 'print("Olá, Cyro!")' }],
+      tables: [
+        {
+          name: 'prazos',
+          columns: ['Destino', 'Dias'],
+          rows: [
+            ['São Paulo', 3],
+            ['Curitiba', 2],
+          ],
+        },
+      ],
+      executions: [],
+    };
     const session = { origin: 'https://api.test', credential: 'synthetic-ev-session' };
     const service = {
       current: () => session,
       request: async (_route, _method, c) => {
         c ||= { action: 'catalog' };
         calls.push(c);
+        if (c.action === 'workbench.list') return structuredClone(workbench);
+        if (c.action === 'workbench.write') {
+          workbench = {
+            ...workbench,
+            revision: workbench.revision + 1,
+            files: [{ name: c.name, content: c.content }],
+          };
+          return structuredClone(workbench);
+        }
         if (c.action === 'catalog')
           return {
             enabled: true,
@@ -205,9 +229,10 @@ app.whenReady().then(async () => {
         offscreen: true,
       },
     });
-    const js = (code) => win.webContents.executeJavaScript(code, true).catch((error) => {
-      throw new Error(`${error.message}\nRenderer script: ${code}`);
-    });
+    const js = (code) =>
+      win.webContents.executeJavaScript(code, true).catch((error) => {
+        throw new Error(`${error.message}\nRenderer script: ${code}`);
+      });
     const wait = async (code) => {
       for (let n = 0; n < 160; n++) {
         if (await js(code)) return;
@@ -229,11 +254,18 @@ app.whenReady().then(async () => {
     await wait(`document.getElementById('ev-create-menu').open`);
     assert.equal(await js(`!!document.getElementById('ev-message')`), false);
     await js(`document.querySelector('#ev-create-menu button[aria-label="Fechar"]').click()`);
-    await wait(`!document.getElementById('ev-create-menu').open && !document.querySelector('main.main-panel').hidden`);
+    await wait(
+      `!document.getElementById('ev-create-menu').open && !document.querySelector('main.main-panel').hidden`,
+    );
     assert.equal(await js(`!!document.querySelector('.ev-chat')`), false);
     await js(`document.querySelector('#ev-nav').click()`);
     await wait(`document.getElementById('ev-create-menu').open`);
-    assert.equal(await js(`getComputedStyle([...document.querySelectorAll('.navigation-heading')].find(n=>n.textContent==='Conversas recentes')).fontWeight`), '700');
+    assert.equal(
+      await js(
+        `getComputedStyle([...document.querySelectorAll('.navigation-heading')].find(n=>n.textContent==='Conversas recentes')).fontWeight`,
+      ),
+      '700',
+    );
     assert.equal(
       await js(`document.querySelectorAll('#add-project,.ev-tabs,.project-row').length`),
       0,
@@ -288,7 +320,7 @@ app.whenReady().then(async () => {
       1,
     );
     assert.equal(await js(`document.querySelector('#quick-nav').nextElementSibling.id`), 'ev-nav');
-    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 1);
+    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 2);
     await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
@@ -347,6 +379,26 @@ app.whenReady().then(async () => {
       }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
+    await js(`document.querySelector('button[aria-label="Abrir IDE do EV"]').click()`);
+    await wait(
+      `!!document.querySelector('#ev-workbench[open] textarea[aria-label="Editor de código"]')`,
+    );
+    await new Promise((r) => setTimeout(r, 250));
+    await fs.writeFile(
+      path.join(shots, 'ev-ide-files.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(
+      `[...document.querySelectorAll('#ev-workbench button')].find(b=>b.textContent==='Tabelas').click()`,
+    );
+    await wait(`!!document.querySelector('table[aria-label="Editor da tabela"]')`);
+    await wait(`!!document.querySelector('table[aria-label="Editor da tabela"] input')`);
+    await new Promise((r) => setTimeout(r, 250));
+    await fs.writeFile(
+      path.join(shots, 'ev-ide-tables.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(`document.querySelector('#ev-workbench button[aria-label="Fechar"]').click()`);
     await js(`document.querySelector('#settings-open').click()`);
     await wait(`!!document.querySelector('#settings-tabs')`);
     await js(
@@ -405,6 +457,7 @@ app.whenReady().then(async () => {
       calls.every(
         (c) =>
           c.action.startsWith('assistant.') ||
+          c.action.startsWith('workbench.') ||
           c.action.startsWith('memory.') ||
           ['files.list', 'file.get', 'catalog', 'list', 'create'].includes(c.action),
       ),

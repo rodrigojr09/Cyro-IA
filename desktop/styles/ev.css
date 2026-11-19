@@ -488,3 +488,98 @@
 .ev-extension-catalog .integrations-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
 }
+
+.ev-workbench {
+  display: grid;
+  gap: 14px;
+  max-height: 75vh;
+  overflow: auto;
+  min-width: 0;
+}
+.ev-workbench nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ev-workbench label {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0;
+}
+.ev-workbench textarea {
+  width: 100%;
+  min-height: 180px;
+  font:
+    13px/1.6 Consolas,
+    monospace;
+  tab-size: 2;
+  resize: vertical;
+  background: var(--bg, #0b111a);
+  color: inherit;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.ev-workbench input,
+.ev-workbench select {
+  padding: 9px;
+  background: #101826;
+  color: inherit;
+  border: 1px solid #334155;
+  border-radius: 7px;
+}
+.ev-ide-files {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 16px;
+}
+.ev-ide-files aside {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.ev-workbench pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 220px;
+  overflow: auto;
+  background: #080d15;
+  padding: 12px;
+  border-radius: 8px;
+}
+.ev-workbench button {
+  margin: 3px;
+  padding: 8px 12px;
+}
+.ev-workbench table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.ev-workbench td,
+.ev-workbench th {
+  border: 1px solid #334155;
+  padding: 7px;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .ev-ide-files {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ev-ide-files aside {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.ev-workbench nav button[aria-pressed='true'] {
+  border: 1px solid #36bff0;
+  background: #18354a;
+  color: #e2f7ff;
+}
+.ev-workbench .ev-chat-table-scroll input {
+  width: 130px;
+  max-width: 100%;
+  box-sizing: border-box;
+}

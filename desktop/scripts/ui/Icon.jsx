@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Code,
   PanelLeft,
   FolderPlus,
   Folder,
@@ -50,6 +51,7 @@ const nodes = {
   'chevron-down': ChevronDown,
   'messages-square': MessagesSquare,
   settings: Settings2,
+  code: Code,
   logout: LogOut,
   paperclip: Paperclip,
   mic: Mic,

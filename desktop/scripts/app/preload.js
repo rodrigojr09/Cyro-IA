@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('cyroEV', {
   request: (input) => ipcRenderer.invoke('ev:request', input),
+  execute: (input) => ipcRenderer.invoke('ev:execute', input),
+  exportSource: (input) => ipcRenderer.invoke('ev:export-source', input),
   upload: (projectId) => ipcRenderer.invoke('ev:upload', projectId),
   download: (input) => ipcRenderer.invoke('ev:download', input),
   draft: (input) => ipcRenderer.invoke('ev:draft', input),

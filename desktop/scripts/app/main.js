@@ -91,6 +91,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       !win ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVWorkbenchDirty ||
       win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
     ) {
@@ -110,6 +111,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       answer.response !== 1 ||
       updatePending ||
       writerController?.isDirty() ||
+      win?.cyroEVWorkbenchDirty ||
       win?.cyroEVDirty ||
       (quickController && !quickController.safeToUpdate())
     ) {
@@ -260,7 +262,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       windowState.save(stateFile, win, stateStorage);
       if (!quitting) {
         event.preventDefault();
-        if (writerController?.isDirty() || win?.cyroEVDirty) {
+        if (writerController?.isDirty() || win?.cyroEVDirty || win?.cyroEVWorkbenchDirty) {
           dialog
             .showMessageBox(win, {
               type: 'warning',
@@ -566,7 +568,13 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         !trusted(event) ||
         !routes.has(baseRoute) ||
         (route.includes('?') &&
-          !['/chats/history', '/chats/catalog', '/chats/metadata', '/projects/knowledge', '/projects/selection'].includes(baseRoute))
+          ![
+            '/chats/history',
+            '/chats/catalog',
+            '/chats/metadata',
+            '/projects/knowledge',
+            '/projects/selection',
+          ].includes(baseRoute))
       ) {
         throw new Error('Solicitação não autorizada.');
       }

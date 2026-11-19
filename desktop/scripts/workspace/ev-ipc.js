@@ -108,6 +108,75 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       };
     }
   });
+  const executions = new Set();
+  ipcMain.handle('ev:execute', async (event, input) => {
+    const s = session(event);
+    const projectId = id(input?.projectId);
+    const requestId = id(input?.requestId);
+    if (executions.size) throw Error('Aguarde a execução atual terminar.');
+    executions.add(requestId);
+    try {
+      // Reauthorize on the central API; renderer cannot inject a command or files.
+      const state = await service().request('/api/ev', 'POST', {
+        action: 'workbench.list',
+        projectId,
+      });
+      s.check();
+      const request = state.executions?.find((item) => item.id === requestId);
+      if (!request) throw Error('Solicitação de execução indisponível. Atualize a IDE.');
+      const approval = await dialog.showMessageBox(s.win, {
+        type: 'warning',
+        title: 'Executar código do EV',
+        message: 'Autorizar esta execução isolada?',
+        detail: `Runtime: ${request.runtime}\nSem rede · 128 MB · 15 segundos\nArquivos: ${request.files.map((f) => f.name).join(', ') || 'nenhum'}\n\n${request.source}`,
+        buttons: ['Cancelar', 'Executar no contêiner'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      });
+      s.check();
+      if (approval.response !== 1) return { cancelled: true };
+      const result = await require('./workbench-runner').runIsolated(request, { check: s.check });
+      try {
+        await service().request('/api/ev', 'POST', {
+          action: 'workbench.result',
+          projectId,
+          operationId: randomUUID(),
+          requestId,
+          output: result.output.slice(0, 16000),
+          exitCode: result.exitCode,
+          timedOut: result.timedOut,
+          outputLimited: result.outputLimited,
+        });
+      } catch {
+        result.persistenceError = 'A saída não foi salva no EV. Copie o resultado antes de fechar.';
+      }
+      s.check();
+      return result;
+    } finally {
+      executions.delete(requestId);
+    }
+  });
+  ipcMain.handle('ev:export-source', async (event, input) => {
+    const s = session(event),
+      projectId = id(input?.projectId);
+    const state = await service().request('/api/ev', 'POST', {
+      action: 'workbench.list',
+      projectId,
+    });
+    s.check();
+    const file = state.files?.find((f) => f.name === input.name);
+    if (!file) throw Error('Arquivo da IDE indisponível.');
+    const result = await dialog.showSaveDialog(s.win, {
+      title: 'Salvar arquivo da IDE',
+      defaultPath: path.basename(file.name),
+    });
+    s.check();
+    if (result.canceled || !result.filePath) return { cancelled: true };
+    await fs.writeFile(result.filePath, file.content, { mode: 0o600 });
+    s.check();
+    return { ok: true };
+  });
   ipcMain.handle('ev:dirty', (event, value) => {
     const s = session(event);
     s.win.cyroEVDirty = value === true;
@@ -123,10 +192,15 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       .createHash('sha256')
       .update(s.current.origin + ':' + owner + ':' + input.projectId)
       .digest('hex');
-    if (input.channel !== undefined && input.channel !== 'CHAT')
+    if (input.channel !== undefined && !['CHAT', 'IDE'].includes(input.channel))
       throw Error('Canal de rascunho inválido.');
     const folder = path.join(dataDir, 'ev-drafts'),
-      file = path.join(folder, hash + (input.channel === 'CHAT' ? '.chat' : '') + '.bin');
+      file = path.join(
+        folder,
+        hash +
+          (input.channel === 'CHAT' ? '.chat' : input.channel === 'IDE' ? '.ide' : '') +
+          '.bin',
+      );
     if (input.operation === 'read') {
       try {
         const raw = await fs.readFile(file);
@@ -140,12 +214,12 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
     if (input.operation === 'remove') {
       await fs.rm(file, { force: true });
       s.check();
-      s.win.cyroEVDirty = false;
+      s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = false;
       return { ok: true };
     }
     if (input.operation !== 'write' || JSON.stringify(input.content).length > 524288)
       throw Error('Rascunho inválido ou acima do limite.');
-    s.win.cyroEVDirty = true;
+    s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = true;
     await fs.mkdir(folder, { recursive: true });
     s.check();
     const temporary = file + '.' + randomUUID() + '.tmp';
@@ -161,7 +235,7 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       await fs.rm(temporary, { force: true });
     }
     s.check();
-    s.win.cyroEVDirty = true;
+    s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = true;
     return { ok: true };
   };
   ipcMain.handle('ev:draft', (event, input) => {

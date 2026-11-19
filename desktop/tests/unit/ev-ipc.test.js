@@ -133,3 +133,58 @@ test('EV IPC authenticates main frame, restricts routes, rejects late account re
     await fs.rm(resolved, { recursive: true, force: true });
   }
 });
+
+test('IDE execution reauthorizes central scope and defaults native approval to cancel', async () => {
+  const handlers = new Map(),
+    projectId = '11111111-1111-4111-8111-111111111111',
+    requestId = '22222222-2222-4222-8222-222222222222';
+  const frame = { url: pathToFileURL(path.resolve(__dirname, '../../index.html')).href },
+    sender = {};
+  sender.mainFrame = frame;
+  const event = { sender, senderFrame: frame };
+  let dialogOptions,
+    authorized = false;
+  const prior = process.env.JARVIS_AUTHENTICATED;
+  process.env.JARVIS_AUTHENTICATED = '1';
+  try {
+    installEVIPC({
+      electron: {
+        ipcMain: { handle: (k, fn) => handlers.set(k, fn) },
+        BrowserWindow: { fromWebContents: () => ({}) },
+        dialog: {
+          showMessageBox: async (_win, opts) => {
+            dialogOptions = opts;
+            return { response: 0 };
+          },
+        },
+      },
+      service: () => ({
+        current: () => ({ credential: 'fixture' }),
+        request: async (_route, _method, input) => {
+          assert.equal(input.projectId, projectId);
+          authorized = true;
+          return {
+            executions: [{ id: requestId, runtime: 'python', source: 'print(42)', files: [] }],
+          };
+        },
+      }),
+    });
+    assert.deepEqual(
+      await handlers.get('ev:execute')(event, { projectId, requestId, source: 'forged' }),
+      { cancelled: true },
+    );
+    assert.ok(authorized);
+    assert.match(dialogOptions.detail, /print\(42\)/);
+    assert.doesNotMatch(dialogOptions.detail, /forged/);
+    assert.equal(dialogOptions.defaultId, 0);
+    await assert.rejects(
+      handlers.get('ev:execute')(
+        { ...event, senderFrame: { url: 'https://evil.test' } },
+        { projectId, requestId },
+      ),
+    );
+  } finally {
+    if (prior === undefined) delete process.env.JARVIS_AUTHENTICATED;
+    else process.env.JARVIS_AUTHENTICATED = prior;
+  }
+});

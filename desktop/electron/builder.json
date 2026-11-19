@@ -53,7 +53,8 @@
     "scripts/updates/client.js",
     "scripts/updates/ipc.js",
     "electron/backend-config.json",
-    "scripts/workspace/ev-ipc.js"
+    "scripts/workspace/ev-ipc.js",
+    "scripts/workspace/workbench-runner.js"
   ],
   "extraResources": [
     {
