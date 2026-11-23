@@ -1499,3 +1499,5 @@
 .ev-chat .code-header button {font-size:10px;padding:5px 8px;min-height:24px}
 
 .ev-chat-heading>div{min-width:0}.ev-chat-heading h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.ev-sidebar-row{display:flex;align-items:center;gap:3px}.ev-sidebar-row>.chat-item{flex:1;min-width:0}.ev-sidebar-options{flex:none;width:28px;height:32px;padding:0;border:0;background:transparent;color:var(--muted);font-size:21px;border-radius:7px}.ev-sidebar-options:hover,.ev-sidebar-options:focus-visible{background:var(--surface-hover,#202d40);color:var(--text)}.ev-manage-body{display:grid;gap:16px}.ev-manage-body form{display:flex;align-items:end;gap:10px}.ev-manage-body label{flex:1;display:grid;gap:8px}.ev-manage-body input{width:100%}.ev-manage-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.ev-manage-body .danger{color:#ff9393}

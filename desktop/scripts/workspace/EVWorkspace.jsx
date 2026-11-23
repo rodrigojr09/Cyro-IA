@@ -7,9 +7,30 @@ import { EVStudio } from './EVStudio';
 import { EVCatalog } from './EVCatalog';
 import { Icon } from '../ui/Icon';
 
+async function waitForIPC(promise, ms = 125000) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              Error(
+                'A operação demorou mais que o esperado. O pedido foi preservado; tente novamente para recuperar o resultado.',
+              ),
+            ),
+          ms,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 export async function evRequest(input) {
   if (!window.cyroEV) throw Error('Espaços Virtuais indisponíveis nesta sessão.');
-  const result = await window.cyroEV.request(input);
+  const result = await waitForIPC(window.cyroEV.request(input));
   if (result?.error) throw Object.assign(Error(result.error), { status: result.status });
   return result;
 }
@@ -368,6 +389,7 @@ export function EVWorkspace({
   onCancelCreation = () => {},
   onDirty = () => {},
   onSpaceChange = () => {},
+  onManage = () => {},
   speaker,
   voiceEnabled = false,
 }) {
@@ -517,13 +539,13 @@ export function EVWorkspace({
     input = useRef(null),
     active = useRef(true),
     sending = useRef(false);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    active.current = true;
+    return () => {
       active.current = false;
       generation.current++;
-    },
-    [],
-  );
+    };
+  }, []);
   useEffect(() => {
     const pending = !!question.trim() || contextFiles.length > 0 || loading;
     onDirty(pending || studioPending);
@@ -621,7 +643,10 @@ export function EVWorkspace({
     if (!active.current || epoch !== generation.current) return;
     await apply(out);
     if (out.space?.state === 'READY') {
-      const draft = await window.cyroEV.draft({ channel: 'CHAT', operation: 'read', projectId });
+      const draft = await waitForIPC(
+        window.cyroEV.draft({ channel: 'CHAT', operation: 'read', projectId }),
+        8000,
+      );
       if ((draft?.question || draft?.fileIds?.length) && epoch === generation.current) {
         if (draft.conversationId && draft.conversationId !== out.conversation?.id) {
           setNotice('Há um rascunho preservado. Abra a conversa correspondente para recuperá-lo.');
@@ -666,7 +691,7 @@ export function EVWorkspace({
     return () => clearTimeout(timer);
   }, [hidden, space, loading]);
   useEffect(() => {
-    if ((!question.trim() && !contextFiles.length) || !space) return;
+    if (sending.current || (!question.trim() && !contextFiles.length) || !space) return;
     const timer = setTimeout(
       () =>
         void window.cyroEV
@@ -759,10 +784,11 @@ export function EVWorkspace({
               confirmationProposalId: confirmation.current || null,
             },
           });
-        await draft(selectedConversation?.id);
+        await waitForIPC(draft(selectedConversation?.id), 8000);
         if (!selectedConversation)
           throw Error('Reabra este EV para carregar seu chat antes de enviar.');
       }
+      setQuestion('');
       const out = await evRequest({
         action: 'assistant.send',
         operationId,
@@ -783,23 +809,30 @@ export function EVWorkspace({
             : [...old, { id: 'user-' + operationId, role: 'user', content: text }],
         );
       await apply(out);
-      setQuestion('');
       setContextFiles([]);
       operation.current = null;
       confirmation.current = null;
+      // Local cleanup must not keep a completed server response in the sending state.
       if (previousSpace)
-        await window.cyroEV.draft({
-          channel: 'CHAT',
-          operation: 'remove',
-          projectId: previousSpace.id,
-        });
+        void window.cyroEV
+          .draft({
+            channel: 'CHAT',
+            operation: 'remove',
+            projectId: previousSpace.id,
+          })
+          .catch((e) => {
+            if (active.current) setNotice('Mensagem enviada. ' + publicError(e));
+          });
       if (out.effect === 'CLEAR_CONTEXT') setContextFiles([]);
-      if ((out.effect === 'UPLOAD' || out.effects?.some((e) => e.type === 'UPLOAD')) && out.space) {
-        await upload(out.space.id);
-      }
-      for (const effect of out.effects || [])
-        if (effect.type === 'DOWNLOAD')
-          await window.cyroEV.download({ projectId: out.space.id, fileId: effect.file.id });
+      void (async () => {
+        if ((out.effect === 'UPLOAD' || out.effects?.some((e) => e.type === 'UPLOAD')) && out.space)
+          await upload(out.space.id);
+        for (const effect of out.effects || [])
+          if (effect.type === 'DOWNLOAD')
+            await window.cyroEV.download({ projectId: out.space.id, fileId: effect.file.id });
+      })().catch((e) => {
+        if (active.current) setNotice('Mensagem enviada. ' + publicError(e));
+      });
       if (voiceEnabled && speaker) {
         const reply =
           out.reply ||
@@ -949,6 +982,16 @@ export function EVWorkspace({
                 : (stateLabel(space?.state) || 'Converse com o Cyro') +
                   (space?.extensionVersion ? ` · v${space.extensionVersion}` : '')}
             </small>
+            <button
+              type="button"
+              className="ev-notes-toggle"
+              aria-label="Opções do EV"
+              title="Opções do EV"
+              disabled={loading}
+              onClick={() => onManage(space)}
+            >
+              ⋯
+            </button>
             <button
               type="button"
               className="ev-notes-toggle"

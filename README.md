@@ -1,4 +1,6 @@
-Versão atual: **9.0.1**, execução no backend com área privada por EV. [Notas](versions/9.0.1.md).
+Versão atual: **9.0.2**, envio do EV sem travar e opções para renomear, limpar mensagens e excluir. [Notas](versions/9.0.2.md).
+
+Versão anterior: **9.0.1**, execução no backend com área privada por EV. [Notas](versions/9.0.1.md).
 
 Versão anterior: **9.0.0**, chat com arquivos, código, preview e tabelas em painéis laterais. [Notas](versions/9.0.0.md).
 

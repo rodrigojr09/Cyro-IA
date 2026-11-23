@@ -108,6 +108,18 @@ test('EV IPC authenticates main frame, restricts routes, rejects late account re
         Buffer.from('PRIVATE_DRAFT_A'),
       ),
     );
+    const oldCleanup = draft(event, { projectId, operation: 'remove' });
+    await handlers.get('ev:dirty')(event, true);
+    await oldCleanup;
+    assert.equal(win.cyroEVDirty, true, 'late cleanup must preserve the new composer dirty state');
+    const oldWrite = draft(event, { projectId, operation: 'write', content: { text: 'stale' } });
+    await handlers.get('ev:dirty')(event, false);
+    await oldWrite;
+    assert.equal(
+      win.cyroEVDirty,
+      false,
+      'late autosave must not restore an acknowledged dirty state',
+    );
     account = { ...account, credential: 'B' };
     await invoke(event, { action: 'open', projectId });
     assert.equal(await draft(event, { projectId, operation: 'read' }), null);

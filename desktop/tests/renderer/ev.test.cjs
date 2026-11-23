@@ -25,8 +25,9 @@ test('EV catalog installs for the account and creation sends the chosen extensio
     dirty: async () => {},
     draft: async () => null,
     request: async (command) => {
-      if(command.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
-      if(command.action==='tables.list')return {tables:[]};
+      if (command.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (command.action === 'tables.list') return { tables: [] };
       calls.push(command);
       if (command.action === 'catalog') return catalog();
       if (command.action === 'extension.install') {
@@ -117,8 +118,9 @@ test('EV chat keeps inline results, confirmation and retry on the same operation
       return null;
     },
     request: async (c) => {
-      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
-      if(c.action==='tables.list')return {tables:[]};
+      if (c.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (c.action === 'tables.list') return { tables: [] };
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
@@ -227,8 +229,9 @@ test('EV shared composer attaches scoped files, removes only context, dictates t
       return { ok: true };
     },
     request: async (c) => {
-      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
-      if(c.action==='tables.list')return {tables:[]};
+      if (c.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (c.action === 'tables.list') return { tables: [] };
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [], next: null };
@@ -287,8 +290,9 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
     dirty: async () => {},
     draft: async () => null,
     request: async (c) => {
-      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
-      if(c.action==='tables.list')return {tables:[]};
+      if (c.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (c.action === 'tables.list') return { tables: [] };
       calls.push(c);
       if (c.action === 'catalog') return { enabled: false, extensions: [] };
       if (c.action === 'files.list') return { files: [file], next: null };
@@ -369,8 +373,9 @@ test('EV has one private chat; history loads only after choosing that EV and is 
     dirty: async () => {},
     draft: async () => null,
     request: async (c) => {
-      if(c.action==='workbench.list')return {revision:0,files:[],tables:[],executions:[]};
-      if(c.action==='tables.list')return {tables:[]};
+      if (c.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (c.action === 'tables.list') return { tables: [] };
       calls.push(c);
       if (c.action === 'catalog') return { enabled: true, extensions: [] };
       if (c.action === 'files.list') return { files: [] };
@@ -402,16 +407,178 @@ test('EV has one private chat; history loads only after choosing that EV and is 
   }
 });
 
-test('EV refreshes its installed version on focus without fetching chat history again',async()=>{
- const env=environment(),calls=[];let version='1.0.0';
- const space={id:'11111111-1111-4111-8111-111111111111',chatId:'22222222-2222-4222-8222-222222222222',name:'EV atualizado',extensionId:'studio.test',extensionVersion:'1.0.0',state:'READY'};
- window.cyroEV={dirty:async()=>{},draft:async()=>null,request:async c=>{calls.push(c);if(c.action==='catalog')return {enabled:true,automaticUpdates:true,extensions:[{id:space.extensionId,version,installedVersion:version,installed:true,name:'Teste'}]};if(c.action==='assistant.open')return {ownerId:'owner',space,conversation:{id:space.chatId},messages:[{id:1,role:'user',content:'Histórico preservado'}],artifacts:[]};if(c.action==='files.list')return {files:[]};throw Error(c.action);}};
- try{
-  await env.mount(env.EVWorkspace,{hidden:false,selectedEV:space});await settle();
-  assert.match(document.querySelector('.ev-chat-heading').textContent,/v1.0.0/);
-  version='1.1.0';await act(async()=>window.dispatchEvent(new window.Event('focus')));await settle();
-  assert.match(document.querySelector('.ev-chat-heading').textContent,/v1.1.0/);
-  assert.match(document.querySelector('.ev-chat-history').textContent,/Histórico preservado/);
-  assert.equal(calls.filter(c=>c.action==='assistant.open').length,1);
- }finally{await env.dispose();}
+test('EV refreshes its installed version on focus without fetching chat history again', async () => {
+  const env = environment(),
+    calls = [];
+  let version = '1.0.0';
+  const space = {
+    id: '11111111-1111-4111-8111-111111111111',
+    chatId: '22222222-2222-4222-8222-222222222222',
+    name: 'EV atualizado',
+    extensionId: 'studio.test',
+    extensionVersion: '1.0.0',
+    state: 'READY',
+  };
+  window.cyroEV = {
+    dirty: async () => {},
+    draft: async () => null,
+    request: async (c) => {
+      calls.push(c);
+      if (c.action === 'catalog')
+        return {
+          enabled: true,
+          automaticUpdates: true,
+          extensions: [
+            {
+              id: space.extensionId,
+              version,
+              installedVersion: version,
+              installed: true,
+              name: 'Teste',
+            },
+          ],
+        };
+      if (c.action === 'assistant.open')
+        return {
+          ownerId: 'owner',
+          space,
+          conversation: { id: space.chatId },
+          messages: [{ id: 1, role: 'user', content: 'Histórico preservado' }],
+          artifacts: [],
+        };
+      if (c.action === 'files.list') return { files: [] };
+      throw Error(c.action);
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false, selectedEV: space });
+    await settle();
+    assert.match(document.querySelector('.ev-chat-heading').textContent, /v1.0.0/);
+    version = '1.1.0';
+    await act(async () => window.dispatchEvent(new window.Event('focus')));
+    await settle();
+    assert.match(document.querySelector('.ev-chat-heading').textContent, /v1.1.0/);
+    assert.match(document.querySelector('.ev-chat-history').textContent, /Histórico preservado/);
+    assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 1);
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('EV clears the submitted composer immediately and releases busy when the reply arrives even if draft cleanup stalls', async () => {
+  const env = environment(),
+    id = '11111111-1111-4111-8111-111111111111',
+    chatId = '22222222-2222-4222-8222-222222222222';
+  const space = { id, name: 'EV de teste', state: 'READY', chatId };
+  let resolveReply, rejectCleanup;
+  const response = new Promise((resolve) => {
+      resolveReply = resolve;
+    }),
+    cleanup = new Promise((_, reject) => {
+      rejectCleanup = reject;
+    });
+  window.cyroEV = {
+    dirty: async () => {},
+    draft: async (c) => (c.operation === 'remove' ? cleanup : null),
+    request: async (c) => {
+      if (c.action === 'catalog') return { extensions: [] };
+      if (c.action === 'assistant.open')
+        return { space, conversation: { id: chatId }, messages: [], artifacts: [] };
+      if (c.action === 'assistant.send') return response;
+      if (c.action === 'workbench.list')
+        return { revision: 0, files: [], tables: [], executions: [] };
+      if (c.action === 'tables.list') return { tables: [] };
+      throw Error(c.action);
+    },
+  };
+  try {
+    await env.mount(env.EVWorkspace, { hidden: false, selectedEV: space });
+    await settle();
+    await input('#ev-message', 'crie uma página HTML');
+    await submit();
+    assert.equal(document.querySelector('#ev-message').value, '');
+    assert.equal(document.querySelector('.ev-chat').getAttribute('aria-busy'), 'true');
+    await act(async () =>
+      resolveReply({
+        space,
+        conversation: { id: chatId },
+        messages: [{ id: 1, role: 'assistant', content: 'Resposta concluída' }],
+        artifacts: [],
+      }),
+    );
+    await settle();
+    assert.match(document.body.textContent, /Resposta concluída/);
+    assert.equal(document.querySelector('.ev-chat-working'), null);
+    assert.equal(document.querySelector('#ev-message').disabled, false);
+    await input('#ev-message', 'Minha próxima mensagem');
+    await act(async () => rejectCleanup(Error('Falha local no rascunho')));
+    await settle();
+    assert.equal(document.querySelector('#ev-message').value, 'Minha próxima mensagem');
+  } finally {
+    await env.dispose();
+  }
+});
+
+test('EV options confirm history clearing separately from EV deletion and protect fresh conversation revisions', async () => {
+  for (const mode of ['clear', 'delete']) {
+    const env = environment(),
+      calls = [],
+      changes = [];
+    let closed = false;
+    const space = {
+      id: '11111111-1111-4111-8111-111111111111',
+      chatId: '22222222-2222-4222-8222-222222222222',
+      name: 'Meu EV',
+      revision: 7,
+      extensionId: 'cyro.logistics',
+      extensionVersion: '1.0.0',
+    };
+    window.cyroEV = {
+      request: async (c) => {
+        calls.push(c);
+        if (c.action === 'open') return { space };
+        if (c.action === 'conversation.read') return { messages: [{ id: 18 }] };
+        return { cleared: true, deleted: true };
+      },
+    };
+    try {
+      await env.mount(env.EVManage, {
+        item: space,
+        onClose: () => {
+          closed = true;
+        },
+        onChanged: (x) => changes.push(x),
+      });
+      await settle();
+      await click(
+        [...document.querySelectorAll('button')].find(
+          (b) => b.textContent === (mode === 'clear' ? 'Limpar mensagens' : 'Excluir EV'),
+        ),
+      );
+      await settle();
+      assert.equal(
+        calls.some((c) => ['conversation.clear', 'delete'].includes(c.action)),
+        false,
+      );
+      await click(
+        [...document.querySelectorAll('button')].find(
+          (b) => b.textContent === (mode === 'clear' ? 'Confirmar limpeza' : 'Confirmar exclusão'),
+        ),
+      );
+      await settle();
+      const command = calls.find(
+        (c) => c.action === (mode === 'clear' ? 'conversation.clear' : 'delete'),
+      );
+      assert.equal(command.projectId, space.id);
+      assert.equal(command.confirmation, mode === 'clear' ? 'LIMPAR' : 'EXCLUIR');
+      if (mode === 'clear') {
+        assert.equal(command.expectedLastMessageId, 18);
+        assert.equal(command.id, space.chatId);
+      } else assert.equal(command.expectedRevision, 7);
+      assert.equal(closed, true);
+      assert.equal(changes[0].action, mode);
+    } finally {
+      await env.dispose();
+    }
+  }
 });

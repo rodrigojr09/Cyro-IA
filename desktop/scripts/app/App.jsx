@@ -18,6 +18,7 @@ import { Composer } from '../chat/Composer';
 import { UpdateNotice } from '../updates/UpdateNotice';
 import { Icon } from '../ui/Icon';
 import { EVWorkspace } from '../workspace/EVWorkspace';
+import { EVManage } from '../workspace/EVManage';
 
 export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [workspace] = useState(() => providedWorkspace || createWorkspace()),
@@ -30,6 +31,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
   const [evActive, setEVActive] = useState(false),
     [evDirty, setEVDirty] = useState(false);
   const [activeEVId, setActiveEVId] = useState(null);
+  const [evManage, setEVManage] = useState(null),
+    [evEpoch, setEVEpoch] = useState(0);
   const [evChats, setEVChats] = useState([]),
     [selectedEV, setSelectedEV] = useState(null),
     [evCreateRequest, setEVCreateRequest] = useState(0);
@@ -340,6 +343,7 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         evActive={evActive}
         evChats={evChats}
         activeEVId={activeEVId}
+        onEVMenu={setEVManage}
         onEVChat={(item) =>
           run(async () => {
             if (evDirty || input.trim() || attachments.files.length)
@@ -370,18 +374,42 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
         }
         onSettings={() => setSettings(true)}
       />
+      <EVManage
+        item={evManage}
+        onClose={() => setEVManage(null)}
+        onChanged={({ action, space }) => {
+          setEVCreateRequest(0);
+          if (action === 'delete') {
+            setEVChats((old) => old.filter((item) => item.id !== space.id));
+            if (selectedEV?.id === space.id) {
+              setSelectedEV(null);
+              setEVActive(false);
+              setActiveEVId(null);
+              setEVDirty(false);
+              setEVEpoch((v) => v + 1);
+            }
+          } else if (selectedEV?.id === space.id) {
+            setSelectedEV(space);
+            setEVEpoch((v) => v + 1);
+          }
+          void refreshEVChats();
+        }}
+      />
       <EVWorkspace
+        key={evEpoch}
         hidden={!evActive}
         selectedEV={selectedEV}
         createRequest={evCreateRequest}
         onCreated={(item) => {
+          setEVCreateRequest(0);
           setSelectedEV(item);
           setEVChats((old) => [item, ...old.filter((ev) => ev.id !== item.id)]);
           void refreshEVChats();
         }}
-        onCancelCreation={() => setEVActive(false)}
+        onCancelCreation={() => {setEVCreateRequest(0);setEVActive(false);}}
         onDirty={setEVDirty}
         onSpaceChange={setActiveEVId}
+        onManage={setEVManage}
         speaker={speaker}
         voiceEnabled={preferences.voice}
       />

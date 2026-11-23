@@ -167,11 +167,16 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
   });
   ipcMain.handle('ev:dirty', (event, value) => {
     const s = session(event);
+    s.win.cyroEVDirtyRevision = (s.win.cyroEVDirtyRevision || 0) + 1;
     s.win.cyroEVDirty = value === true;
   });
   const draftQueues = new Map();
-  const draftAction = async (event, input) => {
+  const draftAction = async (event, input, dirtyRevision) => {
     const s = session(event);
+    const markDirty = (value) => {
+      if ((s.win.cyroEVDirtyRevision || 0) === dirtyRevision)
+        s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = value;
+    };
     id(input?.projectId);
     const owner = scopes.get(input.projectId);
     if (!owner || !dataDir || !electron.safeStorage.isEncryptionAvailable())
@@ -202,12 +207,12 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
     if (input.operation === 'remove') {
       await fs.rm(file, { force: true });
       s.check();
-      s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = false;
+      markDirty(false);
       return { ok: true };
     }
     if (input.operation !== 'write' || JSON.stringify(input.content).length > 524288)
       throw Error('Rascunho inválido ou acima do limite.');
-    s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = true;
+    markDirty(true);
     await fs.mkdir(folder, { recursive: true });
     s.check();
     const temporary = file + '.' + randomUUID() + '.tmp';
@@ -223,14 +228,15 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       await fs.rm(temporary, { force: true });
     }
     s.check();
-    s.win[input.channel === 'IDE' ? 'cyroEVWorkbenchDirty' : 'cyroEVDirty'] = true;
+    markDirty(true);
     return { ok: true };
   };
-  ipcMain.handle('ev:draft', (event, input) => {
+  ipcMain.handle('ev:draft', async (event, input) => {
+    const dirtyRevision = session(event).win.cyroEVDirtyRevision || 0;
     // A delayed write may never recreate a draft after an acknowledged removal.
     const key = id(input?.projectId),
       previous = draftQueues.get(key) || Promise.resolve();
-    const next = previous.catch(() => {}).then(() => draftAction(event, input));
+    const next = previous.catch(() => {}).then(() => draftAction(event, input, dirtyRevision));
     draftQueues.set(key, next);
     void next
       .finally(() => {

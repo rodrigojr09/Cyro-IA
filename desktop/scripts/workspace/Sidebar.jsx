@@ -17,6 +17,7 @@ export function Sidebar({
   evChats = [],
   activeEVId,
   onEVChat = () => {},
+  onEVMenu = () => {},
   onLogout,
   onSettings,
 }) {
@@ -89,19 +90,36 @@ export function Sidebar({
               {evChats
                 .filter((chat) => chat.name.toLocaleLowerCase().includes(query))
                 .map((chat) => (
-                  <button
+                  <div
                     key={chat.id}
-                    className={
-                      'nav-item chat-item' + (evActive && activeEVId === chat.id ? ' active' : '')
-                    }
-                    aria-current={evActive && activeEVId === chat.id ? 'page' : undefined}
-                    disabled={busy || !state.ready}
-                    onClick={() => onEVChat(chat)}
-                    title={chat.name}
+                    className="ev-sidebar-row"
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      onEVMenu(chat);
+                    }}
                   >
-                    <span className="nav-title">{chat.name}</span>
-                    <small>EV</small>
-                  </button>
+                    <button
+                      className={
+                        'nav-item chat-item' + (evActive && activeEVId === chat.id ? ' active' : '')
+                      }
+                      aria-current={evActive && activeEVId === chat.id ? 'page' : undefined}
+                      disabled={busy || !state.ready}
+                      onClick={() => onEVChat(chat)}
+                      title={chat.name}
+                    >
+                      <span className="nav-title">{chat.name}</span>
+                      <small>EV</small>
+                    </button>
+                    <button
+                      className="ev-sidebar-options"
+                      aria-label={'Opções de ' + chat.name}
+                      title="Opções do EV"
+                      disabled={busy || !state.ready}
+                      onClick={() => onEVMenu(chat)}
+                    >
+                      ⋯
+                    </button>
+                  </div>
                 ))}
             </div>
           </>

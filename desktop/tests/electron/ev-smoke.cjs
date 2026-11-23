@@ -30,6 +30,9 @@ app.whenReady().then(async () => {
       extensionId: 'cyro.logistics',
       name: 'Transportadora de teste',
       state: 'READY',
+      revision: 1,
+      description: 'Espaço de teste',
+      extensionVersion: '1.0.0',
     };
     let memoryFacts = ['Prefiro respostas objetivas.'],
       memoryControls = { automatic: true, useExisting: true },
@@ -111,6 +114,10 @@ app.whenReady().then(async () => {
               },
             ],
           };
+        if (c.action === 'open') return { ownerId, space };
+        if (c.action === 'conversation.read')
+          return { conversation: { id: conversationId }, messages };
+        if(c.action==='conversation.clear'){assert.equal(c.confirmation,'LIMPAR');messages=[];artifacts=[];return {cleared:true};}
         if (c.action === 'list') return { ownerId, spaces: createdEV ? [space] : [] };
         if (c.action === 'create') {
           createdEV = true;
@@ -348,7 +355,28 @@ app.whenReady().then(async () => {
       1,
     );
     assert.equal(await js(`document.querySelector('#quick-nav').nextElementSibling.id`), 'ev-nav');
-    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 1);
+    assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 2);
+    await js(`document.querySelector('button[aria-label="Opções do EV"]').click()`);
+    await wait(
+      `document.getElementById('ev-manage').open && !!document.querySelector('#ev-manage input')`,
+    );
+    await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
+    await fs.writeFile(
+      path.resolve(__dirname, '../../../build/v9/ev902-options.png'),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+    await js(
+      `[...document.querySelectorAll('#ev-manage button')].find(b=>b.textContent==='Limpar mensagens').click()`,
+    );
+    await wait(`document.querySelector('#ev-manage').textContent.includes('Confirmar limpeza')`);
+    assert.ok(await js(`document.querySelector('#ev-manage').textContent.includes('memória')`));
+    assert.equal(calls.filter(c=>c.action==='conversation.clear').length,0);
+    await js(`[...document.querySelectorAll('#ev-manage button')].find(b=>b.textContent==='Confirmar limpeza').click()`);
+    await wait(`!document.getElementById('ev-manage').open && !document.getElementById('ev-message').disabled`);
+    assert.equal(calls.filter(c=>c.action==='conversation.clear').length,1);
+    assert.equal(await js(`document.getElementById('ev-create-menu').open`),false);
+
+
     await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
@@ -493,7 +521,17 @@ app.whenReady().then(async () => {
           c.action.startsWith('assistant.') ||
           c.action.startsWith('workbench.') ||
           c.action.startsWith('memory.') ||
-          ['files.list', 'tables.list', 'file.get', 'catalog', 'list', 'create'].includes(c.action),
+          [
+            'files.list',
+            'tables.list',
+            'file.get',
+            'catalog',
+            'list',
+            'create',
+            'open',
+            'conversation.read',
+            'conversation.clear',
+          ].includes(c.action),
       ),
     );
     console.log(
