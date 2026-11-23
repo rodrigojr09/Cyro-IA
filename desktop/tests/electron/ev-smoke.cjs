@@ -103,11 +103,14 @@ app.whenReady().then(async () => {
         if (c.action === 'catalog')
           return {
             enabled: true,
+            sdkVersion: '0.1.7',
             extensions: [
               {
                 id: 'cyro.logistics',
                 name: 'Cyro Logístico',
                 version: '1.0.0',
+                sdkVersion: '0.1.6',
+                sdkStatus: 'outdated',
                 description: 'Transporte',
                 permissions: ['storage', 'messages', 'files'],
                 installed: true,
@@ -323,6 +326,7 @@ app.whenReady().then(async () => {
     await wait(`!!document.querySelector('#ev-extension-menu .integration-card')`);
     await js(`document.querySelector('#ev-extension-menu .integration-card').click()`);
     await wait(`!!document.querySelector('#ev-extension-menu .integration-details')`);
+    await wait(`document.querySelector('#ev-extension-menu .ev-sdk-notice')?.textContent.includes('SDK desatualizado')`);
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
     await fs.writeFile(
       path.resolve(__dirname, '../../../build/v9/ev-extension-details.png'),
@@ -348,6 +352,7 @@ app.whenReady().then(async () => {
       `document.querySelector('.ev-chat-heading h1')?.textContent==='Transportadora de teste' && !document.getElementById('ev-message').disabled`,
     );
     await wait(`!!document.querySelector('#ev-chats button')`);
+    await wait(`document.querySelector('.ev-chat-heading .ev-sdk-notice')?.textContent.includes('0.1.7')`);
     assert.equal(
       await js(
         `[...document.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Novo EV').length`,

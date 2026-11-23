@@ -9,6 +9,18 @@ const permissionLabels = {
   files: 'Consultar arquivos privados do EV',
 };
 
+export function EVSDKNotice({ extension, sdkVersion }) {
+  const status = extension?.sdkStatus;
+  if (status !== 'outdated' && status !== 'undeclared') return null;
+  return (
+    <p className="ev-sdk-notice">
+      {status === 'outdated'
+        ? `SDK desatualizado. Este EV declara a versão ${extension.sdkVersion}. SDK atual do Cyro ${sdkVersion}.`
+        : 'Este EV ainda não declara a versão do SDK.'}
+    </p>
+  );
+}
+
 export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onManage, onUse }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -152,6 +164,7 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
               </div>
             </div>
             <p>{selected.description}</p>
+            <EVSDKNotice extension={selected} sdkVersion={catalog.sdkVersion} />
             <h4>Permissões do EV</h4>
             <ul>
               {(selected.permissions || []).map((permission) => (

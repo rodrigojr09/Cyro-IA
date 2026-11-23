@@ -130,6 +130,13 @@
   border-left: 3px solid var(--accent);
   padding: 12px;
 }
+.ev-sdk-notice {
+  margin: 4px 0;
+  border-left: 3px solid var(--accent);
+  padding-left: 8px;
+  color: var(--text);
+  font-size: 12px;
+}
 @media (max-width: 520px) {
   .ev-menu-actions > button {
     flex: 1 1 100%;

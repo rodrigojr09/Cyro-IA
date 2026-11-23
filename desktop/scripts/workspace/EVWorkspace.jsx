@@ -4,7 +4,7 @@ import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
 import { useDictation } from '../voice/hooks';
 import { EVStudio } from './EVStudio';
-import { EVCatalog } from './EVCatalog';
+import { EVCatalog, EVSDKNotice } from './EVCatalog';
 import { Icon } from '../ui/Icon';
 
 async function waitForIPC(promise, ms = 125000) {
@@ -407,6 +407,8 @@ export function EVWorkspace({
   const [attached, setAttached] = useState([]);
   const [extensionCatalog, setExtensionCatalog] = useState(null);
   const [selectedExtension, setSelectedExtension] = useState('');
+  const activeExtension = extensionCatalog?.extensions?.find((item) => item.id === space?.extensionId);
+  const newSpaceExtension = extensionCatalog?.extensions?.find((item) => item.id === selectedExtension);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
   const [catalogError, setCatalogError] = useState('');
@@ -915,6 +917,7 @@ export function EVWorkspace({
                 ))}
             </select>
           </label>
+          <EVSDKNotice extension={newSpaceExtension} sdkVersion={extensionCatalog?.sdkVersion} />
           <label>
             Nome do espaço
             <input
@@ -969,12 +972,10 @@ export function EVWorkspace({
           <header className="ev-chat-heading">
             <div>
               <span>
-                {space?.extensionId
-                  ? extensionCatalog?.extensions?.find((item) => item.id === space.extensionId)
-                      ?.name || 'CYRO EV'
-                  : 'CYRO EV'}
+                {activeExtension?.name || 'CYRO EV'}
               </span>
               <h1>{space?.name || 'Espaços Virtuais'}</h1>
+              <EVSDKNotice extension={activeExtension} sdkVersion={extensionCatalog?.sdkVersion} />
             </div>
             <small role="status">
               {loading
