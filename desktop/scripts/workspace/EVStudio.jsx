@@ -557,7 +557,7 @@ export const EVStudio = forwardRef(function EVStudio(
               : 'Preview';
   return (
     <aside
-      className={'ev-studio' + (pane ? ' has-panel' : '') + (pane?.kind === 'table' ? ' has-table' : '')}
+      className={'ev-studio' + (pane ? ' has-panel' : '')}
       hidden={hidden || !visible}
       aria-label="Arquivos e painéis do EV"
     >

@@ -490,6 +490,9 @@ app.whenReady().then(async () => {
       `[...document.querySelectorAll('.ev-resource-open')].find(b=>b.textContent.includes('main.py')).click()`,
     );
     await wait(`!!document.querySelector('[aria-label="Painel de código"] textarea')`);
+    assert.ok(await js(`document.querySelector('.ev-studio-explorer-heading').offsetHeight > 0 &&
+      document.querySelector('.ev-category-nav').offsetHeight > 0 &&
+      document.querySelector('.ev-studio-resource-scroll').offsetHeight === 0`));
     await new Promise((r) => setTimeout(r, 250));
     await fs.writeFile(
       path.join(shots, 'ev9-code-panel.png'),
@@ -500,8 +503,10 @@ app.whenReady().then(async () => {
     await wait(`document.querySelector('.ev-studio-status')?.textContent === 'Somente leitura'`);
     assert.ok(await js(`!document.querySelector('table[aria-label="Editor da tabela"] input')`));
     assert.ok(await js(`document.querySelector('.ev-category-nav').offsetHeight > 0 &&
+      document.querySelector('.ev-studio-explorer-heading').offsetHeight > 0 &&
       document.querySelector('.ev-studio-resource-scroll').offsetHeight === 0 &&
-      document.querySelector('.ev-studio-panel').offsetHeight > document.querySelector('.ev-studio').offsetHeight * .85`));
+      Math.abs(document.querySelector('.ev-studio-panel').getBoundingClientRect().top -
+        document.querySelector('.ev-category-nav').getBoundingClientRect().bottom) < 2`));
     await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Tabelas').click()`);
     await js(`document.querySelector('button[aria-label="Editar prazos"]').click()`);
     await wait(`!!document.querySelector('table[aria-label="Editor da tabela"] input')`);
