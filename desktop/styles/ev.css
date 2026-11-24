@@ -1376,6 +1376,13 @@
   color: var(--accent);
   background: var(--surface);
 }
+.ev-studio.has-panel.has-table .ev-studio-explorer {
+  flex: 0 0 auto;
+  border-bottom: 0;
+}
+.ev-studio.has-table .ev-studio-explorer > :not(.ev-category-nav) {
+  display: none;
+}
 .ev-studio.has-panel .ev-studio-resource-scroll {
   display: block;
 }
