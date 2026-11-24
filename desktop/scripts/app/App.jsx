@@ -11,7 +11,7 @@ import { useSpeaker, useDictation } from '../voice/hooks';
 import { usePreferences } from '../ui/preferences';
 import { useAttachments } from '../attachment/components';
 import { Sidebar } from '../workspace/Sidebar';
-import { AnchoredMenu } from '../ui/AnchoredMenu';
+import { AnchoredMenu, contextMenuAt } from '../ui/AnchoredMenu';
 import { Welcome } from '../workspace/Welcome';
 import { Conversation } from '../chat/Conversation';
 import { Composer } from '../chat/Composer';
@@ -341,11 +341,16 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
           event.stopPropagation();
           openSidebarMenu('create', item, event);
         }}
-        onChatMenu={(item, event) => openSidebarMenu('chat', item, event)}
+        onChatMenu={(item, event) =>
+          setMenu({ ...contextMenuAt(event, 'Ações da conversa'), kind: 'chat', item })
+        }
         evActive={evActive}
         evChats={evChats}
         activeEVId={activeEVId}
         onEVMenu={setEVManage}
+        onEVContextMenu={(item, event) =>
+          setMenu({ ...contextMenuAt(event, 'Ações de ' + item.name), kind: 'ev', item })
+        }
         onEVChat={(item) =>
           run(async () => {
             if (evDirty || input.trim() || attachments.files.length)
@@ -594,6 +599,13 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
                 Abrir arquivo no Writer
               </button>
             </>
+          ) : menu.kind === 'ev' ? (
+            <button role="menuitem" onClick={() => {
+              setMenu(null);
+              setEVManage(menu.item);
+            }}>
+              Opções do EV
+            </button>
           ) : (
             <>
               <button

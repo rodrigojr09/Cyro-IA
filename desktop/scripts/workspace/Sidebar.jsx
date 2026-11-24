@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '../ui/Icon';
+import { contextMenuHandlers } from '../ui/AnchoredMenu';
 export function Sidebar({
   collapsed,
   onToggleSidebar,
@@ -20,6 +21,7 @@ export function Sidebar({
   activeEVId,
   onEVChat = () => {},
   onEVMenu = () => {},
+  onEVContextMenu = () => {},
   onLogout,
   onSettings,
 }) {
@@ -36,10 +38,7 @@ export function Sidebar({
       aria-current={!evActive && state.chat?.id === chat.id ? 'page' : undefined}
       disabled={busy || !state.ready}
       onClick={() => onView(chat.project_id || '', chat.id)}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        if (!busy) onChatMenu(chat, event);
-      }}
+      {...contextMenuHandlers((event) => onChatMenu(chat, event))}
     >
       <span className="nav-title">{chat.title}</span>
     </button>
@@ -106,10 +105,6 @@ export function Sidebar({
                   <div
                     key={chat.id}
                     className={'ev-sidebar-row' + (evActive && activeEVId === chat.id ? ' active' : '')}
-                    onContextMenu={(event) => {
-                      event.preventDefault();
-                      onEVMenu(chat);
-                    }}
                   >
                     <button
                       className="nav-item chat-item"
@@ -117,6 +112,7 @@ export function Sidebar({
                       disabled={busy || !state.ready}
                       onClick={() => onEVChat(chat)}
                       title={chat.name}
+                      {...contextMenuHandlers((event) => onEVContextMenu(chat, event))}
                     >
                       <span className="nav-title">{chat.name}</span>
                       <small>EV</small>

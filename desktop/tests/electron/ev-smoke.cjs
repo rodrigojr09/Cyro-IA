@@ -291,6 +291,15 @@ app.whenReady().then(async () => {
       }
       throw Error('Timed out: ' + code);
     };
+    const rightClick = (selector) => js(`(() => {
+      const node = document.querySelector(${JSON.stringify(selector)});
+      const { left, top } = node.getBoundingClientRect();
+      node.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, button: 2, clientX: left + 8, clientY: top + 8
+      }));
+    })()`);
+    const menuAction = (label) => js(`[...document.querySelectorAll('.context-menu [role="menuitem"]')]
+      .find(item => item.textContent.trim() === ${JSON.stringify(label)}).click()`);
     const input = async (selector, value) =>
       js(
         `(()=>{const node=document.querySelector(${JSON.stringify(selector)});const type=node.tagName==='TEXTAREA'?HTMLTextAreaElement:node.tagName==='SELECT'?HTMLSelectElement:HTMLInputElement;Object.getOwnPropertyDescriptor(type.prototype,'value').set.call(node,${JSON.stringify(value)});node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));})()`,
@@ -417,7 +426,10 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('button[aria-label="Studio"]').click()`);
     await js(`[...document.querySelectorAll('.ev-category-home button')].find(b=>b.textContent.trim()==='Documentos').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
-    await js(`document.querySelector('.ev-notes li button').click()`);
+    await rightClick('.ev-notes li button');
+    assert.deepEqual(await js(`[...document.querySelectorAll('.context-menu [role="menuitem"]')]
+      .map(item => item.textContent.trim())`), ['Visualizar', 'Analisar', 'Baixar original', 'Excluir']);
+    await menuAction('Visualizar');
     await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
     assert.ok(
       await js(
@@ -441,6 +453,10 @@ app.whenReady().then(async () => {
     await wait(
       `!!document.querySelector('.ev-chat-proposal') && !document.getElementById('ev-message').disabled`,
     );
+    await rightClick('.ev-chat-message.user');
+    await wait(`!!document.querySelector('.context-menu [aria-label="Copiar mensagem"]')`);
+    await js(`document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
+    await wait(`!document.querySelector('.context-menu')`);
     const retries = calls.filter((c) => c.message === 'edite o primeiro frete para 22,50');
     assert.equal(retries[0].operationId, retries[1].operationId);
     await input('#ev-message', 'confirmar');
@@ -508,7 +524,8 @@ app.whenReady().then(async () => {
       Math.abs(document.querySelector('.ev-studio-panel').getBoundingClientRect().top -
         document.querySelector('.ev-category-nav').getBoundingClientRect().bottom) < 2`));
     await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Tabelas').click()`);
-    await js(`document.querySelector('button[aria-label="Editar prazos"]').click()`);
+    await rightClick('button[aria-label="Visualizar prazos"]');
+    await menuAction('Editar');
     await wait(`!!document.querySelector('table[aria-label="Editor da tabela"] input')`);
     await new Promise((r) => setTimeout(r, 250));
     await fs.writeFile(
@@ -516,7 +533,8 @@ app.whenReady().then(async () => {
       (await win.webContents.capturePage()).toPNG(),
     );
     await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Códigos').click()`);
-    await js(`document.querySelector('button[aria-label="Executar index.html"]').click()`);
+    await rightClick('.ev-resource-open');
+    await menuAction('Executar');
     await wait(`!!document.querySelector('iframe[title="Preview visual do EV"]')`);
     await new Promise((r) => setTimeout(r, 350));
     await fs.writeFile(

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Dialog, Markdown } from '../ui/components';
 import { publicError, writePreference } from '../shared/bridge';
 import { Composer } from '../chat/Composer';
+import { MessageCopy } from '../chat/Conversation';
+import { AnchoredMenu, contextMenuAt, contextMenuHandlers } from '../ui/AnchoredMenu';
 import { useDictation } from '../voice/hooks';
 import { EVStudio } from './EVStudio';
 import { EVCatalog, EVSDKNotice } from './EVCatalog';
@@ -413,6 +415,8 @@ export function EVWorkspace({
   const [space, setSpace] = useState(null),
     [conversation, setConversation] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [copyMenu, setCopyMenu] = useState(null);
+  useEffect(() => setCopyMenu(null), [hidden, space?.id, conversation?.id]);
   const chatCache = useRef(new Map());
   const [messages, setMessages] = useState([]),
     [artifacts, setArtifacts] = useState([]),
@@ -1038,7 +1042,14 @@ export function EVWorkspace({
               </div>
             )}
             {messages.map((message) => (
-              <article className={'ev-chat-message ' + message.role} key={message.id}>
+              <article
+                className={'ev-chat-message ' + message.role}
+                key={message.id}
+                tabIndex={0}
+                {...contextMenuHandlers((event) =>
+                  setCopyMenu({ ...contextMenuAt(event, 'Ações da mensagem'), text: message.content }),
+                )}
+              >
                 <span>{message.role === 'user' ? 'Você' : 'Cyro'}</span>
                 <Markdown
                   text={message.content}
@@ -1061,6 +1072,11 @@ export function EVWorkspace({
                   ))}
               </article>
             ))}
+            {copyMenu && (
+              <AnchoredMenu menu={copyMenu} onClose={() => setCopyMenu(null)}>
+                <MessageCopy key={copyMenu.text} text={copyMenu.text} />
+              </AnchoredMenu>
+            )}
             {notice && (
               <p className="ev-chat-notice" role="status">
                 {notice}

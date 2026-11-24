@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Markdown } from '../ui/components';
-import { AnchoredMenu } from '../ui/AnchoredMenu';
+import { AnchoredMenu, contextMenuAt, contextMenuHandlers } from '../ui/AnchoredMenu';
 import { Icon } from '../ui/Icon';
 import { AttachmentList } from '../attachment/components';
 import { WriterProposal } from '../writer/WriterPreview';
@@ -59,21 +59,9 @@ export function Conversation({
             <article
               className={'message ' + message.role}
               tabIndex={0}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                setCopyMenu({
-                  text: message.content,
-                  trigger: event.currentTarget,
-                  label: 'Ações da mensagem',
-                  placement: 'below-end',
-                  anchor: {
-                    left: event.clientX,
-                    right: event.clientX,
-                    top: event.clientY,
-                    bottom: event.clientY,
-                  },
-                });
-              }}
+              {...contextMenuHandlers((event) => setCopyMenu({
+                ...contextMenuAt(event, 'Ações da mensagem'), text: message.content,
+              }))}
               key={message.id ? 'message:' + message.id : 'temporary:' + index}
             >
               <div className="message-meta">
@@ -135,7 +123,7 @@ export function Conversation({
     </>
   );
 }
-function MessageCopy({ text }) {
+export function MessageCopy({ text }) {
   const [label, setLabel] = useState('Copiar mensagem');
   return (
     <button

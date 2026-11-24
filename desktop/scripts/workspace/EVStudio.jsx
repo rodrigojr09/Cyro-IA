@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Icon } from '../ui/Icon';
+import { AnchoredMenu, contextMenuAt, contextMenuHandlers } from '../ui/AnchoredMenu';
 import { publicError } from '../shared/bridge';
 import { EVNotes } from './EVNotes';
 import { EVCodeEditor } from './EVCodeEditor';
@@ -72,6 +73,11 @@ export const EVStudio = forwardRef(function EVStudio(
     [ready, setReady] = useState(false),
     [retry, setRetry] = useState(0),
     [previewMode, setPreviewMode] = useState('auto');
+  const [resourceMenu, setResourceMenu] = useState(null);
+  useEffect(() => setResourceMenu(null), [projectId, hidden, visible, category, pane, search]);
+  const resourceHandlers = (name, items) => contextMenuHandlers((event) =>
+    setResourceMenu({ ...contextMenuAt(event, 'Ações de ' + name), items }),
+  );
   const wb = useRef(empty()),
     draftRef = useRef({}),
     seen = useRef(null),
@@ -620,6 +626,20 @@ export const EVStudio = forwardRef(function EVStudio(
             <Icon name="refresh" />
           </button>
         </div>}
+        {resourceMenu && (
+          <AnchoredMenu menu={resourceMenu} onClose={() => setResourceMenu(null)}>
+            {resourceMenu.items.map(({ label, run, disabled }) => (
+              <button key={label} type="button" role="menuitem" disabled={disabled}
+                onClick={() => {
+                  setResourceMenu(null);
+                  resourceMenu.trigger.focus({ preventScroll: true });
+                  void perform(run);
+                }}>
+                {label}
+              </button>
+            ))}
+          </AnchoredMenu>
+        )}
         {!pane && notice && <p className="ev-studio-notice" role="status">{notice}</p>}
         {category && <div className="ev-studio-resource-scroll">
           {category === 'code' && <section className="ev-resource-group">
@@ -637,6 +657,15 @@ export const EVStudio = forwardRef(function EVStudio(
               >
                 <button
                   className="ev-resource-open"
+                  {...resourceHandlers(name, [
+                    { label: 'Editar', run: () => choose({ kind: 'code', target: name, source: 'workbench' }) },
+                    { label: 'Executar', disabled: busy, run: async () => {
+                      const key = keyFor({ kind: 'code', target: name, source: 'workbench' });
+                      const target = draftRef.current[key]?.dirty ? await saveCode(key) : name;
+                      await runFile(target);
+                    } },
+                    { label: 'Excluir', disabled: busy, run: () => removeResource('file', name) },
+                  ])}
                   onClick={() =>
                     void perform(() => choose({ kind: 'code', target: name, source: 'workbench' }))
                   }
@@ -649,25 +678,6 @@ export const EVStudio = forwardRef(function EVStudio(
                     (d) =>
                       d.dirty && (d.originalName === name || d.name === name || d.target === name),
                   ) && <i className="ev-dirty-dot" />}
-                </button>
-                <button aria-label={'Excluir ' + name} title="Excluir código" disabled={busy}
-                  onClick={() => void perform(() => removeResource('file', name))}>
-                  <Icon name="trash" />
-                </button>
-                <button
-                  className="ev-resource-run"
-                  aria-label={'Executar ' + name}
-                  title={'Executar ou visualizar ' + name}
-                  disabled={busy}
-                  onClick={() =>
-                    void perform(async () => {
-                      const key = keyFor({ kind: 'code', target: name, source: 'workbench' });
-                      const target = draftRef.current[key]?.dirty ? await saveCode(key) : name;
-                      await runFile(target);
-                    })
-                  }
-                >
-                  <Icon name="play" />
                 </button>
               </div>
             ))}
@@ -693,6 +703,13 @@ export const EVStudio = forwardRef(function EVStudio(
                     (pane?.kind === 'table' && pane.target === t.target ? 'is-active' : '')
                   }
                   aria-label={'Visualizar ' + t.name}
+                  {...resourceHandlers(t.name, [
+                    { label: 'Visualizar', run: () => choose({ kind: 'table', target: t.target, source: t.source, readOnly: true }) },
+                    { label: 'Editar', run: () => choose({ kind: 'table', target: t.target, source: t.source }) },
+                    { label: 'Excluir', disabled: busy, run: () => t.source === 'space'
+                      ? deleteStored('table', t)
+                      : removeResource('table', t.name) },
+                  ])}
                   onClick={() =>
                     void perform(() =>
                       choose({ kind: 'table', target: t.target, source: t.source, readOnly: true }),
@@ -706,16 +723,6 @@ export const EVStudio = forwardRef(function EVStudio(
                   </span>
                   <Icon name="chevron-right" />
                 </button>
-                <div className="ev-studio-item-actions">
-                  <button aria-label={'Editar ' + t.name} onClick={() =>
-                    void perform(() => choose({ kind: 'table', target: t.target, source: t.source }))}>Editar</button>
-                  <button aria-label={'Excluir ' + t.name} title="Excluir tabela" disabled={busy}
-                    onClick={() => void perform(() => t.source === 'space'
-                      ? deleteStored('table', t)
-                      : removeResource('table', t.name))}>
-                    <Icon name="trash" />
-                  </button>
-                </div>
                 </div>
               ))}
             {!workbench.tables.length && !tables.length && (
@@ -741,14 +748,17 @@ export const EVStudio = forwardRef(function EVStudio(
               refreshKey={refreshKey + ':' + resourceRefresh}
               request={request}
               onOpen={(file) => reveal({ kind: 'document', target: file.id, file })}
-              onDelete={(file) => void perform(() => deleteStored('file', file))}
-              onAnalyze={(file) => void perform(async () => {
-                await processDocument(file);
-                setResourceRefresh((value) => value + 1);
-                reveal({ kind: 'document', target: file.id, file });
-                setNotice('Análise solicitada.');
-              })}
-              actionBusy={busy}
+              menuHandlers={(file) => resourceHandlers(file.name, [
+                { label: 'Visualizar', run: () => reveal({ kind: 'document', target: file.id, file }) },
+                { label: 'Analisar', disabled: busy || ['UPLOADING', 'PROCESSING'].includes(file.status), run: async () => {
+                  await processDocument(file);
+                  setResourceRefresh((value) => value + 1);
+                  reveal({ kind: 'document', target: file.id, file });
+                  setNotice('Análise solicitada.');
+                } },
+                { label: 'Baixar original', disabled: busy, run: () => window.cyroEV.download({ projectId, fileId: file.id }) },
+                { label: 'Excluir', disabled: busy, run: () => deleteStored('file', file) },
+              ])}
             />
           </section>}
           {category === 'preview' && !!workbench.executions.length && (

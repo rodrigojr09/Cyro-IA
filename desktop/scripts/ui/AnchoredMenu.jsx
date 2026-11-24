@@ -1,6 +1,24 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+export function contextMenuAt(event, label) {
+  event.preventDefault();
+  event.stopPropagation();
+  const trigger = event.currentTarget;
+  const keyboard = event.type === 'keydown' || (!event.clientX && !event.clientY);
+  const { x, y } = keyboard ? trigger.getBoundingClientRect() : { x: event.clientX, y: event.clientY };
+  return { trigger, label, placement: 'pointer', anchor: { left: x, right: x, top: y, bottom: y } };
+}
+
+export function contextMenuHandlers(open) {
+  return {
+    onContextMenu: open,
+    onKeyDown: (event) => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) open(event);
+    },
+  };
+}
+
 // Measured outside the sidebar so row titles are never used as the popup surface.
 export function AnchoredMenu({ menu, onClose, children }) {
   const ref = useRef(null);
@@ -14,12 +32,14 @@ export function AnchoredMenu({ menu, onClose, children }) {
     const height = window.innerHeight;
     let left = anchor.right + gap;
     let top = anchor.top;
+    if (menu.placement === 'pointer')
+      left = Math.min(anchor.left, width - bounds.width - gap);
     if (menu.placement === 'below-end') {
       left = Math.max(gap, Math.min(anchor.right - bounds.width, width - bounds.width - gap));
       top = anchor.bottom + gap;
       if (top + bounds.height > height - gap) top = anchor.top - bounds.height - gap;
     }
-    if (menu.placement !== 'below-end' && left + bounds.width > width - gap) {
+    if (!['below-end', 'pointer'].includes(menu.placement) && left + bounds.width > width - gap) {
       if (anchor.left - bounds.width - gap >= gap) left = anchor.left - bounds.width - gap;
       else {
         left = Math.max(gap, width - bounds.width - gap);

@@ -808,16 +808,6 @@
   color: #80d5b7;
   background: #80d5b710;
 }
-.ev-resource-row .ev-resource-run {
-  flex-shrink: 0;
-  padding: 4px;
-  opacity: 0.5;
-  min-height: 26px;
-}
-.ev-resource-row:hover .ev-resource-run,
-.ev-resource-row:focus-within .ev-resource-run {
-  opacity: 1;
-}
 .ev-dirty-dot {
   width: 5px;
   height: 5px;
@@ -1369,16 +1359,6 @@
   color: var(--accent);
   background: var(--surface);
 }
-.ev-studio-item-actions {
-  display: flex;
-  gap: 3px;
-  align-items: center;
-  padding-inline: 4px;
-}
-.ev-studio .ev-studio-item-actions button {
-  min-height: 24px;
-  padding: 3px 6px;
-}
 .ev-sheet-read-cell { display: block; padding: 6px 9px; overflow-wrap: anywhere; }
 .ev-terminal-composer textarea {
   height: 76px;
@@ -1569,9 +1549,6 @@
     gap: 3px;
   }
   .ev-studio-explorer-tools > button {
-    display: none;
-  }
-  .ev-resource-row .ev-resource-run {
     display: none;
   }
   .ev-studio-toolbar {

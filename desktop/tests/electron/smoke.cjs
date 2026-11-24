@@ -250,12 +250,14 @@ app.whenReady().then(async () => {
     assert.equal(await js(`document.querySelectorAll('.project-row,#add-project').length`), 0);
     assert.ok(await js(`!!document.getElementById('ev-nav')`));
     await js(
-      `document.querySelector('.chat-item').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true}))`,
+      `document.querySelector('.chat-item').dispatchEvent(new MouseEvent('contextmenu',{
+        bubbles:true, cancelable:true, button:2, clientX:80, clientY:250
+      }))`,
     );
     await waitFor(`document.querySelector('.workspace-action-menu')?.style.visibility==='visible'`);
     assert.equal(
       await js(
-        `document.querySelector('.workspace-action-menu').getBoundingClientRect().left >= document.querySelector('#sidebar').getBoundingClientRect().right+7`,
+        `document.querySelector('.workspace-action-menu').getBoundingClientRect().left === 80`,
       ),
       true,
     );
@@ -309,7 +311,7 @@ app.whenReady().then(async () => {
       await waitFor(`document.querySelector('.ui-action-menu')?.style.visibility==='visible'`);
       assert.equal(
         await js(
-          `(() => {const m=document.querySelector('.ui-action-menu').getBoundingClientRect(); const side=document.getElementById('sidebar').getBoundingClientRect(); return m.left>=side.right+7 && m.right<=innerWidth-7 && m.top>=7 && m.bottom<=innerHeight-7;})()`,
+          `(() => {const m=document.querySelector('.ui-action-menu').getBoundingClientRect(); return m.left>=7 && m.right<=innerWidth-7 && m.top>=7 && m.bottom<=innerHeight-7;})()`,
         ),
         true,
       );
@@ -323,10 +325,9 @@ app.whenReady().then(async () => {
       );
       await waitFor(`!!document.querySelector('.message-copy')`);
       const copyLayout = await js(`(() => {
-        const message=[...document.querySelectorAll('.message.user')].at(-1);
         const button=document.querySelector('.message-copy');const label=button.querySelector('span');
-        const r=button.getBoundingClientRect();const s=getComputedStyle(button);const scroll=document.getElementById('conversation-scroll').getBoundingClientRect();
-        return {nowrap:s.whiteSpace,lines:label.getClientRects().length,width:r.width,inside:r.left>=scroll.left && r.right<=scroll.right,space:parseFloat(getComputedStyle(document.getElementById('messages')).gap),height:r.height};
+        const r=button.getBoundingClientRect();const s=getComputedStyle(button);
+        return {nowrap:s.whiteSpace,lines:label.getClientRects().length,width:r.width,inside:r.left>=0 && r.right<=innerWidth};
       })()`);
       assert.equal(copyLayout.nowrap, 'nowrap');
       assert.equal(copyLayout.lines, 1);
