@@ -1333,6 +1333,63 @@
   color: var(--text);
   font: inherit;
 }
+.ev-terminal-composer select,
+.ev-terminal-composer select option {
+  color-scheme: dark;
+  background-color: var(--panel);
+  color: var(--text);
+}
+:root[data-theme='light'] .ev-terminal-composer select,
+:root[data-theme='light'] .ev-terminal-composer select option {
+  color-scheme: light;
+}
+
+.ev-category-home,
+.ev-category-nav {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+}
+.ev-category-home {
+  flex-direction: column;
+  flex: 1;
+}
+.ev-category-home button {
+  justify-content: flex-start;
+  background: var(--surface);
+  border-color: var(--border);
+}
+.ev-category-nav {
+  flex: 0 0 auto;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-bottom: 1px solid var(--border);
+}
+.ev-category-nav button {
+  flex: 0 0 auto;
+  padding-inline: 6px;
+  white-space: nowrap;
+}
+.ev-category-nav button svg { display: none; }
+.ev-category-nav button:first-child svg { display: block; transform: rotate(180deg); }
+.ev-category-nav button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--surface);
+}
+.ev-studio.has-panel .ev-studio-resource-scroll {
+  display: block;
+}
+.ev-studio-item-actions {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding-inline: 4px;
+}
+.ev-studio .ev-studio-item-actions button {
+  min-height: 24px;
+  padding: 3px 6px;
+}
+.ev-sheet-read-cell { display: block; padding: 6px 9px; overflow-wrap: anywhere; }
 .ev-terminal-composer textarea {
   height: 76px;
   min-height: 60px;

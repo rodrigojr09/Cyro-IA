@@ -23,6 +23,12 @@ const empty = () => ({
 });
 const uid = () => crypto.randomUUID();
 const keyFor = (p) => p.kind + ':' + (p.source || 'workbench') + ':' + p.target;
+const categories = [
+  ['code', 'Códigos', 'code'],
+  ['table', 'Tabelas', 'table'],
+  ['document', 'Documentos', 'folder'],
+  ['preview', 'Terminal', 'terminal'],
+];
 function typedCell(value, type) {
   if (value === null || value === '') return null;
   if (type === 'NUMBER') {
@@ -52,7 +58,10 @@ export const EVStudio = forwardRef(function EVStudio(
 ) {
   const [workbench, setWorkbench] = useState(empty),
     [tables, setTables] = useState([]),
+    [tableNext, setTableNext] = useState(null),
     [pane, setPane] = useState(null),
+    [category, setCategory] = useState(null),
+    [resourceRefresh, setResourceRefresh] = useState(0),
     [drafts, setDrafts] = useState({}),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(''),
@@ -78,6 +87,7 @@ export const EVStudio = forwardRef(function EVStudio(
   };
   const reveal = (next) => {
     if (!active.current) return;
+    setCategory(next.kind);
     setPane(next);
     onOpen();
   };
@@ -166,7 +176,10 @@ export const EVStudio = forwardRef(function EVStudio(
     if (!active.current) return;
     if (studio.status === 'rejected') throw studio.reason;
     apply(studio.value, follow);
-    if (list.status === 'fulfilled') setTables(list.value.tables || []);
+    if (list.status === 'fulfilled') {
+      setTables(list.value.tables || []);
+      setTableNext(list.value.next ?? null);
+    }
     return studio.value;
   }
   async function operation(action, fields = {}) {
@@ -355,6 +368,50 @@ export const EVStudio = forwardRef(function EVStudio(
     setNotice('Cópia editável criada. O anexo original foi preservado.');
     if (run) await runFile(name);
   }
+  async function uploadResources() {
+    const result = await window.cyroEV.upload(projectId);
+    if (result.canceled || !active.current) return;
+    const failures = (result.failures || []).map((failure) => failure.name + ': ' + failure.error);
+    for (const file of result.files || []) {
+      try {
+        if (category === 'code') await uploaded(file);
+        if (category === 'table') {
+          if (!/\.(xlsx|csv)$/i.test(file.name))
+            throw Error('A importação de tabelas aceita CSV e XLSX.');
+          await processDocument(file);
+        }
+      } catch (error) {
+        failures.push(file.name + ': ' + publicError(error));
+      }
+    }
+    setResourceRefresh((value) => value + 1);
+    if (failures.length) setNotice(failures.join(' · '));
+    else if (category === 'table') setNotice('Importação solicitada. Atualize as tabelas após o processamento.');
+    else if (category === 'document') setNotice('Arquivos enviados ao EV.');
+  }
+  function processDocument(file) {
+    return request({ action: 'file.process', projectId, operationId: uid(), id: file.id });
+  }
+  async function deleteStored(kind, item) {
+    if (!window.confirm('Excluir ' + item.name + ' deste EV?')) return;
+    if (kind === 'table' && draftRef.current[keyFor({ kind, source: 'space', target: item.id })]?.dirty)
+      throw Error('Salve ou descarte suas edições antes de excluir a tabela.');
+    await request({
+      action: kind + '.delete', projectId, operationId: uid(), id: item.id,
+      expectedRevision: item.revision, confirmation: 'EXCLUIR',
+    });
+    if (currentPane.current?.target === item.id) setPane(null);
+    setResourceRefresh((value) => value + 1);
+    await refresh(false);
+  }
+  function selectCategory(next) {
+    setSearch('');
+    if (next === 'preview') reveal({ kind: 'preview', target: 'console' });
+    else {
+      setCategory(next);
+      setPane(null);
+    }
+  }
   async function saveTable() {
     const key = keyFor(pane),
       draft = draftRef.current[key];
@@ -428,7 +485,7 @@ export const EVStudio = forwardRef(function EVStudio(
   useImperativeHandle(ref, () => ({
     openReference: (reference) => void perform(async () => {
       if (reference.kind === 'table') {
-        const next = { kind: 'table', target: reference.id, source: 'space', rowId: reference.rowId };
+        const next = { kind: 'table', target: reference.id, source: 'space', rowId: reference.rowId, readOnly: true };
         if (draftRef.current[keyFor(next)]?.dirty)
           throw Error('Salve suas alterações antes de abrir a linha de referência.');
         await choose(next);
@@ -519,7 +576,17 @@ export const EVStudio = forwardRef(function EVStudio(
             <Icon name="close" />
           </button>
         </header>
-        <div className="ev-studio-explorer-tools">
+        <nav className={category ? 'ev-category-nav' : 'ev-category-home'} aria-label="Categorias do Studio">
+          {category && <button type="button" aria-label="Início do Studio" onClick={() => selectCategory(null)}>
+            <Icon name="chevron-right" />
+          </button>}
+          {categories.map(([id, label, icon]) => (
+            <button key={id} type="button" aria-pressed={category === id} onClick={() => selectCategory(id)}>
+              <Icon name={icon} />{label}
+            </button>
+          ))}
+        </nav>
+        {category && category !== 'preview' && <div className="ev-studio-explorer-tools">
           <label>
             <Icon name="search" />
             <input
@@ -529,13 +596,17 @@ export const EVStudio = forwardRef(function EVStudio(
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <button
+          {category === 'code' && <button
             title="Novo arquivo"
             aria-label="Novo arquivo"
             disabled={!ready || busy}
             onClick={newFile}
           >
             <Icon name="plus" />
+          </button>}
+          <button title="Enviar arquivos" aria-label="Enviar arquivos" disabled={!ready || busy}
+            onClick={() => void perform(uploadResources)}>
+            <Icon name="upload" />
           </button>
           <button
             title="Atualizar recursos"
@@ -548,9 +619,10 @@ export const EVStudio = forwardRef(function EVStudio(
           >
             <Icon name="refresh" />
           </button>
-        </div>
-        <div className="ev-studio-resource-scroll">
-          <section className="ev-resource-group">
+        </div>}
+        {!pane && notice && <p className="ev-studio-notice" role="status">{notice}</p>}
+        {category && <div className="ev-studio-resource-scroll">
+          {category === 'code' && <section className="ev-resource-group">
             <h3>
               <Icon name="code" />
               Códigos <small>{fileNames.length}</small>
@@ -578,6 +650,10 @@ export const EVStudio = forwardRef(function EVStudio(
                       d.dirty && (d.originalName === name || d.name === name || d.target === name),
                   ) && <i className="ev-dirty-dot" />}
                 </button>
+                <button aria-label={'Excluir ' + name} title="Excluir código" disabled={busy}
+                  onClick={() => void perform(() => removeResource('file', name))}>
+                  <Icon name="trash" />
+                </button>
                 <button
                   className="ev-resource-run"
                   aria-label={'Executar ' + name}
@@ -598,8 +674,8 @@ export const EVStudio = forwardRef(function EVStudio(
             {!fileNames.length && (
               <p className="ev-resource-empty">Os códigos criados no chat aparecem aqui.</p>
             )}
-          </section>
-          <section className="ev-resource-group">
+          </section>}
+          {category === 'table' && <section className="ev-resource-group">
             <h3>
               <Icon name="table" />
               Tabelas <small>{workbench.tables.length + tables.length}</small>
@@ -610,15 +686,16 @@ export const EVStudio = forwardRef(function EVStudio(
             ]
               .filter((t) => matches(t.name))
               .map((t) => (
+                <div key={t.source + t.target} className="ev-studio-item">
                 <button
-                  key={t.source + t.target}
                   className={
                     'ev-resource-table ' +
                     (pane?.kind === 'table' && pane.target === t.target ? 'is-active' : '')
                   }
+                  aria-label={'Visualizar ' + t.name}
                   onClick={() =>
                     void perform(() =>
-                      choose({ kind: 'table', target: t.target, source: t.source }),
+                      choose({ kind: 'table', target: t.target, source: t.source, readOnly: true }),
                     )
                   }
                 >
@@ -629,12 +706,29 @@ export const EVStudio = forwardRef(function EVStudio(
                   </span>
                   <Icon name="chevron-right" />
                 </button>
+                <div className="ev-studio-item-actions">
+                  <button aria-label={'Editar ' + t.name} onClick={() =>
+                    void perform(() => choose({ kind: 'table', target: t.target, source: t.source }))}>Editar</button>
+                  <button aria-label={'Excluir ' + t.name} title="Excluir tabela" disabled={busy}
+                    onClick={() => void perform(() => t.source === 'space'
+                      ? deleteStored('table', t)
+                      : removeResource('table', t.name))}>
+                    <Icon name="trash" />
+                  </button>
+                </div>
+                </div>
               ))}
             {!workbench.tables.length && !tables.length && (
               <p className="ev-resource-empty">Peça ao Cyro para criar uma tabela.</p>
             )}
-          </section>
-          <section className="ev-resource-group ev-studio-uploads">
+            {tableNext != null && <button disabled={busy} onClick={() => void perform(async () => {
+              const page = await request({ action: 'tables.list', projectId, limit: 100, offset: tableNext });
+              if (!active.current) return;
+              setTables((previous) => [...new Map([...previous, ...page.tables].map((table) => [table.id, table])).values()]);
+              setTableNext(page.next ?? null);
+            })}>Mais tabelas</button>}
+          </section>}
+          {category === 'document' && <section className="ev-resource-group ev-studio-uploads">
             <h3>
               <Icon name="folder" />
               Documentos
@@ -644,12 +738,20 @@ export const EVStudio = forwardRef(function EVStudio(
               hidden={hidden}
               mode="files"
               externalSearch={search}
-              refreshKey={refreshKey}
+              refreshKey={refreshKey + ':' + resourceRefresh}
               request={request}
               onOpen={(file) => reveal({ kind: 'document', target: file.id, file })}
+              onDelete={(file) => void perform(() => deleteStored('file', file))}
+              onAnalyze={(file) => void perform(async () => {
+                await processDocument(file);
+                setResourceRefresh((value) => value + 1);
+                reveal({ kind: 'document', target: file.id, file });
+                setNotice('Análise solicitada.');
+              })}
+              actionBusy={busy}
             />
-          </section>
-          {!!workbench.executions.length && (
+          </section>}
+          {category === 'preview' && !!workbench.executions.length && (
             <section className="ev-resource-group">
               <h3>
                 <Icon name="terminal" />
@@ -674,12 +776,12 @@ export const EVStudio = forwardRef(function EVStudio(
               ))}
             </section>
           )}
-        </div>
+        </div>}
         <footer className="ev-studio-explorer-footer">
-          <button onClick={() => reveal({ kind: 'preview', target: 'console' })}>
+          {category === 'preview' && <button onClick={() => reveal({ kind: 'preview', target: 'console' })}>
             <Icon name="terminal" />
             Terminal
-          </button>
+          </button>}
           <span title="Somente esta conta e este EV">
             <Icon name="shield" />
             Privado
@@ -821,6 +923,7 @@ export const EVStudio = forwardRef(function EVStudio(
           ) : pane.kind === 'table' && draft ? (
             <EVTableEditor
               draft={draft}
+              readOnly={pane.readOnly}
               busy={busy}
               onChange={(value) => setDraft(paneKey, value)}
               onDelete={
@@ -893,7 +996,7 @@ export const EVStudio = forwardRef(function EVStudio(
                   selectedFile={pane.target}
                   projectId={projectId}
                   hidden={hidden}
-                  refreshKey={refreshKey}
+                  refreshKey={refreshKey + ':' + resourceRefresh}
                   request={request}
                   onUse={onUse}
                   renderFiscal={renderFiscal}

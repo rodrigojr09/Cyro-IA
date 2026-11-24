@@ -415,6 +415,7 @@ app.whenReady().then(async () => {
 
 
     await js(`document.querySelector('button[aria-label="Studio"]').click()`);
+    await js(`[...document.querySelectorAll('.ev-category-home button')].find(b=>b.textContent.trim()==='Documentos').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
     await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
@@ -454,7 +455,7 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('.ev-studio-resize').dispatchEvent(new KeyboardEvent('keydown', {key:'End', bubbles:true}))`);
     await wait(`document.querySelector('.ev-studio-resize').getAttribute('aria-valuenow') === '30'`);
     assert.ok(await js(`document.querySelector('.ev-studio').getBoundingClientRect().width <= innerWidth * .3 + .1`));
-    await wait(`document.querySelector('.ev-document-label strong')?.textContent.includes('NF-e 45892')`);
+    assert.ok(await js(`!document.querySelector('table[aria-label="Editor da tabela"] input')`));
     await fs.writeFile(path.resolve(__dirname, '../../../build/v9/ev-studio-reference.png'), (await win.webContents.capturePage()).toPNG());
     await js(`document.querySelector('button[aria-label="Fechar painel"]').click()`);
     assert.ok(
@@ -483,6 +484,7 @@ app.whenReady().then(async () => {
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
     await js(`document.querySelector('button[aria-label="Studio"]').click()`);
+    await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Códigos').click()`);
     await wait(`!!document.querySelector('.ev-studio:not([hidden]) .ev-resource-open')`);
     await js(
       `[...document.querySelectorAll('.ev-resource-open')].find(b=>b.textContent.includes('main.py')).click()`,
@@ -493,13 +495,18 @@ app.whenReady().then(async () => {
       path.join(shots, 'ev9-code-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
+    await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Tabelas').click()`);
     await js(`document.querySelector('.ev-resource-table').click()`);
+    await wait(`document.querySelector('.ev-studio-status')?.textContent === 'Somente leitura'`);
+    assert.ok(await js(`!document.querySelector('table[aria-label="Editor da tabela"] input')`));
+    await js(`document.querySelector('button[aria-label="Editar prazos"]').click()`);
     await wait(`!!document.querySelector('table[aria-label="Editor da tabela"] input')`);
     await new Promise((r) => setTimeout(r, 250));
     await fs.writeFile(
       path.join(shots, 'ev9-table-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
+    await js(`[...document.querySelectorAll('.ev-category-nav button')].find(b=>b.textContent.trim()==='Códigos').click()`);
     await js(`document.querySelector('button[aria-label="Executar index.html"]').click()`);
     await wait(`!!document.querySelector('iframe[title="Preview visual do EV"]')`);
     await new Promise((r) => setTimeout(r, 350));

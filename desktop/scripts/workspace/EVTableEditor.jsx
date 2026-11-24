@@ -10,6 +10,7 @@ export function EVTableEditor({
   onPage,
   onDelete,
   focusRowId,
+  readOnly = false,
 }) {
   const { columns, rows, source } = draft;
   const simple = source !== 'space';
@@ -29,12 +30,12 @@ export function EVTableEditor({
       <div className="ev-studio-toolbar">
         <span className="ev-studio-status">
           <i className={draft.dirty ? 'dirty' : ''} />
-          {draft.dirty ? 'Edições não salvas' : 'Salvo no EV'}
+          {readOnly ? 'Somente leitura' : draft.dirty ? 'Edições não salvas' : 'Salvo no EV'}
         </span>
-        <button disabled={busy || !draft.dirty} onClick={onSave}>
+        {!readOnly && <button disabled={busy || !draft.dirty} onClick={onSave}>
           <Icon name="code-save" />
           Salvar alterações
-        </button>
+        </button>}
         <button
           disabled={busy}
           onClick={onExport}
@@ -42,10 +43,10 @@ export function EVTableEditor({
         >
           <Icon name="download" />
         </button>
-        <button disabled={busy} onClick={onReload} title="Recarregar tabela">
+        {!readOnly && <button disabled={busy} onClick={onReload} title="Recarregar tabela">
           <Icon name="refresh" />
-        </button>
-        {onDelete && (
+        </button>}
+        {!readOnly && onDelete && (
           <button
             title="Remover tabela"
             aria-label="Remover tabela"
@@ -64,7 +65,7 @@ export function EVTableEditor({
               {columns.map((c, j) => (
                 <th key={j}>
                   <span className="ev-column-letter">{letter(j)}</span>
-                  {simple ? (
+                  {simple && !readOnly ? (
                     <input
                       disabled={busy}
                       aria-label={`Nome da coluna ${j + 1}`}
@@ -79,7 +80,7 @@ export function EVTableEditor({
                   )}
                 </th>
               ))}
-              {simple && <th className="ev-sheet-actions" />}
+              {simple && !readOnly && <th className="ev-sheet-actions" />}
             </tr>
           </thead>
           <tbody>
@@ -94,7 +95,9 @@ export function EVTableEditor({
                   <th className="ev-sheet-index">{(draft.offset || 0) + i + 1}</th>
                   {columns.map((c, j) => (
                     <td key={j}>
-                      {typeof row[j] === 'boolean' || draft.types?.[j] === 'BOOLEAN' ? (
+                      {readOnly ? (
+                        <span className="ev-sheet-read-cell">{row[j] == null ? '—' : typeof row[j] === 'boolean' ? (row[j] ? 'Sim' : 'Não') : row[j]}</span>
+                      ) : typeof row[j] === 'boolean' || draft.types?.[j] === 'BOOLEAN' ? (
                         <select
                           disabled={busy}
                           aria-label={`Linha ${i + 1}, coluna ${c}`}
@@ -146,7 +149,7 @@ export function EVTableEditor({
                       )}
                     </td>
                   ))}
-                  {simple && (
+                  {simple && !readOnly && (
                     <td className="ev-sheet-actions">
                       <button
                         title={`Remover linha ${i + 1}`}
@@ -180,7 +183,7 @@ export function EVTableEditor({
             </button>
           </>
         )}
-        {simple ? (
+        {simple ? !readOnly && (
           <>
             <button
               disabled={busy || rows.length >= 500}

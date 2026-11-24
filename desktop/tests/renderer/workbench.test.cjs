@@ -16,7 +16,7 @@ test('v9 opens code from the file sidebar, saves a scoped draft and shows execut
  window.cyroEV={draft:async c=>{drafts.push(c);return null;},execute:store.execute};
  try{
   await env.mount(env.EVStudio,{projectId:'space',hidden:false,visible:true,refreshKey:0,request:store.request});await settle();
-  await click('.ev-resource-open');await settle();assert.equal(document.querySelector('dialog'),null);
+  await click('.ev-category-home button:first-child');await click('.ev-resource-open');await settle();assert.equal(document.querySelector('dialog'),null);
   assert.equal(document.querySelector('textarea[aria-label="Editor de código"]').value,'print(1)');
   await input('textarea[aria-label="Editor de código"]','print(42)');await click('button[aria-label="Salvar código"]');await settle();
   const save=store.calls.find(c=>c.action==='workbench.write');assert.equal(save.projectId,'space');assert.equal(save.expectedFileRevision,1);assert.equal(save.content,'print(42)');
@@ -50,7 +50,7 @@ test('v9 keeps edits after a conflicting save and preserves a local protected dr
  const env=environment(),store=fixture({...empty,files:[{name:'main.py',content:'print(1)',revision:1}]});let local;
  window.cyroEV={draft:async c=>{if(c.operation==='write')local=c.content;return null;}};
  try{
-  await env.mount(env.EVStudio,{projectId:'space',hidden:false,visible:true,request:async c=>{if(c.action==='workbench.write')throw Error('Este arquivo mudou. Seu rascunho foi preservado.');return store.request(c);}});await settle();await click('.ev-resource-open');await input('textarea[aria-label="Editor de código"]','edited privately');await click('button[aria-label="Salvar código"]');await settle();
+  await env.mount(env.EVStudio,{projectId:'space',hidden:false,visible:true,request:async c=>{if(c.action==='workbench.write')throw Error('Este arquivo mudou. Seu rascunho foi preservado.');return store.request(c);}});await settle();await click('.ev-category-home button:first-child');await click('.ev-resource-open');await input('textarea[aria-label="Editor de código"]','edited privately');await click('button[aria-label="Salvar código"]');await settle();
   assert.equal(document.querySelector('textarea').value,'edited privately');assert.ok(Object.values(local.drafts).some(d=>d.content==='edited privately'));
  }finally{await env.dispose();}
 });

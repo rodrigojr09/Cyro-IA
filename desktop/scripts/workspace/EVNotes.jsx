@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { publicError } from '../shared/bridge';
+import { Icon } from '../ui/Icon';
 
 function documentTitle(file) {
   const { number, total } = file.fiscal || {};
@@ -21,6 +22,9 @@ export function EVNotes({
   mode = 'full',
   selectedFile,
   onOpen,
+  onDelete,
+  onAnalyze,
+  actionBusy,
   externalSearch,
 }) {
   const [files, setFiles] = useState([]),
@@ -161,6 +165,14 @@ export function EVNotes({
                         }[file.status] || file.status}
                       </small>
                     </button>
+                    {(onDelete || onAnalyze) && <div className="ev-studio-item-actions">
+                      {onAnalyze && <button type="button" disabled={actionBusy || ['UPLOADING', 'PROCESSING'].includes(file.status)}
+                        onClick={() => onAnalyze(file)}>Analisar</button>}
+                      {onDelete && <button type="button" disabled={actionBusy}
+                        aria-label={'Excluir ' + file.name} title="Excluir documento" onClick={() => onDelete(file)}>
+                        <Icon name="trash" />
+                      </button>}
+                    </div>}
                   </li>
                 ))}
               </ul>

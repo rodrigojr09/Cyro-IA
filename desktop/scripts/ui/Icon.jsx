@@ -43,6 +43,7 @@ import {
   Image,
   X,
   Download,
+  Upload,
   Eye,
 } from 'lucide';
 const nodes = {
@@ -57,6 +58,7 @@ const nodes = {
   save: Download,
   "code-save":SaveIcon,
   download:Download,
+  upload: Upload,
   eye: Eye,
   'chevron-right': ChevronRight,
   'chevron-down': ChevronDown,

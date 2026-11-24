@@ -334,6 +334,7 @@ test('notes sidebar shows uploaded fiscal data, warnings and saved chat analysis
     });
     await act(async () => new Promise((r) => setTimeout(r, 30)));
     await click('button[aria-label="Studio"]');
+    await click('.ev-category-home button:nth-child(3)');
     await act(async () => new Promise((r) => setTimeout(r, 30)));
     const list = document.querySelector('.ev-notes li button');
     assert.match(list.textContent, /nota-teste.xml/);
