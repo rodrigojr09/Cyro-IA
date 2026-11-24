@@ -419,6 +419,7 @@ export function EVWorkspace({
   useEffect(() => setCopyMenu(null), [hidden, space?.id, conversation?.id]);
   const chatCache = useRef(new Map());
   const [messages, setMessages] = useState([]),
+    [pendingMessage, setPendingMessage] = useState(null),
     [artifacts, setArtifacts] = useState([]),
     [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false),
@@ -585,7 +586,7 @@ export function EVWorkspace({
       scroll.current?.scrollTo?.({ top: scroll.current.scrollHeight, behavior: 'auto' }),
     );
     return () => cancelAnimationFrame(frame);
-  }, [messages, artifacts, loading]);
+  }, [messages, pendingMessage, artifacts, loading]);
   async function apply(out) {
     if (!active.current) return;
     if (out.effect === 'CREATE_EV') {
@@ -789,6 +790,7 @@ export function EVWorkspace({
     const text = question.trim() || 'Analise os arquivos anexados.',
       previousSpace = space,
       operationId = (operation.current ||= crypto.randomUUID());
+    const submittedMessage = { id: 'user-' + operationId, role: 'user', content: text };
     try {
       if (
         !space &&
@@ -797,7 +799,11 @@ export function EVWorkspace({
         !selectedExtension
       )
         throw Error('Escolha o tipo do novo espaço antes de criar.');
-      let selectedConversation = conversation;
+      const selectedConversation = conversation;
+      if (space?.state === 'READY' && !selectedConversation)
+        throw Error('Reabra este EV para carregar seu chat antes de enviar.');
+      setPendingMessage(submittedMessage);
+      setQuestion('');
       if (space?.state === 'READY') {
         const draft = (id) =>
           window.cyroEV.draft({
@@ -813,11 +819,8 @@ export function EVWorkspace({
               confirmationProposalId: confirmation.current || null,
             },
           });
-        await waitForIPC(draft(selectedConversation?.id), 8000);
-        if (!selectedConversation)
-          throw Error('Reabra este EV para carregar seu chat antes de enviar.');
+        await waitForIPC(draft(selectedConversation.id), 8000);
       }
-      setQuestion('');
       const out = await evRequest({
         action: 'assistant.send',
         operationId,
@@ -831,11 +834,10 @@ export function EVWorkspace({
           : {}),
       });
       if (!active.current) return;
+      setPendingMessage(null);
       if (!out.messages)
         setMessages((old) =>
-          old.some((m) => m.id === 'user-' + operationId)
-            ? old
-            : [...old, { id: 'user-' + operationId, role: 'user', content: text }],
+          old.some((m) => m.id === submittedMessage.id) ? old : [...old, submittedMessage],
         );
       await apply(out);
       setContextFiles([]);
@@ -870,6 +872,7 @@ export function EVWorkspace({
       }
     } catch (e) {
       if (active.current) {
+        setPendingMessage(null);
         setError(publicError(e));
         setQuestion((old) => old || text);
       }
@@ -1038,7 +1041,7 @@ export function EVWorkspace({
             </button>
           </header>
           <div className="ev-chat-history" ref={scroll} aria-live="polite">
-            {!messages.length && (
+            {!messages.length && !pendingMessage && (
               <div className="ev-chat-welcome">
                 <h2>Como posso ajudar neste EV?</h2>
                 <p>
@@ -1048,7 +1051,7 @@ export function EVWorkspace({
                 </p>
               </div>
             )}
-            {messages.map((message) => (
+            {(pendingMessage ? [...messages, pendingMessage] : messages).map((message) => (
               <article
                 className={'ev-chat-message ' + message.role}
                 key={message.id}

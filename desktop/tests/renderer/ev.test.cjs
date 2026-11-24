@@ -180,6 +180,7 @@ test('EV chat keeps inline results, confirmation and retry on the same operation
     );
     await submit();
     assert.match(document.querySelector('[role="alert"]').textContent, /Conexão interrompida/);
+    assert.equal(document.querySelector('.ev-chat-message.user'), null);
     assert.equal(document.querySelector('#ev-message').value, 'edite o primeiro frete para 15,50');
     fail = false;
     await submit();
@@ -466,12 +467,12 @@ test('EV refreshes its installed version on focus without fetching chat history 
   }
 });
 
-test('EV clears the submitted composer immediately and releases busy when the reply arrives even if draft cleanup stalls', async () => {
+test('EV displays the submitted message while the server works and reconciles it without a duplicate', async () => {
   const env = environment(),
     id = '11111111-1111-4111-8111-111111111111',
     chatId = '22222222-2222-4222-8222-222222222222';
   const space = { id, name: 'EV de teste', state: 'READY', chatId };
-  let resolveReply, rejectCleanup;
+  let resolveReply, rejectCleanup, sent;
   const response = new Promise((resolve) => {
       resolveReply = resolve;
     }),
@@ -485,7 +486,10 @@ test('EV clears the submitted composer immediately and releases busy when the re
       if (c.action === 'catalog') return { extensions: [] };
       if (c.action === 'assistant.open')
         return { space, conversation: { id: chatId }, messages: [], artifacts: [] };
-      if (c.action === 'assistant.send') return response;
+      if (c.action === 'assistant.send') {
+        sent = c;
+        return response;
+      }
       if (c.action === 'workbench.list')
         return { revision: 0, files: [], tables: [], executions: [] };
       if (c.action === 'tables.list') return { tables: [] };
@@ -499,16 +503,22 @@ test('EV clears the submitted composer immediately and releases busy when the re
     await submit();
     assert.equal(document.querySelector('#ev-message').value, '');
     assert.equal(document.querySelector('.ev-chat').getAttribute('aria-busy'), 'true');
+    assert.equal(sent.message, 'crie uma página HTML');
+    assert.match(document.querySelector('.ev-chat-message.user').textContent, /crie uma página HTML/);
     await act(async () =>
       resolveReply({
         space,
         conversation: { id: chatId },
-        messages: [{ id: 1, role: 'assistant', content: 'Resposta concluída' }],
+        messages: [
+          { id: 1, role: 'user', content: sent.message },
+          { id: 2, role: 'assistant', content: 'Resposta concluída' },
+        ],
         artifacts: [],
       }),
     );
     await settle();
     assert.match(document.body.textContent, /Resposta concluída/);
+    assert.equal(document.querySelectorAll('.ev-chat-message.user').length, 1);
     assert.equal(document.querySelector('.ev-chat-working'), null);
     assert.equal(document.querySelector('#ev-message').disabled, false);
     await input('#ev-message', 'Minha próxima mensagem');
