@@ -123,3 +123,11 @@ do proprietário. Sem force push ou substituir tags existentes.
 O proprietário autorizou push normal após validar cada alteração do Cyro.
 No Cyro-IA, manter também `master` atualizado para a Vercel. No Backend,
 usar o branch remoto existente. Não criar tags ou releases sem pedido específico.
+
+## Tags e releases do Cyro-IA
+
+Publicar tag e release do instalador somente para mudanças na camada nativa
+(Electron, ponte IPC/preload ou executor empacotado) e com autorização específica.
+Alterações somente na interface web seguem por push ao master e deploy na Vercel,
+sem tag, release ou novo instalador. A primeira habilitação do domínio remoto
+exige um Desktop compatível por alterar o carregamento e a ponte do Electron.
