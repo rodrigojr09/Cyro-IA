@@ -147,17 +147,34 @@
   margin: 7px 0 0;
 }
 .attachment-caption.attachment-privacy {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--muted);
-  line-height: 1.5;
+  position: relative;
+  width: fit-content;
   opacity: 1;
 }
+.attachment-privacy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.5;
+}
+.attachment-privacy-details {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 8;
+  display: none;
+  width: min(320px, 60vw);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  line-height: 1.5;
+}
+.attachment-privacy:hover .attachment-privacy-label,
+.attachment-privacy:focus-within .attachment-privacy-label { opacity: 1; }
+.attachment-privacy:hover .attachment-privacy-details,
+.attachment-privacy:focus-within .attachment-privacy-details { display: block; }
 .attachment-privacy svg {
   flex: 0 0 14px;
   width: 14px;
@@ -222,6 +239,20 @@
 .attachment-image-card.attachment-suggestion {
   opacity: 0.7;
   border: 2px dashed var(--accent);
+}
+.attachment-image-card.attachment-suggestion .attachment-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
 }
 .attachment-image-card .attachment-feedback:not(:empty) {
   position: absolute;

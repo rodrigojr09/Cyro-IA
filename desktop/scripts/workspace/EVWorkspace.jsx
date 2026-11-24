@@ -526,6 +526,9 @@ export function EVWorkspace({
     onSpaceChange(space?.id || null);
   }, [space?.id]);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [studioWidth, setStudioWidth] = useState(26);
+  const resizeStart = useRef(null);
+  const clampStudio = (width) => Math.max(16, Math.min(30, width));
   const studio = useRef(null);
   const [studioPending, setStudioPending] = useState(false);
   const openStudioCode = useCallback((payload) => studio.current?.openCode(payload), []);
@@ -982,6 +985,7 @@ export function EVWorkspace({
       {space && (
         <section
           className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
+          style={{ '--ev-studio-width': studioWidth + 'vw' }}
           hidden={hidden}
           aria-label="Espaço Virtual por conversa"
           aria-busy={loading}
@@ -1002,24 +1006,24 @@ export function EVWorkspace({
             </small>
             <button
               type="button"
+              className="ev-notes-toggle ev-studio-toggle"
+              aria-label="Studio"
+              title="Studio"
+              aria-expanded={notesOpen}
+              onClick={() => setNotesOpen((old) => !old)}
+            >
+              <Icon name="folder" />
+              <span>Studio</span>
+            </button>
+            <button
+              type="button"
               className="ev-notes-toggle"
               aria-label="Opções do EV"
               title="Opções do EV"
               disabled={loading}
               onClick={() => onManage(space)}
             >
-              ⋯
-            </button>
-            <button
-              type="button"
-              className="ev-notes-toggle ev-studio-toggle"
-              aria-label="Arquivos e Studio"
-              title="Arquivos e Studio"
-              aria-expanded={notesOpen}
-              onClick={() => setNotesOpen((old) => !old)}
-            >
-              <Icon name="folder" />
-              <span>Arquivos e Studio</span>
+              <Icon name="gear" />
             </button>
           </header>
           <div className="ev-chat-history" ref={scroll} aria-live="polite">
@@ -1118,6 +1122,34 @@ export function EVWorkspace({
               attachmentCaption="O arquivo enviado fica no seu EV. O conteúdo disponível para análise pode ser enviado à IA. Até 8 MB por arquivo."
             />
           </div>
+          {notesOpen && (
+            <div
+              className="ev-studio-resize"
+              role="separator"
+              aria-label="Largura do Studio"
+              aria-orientation="vertical"
+              aria-valuemin={16}
+              aria-valuemax={30}
+              aria-valuenow={Math.round(studioWidth)}
+              tabIndex={0}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                resizeStart.current = { x: event.clientX, width: studioWidth };
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                const start = resizeStart.current;
+                if (start) setStudioWidth(clampStudio(start.width + (start.x - event.clientX) / window.innerWidth * 100));
+              }}
+              onLostPointerCapture={() => { resizeStart.current = null; }}
+              onKeyDown={(event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                setStudioWidth((width) => event.key === 'Home' ? 16 : event.key === 'End' ? 30 :
+                  clampStudio(width + (event.key === 'ArrowLeft' ? 2 : -2)));
+              }}
+            />
+          )}
           <EVStudio
             ref={studio}
             visible={notesOpen}

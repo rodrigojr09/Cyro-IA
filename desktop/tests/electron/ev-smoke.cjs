@@ -311,6 +311,13 @@ app.whenReady().then(async () => {
     assert.equal(await js(`document.querySelector('#quick-nav').textContent.trim()`), 'Chat rápido');
     assert.equal(await js(`document.querySelector('#attach-files').getAttribute('aria-describedby')`), 'attachment-caption');
     await wait(`document.querySelector('#attachment-caption')?.textContent.includes('enviado à IA')`);
+    assert.equal(await js(`getComputedStyle(document.querySelector('#attachment-caption')).display`), 'none');
+    await js(`document.querySelector('.attachment-privacy-label').focus()`);
+    await wait(`getComputedStyle(document.querySelector('#attachment-caption')).display === 'block'`);
+    await js(`document.querySelector('#sidebar-toggle').click()`);
+    await wait(`document.body.classList.contains('sidebar-collapsed')`);
+    await js(`document.querySelector('#sidebar-toggle').click()`);
+    await wait(`!document.body.classList.contains('sidebar-collapsed')`);
     const homeShot = path.resolve(__dirname, '../../../build/v10/chat-sidebar.png');
     await fs.mkdir(path.dirname(homeShot), { recursive: true });
     await fs.writeFile(homeShot, (await win.webContents.capturePage()).toPNG());
@@ -407,7 +414,7 @@ app.whenReady().then(async () => {
     assert.equal(await js(`document.getElementById('ev-create-menu').open`),false);
 
 
-    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
+    await js(`document.querySelector('button[aria-label="Studio"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
     await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
@@ -442,6 +449,11 @@ app.whenReady().then(async () => {
     );
     await js(`document.querySelector('.ev-source-links button').click()`);
     await wait(`document.querySelector('.ev-source-row .ev-sheet-index')?.textContent === '51'`);
+    assert.ok(await js(`!!document.querySelector('#ev-chats').offsetWidth`));
+    assert.equal(await js(`document.querySelector('.ev-studio-toggle').nextElementSibling.getAttribute('aria-label')`), 'Opções do EV');
+    await js(`document.querySelector('.ev-studio-resize').dispatchEvent(new KeyboardEvent('keydown', {key:'End', bubbles:true}))`);
+    await wait(`document.querySelector('.ev-studio-resize').getAttribute('aria-valuenow') === '30'`);
+    assert.ok(await js(`document.querySelector('.ev-studio').getBoundingClientRect().width <= innerWidth * .3 + .1`));
     await wait(`document.querySelector('.ev-document-label strong')?.textContent.includes('NF-e 45892')`);
     await fs.writeFile(path.resolve(__dirname, '../../../build/v9/ev-studio-reference.png'), (await win.webContents.capturePage()).toPNG());
     await js(`document.querySelector('button[aria-label="Fechar painel"]').click()`);
@@ -456,7 +468,7 @@ app.whenReady().then(async () => {
       path.join(shots, 'ev-notes-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
-    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
+    await js(`document.querySelector('button[aria-label="Studio"]').click()`);
     await wait(`!document.querySelector('.ev-chat').classList.contains('has-notes')`);
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
     let capture;
@@ -470,7 +482,7 @@ app.whenReady().then(async () => {
       }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
-    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
+    await js(`document.querySelector('button[aria-label="Studio"]').click()`);
     await wait(`!!document.querySelector('.ev-studio:not([hidden]) .ev-resource-open')`);
     await js(
       `[...document.querySelectorAll('.ev-resource-open')].find(b=>b.textContent.includes('main.py')).click()`,

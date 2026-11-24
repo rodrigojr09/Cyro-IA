@@ -320,6 +320,8 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     >
       <UpdateNotice />
       <Sidebar
+        collapsed={preferences.collapsed}
+        onToggleSidebar={() => setPreferences({ collapsed: !preferences.collapsed })}
         state={state}
         busy={busy}
         search={search}
@@ -415,14 +417,6 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       />
       <main className="main-panel" hidden={evActive}>
         <header className="topbar">
-          <button
-            id="sidebar-toggle"
-            aria-label="Alternar barra lateral"
-            aria-expanded={!preferences.collapsed}
-            onClick={() => setPreferences({ collapsed: !preferences.collapsed })}
-          >
-            <Icon name="panel-left" />
-          </button>
           <div className="breadcrumbs">
             <button
               id="project-name"

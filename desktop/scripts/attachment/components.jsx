@@ -103,12 +103,12 @@ export function AttachmentCard({
           )}
           {!imageOnly && <Icon name={suggestion ? 'plus' : 'save'} />}
         </button>
-        {onRemove && !imageOnly && (
+        {onRemove && (!imageOnly || suggestion) && (
           <button
             id={removeId}
             className="attachment-remove"
             type="button"
-            aria-label={'Remover ' + file.name}
+            aria-label={suggestion ? 'Dispensar sugestão de colagem' : 'Remover ' + file.name}
             disabled={working || busy}
             onClick={onRemove}
           >

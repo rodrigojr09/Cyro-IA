@@ -196,13 +196,15 @@ export function Composer({
         <span>Enter para enviar · Shift+Enter para nova linha</span>
       </div>
       {!isWriter && (
-        <p id={idPrefix + 'attachment-caption'} className="attachment-caption attachment-privacy">
-          <Icon name="shield" />
-          <span>
-            <strong>Privacidade dos anexos.</strong>{' '}
+        <div className="attachment-caption attachment-privacy">
+          <span tabIndex={0} aria-describedby={idPrefix + 'attachment-caption'} className="attachment-privacy-label">
+            <Icon name="shield" />
+            <strong>Privacidade dos anexos.</strong>
+          </span>
+          <span role="tooltip" id={idPrefix + 'attachment-caption'} className="attachment-privacy-details">
             {attachmentCaption || 'Os arquivos originais ficam neste computador. Ao enviar a mensagem, o conteúdo disponível para análise pode ser enviado à IA. Até 5 arquivos de 5 MB cada.'}
           </span>
-        </p>
+        </div>
       )}
       {state.storage?.cloud?.blocked && (
         <p className="storage-blocked" role="alert">

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Icon } from '../ui/Icon';
 export function Sidebar({
+  collapsed,
+  onToggleSidebar,
   state,
   busy,
   search,
@@ -47,7 +49,16 @@ export function Sidebar({
       <div className="brand">
         <span className="brand-mark">C</span>
         <strong>Cyro IA</strong>
-        <span className="brand-caption">WORKSPACE</span>
+        <button
+          id="sidebar-toggle"
+          type="button"
+          aria-label={collapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+          onClick={onToggleSidebar}
+        >
+          <Icon name="panel-left" />
+        </button>
       </div>
       <button id="ev-nav" className="primary new-chat-action" title="Novo Espaço Virtual" disabled={!state.ready || busy} onClick={onEV}>
         <Icon name="folder-plus" />
@@ -94,16 +105,14 @@ export function Sidebar({
                 .map((chat) => (
                   <div
                     key={chat.id}
-                    className="ev-sidebar-row"
+                    className={'ev-sidebar-row' + (evActive && activeEVId === chat.id ? ' active' : '')}
                     onContextMenu={(event) => {
                       event.preventDefault();
                       onEVMenu(chat);
                     }}
                   >
                     <button
-                      className={
-                        'nav-item chat-item' + (evActive && activeEVId === chat.id ? ' active' : '')
-                      }
+                      className="nav-item chat-item"
                       aria-current={evActive && activeEVId === chat.id ? 'page' : undefined}
                       disabled={busy || !state.ready}
                       onClick={() => onEVChat(chat)}
@@ -119,7 +128,7 @@ export function Sidebar({
                       disabled={busy || !state.ready}
                       onClick={() => onEVMenu(chat)}
                     >
-                      ⋯
+                      <Icon name="gear" />
                     </button>
                   </div>
                 ))}

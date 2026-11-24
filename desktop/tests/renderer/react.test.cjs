@@ -555,7 +555,7 @@ test('clipboard uses the shared card and attaches only after explicit local acti
     assert.match(card.querySelector('#clipboard-use').getAttribute('aria-label'), /Usar/);
     assert.equal(card.querySelector('.attachment-privacy'), null);
     assert.equal(card.querySelector('.attachment-info'), null);
-    assert.equal(card.querySelector('.attachment-remove'), null);
+    assert.equal(card.querySelector('#clipboard-ignore').getAttribute('aria-label'), 'Dispensar sugestão de colagem');
     assert.equal(attached, 0);
     assert.equal(sent, 0);
     const add = card.querySelector('#clipboard-use');

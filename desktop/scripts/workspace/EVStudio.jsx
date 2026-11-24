@@ -57,7 +57,6 @@ export const EVStudio = forwardRef(function EVStudio(
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(''),
     [search, setSearch] = useState(''),
-    [expanded, setExpanded] = useState(false),
     [runtime, setRuntime] = useState('shell'),
     [command, setCommand] = useState('ls -la'),
     [localResults, setLocalResults] = useState({}),
@@ -501,7 +500,7 @@ export const EVStudio = forwardRef(function EVStudio(
               : 'Preview';
   return (
     <aside
-      className={'ev-studio' + (pane ? ' has-panel' : '') + (pane?.kind === 'table' ? ' has-table' : '') + (expanded ? ' is-expanded' : '')}
+      className={'ev-studio' + (pane ? ' has-panel' : '') + (pane?.kind === 'table' ? ' has-table' : '')}
       hidden={hidden || !visible}
       aria-label="Arquivos e painéis do EV"
     >
@@ -708,18 +707,10 @@ export const EVStudio = forwardRef(function EVStudio(
               <h2 title={title}>{title}</h2>
             </div>
             <button
-              title={expanded ? 'Reduzir painel' : 'Expandir painel'}
-              aria-label={expanded ? 'Reduzir painel' : 'Expandir painel'}
-              onClick={() => setExpanded(!expanded)}
-            >
-              <Icon name={expanded ? 'minimize' : 'maximize'} />
-            </button>
-            <button
               aria-label="Fechar painel"
               title="Fechar painel"
               onClick={() => {
                 setPane(null);
-                setExpanded(false);
               }}
             >
               <Icon name="close" />
