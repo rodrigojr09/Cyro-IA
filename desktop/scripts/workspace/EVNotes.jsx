@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { publicError } from '../shared/bridge';
 
+function documentTitle(file) {
+  const { number, total } = file.fiscal || {};
+  if (!number) return file.name;
+  const value = typeof total === 'string' && total.trim() ? Number(total) : NaN;
+  return 'NF-e ' + number + (Number.isFinite(value)
+    ? ' · ' + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+    : '');
+}
+
 export function EVNotes({
   projectId,
   hidden,
@@ -130,15 +139,22 @@ export function EVNotes({
                     <button
                       type="button"
                       aria-pressed={selected === file.id}
+                      title={file.fiscal?.accessKey || file.name}
                       onClick={() => {
                         setSelected(file.id);
                         onOpen?.(file);
                       }}
                     >
-                      <strong>{file.name}</strong>
+                      <div className="ev-document-label">
+                        <strong>{documentTitle(file)}</strong>
+                        {/\.(xml|pdf|xlsx|xls|csv)$/i.test(file.name) && (
+                          <span>{file.name.split('.').at(-1).toUpperCase()}</span>
+                        )}
+                      </div>
+                      {file.fiscal?.accessKey && <small>{file.fiscal.accessKey}</small>}
                       <small>
                         {{
-                          READY: 'Enviado',
+                          READY: file.fiscal ? 'Lido' : 'Enviado',
                           PROCESSED: 'Lido',
                           ERROR: 'Falha na leitura',
                           PROCESSING: 'Processando',

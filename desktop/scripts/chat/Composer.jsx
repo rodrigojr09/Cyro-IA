@@ -195,20 +195,15 @@ export function Composer({
         </span>
         <span>Enter para enviar · Shift+Enter para nova linha</span>
       </div>
-      {!isWriter && (attachmentCaption ? (
-        <p id={idPrefix + 'attachment-caption'} className="attachment-caption">
-          {attachmentCaption}
-        </p>
-      ) : (
+      {!isWriter && (
         <p id={idPrefix + 'attachment-caption'} className="attachment-caption attachment-privacy">
           <Icon name="shield" />
           <span>
-            <strong>Privacidade dos anexos.</strong> Os arquivos originais ficam neste computador.
-            Ao enviar a mensagem, o conteúdo disponível para análise pode ser enviado à IA.
-            {' '}Até 5 arquivos de 5 MB cada.
+            <strong>Privacidade dos anexos.</strong>{' '}
+            {attachmentCaption || 'Os arquivos originais ficam neste computador. Ao enviar a mensagem, o conteúdo disponível para análise pode ser enviado à IA. Até 5 arquivos de 5 MB cada.'}
           </span>
         </p>
-      ))}
+      )}
       {state.storage?.cloud?.blocked && (
         <p className="storage-blocked" role="alert">
           Limite de memória na nuvem atingido. Apague alguns chats nas configurações para continuar

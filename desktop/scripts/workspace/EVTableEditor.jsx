@@ -9,11 +9,16 @@ export function EVTableEditor({
   busy,
   onPage,
   onDelete,
+  focusRowId,
 }) {
   const { columns, rows, source } = draft;
   const simple = source !== 'space';
   const [page, setPage] = useState(0);
   useEffect(() => setPage(0), [draft.name]);
+  const focused = React.useRef(null);
+  useEffect(() => {
+    if (focusRowId) focused.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [focusRowId, draft.offset]);
   const start = simple ? page * 50 : 0,
     visible = simple ? rows.slice(start, start + 50) : rows;
   const letter = (j) =>
@@ -81,7 +86,11 @@ export function EVTableEditor({
             {visible.map((row, local) => {
               const i = local + start;
               return (
-                <tr key={draft.rowIds?.[i] || i}>
+                <tr
+                  key={draft.rowIds?.[i] || i}
+                  ref={focusRowId && draft.rowIds?.[i] === focusRowId ? focused : undefined}
+                  className={focusRowId && draft.rowIds?.[i] === focusRowId ? 'ev-source-row' : undefined}
+                >
                   <th className="ev-sheet-index">{(draft.offset || 0) + i + 1}</th>
                   {columns.map((c, j) => (
                     <td key={j}>

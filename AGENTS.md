@@ -117,3 +117,9 @@ Códigos/comandos rodam no backend em serviço executor separado, com área priv
 persistente por EV e sandbox temporário. Desktop confirma e solicita; não exige Docker
 local. Preservar 9.0.0. Após validar, enviar e criar tag v9.0.1 conforme pedido explícito
 do proprietário. Sem force push ou substituir tags existentes.
+
+## Envio contínuo — 24/11/2026
+
+O proprietário autorizou push normal após validar cada alteração do Cyro.
+No Cyro-IA, manter também `master` atualizado para a Vercel. No Backend,
+usar o branch remoto existente. Não criar tags ou releases sem pedido específico.

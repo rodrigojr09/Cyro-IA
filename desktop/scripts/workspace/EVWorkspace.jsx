@@ -322,7 +322,24 @@ function Batch({ item, projectId, hidden }) {
     </div>
   );
 }
-function Artifact({ item, projectId, hidden, onOpen, onTable }) {
+function Artifact({ item, projectId, hidden, onOpen, onTable, onReference }) {
+  if (item.type === 'REFERENCES')
+    return (
+      <div className="ev-source-links" aria-label="Referências do EV">
+        <small>Referências do EV</small>
+        {item.references.map((reference) => (
+          <button
+            type="button"
+            key={reference.rowId || reference.id}
+            title={reference.name}
+            onClick={() => onReference(reference)}
+          >
+            <Icon name={reference.kind === 'table' ? 'table' : 'text'} />
+            <span>{reference.name}{reference.rowId ? ' · Abrir linha' : ''}</span>
+          </button>
+        ))}
+      </div>
+    );
   if (item.type === 'TABLE') return <DataTable item={item} onOpen={onTable} />;
   if (item.type === 'WORKBENCH')
     return (
@@ -995,13 +1012,14 @@ export function EVWorkspace({
             </button>
             <button
               type="button"
-              className="ev-notes-toggle"
-              aria-label="Notas e arquivos"
-              title="Notas e arquivos"
+              className="ev-notes-toggle ev-studio-toggle"
+              aria-label="Arquivos e Studio"
+              title="Arquivos e Studio"
               aria-expanded={notesOpen}
               onClick={() => setNotesOpen((old) => !old)}
             >
               <Icon name="folder" />
+              <span>Arquivos e Studio</span>
             </button>
           </header>
           <div className="ev-chat-history" ref={scroll} aria-live="polite">
@@ -1032,6 +1050,7 @@ export function EVWorkspace({
                       item={item}
                       onOpen={(intent) => studio.current?.openIntent(intent)}
                       onTable={(id) => studio.current?.openTable(id, 'space')}
+                      onReference={(reference) => studio.current?.openReference(reference)}
                       projectId={space?.id}
                       hidden={hidden}
                     />
@@ -1096,7 +1115,7 @@ export function EVWorkspace({
               dictation={dictation}
               onDictation={() => void dictation.toggle().catch((e) => setNotice(publicError(e)))}
               status={loading ? 'Cyro está trabalhando…' : notice || 'Pronto'}
-              attachmentCaption="Qualquer arquivo · até 8 MB. A leitura depende do formato; remover da mensagem preserva o original."
+              attachmentCaption="O arquivo enviado fica no seu EV. O conteúdo disponível para análise pode ser enviado à IA. Até 8 MB por arquivo."
             />
           </div>
           <EVStudio

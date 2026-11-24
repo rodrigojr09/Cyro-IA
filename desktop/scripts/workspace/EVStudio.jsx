@@ -115,6 +115,7 @@ export const EVStudio = forwardRef(function EVStudio(
           id: next.target,
           offset,
           limit: 50,
+          ...(next.rowId && offset === 0 ? { focusRowId: next.rowId } : {}),
         });
         if (!active.current) return;
         const columns = out.table.columns;
@@ -130,7 +131,7 @@ export const EVStudio = forwardRef(function EVStudio(
           rowIds: out.rows.map((r) => r.id),
           entityRevision: out.table.revision,
           total: out.table.rowCount,
-          offset,
+          offset: out.offset ?? offset,
           dirty: false,
         });
       } else {
@@ -426,6 +427,17 @@ export const EVStudio = forwardRef(function EVStudio(
     reveal(panel);
   }
   useImperativeHandle(ref, () => ({
+    openReference: (reference) => void perform(async () => {
+      if (reference.kind === 'table') {
+        const next = { kind: 'table', target: reference.id, source: 'space', rowId: reference.rowId };
+        if (draftRef.current[keyFor(next)]?.dirty)
+          throw Error('Salve suas alterações antes de abrir a linha de referência.');
+        await choose(next);
+      } else {
+        const { file } = await request({ action: 'file.get', projectId, id: reference.id });
+        reveal({ kind: 'document', target: file.id, file });
+      }
+    }),
     openCode: (payload) => void perform(() => blockCode(payload, false)),
     runCode: (payload) => void perform(() => blockCode(payload, true)),
     openTable: (target, source = 'workbench') =>
@@ -489,20 +501,20 @@ export const EVStudio = forwardRef(function EVStudio(
               : 'Preview';
   return (
     <aside
-      className={'ev-studio' + (pane ? ' has-panel' : '') + (expanded ? ' is-expanded' : '')}
+      className={'ev-studio' + (pane ? ' has-panel' : '') + (pane?.kind === 'table' ? ' has-table' : '') + (expanded ? ' is-expanded' : '')}
       hidden={hidden || !visible}
       aria-label="Arquivos e painéis do EV"
     >
       <div className="ev-studio-explorer">
         <header className="ev-studio-explorer-heading">
           <div>
-            <span>SEU ESPAÇO</span>
-            <h2>Arquivos</h2>
+            <span>STUDIO</span>
+            <h2>Conteúdo do EV</h2>
           </div>
           <button
             type="button"
-            title="Fechar arquivos"
-            aria-label="Fechar arquivos"
+            title="Fechar Studio"
+            aria-label="Fechar Studio"
             onClick={onClose}
           >
             <Icon name="close" />
@@ -837,7 +849,8 @@ export const EVStudio = forwardRef(function EVStudio(
                   }
                 })
               }
-              onPage={(offset) => void perform(() => choose(pane, wb.current, offset))}
+              focusRowId={pane.rowId}
+              onPage={(offset) => void perform(() => choose({ ...pane, rowId: undefined }, wb.current, offset))}
               onExport={() =>
                 void perform(async () => {
                   const content = csvFor(draft),

@@ -49,18 +49,19 @@ export function Sidebar({
         <strong>Cyro IA</strong>
         <span className="brand-caption">WORKSPACE</span>
       </div>
-      <button id="ev-nav" className="primary new-chat-action" disabled={!state.ready || busy} onClick={onEV}>
+      <button id="ev-nav" className="primary new-chat-action" title="Novo Espaço Virtual" disabled={!state.ready || busy} onClick={onEV}>
         <Icon name="folder-plus" />
-        Novo Espaço Virtual
+        <span>Novo Espaço Virtual</span>
       </button>
       <button
         id="new-general-chat"
         className="quiet new-chat-action"
+        title="Novo chat"
         disabled={!state.ready || busy}
         onClick={() => onNewChat('')}
       >
         <Icon name="plus" />
-        Novo chat
+        <span>Novo chat</span>
       </button>
       <button
         id="quick-nav"
@@ -70,7 +71,7 @@ export function Sidebar({
         onClick={() => onView('', state.chats.find((chat) => chat.slot === 'quick')?.id)}
       >
         <Icon name="zap" />
-        Chat rápido
+        <span>Chat rápido</span>
       </button>
       <label className="search">
         <Icon name="search" />
@@ -139,13 +140,13 @@ export function Sidebar({
         </p>
       </nav>
       <footer className="sidebar-footer">
-        <button id="logout" onClick={onLogout}>
+        <button id="logout" title="Sair da conta" onClick={onLogout}>
           <Icon name="logout" />
-          Sair da conta
+          <span>Sair da conta</span>
         </button>
-        <button id="settings-open" onClick={onSettings}>
+        <button id="settings-open" title="Configurações" onClick={onSettings}>
           <Icon name="settings" />
-          Configurações
+          <span>Configurações</span>
         </button>
         <span
           className="read-only-note"

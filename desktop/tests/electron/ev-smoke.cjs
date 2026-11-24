@@ -24,7 +24,10 @@ app.whenReady().then(async () => {
       planId = randomUUID(),
       rowId = randomUUID();
     const noteId = randomUUID();
-    const note = { id: noteId, name: 'nota-teste.xml', status: 'PROCESSED' };
+    const note = {
+      id: noteId, name: 'nota-teste.xml', status: 'PROCESSED',
+      fiscal: { number: '45892', total: '1240.00', accessKey: '1'.repeat(44) },
+    };
     const space = {
       id: projectId,
       chatId: conversationId,
@@ -77,6 +80,12 @@ app.whenReady().then(async () => {
         c ||= { action: 'catalog' };
         calls.push(c);
         if (c.action === 'tables.list') return { tables: [] };
+        if (c.action === 'table.read' && c.focusRowId === rowId)
+          return {
+            table: { name: 'Conferência de fretes', rowCount: 51, revision: 1, columns: [{ id: columnId, name: 'Frete' }] },
+            rows: [{ id: rowId, data: { [columnId]: '22,50' } }],
+            offset: 50,
+          };
         if (c.action === 'workbench.runFile') {
           const file = workbench.files.find((f) => f.name === c.name);
           workbench = {
@@ -234,7 +243,10 @@ app.whenReady().then(async () => {
               item.type === 'PROPOSAL' ? { ...item, state: 'APPLIED' } : item,
             ),
           }));
-        artifacts = [...artifacts, { messageId: messages.at(-1).id, items: [item] }];
+        const items = c.message === 'confirmar'
+          ? [item, { type: 'REFERENCES', references: [{ kind: 'table', id: tableId, rowId, name: 'Conferência de fretes' }] }]
+          : [item];
+        artifacts = [...artifacts, { messageId: messages.at(-1).id, items }];
         return { ownerId, space, conversation: { id: conversationId }, messages, artifacts };
       },
     };
@@ -395,7 +407,7 @@ app.whenReady().then(async () => {
     assert.equal(await js(`document.getElementById('ev-create-menu').open`),false);
 
 
-    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
+    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
     await wait(`!!document.querySelector('.ev-notes li button')`);
     await js(`document.querySelector('.ev-notes li button').click()`);
     await wait(`document.querySelector('.ev-note-detail')?.textContent.includes('150.00')`);
@@ -428,6 +440,11 @@ app.whenReady().then(async () => {
     await wait(
       `!!document.querySelector('.ev-chat-table') && !document.getElementById('ev-message').disabled`,
     );
+    await js(`document.querySelector('.ev-source-links button').click()`);
+    await wait(`document.querySelector('.ev-source-row .ev-sheet-index')?.textContent === '51'`);
+    await wait(`document.querySelector('.ev-document-label strong')?.textContent.includes('NF-e 45892')`);
+    await fs.writeFile(path.resolve(__dirname, '../../../build/v9/ev-studio-reference.png'), (await win.webContents.capturePage()).toPNG());
+    await js(`document.querySelector('button[aria-label="Fechar painel"]').click()`);
     assert.ok(
       await js(
         `!!document.querySelector('#ev-attach-files') && !!document.querySelector('#ev-microphone') && !!document.querySelector('#ev-send')`,
@@ -439,7 +456,7 @@ app.whenReady().then(async () => {
       path.join(shots, 'ev-notes-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
-    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
+    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
     await wait(`!document.querySelector('.ev-chat').classList.contains('has-notes')`);
     await js(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))`);
     let capture;
@@ -453,7 +470,7 @@ app.whenReady().then(async () => {
       }
     }
     await fs.writeFile(path.join(shots, 'ev-logistics-chat.png'), capture.toPNG());
-    await js(`document.querySelector('button[aria-label="Notas e arquivos"]').click()`);
+    await js(`document.querySelector('button[aria-label="Arquivos e Studio"]').click()`);
     await wait(`!!document.querySelector('.ev-studio:not([hidden]) .ev-resource-open')`);
     await js(
       `[...document.querySelectorAll('.ev-resource-open')].find(b=>b.textContent.includes('main.py')).click()`,
@@ -478,7 +495,7 @@ app.whenReady().then(async () => {
       path.join(shots, 'ev9-preview-panel.png'),
       (await win.webContents.capturePage()).toPNG(),
     );
-    await js(`document.querySelector('button[aria-label="Fechar arquivos"]').click()`);
+    await js(`document.querySelector('button[aria-label="Fechar Studio"]').click()`);
     await js(`document.querySelector('#settings-open').click()`);
     await wait(`!!document.querySelector('#settings-tabs')`);
     await js(
@@ -548,6 +565,7 @@ app.whenReady().then(async () => {
           [
             'files.list',
             'tables.list',
+            'table.read',
             'file.get',
             'catalog',
             'list',
