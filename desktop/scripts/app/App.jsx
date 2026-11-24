@@ -101,7 +101,9 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
     (!isWriter || !!writerState.document) &&
     !attachments.choosing;
   const status = state.error || (isWriter ? writerState.error || writerState.status : state.status);
-  const rows = isWriter ? writerState.messages : state.messages.slice(-state.visible);
+  const chatRows = state.messages.slice(-state.visible);
+  if (state.pendingMessage) chatRows.push(state.pendingMessage);
+  const rows = isWriter ? writerState.messages : chatRows;
   const run = async (fn) => {
     try {
       return await fn();

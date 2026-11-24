@@ -18,6 +18,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     project: null,
     chat: null,
     messages: [],
+    pendingMessage: null,
     visible: 100,
     status: 'Carregando suas conversas...',
     error: '',
@@ -263,10 +264,14 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
     if (sending || !canSend() || (!text.trim() && !attachments.length) || text.length > 6000)
       return false;
     sending = true;
+    const question = text.trim() || 'Analise os anexos.';
     try {
       const s = store.get();
       const contextEpoch = generation;
-      store.set({ loading: true });
+      store.set({
+        loading: true,
+        pendingMessage: { role: 'user', content: question, attachments },
+      });
       try {
         if (s.project) {
           const size = await post('/projects/selection/size', { project_id: s.project.id });
@@ -288,16 +293,11 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
       if (!canSend() || !store.get().chat) return false;
       const chat = store.get().chat,
         previous = cache.get(chat.id);
-      const historyBefore = store.get().messages.filter((message) => !message.temporary);
-      const question = text.trim() || 'Analise os anexos.';
+      const historyBefore = store.get().messages;
       store.set({
         busy: true,
         error: '',
         status: 'Cyro está pensando...',
-        messages: [
-          ...store.get().messages,
-          { role: 'user', content: question, attachments, temporary: true },
-        ],
         pendingActions: [],
       });
       try {
@@ -324,10 +324,12 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
             chat: saved,
             chats: store.get().chats.map((item) => (item.id === chat.id ? saved : item)).sort((a, b) => String(b.last_message_at || b.created_at).localeCompare(String(a.last_message_at || a.created_at))),
             messages: entry.messages,
+            pendingMessage: null,
           });
         } else {
           cache.delete(chat.id);
           store.set({
+            pendingMessage: null,
             messages: [
               ...historyBefore,
               { role: 'user', content: question, attachments },
@@ -349,6 +351,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
         }
       }
     } finally {
+      if (store.get().pendingMessage) store.set({ pendingMessage: null });
       sending = false;
     }
   }
@@ -439,6 +442,7 @@ export function createWorkspace({ api = defaultApi, post = defaultPost } = {}) {
         project: null,
         chat: null,
         messages: [],
+        pendingMessage: null,
         projects: [],
         chats: [],
         storage: null,

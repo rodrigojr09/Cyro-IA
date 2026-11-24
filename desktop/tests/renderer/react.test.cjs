@@ -75,22 +75,36 @@ test('React workspace blocks sending until the entire bootstrap resolves and loa
     await env.dispose();
   }
 });
-test('React chat waits for a durable response and keeps draft after failure', async () => {
+test('React shows the message before creating its conversation and restores the draft after failure', async () => {
   const env = environment(),
+    creation = deferred(),
     pending = deferred(),
     f = fixture(env, { send: () => pending.promise }),
-    workspace = env.createWorkspace({ api: f.transport, post: f.post });
+    workspace = env.createWorkspace({
+      api: f.transport,
+      post: async (route, body) => {
+        if (route === '/chats/create') await creation.promise;
+        return f.post(route, body);
+      },
+    });
   try {
     await env.mount(env.App, { workspace });
     await input('#input', 'Minha pergunta');
     await click('#send');
     assert.equal(document.querySelector('#input').value, '');
     assert.equal(document.querySelector('#send').disabled, true);
+    assert.match(document.querySelector('#messages .message.user').textContent, /Minha pergunta/);
+    assert.equal(f.calls.some((call) => call.route === '/chat'), false);
+    await act(async () => creation.resolve());
+    await settle();
+    assert.equal(f.calls.some((call) => call.route === '/chat'), true);
+    assert.equal(document.querySelectorAll('#messages .message.user').length, 1);
     assert.doesNotMatch(document.querySelector('#messages').textContent, /Resposta salva/);
     await act(async () => pending.reject(Error('Falha de persistência')));
     await settle();
     assert.equal(document.querySelector('#input').value, 'Minha pergunta');
     assert.match(document.querySelector('#status').textContent, /Falha de persistência/);
+    assert.equal(document.querySelector('#messages .message.user'), null);
     assert.doesNotMatch(document.querySelector('#messages').textContent, /Resposta salva/);
   } finally {
     await env.dispose();
@@ -106,6 +120,8 @@ test('React chat reuses acknowledged messages when switching away and back', asy
     await input('#input', 'Investigue o login');
     await click('#send');
     assert.match(document.querySelector('#messages').textContent, /Resposta salva/);
+    const sentMessages = [...document.querySelectorAll('#messages .message.user')];
+    assert.equal(sentMessages.filter((row) => row.textContent.includes('Investigue o login')).length, 1);
     await act(async () => workspace.view('project-a', 'second'));
     await act(async () => workspace.view('project-a', 'first'));
     assert.match(document.querySelector('#messages').textContent, /Resposta salva/);

@@ -20,7 +20,7 @@ export function Conversation({
     before = useRef(null),
     [atBottom, setAtBottom] = useState(true);
   const [copyMenu, setCopyMenu] = useState(null);
-  const thinking = state.busy || writerState.busy;
+  const thinking = state.busy || writerState.busy || !!state.pendingMessage;
   useLayoutEffect(() => setCopyMenu(null), [state.chat?.id]);
   useLayoutEffect(() => {
     if (thinking) sticky.current = true;
