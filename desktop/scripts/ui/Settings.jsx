@@ -4,6 +4,42 @@ import { Integrations } from '../integrations/Integrations';
 import { Storage } from '../storage/Storage';
 import { AccountPanel } from '../session/AccountPanel';
 import { MemoryPanel } from '../memory/MemoryPanel';
+import { EVCatalogPanel } from '../workspace/EVCatalog';
+import { evRequest } from '../workspace/EVWorkspace';
+import { publicError } from '../shared/bridge';
+
+function EVSettingsCatalog() {
+  const [catalog, setCatalog] = useState(null);
+  const [busy, setBusy] = useState(true);
+  const [error, setError] = useState('');
+  async function load(input) {
+    setBusy(true);
+    setError('');
+    try {
+      setCatalog(await evRequest(input));
+    } catch (failure) {
+      setError(publicError(failure));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const refresh = () => void load({ action: 'catalog' });
+  useEffect(refresh, []);
+  return (
+    <EVCatalogPanel
+      catalog={catalog}
+      busy={busy}
+      error={error}
+      onRefresh={refresh}
+      onManage={(extension, install) => void load({
+        action: install ? 'extension.install' : 'extension.uninstall',
+        extensionId: extension.id,
+        operationId: crypto.randomUUID(),
+      })}
+    />
+  );
+}
+
 export function Settings({
   open,
   onClose,
@@ -51,6 +87,7 @@ export function Settings({
     'Quick Chat',
     'Área de transferência',
     'Integrações',
+    'Catálogo de EVs',
     'Sobre',
   ];
   useEffect(() => {
@@ -71,7 +108,7 @@ export function Settings({
       hidden={!open}
       tabIndex={-1}
       aria-labelledby="settings-heading"
-      className={'settings-page' + (category === 'Integrações' ? ' settings-integrations' : '')}
+      className={'settings-page' + (['Integrações', 'Catálogo de EVs'].includes(category) ? ' settings-integrations' : '')}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault();
@@ -114,6 +151,7 @@ export function Settings({
             <SettingsSectionBoundary key={category}>
               {category === 'Conta e plano' && <AccountPanel />}
               {category === 'Memória' && <MemoryPanel projectId={memoryProjectId} />}
+              {category === 'Catálogo de EVs' && <EVSettingsCatalog />}
               {category === 'Aparência' && (
                 <>
                   <h3>Aparência</h3>
@@ -279,7 +317,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 9.0.2</p>
+                  <p>Versão 10.0.0</p>
                   <button
                     onClick={() =>
                       perform(async () => {

@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { pathToFileURL } = require('node:url');
+const { isWorkspaceEvent, isWorkspaceContents } = require('../app/workspace-page.cjs');
 const { execFile } = require('node:child_process');
 const { createUpdater } = require('./client');
 function signature(file) {
@@ -26,12 +26,10 @@ function signature(file) {
 }
 function installUpdateIPC({ electron, service, origin, dataDir }) {
   const { app, BrowserWindow, ipcMain, shell } = electron;
-  const mainPage = pathToFileURL(path.resolve(__dirname, '../../index.html')).href;
   function trusted(event) {
     return (
       app.isPackaged &&
-      event.senderFrame === event.sender.mainFrame &&
-      event.senderFrame.url === mainPage &&
+      isWorkspaceEvent(event) &&
       service()?.current()
     );
   }
@@ -43,7 +41,7 @@ function installUpdateIPC({ electron, service, origin, dataDir }) {
     verifySignature: signature,
     notify: (value) => {
       for (const window of BrowserWindow.getAllWindows())
-        if (window.webContents.getURL() === mainPage)
+        if (isWorkspaceContents(window.webContents))
           window.webContents.send('cyro:updates-state', value);
     },
     openLink: (url) => shell.openExternal(url),
@@ -56,8 +54,7 @@ function installUpdateIPC({ electron, service, origin, dataDir }) {
     ipcMain.handle('cyro:updates-' + action, async (event) => {
       if (
         !app.isPackaged &&
-        event.senderFrame === event.sender.mainFrame &&
-        event.senderFrame.url === mainPage
+        isWorkspaceEvent(event)
       )
         return { phase: 'disabled', installedVersion: app.getVersion() };
       if (!trusted(event)) throw Error('Solicitação não autorizada.');

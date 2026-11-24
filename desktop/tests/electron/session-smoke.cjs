@@ -122,15 +122,20 @@ app.whenReady().then(async () => {
     await window.webContents.executeJavaScript(
       `document.getElementById('login-email').value='test@example.test';document.getElementById('login-password').value='password-for-test-only';document.getElementById('login-form').requestSubmit();`,
     );
+    const hosted = process.env.CYRO_WEB_DEVELOPMENT === '1';
+    const workspaceLoaded = () => hosted
+      ? window.webContents.getURL() === 'http://127.0.0.1:3000/'
+      : window.webContents.getURL().endsWith('/index.html');
     for (let attempt = 0; attempt < 100; attempt++) {
       if (
-        window.webContents.getURL().endsWith('/index.html') &&
-        BrowserWindow.getAllWindows().every((win) => !win.webContents.isLoading())
+        workspaceLoaded() &&
+        BrowserWindow.getAllWindows().every((win) => !win.webContents.isLoading()) &&
+        await window.webContents.executeJavaScript("!!document.getElementById('status')")
       )
         break;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    assert.ok(window.webContents.getURL().endsWith('/index.html'), await window.webContents.executeJavaScript('document.body.innerText'));
+    assert.ok(workspaceLoaded(), await window.webContents.executeJavaScript('document.body.innerText'));
     const workspace = await window.webContents.executeJavaScript(
       "window.jarvisWindow.api('/workspace')",
     );

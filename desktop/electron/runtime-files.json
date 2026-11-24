@@ -1,5 +1,6 @@
 [
   "scripts/app/main.js",
+  "scripts/app/workspace-page.cjs",
   "scripts/app/preload.js",
   "scripts/app/portable-paths.js",
   "scripts/app/window-state.js",

@@ -35,6 +35,10 @@ async function setup({ saved = false, corrupt = false, failUnlock = false, login
       frame.url = pathToFileURL(value).href;
     },
   };
+  require('../../scripts/app/workspace-page.cjs').registerWorkspace(window, {
+    packaged: false,
+    cloud: true,
+  });
   let current = saved
     ? { origin: 'https://jarvis.example.test', credential: 'a'.repeat(43) }
     : null;

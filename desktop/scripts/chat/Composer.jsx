@@ -23,7 +23,7 @@ export function Composer({
   idPrefix = '',
   inputId = 'input',
   placeholder = 'Converse com o Cyro...',
-  attachmentCaption = 'Qualquer extensão · até 5 arquivos de 5 MB cada. Originais ficam neste computador; a análise disponível envia conteúdo à IA.',
+  attachmentCaption,
   active = true,
   disableInput = false,
   cancelable = true,
@@ -101,6 +101,7 @@ export function Composer({
           id={idPrefix + 'attach-files'}
           className="attach-files"
           aria-label="Anexar arquivos"
+          aria-describedby={idPrefix + 'attachment-caption'}
           hidden={isWriter}
           disabled={!canSend || attachments.files.length >= 5}
           onClick={attachments.choose}
@@ -194,9 +195,20 @@ export function Composer({
         </span>
         <span>Enter para enviar · Shift+Enter para nova linha</span>
       </div>
-      <p className="attachment-caption" hidden={isWriter}>
-        {attachmentCaption}
-      </p>
+      {!isWriter && (attachmentCaption ? (
+        <p id={idPrefix + 'attachment-caption'} className="attachment-caption">
+          {attachmentCaption}
+        </p>
+      ) : (
+        <p id={idPrefix + 'attachment-caption'} className="attachment-caption attachment-privacy">
+          <Icon name="shield" />
+          <span>
+            <strong>Privacidade dos anexos.</strong> Os arquivos originais ficam neste computador.
+            Ao enviar a mensagem, o conteúdo disponível para análise pode ser enviado à IA.
+            {' '}Até 5 arquivos de 5 MB cada.
+          </span>
+        </p>
+      ))}
       {state.storage?.cloud?.blocked && (
         <p className="storage-blocked" role="alert">
           Limite de memória na nuvem atingido. Apague alguns chats nas configurações para continuar

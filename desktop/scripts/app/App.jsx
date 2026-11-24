@@ -440,7 +440,9 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
               {state.project?.name || 'Conversas gerais'}
             </button>
             <h1 id="conversation-name" data-chat-id={state.chat?.id}>
-              {state.chat?.title || (state.project ? 'Visão geral do projeto' : 'Nova conversa')}
+              {state.chat?.slot === 'quick'
+                ? 'Chat rápido'
+                : state.chat?.title || (state.project ? 'Visão geral do projeto' : 'Nova conversa')}
             </h1>
           </div>
           <div className="top-actions">

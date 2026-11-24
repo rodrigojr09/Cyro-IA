@@ -7,6 +7,7 @@ const os = require('node:os');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const { installEVIPC } = require('../../scripts/workspace/ev-ipc');
+const workspacePage = require('../../scripts/app/workspace-page.cjs');
 app.disableHardwareAcceleration();
 let win;
 const directory = require('node:fs').mkdtempSync(path.join(os.tmpdir(), 'cyro-ev-smoke-'));
@@ -282,13 +283,26 @@ app.whenReady().then(async () => {
       js(
         `(()=>{const node=document.querySelector(${JSON.stringify(selector)});const type=node.tagName==='TEXTAREA'?HTMLTextAreaElement:node.tagName==='SELECT'?HTMLSelectElement:HTMLInputElement;Object.getOwnPropertyDescriptor(type.prototype,'value').set.call(node,${JSON.stringify(value)});node.dispatchEvent(new Event('input',{bubbles:true}));node.dispatchEvent(new Event('change',{bubbles:true}));})()`,
       );
-    await win.loadFile(path.resolve(__dirname, '../../index.html'));
+    if (process.env.CYRO_WEB_DEVELOPMENT === '1') {
+      workspacePage.registerWorkspace(win, { packaged: false, cloud: true, webDevelopment: true });
+      await workspacePage.openWorkspace(win);
+      assert.equal(win.webContents.getURL(), 'http://127.0.0.1:3000/');
+    } else {
+      await win.loadFile(path.resolve(__dirname, '../../index.html'));
+    }
     await wait(
       `!!document.getElementById('ev-nav') && !document.getElementById('ev-nav').disabled`,
     );
     assert.equal(await js(`!!document.querySelector('.ev-chat')`), false);
     assert.equal(calls.filter((c) => c.action === 'assistant.open').length, 0);
-    await js(`document.querySelector('#ev-nav').click()`);
+    assert.equal(await js(`document.querySelector('#ev-nav').nextElementSibling.id`), 'new-general-chat');
+    assert.equal(await js(`document.querySelector('#quick-nav').textContent.trim()`), 'Chat rápido');
+    assert.equal(await js(`document.querySelector('#attach-files').getAttribute('aria-describedby')`), 'attachment-caption');
+    await wait(`document.querySelector('#attachment-caption')?.textContent.includes('enviado à IA')`);
+    const homeShot = path.resolve(__dirname, '../../../build/v10/chat-sidebar.png');
+    await fs.mkdir(path.dirname(homeShot), { recursive: true });
+    await fs.writeFile(homeShot, (await win.webContents.capturePage()).toPNG());
+    await js(`document.querySelector('#suggest-project').click()`);
     await wait(`document.getElementById('ev-create-menu').open`);
     assert.equal(await js(`!!document.getElementById('ev-message')`), false);
     await js(`document.querySelector('#ev-create-menu button[aria-label="Fechar"]').click()`);
@@ -355,11 +369,10 @@ app.whenReady().then(async () => {
     await wait(`document.querySelector('.ev-chat-heading .ev-sdk-notice')?.textContent.includes('0.1.7')`);
     assert.equal(
       await js(
-        `[...document.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Novo EV').length`,
+        `[...document.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Novo Espaço Virtual').length`,
       ),
       1,
     );
-    assert.equal(await js(`document.querySelector('#quick-nav').nextElementSibling.id`), 'ev-nav');
     assert.equal(await js(`document.querySelectorAll('.ev-chat-heading button').length`), 2);
     await js(`document.querySelector('button[aria-label="Opções do EV"]').click()`);
     await wait(
@@ -468,6 +481,12 @@ app.whenReady().then(async () => {
     await js(`document.querySelector('button[aria-label="Fechar arquivos"]').click()`);
     await js(`document.querySelector('#settings-open').click()`);
     await wait(`!!document.querySelector('#settings-tabs')`);
+    await js(
+      `[...document.querySelectorAll('#settings-tabs button')].find(b=>b.textContent==='Catálogo de EVs').click()`,
+    );
+    await wait(`!!document.querySelector('#settings-content [data-extension="cyro.logistics"]')`);
+    await js(`document.querySelector('#settings-content [data-extension="cyro.logistics"]').click()`);
+    await wait(`document.querySelector('#settings-content .ev-sdk-notice')?.textContent.includes('SDK desatualizado')`);
     await js(
       `[...document.querySelectorAll('#settings-tabs button')].find(b=>b.textContent==='Memória').click()`,
     );

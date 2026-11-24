@@ -49,9 +49,13 @@ export function Sidebar({
         <strong>Cyro IA</strong>
         <span className="brand-caption">WORKSPACE</span>
       </div>
+      <button id="ev-nav" className="primary new-chat-action" disabled={!state.ready || busy} onClick={onEV}>
+        <Icon name="folder-plus" />
+        Novo Espaço Virtual
+      </button>
       <button
         id="new-general-chat"
-        className="primary new-chat-action"
+        className="quiet new-chat-action"
         disabled={!state.ready || busy}
         onClick={() => onNewChat('')}
       >
@@ -61,15 +65,12 @@ export function Sidebar({
       <button
         id="quick-nav"
         className={'quiet' + (!evActive && state.chat?.slot === 'quick' ? ' active' : '')}
+        title="Abrir o histórico do seu Chat rápido"
         disabled={!state.ready || busy || !state.chats.some((chat) => chat.slot === 'quick')}
         onClick={() => onView('', state.chats.find((chat) => chat.slot === 'quick')?.id)}
       >
         <Icon name="zap" />
-        Quick Chat
-      </button>
-      <button id="ev-nav" className="quiet" disabled={!state.ready || busy} onClick={onEV}>
-        <Icon name="folder-plus" />
-        Novo EV
+        Chat rápido
       </button>
       <label className="search">
         <Icon name="search" />
@@ -85,7 +86,7 @@ export function Sidebar({
       <nav id="navigation" aria-label="Navegação">
         {evChats.length > 0 && (
           <>
-            <p className="navigation-heading">Chats EV</p>
+            <p className="navigation-heading">Espaços Virtuais</p>
             <div className="chat-list" id="ev-chats">
               {evChats
                 .filter((chat) => chat.name.toLocaleLowerCase().includes(query))

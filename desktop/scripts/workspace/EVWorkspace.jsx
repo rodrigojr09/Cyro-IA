@@ -876,7 +876,7 @@ export function EVWorkspace({
       />
       <Dialog
         id="ev-create-menu"
-        title="Novo EV"
+        title="Novo Espaço Virtual"
         open={!hidden && creationOpen}
         onClose={() => {
           if (!loading) {
@@ -1011,7 +1011,7 @@ export function EVWorkspace({
                 <p>
                   {space
                     ? 'Peça para enviar arquivos, conferir notas, criar uma tabela ou comparar planilhas. O Cyro organiza os dados e mantém o contexto deste espaço.'
-                    : 'Use Novo EV para escolher nome e tipo. Seus EVs aparecem como chats na barra lateral.'}
+                    : 'Crie um Espaço Virtual com nome e tipo. Seus espaços aparecem na barra lateral.'}
                 </p>
               </div>
             )}

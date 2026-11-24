@@ -1,7 +1,7 @@
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { randomUUID } = require('node:crypto');
-const { pathToFileURL } = require('node:url');
+const { isWorkspaceEvent } = require('../app/workspace-page.cjs');
 const MAX = 8 * 1024 * 1024;
 const MIME = {
   '.xml': 'application/xml',
@@ -19,7 +19,6 @@ const MIME = {
 };
 function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
   const { ipcMain, BrowserWindow, dialog } = electron;
-  const page = pathToFileURL(path.resolve(__dirname, '../../index.html')).href;
   let draftCredential,
     scopes = new Map();
   function session(event) {
@@ -27,8 +26,7 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       current = service()?.current();
     if (
       !win ||
-      event.senderFrame !== event.sender.mainFrame ||
-      event.senderFrame.url !== page ||
+      !isWorkspaceEvent(event) ||
       !current ||
       process.env.JARVIS_AUTHENTICATED !== '1'
     )

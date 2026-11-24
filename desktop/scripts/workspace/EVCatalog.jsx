@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import { Dialog } from '../ui/components';
 import { Icon } from '../ui/Icon';
 
@@ -21,7 +21,19 @@ export function EVSDKNotice({ extension, sdkVersion }) {
   );
 }
 
-export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onManage, onUse }) {
+export function EVCatalog({ open, onBack, ...props }) {
+  return (
+    <Dialog id="ev-extension-menu" title="Catálogo de EVs" open={open} onClose={() => {
+      if (!props.busy) onBack();
+    }}>
+      <EVCatalogPanel {...props} onBack={onBack} />
+    </Dialog>
+  );
+}
+
+export function EVCatalogPanel({ catalog, busy, error, onBack, onRefresh, onManage, onUse }) {
+  const searchId = useId();
+  const panel = useRef(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
@@ -34,15 +46,8 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
         .includes(query.trim().toLocaleLowerCase('pt-BR')),
   );
   return (
-    <Dialog
-      id="ev-extension-menu"
-      title="Catálogo de EVs"
-      open={open}
-      onClose={() => {
-        if (!busy) onBack();
-      }}
-    >
       <section
+        ref={panel}
         className="integrations-page ev-extension-catalog"
         aria-label="Catálogo de extensões EV"
         aria-busy={busy}
@@ -52,9 +57,9 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
           <h3>Um EV para cada trabalho</h3>
           <p>Instale um tipo na sua conta e crie um chat com as ferramentas certas para você.</p>
         </header>
-        <button type="button" className="ev-catalog-back" disabled={busy} onClick={onBack}>
+        {onBack && <button type="button" className="ev-catalog-back" disabled={busy} onClick={onBack}>
           Voltar à criação
-        </button>
+        </button>}
         {error && (
           <p className="ev-menu-error" role="alert">
             {error}
@@ -72,13 +77,13 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
         )}
         {catalog?.enabled && !selected && (
           <>
-            <label className="integrations-search-label" htmlFor="ev-catalog-search">
+            <label className="integrations-search-label" htmlFor={onBack ? 'ev-catalog-search' : searchId}>
               Pesquisar EVs
             </label>
             <div className="integrations-search">
               <Icon name="search" />
               <input
-                id="ev-catalog-search"
+                id={onBack ? 'ev-catalog-search' : searchId}
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -145,7 +150,7 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
               onClick={() => {
                 setSelectedId(null);
                 requestAnimationFrame(() =>
-                  document.querySelector('[data-extension="' + selected.id + '"]')?.focus(),
+                  panel.current?.querySelector('[data-extension="' + selected.id + '"]')?.focus(),
                 );
               }}
             >
@@ -201,7 +206,7 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
                   : `${selected.installed ? 'Desinstalar' : 'Instalar'} ${selected.name}`}
               </button>
             </div>
-            {selected.installed && (
+            {selected.installed && onUse && (
               <p className="ev-catalog-preserved">
                 Desinstalar preserva os dados dos espaços existentes.
               </p>
@@ -209,6 +214,5 @@ export function EVCatalog({ open, catalog, busy, error, onBack, onRefresh, onMan
           </section>
         )}
       </section>
-    </Dialog>
   );
 }

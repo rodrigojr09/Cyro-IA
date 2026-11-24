@@ -3,10 +3,11 @@
   "productName": "Cyro IA",
   "asar": true,
   "directories": {
-    "output": "../release/v9"
+    "output": "../release/v10"
   },
   "files": [
     "scripts/app/main.js",
+    "scripts/app/workspace-page.cjs",
     "scripts/app/preload.js",
     "scripts/app/portable-paths.js",
     "scripts/app/window-state.js",

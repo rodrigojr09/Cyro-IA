@@ -344,6 +344,17 @@
 :root[data-theme='light'] .suggestions span {
   color: #4c5b70;
 }
+#welcome #suggest-project {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+#welcome #suggest-project:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+}
+#welcome #suggest-project strong {
+  font-weight: 650;
+}
 :root[data-theme='light'] .nav-item.active {
   background: #d4e7f3;
   color: #123f59;

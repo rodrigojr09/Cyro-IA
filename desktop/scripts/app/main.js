@@ -40,7 +40,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   const path = require('path');
   const fs = require('fs/promises');
   const { pathToFileURL } = require('url');
-  const pageURL = pathToFileURL(path.join(DESKTOP_ROOT, 'index.html')).href;
+  const workspacePage = require('./workspace-page.cjs');
   if (!path.isAbsolute(dataDir)) throw new Error('JARVIS_DATA_DIR deve ser um caminho absoluto.');
   const routes = new Map([
     ['/projects/selection/size', 'POST'],
@@ -149,9 +149,8 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   function trusted(event) {
     return (
       event.sender === win?.webContents &&
-      event.senderFrame === win.webContents.mainFrame &&
       (process.env.JARVIS_CLOUD !== '1' || process.env.JARVIS_AUTHENTICATED === '1') &&
-      event.senderFrame.url === pageURL
+      workspacePage.isWorkspaceEvent(event)
     );
   }
   function notifyWorkspaceChanged() {
@@ -258,8 +257,14 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
         autoplayPolicy: 'no-user-gesture-required',
       },
     });
+    workspacePage.registerWorkspace(win, {
+      packaged: app.isPackaged,
+      cloud: process.env.JARVIS_CLOUD === '1',
+      webDevelopment: process.env.CYRO_WEB_DEVELOPMENT === '1',
+    });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', (event) => event.preventDefault());
+    win.webContents.on('will-redirect', (event) => event.preventDefault());
     win.on?.('close', (event) => {
       windowState.save(stateFile, win, stateStorage);
       if (!quitting) {
@@ -296,14 +301,11 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
     });
     if (!saved || saved.maximized) win.maximize?.();
     if (saved?.fullscreen) win.setFullScreen?.(true);
-    win.loadFile(
-      path.join(
-        DESKTOP_ROOT,
-        process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1'
-          ? 'login.html'
-          : 'index.html',
-      ),
-    );
+    const initialPage =
+      process.env.JARVIS_CLOUD === '1' && process.env.JARVIS_AUTHENTICATED !== '1'
+        ? workspacePage.showLogin(win)
+        : workspacePage.openWorkspace(win);
+    void initialPage?.catch(() => {});
   }
   function showMain(chatId) {
     if (win) {

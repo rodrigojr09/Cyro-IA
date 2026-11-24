@@ -2,6 +2,7 @@ const DESKTOP_ROOT = require('node:path').resolve(__dirname, '../..');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { isWorkspaceEvent } = require('../app/workspace-page.cjs');
 const core = require('./manager');
 
 function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, authenticated }) {
@@ -46,10 +47,10 @@ function install({ electron, dataDir, stateStorage, mainWindow, quickWindows, au
     if (!authenticated() || event.senderFrame !== event.sender.mainFrame)
       throw Error('Solicitação não autorizada.');
     for (const [kind, window] of Object.entries(windows())) {
-      const url =
-        pathToFileURL(path.join(DESKTOP_ROOT, kind === 'main' ? 'index.html' : 'quick.html')).href +
-        (kind === 'main' ? '' : '?panel=' + kind);
-      if (window && event.sender === window.webContents && event.senderFrame.url === url) {
+      const trustedPage = kind === 'main'
+        ? isWorkspaceEvent(event)
+        : event.senderFrame?.url === pathToFileURL(path.join(DESKTOP_ROOT, 'quick.html')).href + '?panel=' + kind;
+      if (window && event.sender === window.webContents && trustedPage) {
         if (!watched.has(event.sender)) {
           watched.add(event.sender);
           const release = () => {

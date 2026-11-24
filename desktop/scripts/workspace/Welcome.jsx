@@ -12,9 +12,9 @@ export function Welcome({ hidden, displayName, onProject, onContinue, onPrompt }
         {[
           [
             'suggest-project',
-            'folder-search',
-            'Abrir um Espaço Virtual',
-            'Documentos fiscais, planilhas e sua operação',
+            'folder-plus',
+            'Criar Espaço Virtual',
+            'Organize e analise planilhas e notas fiscais',
             onProject,
           ],
           [

@@ -24,6 +24,7 @@ const { app, dialog, safeStorage, ipcMain, BrowserWindow } = require('electron')
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const cloud = require('../scripts/session/cloud');
+const workspacePage = require('../scripts/app/workspace-page.cjs');
 const { loginErrorMessage } = require('../scripts/session/login-errors');
 const dataDir =
   process.env.JARVIS_DATA_DIR ||
@@ -47,12 +48,12 @@ require('../scripts/integrations/spotify-ipc').installSpotifyIPC({
   service: () => service,
 });
 const microphoneGrants = new Map();
-const mainPage = require('node:url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 app.on('web-contents-created', (_event, contents) => {
   contents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
     const allowed =
       permission === 'media' &&
-      webContents?.getURL() === mainPage &&
+      workspacePage.isWorkspaceContents(webContents) &&
+      details.isMainFrame === true &&
       microphoneGrants.get(webContents.id) > Date.now() &&
       details.mediaTypes?.length === 1 &&
       details.mediaTypes[0] === 'audio';
@@ -60,17 +61,19 @@ app.on('web-contents-created', (_event, contents) => {
     callback(!!allowed);
   });
   contents.session.setPermissionCheckHandler(
-    (webContents, permission, _origin, details) =>
+    (webContents, permission, origin, details) =>
       permission === 'media' &&
       details.mediaType === 'audio' &&
-      webContents?.getURL() === mainPage &&
+      workspacePage.isWorkspaceContents(webContents) &&
+      details.isMainFrame === true &&
+      (webContents.mainFrame.url.startsWith('file:') || origin === webContents.mainFrame.origin) &&
       microphoneGrants.get(webContents.id) > Date.now(),
   );
   contents.on('will-attach-webview', (event) => event.preventDefault());
 });
 let queue = Promise.resolve();
 ipcMain.handle('jarvis:voice-input-permission', async (event) => {
-  if (event.senderFrame !== event.sender.mainFrame || event.senderFrame.url !== mainPage)
+  if (!workspacePage.isWorkspaceEvent(event))
     throw Error('Solicitação não autorizada.');
   const answer = await dialog.showMessageBox({
     type: 'question',
@@ -86,19 +89,19 @@ ipcMain.handle('jarvis:voice-input-permission', async (event) => {
   return true;
 });
 function trusted(event, loginOnly = false) {
-  const expected = require('node:url').pathToFileURL(path.join(__dirname, '..', 'login.html')).href;
-  const main = require('node:url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
   return (
-    event.senderFrame === event.sender.mainFrame &&
-    (event.senderFrame.url === expected || (!loginOnly && event.senderFrame.url === main))
+    (event.senderFrame && event.senderFrame === event.sender.mainFrame &&
+      event.senderFrame.url === workspacePage.loginURL) ||
+    (!loginOnly && workspacePage.isWorkspaceEvent(event))
   );
 }
 async function unlock() {
   process.env.JARVIS_AUTHENTICATED = '1';
   app.emit('jarvis:session-changed', true);
   for (const win of BrowserWindow.getAllWindows()) {
-    if (win.webContents.getURL().endsWith('/login.html'))
-      await win.loadFile(path.join(__dirname, '..', 'index.html'));
+    if (workspacePage.isRegisteredWorkspace(win.webContents) &&
+        win.webContents.getURL() === workspacePage.loginURL)
+      await workspacePage.openWorkspace(win);
   }
 }
 async function login(value) {
@@ -143,8 +146,8 @@ async function lock() {
   delete process.env.JARVIS_AUTHENTICATED;
   app.emit('jarvis:session-changed', false);
   for (const win of BrowserWindow.getAllWindows()) {
-    if (win.webContents.getURL() === mainPage)
-      await win.loadFile(path.join(__dirname, '..', 'login.html'));
+    if (workspacePage.isRegisteredWorkspace(win.webContents))
+      await workspacePage.showLogin(win);
   }
 }
 ipcMain.handle('jarvis:cloud-state', (event) => {

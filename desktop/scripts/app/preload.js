@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('cyroDesktop', { workspaceProtocol: 1 });
 contextBridge.exposeInMainWorld('cyroEV', {
   request: (input) => ipcRenderer.invoke('ev:request', input),
   readSource: (input) => ipcRenderer.invoke('ev:read-source', input),

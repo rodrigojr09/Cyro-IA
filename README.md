@@ -1,4 +1,6 @@
-Versão atual: **9.0.2**, envio do EV sem travar e opções para renomear, limpar mensagens e excluir. [Notas](versions/9.0.2.md).
+Versão em validação: **10.0.0**, com catálogo de EVs nas Configurações e Cyro Logístico 1.1.0. [Notas](versions/10.0.0.md).
+
+A interface Next.js da janela principal e a configuração de deploy estão em [Cyro IA Web](web/README.md).
 
 Versão anterior: **9.0.1**, execução no backend com área privada por EV. [Notas](versions/9.0.1.md).
 

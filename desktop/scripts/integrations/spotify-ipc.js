@@ -1,17 +1,18 @@
 const DESKTOP_ROOT = require('node:path').resolve(__dirname, '../..');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { isWorkspaceEvent } = require('../app/workspace-page.cjs');
 function installSpotifyIPC({ electron, service }) {
   const { ipcMain, BrowserWindow, shell, dialog } = electron;
   ipcMain.handle('spotify:request', async (event, input) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    const mainURL = pathToFileURL(path.join(DESKTOP_ROOT, 'index.html')).href;
     const quickURL = pathToFileURL(path.join(DESKTOP_ROOT, 'quick.html')).href + '?panel=composer';
     const url = event.senderFrame?.url;
+    const fromWorkspace = isWorkspaceEvent(event);
     if (
       !win ||
       event.senderFrame !== event.sender.mainFrame ||
-      ![mainURL, quickURL].includes(url) ||
+      (!fromWorkspace && url !== quickURL) ||
       !service()?.current() ||
       process.env.JARVIS_AUTHENTICATED !== '1'
     )
@@ -33,7 +34,7 @@ function installSpotifyIPC({ electron, service }) {
       !['status', 'start', 'poll', 'cancel', 'disconnect', 'control'].includes(input.operation)
     )
       throw Error('Operação Spotify inválida.');
-    if (['start', 'cancel', 'disconnect'].includes(input.operation) && url !== mainURL)
+    if (['start', 'cancel', 'disconnect'].includes(input.operation) && !fromWorkspace)
       throw Error('Abra as integrações na janela principal.');
     if (input.operation === 'disconnect') {
       const decision = await dialog.showMessageBox(win, {
