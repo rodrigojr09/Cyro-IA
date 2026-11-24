@@ -1,18 +1,13 @@
-const DESKTOP_ROOT = require('node:path').resolve(__dirname, '../..');
-const path = require('node:path');
-const { pathToFileURL } = require('node:url');
-const { isWorkspaceEvent } = require('../app/workspace-page.cjs');
+const { isWorkspaceEvent, isQuickEvent } = require('../app/workspace-page.cjs');
 function installSpotifyIPC({ electron, service }) {
   const { ipcMain, BrowserWindow, shell, dialog } = electron;
   ipcMain.handle('spotify:request', async (event, input) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    const quickURL = pathToFileURL(path.join(DESKTOP_ROOT, 'quick.html')).href + '?panel=composer';
-    const url = event.senderFrame?.url;
     const fromWorkspace = isWorkspaceEvent(event);
     if (
       !win ||
       event.senderFrame !== event.sender.mainFrame ||
-      (!fromWorkspace && url !== quickURL) ||
+      (!fromWorkspace && !isQuickEvent(event, 'composer')) ||
       !service()?.current() ||
       process.env.JARVIS_AUTHENTICATED !== '1'
     )

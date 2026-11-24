@@ -1,6 +1,3 @@
-import '../generated/app.css';
-import '../generated/clipboard.css';
-import '../generated/writer.css';
 import { version } from '../generated/version.json';
 
 export const metadata = {

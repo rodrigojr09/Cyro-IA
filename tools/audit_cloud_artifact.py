@@ -39,7 +39,9 @@ def audit(output=None):
         expected = json.loads((ROOT / "desktop/electron/runtime-files.json").read_text(encoding="utf-8"))
         if any(name.startswith("tests/") or name.endswith((".jsx", ".tsx", ".test.js")) for name in entries):
             raise RuntimeError("Fontes de desenvolvimento ou testes presentes no pacote.")
-        expected.extend(p.relative_to(ROOT / "desktop").as_posix() for p in (ROOT / "desktop/styles").glob("*.css"))
+        unexpected = set(entries) - set(expected) - {"electron/runtime-files.json"}
+        if unexpected:
+            raise RuntimeError(f"Arquivos fora do manifesto nativo: {sorted(unexpected)}")
         for name in expected:
             item = header
             for part in name.split("/"):
@@ -61,6 +63,11 @@ def audit(output=None):
     for file in payload.rglob("*"):
         if not file.is_file():
             continue
+        relative = file.relative_to(payload).as_posix()
+        if relative.startswith("resources/") and file.suffix.lower() in {
+            ".html", ".htm", ".css", ".js", ".jsx", ".mjs", ".svg",
+        }:
+            raise RuntimeError(f"Frontend avulso no instalador: {relative}")
         if (
             file.relative_to(payload).as_posix()
             == "resources/backend/_internal/certifi/cacert.pem"

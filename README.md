@@ -1,4 +1,4 @@
-Versão em validação: **10.0.0**, com catálogo de EVs nas Configurações e Cyro Logístico 1.1.0. [Notas](versions/10.0.0.md).
+Versão em validação: **10.0.1**, com a interface do Cyro hospedada e instalador restrito ao Electron e ao serviço local. [Notas](versions/10.0.1.md).
 
 A interface Next.js da janela principal e a configuração de deploy estão em [Cyro IA Web](web/README.md).
 

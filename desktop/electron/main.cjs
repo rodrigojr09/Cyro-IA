@@ -91,7 +91,7 @@ ipcMain.handle('jarvis:voice-input-permission', async (event) => {
 function trusted(event, loginOnly = false) {
   return (
     (event.senderFrame && event.senderFrame === event.sender.mainFrame &&
-      event.senderFrame.url === workspacePage.loginURL) ||
+      workspacePage.isLoginContents(event.sender)) ||
     (!loginOnly && workspacePage.isWorkspaceEvent(event))
   );
 }
@@ -100,7 +100,7 @@ async function unlock() {
   app.emit('jarvis:session-changed', true);
   for (const win of BrowserWindow.getAllWindows()) {
     if (workspacePage.isRegisteredWorkspace(win.webContents) &&
-        win.webContents.getURL() === workspacePage.loginURL)
+        workspacePage.isLoginContents(win.webContents))
       await workspacePage.openWorkspace(win);
   }
 }

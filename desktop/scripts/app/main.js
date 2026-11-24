@@ -39,7 +39,6 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
   app.disableHardwareAcceleration();
   const path = require('path');
   const fs = require('fs/promises');
-  const { pathToFileURL } = require('url');
   const workspacePage = require('./workspace-page.cjs');
   if (!path.isAbsolute(dataDir)) throw new Error('JARVIS_DATA_DIR deve ser um caminho absoluto.');
   const routes = new Map([
@@ -261,6 +260,19 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       packaged: app.isPackaged,
       cloud: process.env.JARVIS_CLOUD === '1',
       webDevelopment: process.env.CYRO_WEB_DEVELOPMENT === '1',
+      unavailable: async (window) => {
+        const answer = await dialog.showMessageBox(window, {
+          type: 'warning',
+          title: 'Cyro IA',
+          message: 'Não foi possível abrir a interface do Cyro.',
+          detail: 'Verifique sua conexão com web.cyro-ia.tech e tente novamente.',
+          buttons: ['Tentar novamente', 'Fechar'],
+          defaultId: 0,
+          cancelId: 1,
+        });
+        if (answer.response !== 0 && !window.isDestroyed()) window.close();
+        return answer.response === 0;
+      },
     });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', (event) => event.preventDefault());
@@ -335,9 +347,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       const quickTrusted =
         composer &&
         event.sender === composer.webContents &&
-        event.senderFrame === composer.webContents.mainFrame &&
-        event.senderFrame.url ===
-          pathToFileURL(path.join(DESKTOP_ROOT, 'quick.html')).href + '?panel=composer';
+        workspacePage.isQuickEvent(event, 'composer');
       if (
         (!trusted(event) && !(quickTrusted && key === 'jarvis.quick.draft')) ||
         !allowedStorage.has(key)

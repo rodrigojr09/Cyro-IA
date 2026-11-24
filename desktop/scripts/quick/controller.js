@@ -1,7 +1,7 @@
 const DESKTOP_ROOT = require('node:path').resolve(__dirname, '../..');
 const path = require('node:path');
 const fs = require('node:fs');
-const { pathToFileURL } = require('node:url');
+const workspacePage = require('../app/workspace-page.cjs');
 const { randomUUID } = require('node:crypto');
 const { performance } = require('node:perf_hooks');
 const core = require('./core');
@@ -21,8 +21,7 @@ function createQuick({
   cancel = clearInterval,
 }) {
   const { BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, clipboard } = electron;
-  const file = path.join(dataDir, 'quick-state.json'),
-    url = pathToFileURL(path.join(DESKTOP_ROOT, 'quick.html')).href;
+  const file = path.join(dataDir, 'quick-state.json');
   let config = { ...core.defaults },
     position = null,
     masterVoice = true,
@@ -151,7 +150,13 @@ function createQuick({
     window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', (event) => event.preventDefault());
-    window.loadFile(path.join(DESKTOP_ROOT, 'quick.html'), { query: { panel: kind } });
+    window.webContents.on('will-redirect', (event) => event.preventDefault());
+    workspacePage.registerQuick(window, kind, {
+      packaged: electron.app?.isPackaged,
+      cloud: process.env.JARVIS_CLOUD === '1',
+      webDevelopment: process.env.CYRO_WEB_DEVELOPMENT === '1',
+    });
+    void workspacePage.openQuick(window, kind).catch(() => {});
     window.webContents.on('did-finish-load', () => {
       publish();
       if (kind === 'composer' && expanded) window.webContents.send('quick:focus');
@@ -360,8 +365,7 @@ function createQuick({
     const role = Object.keys(windows).find(
       (key) =>
         event.sender === windows[key].webContents &&
-        event.senderFrame === windows[key].webContents.mainFrame &&
-        event.senderFrame.url === url + '?panel=' + key,
+        workspacePage.isQuickEvent(event, key),
     );
     return role && permissions[role].includes(action) ? role : null;
   }

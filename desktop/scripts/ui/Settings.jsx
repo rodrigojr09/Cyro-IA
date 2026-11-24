@@ -317,7 +317,7 @@ export function Settings({
               {category === 'Sobre' && (
                 <>
                   <h3>Sobre o Cyro IA</h3>
-                  <p>Versão 10.0.0</p>
+                  <p>Versão 10.0.1</p>
                   <button
                     onClick={() =>
                       perform(async () => {

@@ -1,5 +1,5 @@
-// All renderer libraries are already compiled by build.cjs. Native runtime must
-// remain limited to Electron, Node builtins and the explicitly audited manifest.
+// Installed Windows edition loads its renderers from the hosted workspace.
+// Native runtime is limited to Electron, Node builtins and the audited manifest.
 const fs = require('node:fs');
 const path = require('node:path');
 const { builtinModules } = require('node:module');

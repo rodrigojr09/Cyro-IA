@@ -10,7 +10,7 @@ const renderer = path.join(root, 'generated');
 mkdirSync(path.join(renderer, 'dist'), { recursive: true });
 cpSync(path.join(desktop, 'scripts'), path.join(renderer, 'scripts'), { recursive: true });
 cpSync(path.join(desktop, 'styles'), path.join(renderer, 'styles'), { recursive: true });
-for (const name of ['app.css', 'clipboard.css', 'writer.css']) {
+for (const name of ['app.css', 'clipboard.css', 'writer.css', 'login.css', 'quick.css']) {
   copyFileSync(path.join(desktop, name), path.join(renderer, name));
 }
 copyFileSync(

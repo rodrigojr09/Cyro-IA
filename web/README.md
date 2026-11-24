@@ -1,6 +1,6 @@
 # Cyro IA Web
 
-Interface Next.js da janela principal do Cyro IA Desktop. O build usa os componentes React e estilos de `desktop/` para que o instalador e a Vercel partam das mesmas fontes. A sessão, os arquivos e as ações nativas passam pela ponte do Electron. As janelas nativas de autenticação e Chat rápido são carregadas pelo instalador.
+Interface Next.js do Cyro IA Desktop. O build usa os componentes React e estilos de `desktop/`. A janela principal, a tela de login e o Chat rápido são servidos pela Vercel. A sessão, os arquivos e as ações nativas passam pela ponte do Electron.
 
 ## Vercel
 
@@ -15,4 +15,9 @@ O build web usa a ponte do Desktop e dispensa variáveis de ambiente e segredos 
 
 Execute `npm ci` e `npm run build` dentro de `web/`. Para testar a integração, sirva esse build com `npm start -- --hostname 127.0.0.1 --port 3000` e inicie o Electron de desenvolvimento com `CYRO_WEB_DEVELOPMENT=1`. Atualizações das fontes em `desktop/` são incorporadas ao iniciar um novo build ou servidor de desenvolvimento.
 
-Em produção, o instalador abre `https://web.cyro-ia.tech/`. Se a página ficar indisponível durante a abertura, ele usa a interface incluída no instalador. O contrato da ponte é anunciado em `window.cyroDesktop.workspaceProtocol`. Atualizações exclusivamente visuais aparecem ao reabrir a janela. Mudanças no contrato nativo exigem um instalador compatível.
+Em produção, o Electron carrega `/`, `/entrar` e `/rapido?panel=…` de
+`https://web.cyro-ia.tech`. A partir da 10.0.1, uma falha de carregamento na
+janela principal oferece a opção de tentar novamente em um diálogo nativo.
+Mantenha as três rotas em deploys e rollbacks para atender os instaladores
+10.0.1. Atualizações exclusivamente visuais aparecem ao reabrir a janela.
+Mudanças no contrato nativo exigem um instalador compatível.

@@ -115,14 +115,20 @@ app.whenReady().then(async () => {
       } catch {}
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    const window = BrowserWindow.getAllWindows().find((win) =>
-      win.webContents.getURL().endsWith('/login.html'),
-    );
+    const hosted = process.env.CYRO_WEB_DEVELOPMENT === '1';
+    const loginURL = hosted ? 'http://127.0.0.1:3000/entrar' : null;
+    let window;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      window = BrowserWindow.getAllWindows().find((win) => hosted
+        ? win.webContents.getURL() === loginURL
+        : win.webContents.getURL().endsWith('/login.html'));
+      if (window && await window.webContents.executeJavaScript("!!document.getElementById('login-form')")) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     assert.ok(window);
     await window.webContents.executeJavaScript(
       `document.getElementById('login-email').value='test@example.test';document.getElementById('login-password').value='password-for-test-only';document.getElementById('login-form').requestSubmit();`,
     );
-    const hosted = process.env.CYRO_WEB_DEVELOPMENT === '1';
     const workspaceLoaded = () => hosted
       ? window.webContents.getURL() === 'http://127.0.0.1:3000/'
       : window.webContents.getURL().endsWith('/index.html');

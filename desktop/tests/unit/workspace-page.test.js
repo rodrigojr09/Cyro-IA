@@ -40,19 +40,27 @@ test('the hosted renderer can call IPC only from the registered main frame and e
   assert.equal(isWorkspaceEvent({ sender: content, senderFrame: content.mainFrame }), false);
 });
 
-test('a failed hosted load opens the bundled workspace, but a concurrent sign-out wins', async () => {
-  const offline = windowFixture(async () => { throw Error('offline'); });
-  registerWorkspace(offline.win, { packaged: true, cloud: true });
+test('a failed hosted load offers native retry and a concurrent sign-out wins', async () => {
+  let offered = 0;
+  const offline = windowFixture(async () => { if (!offered) throw Error('offline'); });
+  registerWorkspace(offline.win, {
+    packaged: true,
+    cloud: true,
+    unavailable: async () => { offered++; return true; },
+  });
   await openWorkspace(offline.win);
-  assert.match(offline.opened[1], /index\.html$/);
+  assert.equal(offered, 1);
+  assert.deepEqual(offline.opened, ['https://web.cyro-ia.tech/', 'https://web.cyro-ia.tech/']);
 
   let fail;
-  const racing = windowFixture(() => new Promise((_, reject) => { fail = reject; }));
+  const racing = windowFixture((url) => url.endsWith('/entrar')
+    ? Promise.resolve()
+    : new Promise((_, reject) => { fail = reject; }));
   registerWorkspace(racing.win, { packaged: true, cloud: true });
   const pending = openWorkspace(racing.win);
   await showLogin(racing.win);
   fail(Error('navigation cancelled'));
   await pending;
   assert.equal(racing.opened.length, 2);
-  assert.match(racing.opened[1], /login\.html$/);
+  assert.equal(racing.opened[1], 'https://web.cyro-ia.tech/entrar');
 });
