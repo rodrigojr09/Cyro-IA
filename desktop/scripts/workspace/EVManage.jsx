@@ -5,6 +5,9 @@ import { evRequest } from './EVWorkspace';
 
 export function EVManage({ item, onClose, onChanged }) {
   const [space, setSpace] = useState(null),
+    [extensionSettings, setExtensionSettings] = useState(null),
+    [values, setValues] = useState({}),
+    [saved, setSaved] = useState(false),
     [name, setName] = useState(''),
     [mode, setMode] = useState(''),
     [lastId, setLastId] = useState(0),
@@ -13,6 +16,9 @@ export function EVManage({ item, onClose, onChanged }) {
   useEffect(() => {
     let active = true;
     setSpace(null);
+    setExtensionSettings(null);
+    setValues({});
+    setSaved(false);
     setMode('');
     setError('');
     if (item)
@@ -21,6 +27,8 @@ export function EVManage({ item, onClose, onChanged }) {
           if (active) {
             setSpace(out.space);
             setName(out.space.name);
+            setExtensionSettings(out.extensionSettings);
+            setValues(out.extensionSettings?.values || {});
           }
         })
         .catch((e) => {
@@ -52,6 +60,29 @@ export function EVManage({ item, onClose, onChanged }) {
       });
       setLastId(out.messages.at(-1)?.id || 0);
       setMode('clear');
+    });
+  }
+  const changedValues = Object.fromEntries(
+    Object.entries(values).filter(([key, value]) => value !== extensionSettings?.values[key]),
+  );
+  function change(key, value) {
+    setSaved(false);
+    setValues((previous) => ({ ...previous, [key]: value }));
+  }
+  async function saveSettings() {
+    if (!Object.keys(changedValues).length) return;
+    await perform(async () => {
+      const out = await evRequest({
+        action: 'extension.settings',
+        projectId: space.id,
+        operationId: crypto.randomUUID(),
+        expectedRevision: space.revision,
+        values: changedValues,
+      });
+      setSpace(out.space);
+      setExtensionSettings(out.extensionSettings);
+      setValues(out.extensionSettings.values);
+      setSaved(true);
     });
   }
   async function confirm() {
@@ -129,6 +160,41 @@ export function EVManage({ item, onClose, onChanged }) {
                   Salvar nome
                 </button>
               </form>
+              {!!extensionSettings?.fields.length && (
+                <form className="ev-extension-settings" onSubmit={(event) => {
+                  event.preventDefault();
+                  void saveSettings();
+                }}>
+                  <fieldset disabled={busy}>
+                    <legend>Preferências da extensão</legend>
+                    {extensionSettings.fields.map((field) => (
+                      <div key={field.key}>
+                        <label htmlFor={'ev-setting-' + field.key}>{field.label}</label>
+                        {field.type === 'boolean' ? (
+                          <input id={'ev-setting-' + field.key} type="checkbox"
+                            checked={values[field.key] === true}
+                            onChange={(event) => change(field.key, event.target.checked)} />
+                        ) : field.type === 'select' ? (
+                          <select id={'ev-setting-' + field.key} value={values[field.key]}
+                            onChange={(event) => change(field.key, event.target.value)}>
+                            {field.options.map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input id={'ev-setting-' + field.key} type="text" value={values[field.key]} maxLength={240}
+                            onChange={(event) => change(field.key, event.target.value)} />
+                        )}
+                        {field.description && <small>{field.description}</small>}
+                      </div>
+                    ))}
+                    <button type="submit" disabled={!Object.keys(changedValues).length}>
+                      Salvar preferências
+                    </button>
+                    {saved && <p role="status">Preferências salvas.</p>}
+                  </fieldset>
+                </form>
+              )}
               <div className="ev-manage-actions">
                 <button disabled={busy || !space.chatId} onClick={() => void clear()}>
                   Limpar mensagens

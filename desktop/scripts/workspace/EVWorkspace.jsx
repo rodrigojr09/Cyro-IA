@@ -429,6 +429,9 @@ export function EVWorkspace({
   const [extensionCatalog, setExtensionCatalog] = useState(null);
   const [selectedExtension, setSelectedExtension] = useState('');
   const activeExtension = extensionCatalog?.extensions?.find((item) => item.id === space?.extensionId);
+  const theme = activeExtension?.theme;
+  const themeColor = (color) => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)
+    ? color : undefined;
   const newSpaceExtension = extensionCatalog?.extensions?.find((item) => item.id === selectedExtension);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState('');
@@ -989,7 +992,11 @@ export function EVWorkspace({
       {space && (
         <section
           className={'ev-chat main-panel' + (notesOpen ? ' has-notes' : '')}
-          style={{ '--ev-studio-width': studioWidth + 'vw' }}
+          style={{
+            '--ev-studio-width': studioWidth + 'vw',
+            '--ev-chat-color': themeColor(theme?.chatColor),
+            '--ev-studio-color': themeColor(theme?.studioColor),
+          }}
           hidden={hidden}
           aria-label="Espaço Virtual por conversa"
           aria-busy={loading}

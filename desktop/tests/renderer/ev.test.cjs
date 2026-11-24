@@ -520,6 +520,35 @@ test('EV clears the submitted composer immediately and releases busy when the re
   }
 });
 
+test('EV options save declared extension preferences for the selected space', async () => {
+  const env = environment();
+  const space = { id: '11111111-1111-4111-8111-111111111111', name: 'Fretes', revision: 7 };
+  const fields = [{ key: 'details', type: 'boolean', label: 'Detalhar notas', default: true }];
+  const requests = [];
+  window.cyroEV = {
+    request: async (command) => {
+      if (command.action === 'open') return { space, extensionSettings: { fields, values: { details: true } } };
+      requests.push(command);
+      return { space: { ...space, revision: 8 }, extensionSettings: { fields, values: command.values } };
+    },
+  };
+  try {
+    await env.mount(env.EVManage, { item: space, onClose: () => {}, onChanged: () => {} });
+    await settle();
+    assert.equal(document.querySelector('#ev-setting-details').checked, true);
+    await click('#ev-setting-details');
+    await click('.ev-extension-settings button[type="submit"]');
+    await settle();
+    assert.equal(requests[0].action, 'extension.settings');
+    assert.equal(requests[0].projectId, space.id);
+    assert.equal(requests[0].expectedRevision, 7);
+    assert.deepEqual(requests[0].values, { details: false });
+    assert.equal(document.querySelector('.ev-extension-settings [role="status"]').textContent, 'Preferências salvas.');
+  } finally {
+    await env.dispose();
+  }
+});
+
 test('EV options confirm history clearing separately from EV deletion and protect fresh conversation revisions', async () => {
   for (const mode of ['clear', 'delete']) {
     const env = environment(),

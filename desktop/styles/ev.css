@@ -312,6 +312,7 @@
   margin-left: auto;
   padding: 14px 20px;
   background: var(--panel, #151c27);
+  background: color-mix(in srgb, var(--ev-chat-color, var(--panel, #151c27)) 15%, var(--panel, #151c27));
   border: 1px solid var(--border);
   border-radius: 16px 16px 4px 16px;
   width: fit-content;
@@ -578,14 +579,38 @@
   min-height: 0;
   margin: 16px 0;
   border: 1px solid var(--border);
+  border-color: color-mix(in srgb, var(--ev-studio-color, var(--border)) 36%, var(--border));
   border-radius: 16px;
   overflow: hidden;
   background: var(--panel, #111b28);
+  background: color-mix(in srgb, var(--ev-studio-color, var(--panel, #111b28)) 12%, var(--panel, #111b28));
   box-shadow: 0 12px 48px #0002;
   font-size: 12px;
 }
 .ev-studio[hidden] {
   display: none;
+}
+.ev-extension-settings fieldset {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.ev-extension-settings fieldset > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 10px;
+}
+.ev-extension-settings input[type='checkbox'] {
+  width: auto;
+}
+.ev-extension-settings small {
+  grid-column: 1 / -1;
 }
 .ev-studio button {
   font: inherit;
@@ -627,6 +652,7 @@
   min-width: 0;
   width: 100%;
   background: var(--side, #101824);
+  background: color-mix(in srgb, var(--ev-studio-color, var(--side, #101824)) 12%, var(--side, #101824));
 }
 .ev-studio.has-panel { flex-direction: column; }
 .ev-studio.has-panel .ev-studio-explorer {
