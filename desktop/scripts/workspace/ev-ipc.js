@@ -123,18 +123,6 @@ function installEVIPC({ electron, service, dataDir, fetcher = fetch }) {
       s.check();
       const request = state.executions?.find((item) => item.id === requestId);
       if (!request) throw Error('Solicitação de execução indisponível. Atualize a IDE.');
-      const approval = await dialog.showMessageBox(s.win, {
-        type: 'warning',
-        title: 'Executar código do EV',
-        message: 'Autorizar a execução no servidor do Cyro?',
-        detail: `Runtime: ${request.runtime}\nÁrea privada deste EV no backend · Sem rede · 128 MB · 15 segundos\nArquivos: ${request.files.map((f) => f.name).join(', ') || 'nenhum'}\n\n${request.source}`,
-        buttons: ['Cancelar', 'Executar no servidor'],
-        defaultId: 0,
-        cancelId: 0,
-        noLink: true,
-      });
-      s.check();
-      if (approval.response !== 1) return { cancelled: true };
       const result = await service().request('/api/ev/execute', 'POST', { projectId, requestId });
       s.check();
       return result;

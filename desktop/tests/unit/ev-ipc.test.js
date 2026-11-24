@@ -146,7 +146,7 @@ test('EV IPC authenticates main frame, restricts routes, rejects late account re
   }
 });
 
-test('IDE execution reauthorizes central scope and defaults native approval to cancel', async () => {
+test('IDE execution reauthorizes central scope without opening a native dialog', async () => {
   const handlers = new Map(),
     projectId = '11111111-1111-4111-8111-111111111111',
     requestId = '22222222-2222-4222-8222-222222222222';
@@ -154,9 +154,8 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
     sender = {};
   sender.mainFrame = frame;
   const event = { sender, senderFrame: frame };
-  let dialogOptions,
-    authorized = false,
-    approval = 0,
+  let authorized = false,
+    registered = false,
     remoteCalls = 0;
   const prior = process.env.JARVIS_AUTHENTICATED;
   process.env.JARVIS_AUTHENTICATED = '1';
@@ -166,10 +165,7 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
         ipcMain: { handle: (k, fn) => handlers.set(k, fn) },
         BrowserWindow: { fromWebContents: () => ({}) },
         dialog: {
-          showMessageBox: async (_win, opts) => {
-            dialogOptions = opts;
-            return { response: approval };
-          },
+          showMessageBox: () => assert.fail('Execution must not open a native dialog'),
         },
       },
       service: () => ({
@@ -177,27 +173,26 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
         request: async (_route, _method, input) => {
           assert.equal(input.projectId, projectId);
           if (_route === '/api/ev/execute') {
+            assert.ok(authorized);
             remoteCalls++;
             assert.deepEqual(input, { projectId, requestId });
             return { output: '42', exitCode: 0, executor: 'server' };
           }
           authorized = true;
           return {
-            executions: [{ id: requestId, runtime: 'python', source: 'print(42)', files: [] }],
+            executions: registered ? [{ id: requestId }] : [],
           };
         },
       }),
     });
-    assert.deepEqual(
-      await handlers.get('ev:execute')(event, { projectId, requestId, source: 'forged' }),
-      { cancelled: true },
+    await assert.rejects(
+      handlers.get('ev:execute')(event, { projectId, requestId }),
+      /Solicitação de execução indisponível/,
     );
     assert.ok(authorized);
-    assert.match(dialogOptions.detail, /print\(42\)/);
-    assert.doesNotMatch(dialogOptions.detail, /forged/);
-    assert.equal(dialogOptions.defaultId, 0);
     assert.equal(remoteCalls, 0);
-    approval = 1;
+    registered = true;
+    authorized = false;
     assert.deepEqual(
       await handlers.get('ev:execute')(event, {
         projectId,
@@ -208,7 +203,6 @@ test('IDE execution reauthorizes central scope and defaults native approval to c
       { output: '42', exitCode: 0, executor: 'server' },
     );
     assert.equal(remoteCalls, 1);
-    assert.match(dialogOptions.detail, /backend/);
     await assert.rejects(
       handlers.get('ev:execute')(
         { ...event, senderFrame: { url: 'https://evil.test' } },

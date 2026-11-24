@@ -136,7 +136,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    version="10.0.1" if CLOUD else "2.0.1-dev.0",
+    version="10.0.2" if CLOUD else "2.0.1-dev.0",
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
