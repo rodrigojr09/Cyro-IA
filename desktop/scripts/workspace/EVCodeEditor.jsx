@@ -48,7 +48,6 @@ export function EVCodeEditor({ name, value, onChange, onSave, readOnly = false }
           spellCheck={false}
           readOnly={readOnly}
           value={value}
-          maxLength={64000}
           wrap="off"
           onChange={(e) => onChange(e.target.value)}
           onScroll={(e) => {

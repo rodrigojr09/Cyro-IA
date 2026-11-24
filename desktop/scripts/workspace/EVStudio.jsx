@@ -343,8 +343,6 @@ export const EVStudio = forwardRef(function EVStudio(
     if (next.panel?.target !== 'document') await execute(next.panel.target);
   }
   async function blockCode({ content, language }, run = false) {
-    if (content.length > 64000)
-      throw Error('Este trecho excede o limite de 64 mil caracteres do editor.');
     await refresh(false);
     let hash = 0;
     for (let i = 0; i < content.length; i++) hash = (hash * 31 + content.charCodeAt(i)) >>> 0;
