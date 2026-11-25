@@ -8,6 +8,7 @@ const core = require('./core');
 function createQuick({
   electron,
   backend,
+  requestEV,
   dataDir,
   mainWindow,
   openMain,
@@ -36,6 +37,10 @@ function createQuick({
     project = null,
     usedProject = null,
     lastChatId = null,
+    lastEV = null,
+    evSpaces = [],
+    evLoading = false,
+    pendingEV = null,
     voiceEpoch = 0,
     voicing = false,
     disposed = false,
@@ -108,6 +113,7 @@ function createQuick({
       question,
       error,
       project: project ? { id: project.id, name: project.name } : null,
+      ...(requestEV ? { evSpaces, evLoading } : {}),
       usedProject,
       voicing,
       masterVoice,
@@ -227,6 +233,29 @@ function createQuick({
     windows.composer.focus();
     windows.composer.webContents.send('quick:focus');
     publish();
+    void refreshEVs();
+  }
+  async function refreshEVs() {
+    if (!requestEV || disposed || evLoading || !isReady()) return;
+    evLoading = true;
+    publish();
+    try {
+      const spaces = new Map();
+      let offset = 0;
+      while (!disposed && offset != null) {
+        const result = await requestEV('/api/ev', { action: 'list', limit: 100, offset });
+        for (const { id, name, chatId, state } of result.spaces || []) {
+          if (state === 'READY' && chatId) spaces.set(id, { id, name, chatId });
+        }
+        offset = Number.isSafeInteger(result.next) && result.next > offset ? result.next : null;
+      }
+      if (!disposed) evSpaces = [...spaces.values()];
+    } catch {
+      if (!disposed) evSpaces = [];
+    } finally {
+      evLoading = false;
+      if (!disposed) publish();
+    }
   }
   function showAnswer() {
     answerVisible = true;
@@ -270,7 +299,7 @@ function createQuick({
       }
     }
   }
-  async function send(message, useProject) {
+  async function send(message, destination) {
     if (disposed) throw Error('Quick Chat encerrado.');
     if (!isReady()) throw Error('Aguarde o carregamento das suas informações e histórico.');
     if (busy) throw Error('Aguarde a resposta atual.');
@@ -278,12 +307,14 @@ function createQuick({
       typeof message !== 'string' ||
       !message.trim() ||
       message.length > 6000 ||
-      typeof useProject !== 'boolean'
+      (typeof destination !== 'boolean' && typeof destination !== 'string')
     )
       throw Error('Pergunta inválida.');
-    if (useProject && !project) throw Error('Selecione um projeto na janela principal.');
-    const selected = useProject ? { ...project } : null;
-    usedProject = selected?.name || null;
+    const ev = typeof destination === 'string' ? evSpaces.find((item) => item.id === destination) : null;
+    if (typeof destination === 'string' && !ev) throw Error('Espaço Virtual indisponível.');
+    if (destination === true && !project) throw Error('Selecione um projeto na janela principal.');
+    const selected = destination === true ? { ...project } : null;
+    usedProject = ev?.name || selected?.name || null;
     question = message.trim();
     busy = true;
     answer = '';
@@ -309,7 +340,24 @@ function createQuick({
         if (!size.data.within_limit || size.data.selected_bytes > size.data.max_bytes)
           throw Error('O projeto ultrapassa 5 MB. Remova arquivos da seleção antes de enviar.');
       }
-      const result = await backend(
+      let result;
+      if (ev) {
+        const key = JSON.stringify([ev.id, ev.chatId, question]);
+        if (pendingEV?.key !== key) pendingEV = { key, id: randomUUID() };
+        const out = await requestEV('/api/ev/assistant', {
+          action: 'assistant.send', projectId: ev.id, conversationId: ev.chatId,
+          operationId: pendingEV.id, message: question, fileIds: [],
+        });
+        try {
+          const window = mainWindow();
+          if (!disposed && window && !window.isDestroyed())
+            window.webContents.send('jarvis:workspace-changed', ev.id);
+        } catch {}
+        const reply = out.messages?.at(-1);
+        if (reply?.role !== 'assistant') throw Error('A resposta do EV está indisponível.');
+        pendingEV = null;
+        result = { ok: true, data: { reply: reply.content } };
+      } else result = await backend(
         '/quick/chat',
         'POST',
         JSON.stringify({ message: question, project_id: selected?.id || null }),
@@ -322,6 +370,7 @@ function createQuick({
       answer = result.data.reply;
       spokenAnswer = result.data.speech_text || answer;
       lastChatId = result.data.chat_id || null;
+      lastEV = ev;
       busy = false;
       clock.pause('busy', false);
       clock.reset(core.duration(answer, config));
@@ -424,6 +473,10 @@ function createQuick({
       }, 2000);
     },
     'open-main': async () => {
+      if (lastEV) {
+        openMain({ ev: lastEV });
+        return;
+      }
       if (lastChatId) {
         openMain(lastChatId);
         return;
@@ -500,6 +553,7 @@ function createQuick({
     if (lastReady !== isReady()) {
       lastReady = isReady();
       publish();
+      if (lastReady && expanded) void refreshEVs();
     }
     if (answerVisible && !busy && clock.tick() <= 0) hide();
     else if (answerVisible) publish();

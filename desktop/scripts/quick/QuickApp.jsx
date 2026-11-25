@@ -12,6 +12,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
       }
     }),
     [useProject, setUseProject] = useState(false),
+    [evId, setEvId] = useState(''),
     [submitting, setSubmitting] = useState(false);
   const question = useRef(null),
     answer = useRef(null),
@@ -20,6 +21,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
     sending = useRef(false),
     latest = useRef(null);
   latest.current = state;
+  const unavailableEV = !!evId && !state?.evSpaces?.some((space) => space.id === evId);
   const stop = () => {
     audio.current?.pause();
     audio.current = null;
@@ -147,6 +149,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
       !state ||
       state.busy ||
       state.ready === false ||
+      unavailableEV ||
       !text.trim() ||
       text.length > 6000
     )
@@ -155,7 +158,7 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
     setSubmitting(true);
     if (!clipboard) setDraft('');
     try {
-      const result = await window.quick.send(text.trim(), useProject);
+      const result = await window.quick.send(text.trim(), evId || useProject);
       if (!result.ok && !clipboard) setDraft((value) => value || text);
       return result.ok === true;
     } catch {
@@ -280,7 +283,18 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
           Carregando histórico e informações. Você já pode preparar a próxima mensagem.
         </p>
         <div className="tools">
-          <label hidden={!state?.project}>
+          {state?.evSpaces ? (
+            <label className="quick-destination">
+              <span>Conversar em</span>
+              <select aria-label="Destino da mensagem" value={evId}
+              disabled={state.busy || submitting}
+              onChange={(event) => setEvId(event.target.value)}>
+              <option value="">Chat rápido</option>
+              {unavailableEV && <option value={evId}>EV indisponível</option>}
+              {state.evSpaces.map((space) => <option value={space.id} key={space.id}>{space.name}</option>)}
+              </select>
+            </label>
+          ) : <label hidden={!state?.project}>
             <input
               id="use-project"
               type="checkbox"
@@ -291,11 +305,11 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
             <span id="project-label">
               {state?.project ? 'Usar ' + state.project.name : 'Nenhum projeto ativo'}
             </span>
-          </label>
+          </label>}
           <button
             id="send"
             aria-label="Enviar"
-            disabled={!state || state.busy || state.ready === false || submitting}
+            disabled={!state || state.busy || state.ready === false || submitting || unavailableEV}
             onClick={() => void submit()}
           >
             ↑

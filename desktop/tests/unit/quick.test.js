@@ -7,7 +7,7 @@ const fs = require('node:fs'),
 const { pathToFileURL } = require('node:url');
 const core = require('../../scripts/quick/core'),
   { createQuick } = require('../../scripts/quick/controller');
-function fixture(directory, backend, isReady = () => true) {
+function fixture(directory, backend, isReady = () => true, requestEV) {
   let now = 0,
     tick,
     opened = [],
@@ -117,6 +117,7 @@ function fixture(directory, backend, isReady = () => true) {
           };
     },
     dataDir: directory,
+    requestEV,
     isReady,
     mainWindow: () => main,
     openMain: (id) => opened.push(id),
@@ -163,6 +164,33 @@ function temporary(fn) {
     }
   };
 }
+
+test('Chat rápido uses its own history or sends to an authorized EV conversation', temporary(async (_base, dir) => {
+  const ev = { id: '11111111-1111-4111-8111-111111111111', name: 'Cyro Logístico', chatId: '22222222-2222-4222-8222-222222222222' };
+  const calls = [];
+  _base.controller.destroy();
+  const f = fixture(dir, undefined, () => true, async (route, input) => {
+    calls.push({ route, input });
+    if (input.action === 'list') return { spaces: [{ ...ev, state: 'READY' }] };
+    return { messages: [{ role: 'assistant', content: 'Resposta do EV' }] };
+  });
+  try {
+    await f.invoke('orb', 'toggle');
+    assert.deepEqual((await f.invoke('composer', 'state')).evSpaces, [ev]);
+    await f.invoke('composer', 'send', 'Pergunta geral', false);
+    assert.ok(f.requests.some(([route]) => route === '/quick/chat'));
+    await assert.rejects(async () => f.invoke('composer', 'send', 'Pergunta', 'forged'), /Espaço Virtual indisponível/);
+    await f.invoke('composer', 'send', 'Pergunta do EV', ev.id);
+    assert.equal(calls.at(-1).route, '/api/ev/assistant');
+    assert.equal(calls.at(-1).input.projectId, ev.id);
+    assert.equal(calls.at(-1).input.conversationId, ev.chatId);
+    assert.equal((await f.invoke('response', 'state')).answer, 'Resposta do EV');
+    await f.invoke('response', 'open-main');
+    assert.deepEqual(f.opened, [{ ev }]);
+  } finally {
+    f.controller.destroy();
+  }
+}));
 
 test('tempo de leitura usa 200 ppm, mínimo, máximo e configurações validadas', () => {
   assert.equal(core.duration('Olá'), 5000);

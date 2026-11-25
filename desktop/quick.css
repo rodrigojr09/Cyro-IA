@@ -140,6 +140,18 @@ textarea {
 .tools input {
   accent-color: #38bdf8;
 }
+#composer .quick-destination {
+  gap: 6px;
+}
+#composer .quick-destination select {
+  min-width: 0;
+  max-width: 180px;
+  color: #dceaf5;
+  background: #111b28;
+  border: 1px solid #35465a;
+  border-radius: 6px;
+  padding: 4px 6px;
+}
 #send {
   font-size: 18px;
   background: #79d4fa;

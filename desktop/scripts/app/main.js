@@ -693,6 +693,7 @@ if (!ownsInstance || (process.argv || []).includes('--jarvis-probe')) {
       quickController = require('../quick/controller').createQuick({
         electron: require('electron'),
         backend,
+        requestEV: app[Symbol.for('cyro.quickEVRequest')],
         dataDir,
         mainWindow: () => win,
         isReady: () => process.env.JARVIS_CLOUD !== '1' || readiness.ready(),

@@ -655,9 +655,9 @@ export function EVWorkspace({
         }),
       );
   }
-  async function open(projectId, conversationId) {
+  async function open(projectId, conversationId, reload = false) {
     const epoch = ++generation.current;
-    const cached = conversationId && chatCache.current.get(projectId + ':' + conversationId);
+    const cached = !reload && conversationId && chatCache.current.get(projectId + ':' + conversationId);
     const out =
       cached ||
       (await evRequest({
@@ -698,14 +698,27 @@ export function EVWorkspace({
     if (
       selectedEV.id === space?.id &&
       space.state === 'READY' &&
-      conversation?.id === selectedEV.chatId
+      conversation?.id === selectedEV.chatId && !selectedEV.reloadToken
     )
       return;
     setLoading(true);
-    void open(selectedEV.id, selectedEV.chatId)
+    void open(selectedEV.id, selectedEV.chatId, !!selectedEV.reloadToken)
       .catch((e) => setError(publicError(e)))
       .finally(() => setLoading(false));
-  }, [hidden, selectedEV?.id, selectedEV?.chatId]);
+  }, [hidden, selectedEV?.id, selectedEV?.chatId, selectedEV?.reloadToken]);
+  useEffect(() => window.jarvisWindow?.onWorkspaceChanged?.((id) => {
+    if (typeof id !== 'string') return;
+    for (const key of chatCache.current.keys()) {
+      if (key.startsWith(id + ':')) chatCache.current.delete(key);
+    }
+    if (hidden || loading || space?.id !== id || !conversation?.id) return;
+    const epoch = generation.current;
+    void evRequest({
+      action: 'assistant.open', projectId: id, conversationId: conversation.id, metadataOnly: false,
+    }).then((out) => {
+      if (active.current && epoch === generation.current && !sending.current) return apply(out);
+    }).catch(() => {});
+  }), [hidden, loading, space?.id, conversation?.id]);
   useEffect(() => {
     if (hidden || !space || space.state !== 'PROVISIONING' || loading) return;
     const timer = setTimeout(() => {

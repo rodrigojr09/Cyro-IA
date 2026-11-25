@@ -206,7 +206,9 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       queueOpen();
     });
     document.addEventListener('close', queueOpen, true);
-    const unsubscribe = window.jarvisWindow.onWorkspaceChanged?.(refresh);
+    const unsubscribe = window.jarvisWindow.onWorkspaceChanged?.((evId) => {
+      if (!evId) refresh();
+    });
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
     return () => {
@@ -238,8 +240,15 @@ export function App({ workspace: providedWorkspace, writer: providedWriter }) {
       speaker.stop();
       attachments.clear();
       setInput('');
-      await workspace.openById(id);
-      setEVActive(false);
+      if (id?.ev?.id) {
+        const out = await window.cyroEV.request({ action: 'open', projectId: id.ev.id });
+        if (!out?.space) throw Error(out?.error || 'Espaço Virtual indisponível.');
+        setSelectedEV({ ...out.space, reloadToken: crypto.randomUUID() });
+        setEVActive(true);
+      } else {
+        await workspace.openById(id);
+        setEVActive(false);
+      }
     });
   }, [openRequest, state.ready, busy, submitting, evDirty, writerState.saving, settings]);
   useEffect(() => {

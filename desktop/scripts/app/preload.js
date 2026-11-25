@@ -62,7 +62,7 @@ contextBridge.exposeInMainWorld('jarvisWindow', {
   saveAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-save', id),
   discardAttachment: (id) => ipcRenderer.invoke('jarvis:attachments-discard', id),
   onWorkspaceChanged: (callback) => {
-    const listener = () => callback();
+    const listener = (_event, evId) => callback(evId);
     ipcRenderer.on('jarvis:workspace-changed', listener);
     return () => ipcRenderer.removeListener('jarvis:workspace-changed', listener);
   },

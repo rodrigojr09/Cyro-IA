@@ -38,6 +38,13 @@ const dataDir =
 process.env.JARVIS_DATA_DIR = dataDir;
 require('../scripts/app/portable-paths').configureElectron(app, dataDir);
 let service;
+app[Symbol.for('cyro.quickEVRequest')] = async (route, payload) => {
+  const current = service?.current();
+  if (!current) throw Error('Entre com sua conta.');
+  const data = await service.request(route, 'POST', payload);
+  if (service.current()?.credential !== current.credential) throw Error('A sessão mudou.');
+  return data;
+};
 require('../scripts/workspace/ev-ipc').installEVIPC({
   electron: require('electron'),
   service: () => service,

@@ -14,7 +14,7 @@ const invoke = (name, ...args) => ipcRenderer.invoke('quick:' + name, ...args);
 contextBridge.exposeInMainWorld('quick', {
   toggle: () => invoke('toggle'),
   move: (x, y, save) => invoke('move', x, y, save),
-  send: (message, useProject) => invoke('send', message, useProject),
+  send: (message, destination) => invoke('send', message, destination),
   state: () => invoke('state'),
   openMain: () => invoke('open-main'),
   resize: (height) => invoke('resize', height),
