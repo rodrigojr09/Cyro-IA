@@ -74,6 +74,8 @@ export const EVStudio = forwardRef(function EVStudio(
     [retry, setRetry] = useState(0),
     [previewMode, setPreviewMode] = useState('auto');
   const [resourceMenu, setResourceMenu] = useState(null);
+  const [fileHistory, setFileHistory] = useState(null);
+  useEffect(() => setFileHistory(null), [projectId, pane?.target, pane?.kind, workbench.revision]);
   useEffect(() => setResourceMenu(null), [projectId, hidden, visible, category, pane, search]);
   const resourceHandlers = (name, items) => contextMenuHandlers((event) =>
     setResourceMenu({ ...contextMenuAt(event, 'Ações de ' + name), items }),
@@ -871,6 +873,21 @@ export const EVStudio = forwardRef(function EVStudio(
                   <Icon name="code-save" />
                 </button>
                 <button
+                  title="Histórico de versões"
+                  aria-label="Histórico de versões"
+                  aria-expanded={fileHistory !== null}
+                  disabled={busy || draft.dirty || !workbench.files.some((file) => file.name === draft.name)}
+                  onClick={() => {
+                    if (fileHistory) setFileHistory(null);
+                    else void perform(async () => {
+                      const out = await request({ action: 'workbench.versions', projectId, name: draft.name });
+                      setFileHistory(out.versions);
+                    });
+                  }}
+                >
+                  <Icon name="history" />
+                </button>
+                <button
                   title="Baixar código"
                   aria-label="Baixar código"
                   disabled={
@@ -906,6 +923,30 @@ export const EVStudio = forwardRef(function EVStudio(
                   Executar
                 </button>
               </div>
+              {fileHistory && (
+                <div className="ev-studio-toolbar" aria-label="Versões anteriores">
+                  {fileHistory.length ? (
+                    <form onSubmit={(event) => {
+                      event.preventDefault();
+                      const version = Number(new FormData(event.currentTarget).get('version'));
+                      void perform(async () => {
+                        const updated = await request({
+                          action: 'workbench.rollback', projectId, operationId: uid(),
+                          name: draft.name, version,
+                        });
+                        apply(updated);
+                        setFileHistory(null);
+                        setNotice('Versão restaurada em uma nova revisão.');
+                      });
+                    }}>
+                      <select name="version" aria-label="Versão anterior" disabled={busy || draft.dirty}>
+                        {fileHistory.map(({ version }) => <option key={version} value={version}>Versão {version}</option>)}
+                      </select>
+                      <button type="submit" disabled={busy || draft.dirty}>Restaurar</button>
+                    </form>
+                  ) : <span>Nenhuma versão anterior disponível.</span>}
+                </div>
+              )}
               <EVCodeEditor
                 readOnly={busy}
                 name={draft.name}

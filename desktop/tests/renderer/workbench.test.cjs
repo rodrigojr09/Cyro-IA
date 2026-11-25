@@ -11,6 +11,32 @@ function fixture(initial){
  return {request,calls,get:()=>state,execute:async value=>{assert.deepEqual(value,{projectId:'space',requestId:'run-id'});const result={output:'42',exitCode:0};state.executions[0].result=result;return result;}};
 }
 const empty={revision:0,files:[],tables:[],executions:[]};
+test('the Studio restores a previous code version from its toolbar', async () => {
+  const env = environment();
+  const panel = {kind: 'code', source: 'workbench', target: 'main.py', token: 'open'};
+  const state = {...empty, revision: 2, files: [{name: 'main.py', content: 'new', revision: 2}], panel};
+  const store = fixture(state);
+  window.cyroEV = {draft: async () => null};
+  try {
+    await env.mount(env.EVStudio, {projectId: 'space', hidden: false, visible: true, request: async command => {
+      if (command.action === 'workbench.versions') return {versions: [{version: 1}]};
+      if (command.action === 'workbench.rollback') {
+        assert.equal(command.name, 'main.py');
+        assert.equal(command.version, 1);
+        return {...state, revision: 3, files: [{name: 'main.py', content: 'old', revision: 3}],
+          panel: {...panel, token: 'restored'}};
+      }
+      return store.request(command);
+    }});
+    await settle();
+    await click('[aria-label="Histórico de versões"]');
+    await click('[aria-label="Versões anteriores"] button');
+    await settle();
+    assert.equal(document.querySelector('textarea[aria-label="Editor de código"]').value, 'old');
+  } finally {
+    await env.dispose();
+  }
+});
 test('an open Studio refreshes saved code and protects unsaved edits', async () => {
   const env = environment();
   const store = fixture({
