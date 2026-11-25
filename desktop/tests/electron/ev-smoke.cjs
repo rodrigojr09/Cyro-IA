@@ -459,8 +459,7 @@ app.whenReady().then(async () => {
     await wait(`!document.querySelector('.context-menu')`);
     const retries = calls.filter((c) => c.message === 'edite o primeiro frete para 22,50');
     assert.equal(retries[0].operationId, retries[1].operationId);
-    await input('#ev-message', 'confirmar');
-    await js(`document.querySelector('#ev-send').click()`);
+    await js(`[...document.querySelectorAll('.ev-chat-proposal button')].find(b=>b.textContent.trim()==='Confirmar').click()`);
     await wait(
       `!!document.querySelector('.ev-chat-table') && !document.getElementById('ev-message').disabled`,
     );

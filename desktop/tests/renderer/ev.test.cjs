@@ -186,7 +186,13 @@ test('EV chat keeps inline results, confirmation and retry on the same operation
     await submit();
     const sends = calls.filter((c) => c.message === 'edite o primeiro frete para 15,50');
     assert.equal(sends[0].operationId, sends[1].operationId);
-    assert.match(document.querySelector('.ev-chat-proposal').textContent, /confirmar/);
+    const approve = [...document.querySelectorAll('.ev-chat-proposal button')].find(
+      (button) => button.textContent.trim() === 'Confirmar',
+    );
+    assert.ok(approve);
+    await click(approve);
+    assert.equal(calls.at(-1).message, 'confirmar');
+    assert.equal(calls.at(-1).confirmationProposalId, '55555555-5555-4555-8555-555555555555');
     assert.ok(document.querySelector('#ev-attach-files'));
     assert.ok(document.querySelector('#ev-microphone'));
     assert.ok(document.querySelector('#ev-send'));

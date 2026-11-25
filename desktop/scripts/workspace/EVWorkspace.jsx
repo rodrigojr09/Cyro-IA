@@ -324,7 +324,7 @@ function Batch({ item, projectId, hidden }) {
     </div>
   );
 }
-function Artifact({ item, projectId, hidden, onOpen, onTable, onReference }) {
+function Artifact({ item, projectId, hidden, onOpen, onTable, onReference, onDecide, decisionDisabled }) {
   if (item.type === 'REFERENCES')
     return (
       <div className="ev-source-links" aria-label="Referências do EV">
@@ -390,10 +390,14 @@ function Artifact({ item, projectId, hidden, onOpen, onTable, onReference }) {
           </p>
         ))}
         {(!item.state || item.state === 'PROPOSED') && (
-          <p>
-            Responda <strong>confirmar</strong> para aplicar ou <strong>rejeitar</strong> para
-            cancelar.
-          </p>
+          <div className="ev-manage-actions">
+            <button type="button" disabled={decisionDisabled} onClick={() => onDecide(item.id, 'rejeitar')}>
+              Rejeitar
+            </button>
+            <button type="button" disabled={decisionDisabled} onClick={() => onDecide(item.id, 'confirmar')}>
+              Confirmar
+            </button>
+          </div>
         )}
       </div>
     );
@@ -550,19 +554,11 @@ export function EVWorkspace({
     if (!hidden && !sending.current) changeQuestion((question ? question + ' ' : '') + text);
   }, setNotice);
   const confirmation = useRef(null);
+  const decisionBlocked = !!contextFiles.length ||
+    (!!question.trim() && !/^(?:eu\s+)?(?:confirmar|confirmo|rejeitar|rejeito|cancelar)[.!]?$/i.test(question.trim()));
   useEffect(() => {
     if (hidden || loading) dictation.stop();
   }, [hidden, loading]);
-  const proposalContext = () =>
-    [...artifacts]
-      .sort((a, b) => a.messageId - b.messageId)
-      .flatMap((group) => group.items)
-      .filter(
-        (item) =>
-          item.type === 'PROPOSAL' &&
-          (!item.state || ['PROPOSED', 'APPLYING'].includes(item.state)),
-      )
-      .at(-1)?.id;
   const operation = useRef(null),
     generation = useRef(0),
     scroll = useRef(null),
@@ -734,7 +730,7 @@ export function EVWorkspace({
               conversationId: conversation?.id || null,
               question,
               fileIds: contextFiles,
-              confirmationProposalId: (confirmation.current ||= proposalContext()),
+              confirmationProposalId: confirmation.current,
               operationId: (operation.current ||= crypto.randomUUID()),
             },
           })
@@ -780,14 +776,20 @@ export function EVWorkspace({
       if (active.current) setLoading(false);
     }
   }
-  async function send(event) {
+  async function send(event, decision) {
     event?.preventDefault();
-    if (sending.current || loading || (!question.trim() && !contextFiles.length)) return;
+    if (sending.current || loading || (!decision && !question.trim() && !contextFiles.length)) return;
+    if (decision) {
+      if (decisionBlocked) return;
+      if (confirmation.current !== decision.id || question.trim() !== decision.text)
+        operation.current = null;
+      confirmation.current = decision.id;
+    }
     sending.current = true;
     setLoading(true);
     setError('');
     setNotice('');
-    const text = question.trim() || 'Analise os arquivos anexados.',
+    const text = decision?.text || question.trim() || 'Analise os arquivos anexados.',
       previousSpace = space,
       operationId = (operation.current ||= crypto.randomUUID());
     const submittedMessage = { id: 'user-' + operationId, role: 'user', content: text };
@@ -829,8 +831,8 @@ export function EVWorkspace({
         ...(selectedConversation ? { conversationId: selectedConversation.id } : {}),
         fileIds: contextFiles.slice(0, 5),
         ...(!space && selectedExtension ? { extensionId: selectedExtension } : {}),
-        ...(confirmation.current || proposalContext()
-          ? { confirmationProposalId: (confirmation.current ||= proposalContext()) }
+        ...(confirmation.current
+          ? { confirmationProposalId: confirmation.current }
           : {}),
       });
       if (!active.current) return;
@@ -1076,6 +1078,8 @@ export function EVWorkspace({
                       onOpen={(intent) => studio.current?.openIntent(intent)}
                       onTable={(id) => studio.current?.openTable(id, 'space')}
                       onReference={(reference) => studio.current?.openReference(reference)}
+                      onDecide={(id, text) => void send(null, { id, text })}
+                      decisionDisabled={loading || decisionBlocked}
                       projectId={space?.id}
                       hidden={hidden}
                     />
