@@ -1189,7 +1189,7 @@ export function EVWorkspace({
             key={space?.id || 'lobby'}
             projectId={space?.id}
             hidden={hidden}
-            refreshKey={messages.length + ':' + contextFiles.join(',')}
+            refreshKey={(messages.at(-1)?.id ?? '') + ':' + contextFiles.join(',')}
             request={evRequest}
             onUse={(file) => {
               operation.current = null;

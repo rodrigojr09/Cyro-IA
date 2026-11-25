@@ -169,9 +169,17 @@ export const EVStudio = forwardRef(function EVStudio(
     wb.current = next;
     setWorkbench(next);
     const intent = next.panel;
+    const panel = currentPane.current;
+    const draft = panel?.kind === 'code' ? draftRef.current[keyFor(panel)] : null;
+    const file = draft && next.files.find((entry) => entry.name === panel.target);
+    const changed = file && (draft.entityRevision !== (file.revision || 0) || draft.baseContent !== file.content);
+    if (changed && draft.dirty)
+      setNotice('O arquivo foi atualizado no EV. Seu rascunho foi preservado.');
     if (follow && intent?.token && intent.token !== seen.current) {
       seen.current = intent.token;
       void choose(intent, next).catch((e) => setNotice(publicError(e)));
+    } else if (changed && !draft.dirty) {
+      void choose(panel, next).catch((e) => setNotice(publicError(e)));
     }
   }
   async function refresh(follow = true) {

@@ -11,6 +11,34 @@ function fixture(initial){
  return {request,calls,get:()=>state,execute:async value=>{assert.deepEqual(value,{projectId:'space',requestId:'run-id'});const result={output:'42',exitCode:0};state.executions[0].result=result;return result;}};
 }
 const empty={revision:0,files:[],tables:[],executions:[]};
+test('an open Studio refreshes saved code and protects unsaved edits', async () => {
+  const env = environment();
+  const store = fixture({
+    ...empty,
+    files: [{name: 'main.py', content: 'original', revision: 1}],
+    panel: {kind: 'code', source: 'workbench', target: 'main.py', token: 'open'},
+  });
+  window.cyroEV = {draft: async () => null};
+  const sync = () => act(async () => window.dispatchEvent(new window.Event('focus')));
+  const editor = 'textarea[aria-label="Editor de código"]';
+  try {
+    await env.mount(env.EVStudio, {projectId: 'space', hidden: false, visible: true, request: store.request});
+    await settle();
+    const remote = store.get();
+    remote.files[0] = {name: 'main.py', content: 'saved from chat', revision: 2};
+    remote.revision++;
+    await sync();
+    assert.equal(document.querySelector(editor).value, 'saved from chat');
+    await input(editor, 'local draft');
+    remote.files[0] = {name: 'main.py', content: 'newer saved version', revision: 3};
+    remote.revision++;
+    await sync();
+    assert.equal(document.querySelector(editor).value, 'local draft');
+    assert.match(document.body.textContent, /rascunho foi preservado/);
+  } finally {
+    await env.dispose();
+  }
+});
 test('v9 opens code from the file sidebar, saves a scoped draft and shows execution output without a modal',async()=>{
  const env=environment(),store=fixture({...empty,files:[{name:'main.py',content:'print(1)',revision:1}]});const drafts=[];
  window.cyroEV={draft:async c=>{drafts.push(c);return null;},execute:store.execute};
