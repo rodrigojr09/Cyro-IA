@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Clipboard } from '../clipboard/Clipboard';
+import { Icon } from '../ui/Icon';
 import { preferenceStorage, ignoreOwnSelection } from '../shared/bridge';
 const ignore = (promise) => void promise?.catch(() => {});
 export function QuickApp({ panel = new URLSearchParams(location.search).get('panel') }) {
@@ -21,7 +22,8 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
     sending = useRef(false),
     latest = useRef(null);
   latest.current = state;
-  const unavailableEV = !!evId && !state?.evSpaces?.some((space) => space.id === evId);
+  const selectedEV = state?.evSpaces?.find((space) => space.id === evId);
+  const unavailableEV = !!evId && !selectedEV;
   const stop = () => {
     audio.current?.pause();
     audio.current = null;
@@ -282,19 +284,26 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
         <p id="quick-startup-status" role="status" hidden={state?.ready !== false}>
           Carregando histórico e informações. Você já pode preparar a próxima mensagem.
         </p>
-        <div className="tools">
+        <div className="quick-composer-footer">
           {state?.evSpaces ? (
             <label className="quick-destination">
-              <span>Conversar em</span>
+              <span className="quick-destination-icon" aria-hidden="true">
+                <Icon name={evId ? 'folder' : 'messages-square'} />
+              </span>
+              <span className="quick-destination-text" aria-hidden="true">
+                <small>Conversar em</small>
+                <strong>{selectedEV?.name || (unavailableEV ? 'EV indisponível' : 'Chat rápido')}</strong>
+              </span>
+              <Icon name="chevron-down" className="quick-destination-chevron" />
               <select aria-label="Destino da mensagem" value={evId}
-              disabled={state.busy || submitting}
-              onChange={(event) => setEvId(event.target.value)}>
-              <option value="">Chat rápido</option>
-              {unavailableEV && <option value={evId}>EV indisponível</option>}
-              {state.evSpaces.map((space) => <option value={space.id} key={space.id}>{space.name}</option>)}
+                disabled={state.busy || submitting}
+                onChange={(event) => setEvId(event.target.value)}>
+                <option value="">Chat rápido</option>
+                {unavailableEV && <option value={evId}>EV indisponível</option>}
+                {state.evSpaces.map((space) => <option value={space.id} key={space.id}>{space.name}</option>)}
               </select>
             </label>
-          ) : <label hidden={!state?.project}>
+          ) : <label className="quick-legacy-destination" hidden={!state?.project}>
             <input
               id="use-project"
               type="checkbox"
@@ -309,10 +318,11 @@ export function QuickApp({ panel = new URLSearchParams(location.search).get('pan
           <button
             id="send"
             aria-label="Enviar"
-            disabled={!state || state.busy || state.ready === false || submitting || unavailableEV}
+            disabled={!state || state.busy || state.ready === false || submitting || unavailableEV || !draft.trim()}
             onClick={() => void submit()}
           >
-            ↑
+            <span>Enviar</span>
+            <Icon name="arrow-up" />
           </button>
         </div>
       </section>

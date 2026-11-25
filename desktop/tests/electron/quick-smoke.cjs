@@ -61,6 +61,9 @@ app.whenReady().then(async () => {
     const create = () =>
       require('../../scripts/quick/controller').createQuick({
         electron: { BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, clipboard },
+        requestEV: async () => ({
+          spaces: [{ id: 'ev-fixture', chatId: 'ev-chat', name: 'Cyro Logístico', state: 'READY' }],
+        }),
         backend: async (route, method, body) => {
           if (route === '/quick/session') return { ok: true, data: { chat_id: 'quick-fixture' } };
           if (route === '/speak')
@@ -101,6 +104,22 @@ app.whenReady().then(async () => {
     assert.equal(orb.getBounds().width, 42);
     await orb.webContents.executeJavaScript('window.quick.toggle()');
     assert.equal(composer.isVisible(), true);
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const hasEV = await composer.webContents.executeJavaScript(
+        `!!document.querySelector('[aria-label="Destino da mensagem"] option[value="ev-fixture"]')`,
+      );
+      if (hasEV) break;
+      await delay(50);
+    }
+    const footer = await composer.webContents.executeJavaScript(`(() => {
+      const select = document.querySelector('[aria-label="Destino da mensagem"]');
+      const field = document.getElementById('question').getBoundingClientRect();
+      const bottom = document.querySelector('.quick-composer-footer').getBoundingClientRect();
+      return { options: [...select.options].map(option => option.textContent),
+        visible: bottom.top >= field.bottom && bottom.bottom <= innerHeight };
+    })()`);
+    assert.deepEqual(footer.options, ['Chat rápido', 'Cyro Logístico']);
+    assert.equal(footer.visible, true);
     await response.webContents.executeJavaScript(
       `window.played=0;window.NativeAudio=window.Audio;window.Audio=function(src){const media=new window.NativeAudio(src);media.muted=true;const play=media.play.bind(media);media.play=async()=>{await play();window.played++;};return media;};void 0;`,
     );
